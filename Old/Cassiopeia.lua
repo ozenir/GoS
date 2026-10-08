@@ -243,5 +243,5 @@ end
 
 AddGapcloseEvent(_R, 69, false, CassiopeiaMenu)
 
-PrintChat(string.format("<font color='#1244EA'>Cassiopeia:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>"))
+PrintChat(string.format("<font color='#F5B301'>Cassiopeia:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>"))
 PrintChat("Have Fun Using D3Carry Scripts: " ..GetObjectBaseName(myHero)) 

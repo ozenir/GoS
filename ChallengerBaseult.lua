@@ -30,8 +30,8 @@ function ChallengerBaseult:__init()
     }
   }
 
-  if not self.SpellData[GetObjectName(myHero)] then PrintChat("<b><font color='#EE2EC'>Challenger Baseult -</font></b><b><font color='#ff0000'> "..GetObjectName(myHero).." Is Not Supported! </font></b>") return end
-  PrintChat(string.format("<b><font color='#EE2EC'>Challenger Baseult</font></b> For "..GetObjectName(myHero).." Loaded, Have Fun ! "))
+  if not self.SpellData[GetObjectName(myHero)] then PrintChat("<font color='#F5B301'>Challenger Baseult -</font><font color='#ff0000'> "..GetObjectName(myHero).." Is Not Supported! </font>") return end
+  PrintChat(string.format("<font color='#F5B301'>Challenger Baseult</font> For "..GetObjectName(myHero).." Loaded, Have Fun ! "))
   self.Recalling = {}
   self.BaseultMenu = MenuConfig("ChallengerBaseult", "Challenger Baseult")
   self.BaseultMenu:KeyBinding("Baseult", "Baseult", string.byte("H"), true, function() end, true)
@@ -123,8 +123,8 @@ end
 if GetUser() ~= "Deftsu" then 
   GetWebResultAsync("https://raw.githubusercontent.com/D3ftsu/GoS/master/ChallengerBaseult.version", function(data)
     if tonumber(data) > ChallengerBaseultVersion then
-      PrintChat("<b><font color='#EE2EC'>Challenger Baseult - </font></b> New version found! " ..data.." Downloading update, please wait...")
-      DownloadFileAsync("https://raw.githubusercontent.com/D3ftsu/GoS/master/ChallengerBaseult.lua", SCRIPT_PATH .. "ChallengerBaseult.lua", function() PrintChat("<b><font color='#EE2EC'>Challenger Baseult - </font></b> Updated from v"..tostring(ChallengerBaseultVersion).." to v"..data..". Please press F6 twice to reload.") return end)
+      PrintChat("<font color='#F5B301'>Challenger Baseult - </font> New version found! " ..data.." Downloading update, please wait...")
+      DownloadFileAsync("https://raw.githubusercontent.com/D3ftsu/GoS/master/ChallengerBaseult.lua", SCRIPT_PATH .. "ChallengerBaseult.lua", function() PrintChat("<font color='#F5B301'>Challenger Baseult - </font> Updated from v"..tostring(ChallengerBaseultVersion).." to v"..data..". Please press F6 twice to reload.") return end)
     end
   end)
 end

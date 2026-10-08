@@ -49,7 +49,7 @@ local BaseultMenu = MenuConfig("Baseult", "Baseult")
 
 if SpellData[GetObjectName(myHero)] then
   BaseultMenu:Boolean("Enabled", "Enabled", true)
-  PrintChat(string.format("<font color='#1244EA'>Baseult</font> <font color='#FFFFFF'> For "..GetObjectName(myHero).." Loaded, Have Fun Getting Some Kills ! </font>"))
+  PrintChat(string.format("<font color='#F5B301'>Baseult</font> <font color='#FFFFFF'> For "..GetObjectName(myHero).." Loaded, Have Fun Getting Some Kills ! </font>"))
   Delay = SpellData[GetObjectName(myHero)].Delay
   MissileSpeed = SpellData[GetObjectName(myHero)].MissileSpeed
   Damage = SpellData[GetObjectName(myHero)].Damage

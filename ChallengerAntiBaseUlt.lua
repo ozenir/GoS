@@ -2,15 +2,15 @@ ChallengerAntiBaseUltVersion     = "0.04"
 
 function ChallengerAntiBaseUltUpdaterino(data)
   if tonumber(data) > tonumber(ChallengerAntiBaseUltVersion) then
-    PrintChat("<b><font color='#EE2EC'>Challenger AntiBaseUlt - </font></b> New version found! " ..tonumber(data).." Downloading update, please wait...")
-    DownloadFileAsync("https://raw.githubusercontent.com/D3ftsu/GoS/master/ChallengerAntiBaseUlt.lua", SCRIPT_PATH .. "ChallengerAntiBaseUlt.lua", function() PrintChat("<b><font color='#EE2EC'>Challenger AntiBaseUlt - </font></b> Updated from v"..tonumber(ChallengerAntiBaseUltVersion).." to v"..tonumber(data)..". Please press F6 twice to reload.") return end)
+    PrintChat("<font color='#F5B301'>Challenger AntiBaseUlt - </font> New version found! " ..tonumber(data).." Downloading update, please wait...")
+    DownloadFileAsync("https://raw.githubusercontent.com/D3ftsu/GoS/master/ChallengerAntiBaseUlt.lua", SCRIPT_PATH .. "ChallengerAntiBaseUlt.lua", function() PrintChat("<font color='#F5B301'>Challenger AntiBaseUlt - </font> Updated from v"..tonumber(ChallengerAntiBaseUltVersion).." to v"..tonumber(data)..". Please press F6 twice to reload.") return end)
   end
 end
 
 class "ChallengerAntiBaseUlt"
 
 function ChallengerAntiBaseUlt:__init()
-  PrintChat("<b><font color='#EE2EC'>Challenger Anti-BaseUlt - </font></b> Loaded v" ..ChallengerAntiBaseUltVersion)
+  PrintChat("<font color='#F5B301'>Challenger Anti-BaseUlt - </font> Loaded v" ..ChallengerAntiBaseUltVersion)
   self.cfg = MenuConfig("AntiBaseUlt", "Anti-BaseUlt")
   self.cfg:Boolean("Enabled", "Enabled", true)
   self.SpellData = {
@@ -66,7 +66,7 @@ function ChallengerAntiBaseUlt:Tick()
     if getdmg("R", GetObjectSpellOwner(missile), myHero, 3) > GetCurrentHP(myHero) and self:InFountain(GetObjectSpellEndPos(missile)) and self.RecallingTime > (GetDistance(missile, self.fountain) / self.SpellData[GetObjectSpellOwner(missile)].MissileSpeed * 1000) then
       MoveToXYZ(myHero.x+100,myHero.y, myHero.z+100)
       if GetTickCount()-self.LastPrint > 1000 then
-        PrintChat("<b><font color='#EE2EC'>Challenger Anti-BaseUlt - </font></b> Prevented A Baseult From "..GetObjectName(GetObjectSpellOwner(missile))" ")
+        PrintChat("<font color='#F5B301'>Challenger Anti-BaseUlt - </font> Prevented A Baseult From "..GetObjectName(GetObjectSpellOwner(missile))" ")
         self.LastPrint = GetTickCount()
       end
     end

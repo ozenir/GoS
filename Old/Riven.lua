@@ -280,5 +280,5 @@ end)
 
 AddGapcloseEvent(_W, 260, false, RivenMenu)
 
-PrintChat(string.format("<font color='#1244EA'>Riven:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>")) 
+PrintChat(string.format("<font color='#F5B301'>Riven:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>")) 
 PrintChat("Have Fun Using D3Carry Scripts: " ..GetObjectBaseName(myHero)) 

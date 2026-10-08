@@ -207,5 +207,5 @@ end
 
 AddGapcloseEvent(_E, 550, true, VayneMenu)
 
-PrintChat(string.format("<font color='#1244EA'>Vayne:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>"))
+PrintChat(string.format("<font color='#F5B301'>Vayne:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>"))
 PrintChat("Have Fun Using D3Carry Scripts: " ..GetObjectBaseName(myHero)) 

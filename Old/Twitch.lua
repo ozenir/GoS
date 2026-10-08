@@ -241,5 +241,5 @@ function Edmg(unit)
   return CalcDamage(myHero,unit,(5*GetCastLevel(myHero,_E)+10+.2*GetBonusAP(myHero)+.25*(GetBonusDmg(myHero)))*Estacks(unit))
 end
 
-PrintChat(string.format("<font color='#1244EA'>Twitch:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>")) 
+PrintChat(string.format("<font color='#F5B301'>Twitch:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>")) 
 PrintChat("Have Fun Using D3Carry Scripts: " ..GetObjectBaseName(myHero)) 
