@@ -4,9 +4,9 @@ class "ChallengerSmite"
 
 function ChallengerSmite:__init()
   self.Smite = GetCastName(myHero, 4):lower():find("smite") and 4 or (GetCastName(myHero, 5):lower():find("smite") and 5 or nil)
-  if not self.Smite then PrintChat("<b><font color='#EE2EC'>Challenger Smite - </font></b> <font color='#ff0000'> Smite Not Found !</font>") return end
-  if mapID ~= SUMMONERS_RIFT and mapID ~= TWISTED_TREELINE then PrintChat("<b><font color='#EE2EC'>Challenger Smite - </font></b> <font color='#ff0000'> Map Not Supported !</font>") return end
-  PrintChat("<b><font color='#EE2EC'>Challenger Smite - </font></b> Loaded v" ..ChallengerSmiteVersion)
+  if not self.Smite then PrintChat("<font color='#F5B301'>Challenger Smite - </font> <font color='#ff0000'> Smite Not Found !</font>") return end
+  if mapID ~= SUMMONERS_RIFT and mapID ~= TWISTED_TREELINE then PrintChat("<font color='#F5B301'>Challenger Smite - </font> <font color='#ff0000'> Map Not Supported !</font>") return end
+  PrintChat("<font color='#F5B301'>Challenger Smite - </font> Loaded v" ..ChallengerSmiteVersion)
   require("DamageLib")
   self.Spells = {}
   self.MobManager = {}

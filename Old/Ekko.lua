@@ -316,5 +316,5 @@ function DrawLine3D(x,y,z,a,b,c,width,col)
 	DrawLine(p1.x, p1.y, p2.x, p2.y, width, col)
 end
 
-PrintChat(string.format("<font color='#1244EA'>Ekko:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>"))
+PrintChat(string.format("<font color='#F5B301'>Ekko:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>"))
 PrintChat("Have Fun Using D3Carry Scripts: " ..GetObjectBaseName(myHero)) 

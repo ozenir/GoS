@@ -206,4 +206,4 @@ function IsHunted(unit)
    return (hunted[GetNetworkID(unit)] or 0) > 0
 end
 
-PrintChat(string.format("<font color='#1244EA'>Nidalee:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>"))
+PrintChat(string.format("<font color='#F5B301'>Nidalee:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>"))

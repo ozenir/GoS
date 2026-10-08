@@ -389,5 +389,5 @@ function GetDrawText(enemy)
 	end
 end
 
-PrintChat(string.format("<font color='#1244EA'>Katarina:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>")) 
+PrintChat(string.format("<font color='#F5B301'>Katarina:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>")) 
 PrintChat("Have Fun Using D3Carry Scripts: " ..GetObjectBaseName(myHero)) 

@@ -213,5 +213,5 @@ end)
 
 AddGapcloseEvent(_R, 69, false, AsheMenu)
 
-PrintChat(string.format("<font color='#1244EA'>Ashe:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>"))
+PrintChat(string.format("<font color='#F5B301'>Ashe:</font> <font color='#FFFFFF'> By Deftsu Loaded, Have A Good Game ! </font>"))
 PrintChat("Have Fun Using D3Carry Scripts: " ..GetObjectBaseName(myHero)) 
