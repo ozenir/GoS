@@ -3,19 +3,21 @@
     {
       "clipeInicio": null,
       "destaque": [
-        "level 2"
+        "nível 2",
+        "quarto tiro"
       ],
-      "narracao": "Quem pega o level 2 primeiro ganha a bot lane.",
+      "narracao": "Seu Jhin perde o nível 2 porque desperdiça o quarto tiro.",
+      "textoTela": "VOCÊ ERRA ISSO",
+      "visual": "Jhin na bot lane no minuto 1:50 com a barra de XP em zoom e o quarto tiro desperdiçado em um minion.",
       "provas": [
         {
-          "cor": "ouro",
-          "detalhe": "quem chega primeiro\nganha a bot lane",
-          "gatilho": "level",
-          "rotulo": "LEVEL 2",
-          "tipo": "placar"
+          "tipo": "nota",
+          "rotulo": "NÍVEL 2 PERDIDO",
+          "detalhe": "desperdiçou\no 4º tiro",
+          "gatilho": "perde",
+          "cor": "vermelho"
         }
       ],
-      "textoTela": "LEVEL 2 DECIDE TUDO",
       "videoFundo": {
         "asset": "7b4bf3c9f1bbb71c9fbe469b678bdf74",
         "arquivo": "biblioteca/campeoes/Jhin/videos/P.mp4",
@@ -27,26 +29,34 @@
         "w": 1056,
         "h": 720,
         "campeao": "Jhin"
-      },
-      "visual": "Jhin dando a primeira troca vencedora na lane, com o ícone de level 2 aparecendo em zoom."
+      }
     },
     {
       "clipeInicio": null,
       "destaque": [
-        "Jhin",
-        "troca"
+        "quarto",
+        "crítico"
       ],
-      "narracao": "Com Jhin, isso decide a primeira troca da lane.",
+      "narracao": "Primeiro, a passiva. Os três primeiros tiros são normais, o quarto é crítico.",
+      "textoTela": "4 TIROS",
+      "visual": "Contador dos quatro disparos no HUD, com zoom na arma recarregando entre os tiros.",
       "provas": [
         {
-          "gatilho": "Jhin",
-          "imgArquivo": "biblioteca/campeoes/Jhin/arte.jpg",
-          "imgAsset": "50b2b18faec1a4aff56ceeb67b3fdfb5",
-          "rotulo": "Jhin",
-          "tipo": "foto"
+          "tipo": "icone",
+          "rotulo": "Passiva · Sussurro",
+          "imgArquivo": "biblioteca/campeoes/Jhin/habilidades/P.png",
+          "imgAsset": "6fcbb8dbbcd2f36b5035220e7c89f00c",
+          "detalhe": "só 4 tiros por vez",
+          "gatilho": "passiva"
+        },
+        {
+          "tipo": "placar",
+          "rotulo": "4",
+          "detalhe": "o 4º tiro é\nsempre crítico",
+          "gatilho": "quarto",
+          "cor": "ouro"
         }
       ],
-      "textoTela": "",
       "videoFundo": {
         "asset": "7b4bf3c9f1bbb71c9fbe469b678bdf74",
         "arquivo": "biblioteca/campeoes/Jhin/videos/P.mp4",
@@ -58,216 +68,126 @@
         "w": 1056,
         "h": 720,
         "campeao": "Jhin"
-      },
-      "visual": "Corte para a troca com Jhin acertando o auto reforçado e o adversário recuando com pouca vida."
+      }
     },
     {
       "clipeInicio": null,
       "destaque": [
-        "erro",
-        "último golpe"
+        "vida perdida"
       ],
-      "narracao": "Erro comum: esperar só o último golpe na primeira wave.",
+      "narracao": "O quarto tiro também causa dano extra pela vida perdida do alvo.",
+      "textoTela": "VIDA PERDIDA",
+      "visual": "Quarto tiro acertando o ADC inimigo, com a barra de vida em zoom.",
       "provas": [
         {
-          "cor": "vermelho",
-          "detalhe": "esperar só o\núltimo golpe",
-          "gatilho": "Erro",
-          "riscar": true,
-          "rotulo": "ERRO COMUM",
-          "tipo": "nota"
+          "tipo": "nota",
+          "rotulo": "4º TIRO EXECUTA",
+          "detalhe": "dano extra pela\nvida perdida do alvo",
+          "gatilho": "vida",
+          "cor": "vermelho"
         }
       ],
-      "textoTela": "ERRO COMUM",
-      "visual": "Jhin parado atrás da wave, só esperando para dar o last hit, com um X vermelho na tela."
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "suporte",
-        "minions"
-      ],
-      "narracao": "Peça ajuda do seu suporte. Ele precisa bater nos minions inimigos.",
-      "provas": [
-        {
-          "cor": "verde",
-          "gatilho": "suporte",
-          "rotulo": "SUPORTE BATE NA WAVE",
-          "tipo": "etiqueta"
-        }
-      ],
-      "textoTela": "",
-      "visual": "O suporte aliado batendo nos minions inimigos enquanto Jhin dá os últimos golpes."
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "acelera"
-      ],
-      "narracao": "Dano em conjunto acelera o abate da wave inteira.",
-      "provas": [
-        {
-          "cor": "verde",
-          "detalhe": "a wave inteira\nmorre mais rápido",
-          "gatilho": "Dano",
-          "rotulo": "DANO EM DUPLA",
-          "tipo": "nota"
-        }
-      ],
-      "textoTela": "",
-      "visual": "A primeira wave inimiga morrendo rápido, com a barra de vida dos minions caindo em câmera acelerada."
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "seis minions"
-      ],
-      "narracao": "Passo um: mate os seis minions da primeira wave.",
-      "provas": [
-        {
-          "cor": "azul",
-          "detalhe": "minions da 1ª wave",
-          "gatilho": "seis",
-          "rotulo": "6",
-          "tipo": "placar"
-        }
-      ],
-      "textoTela": "1 · SEIS MINIONS",
-      "visual": "Contador na tela de 1 a 6 conforme cada minion morre."
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "segunda wave"
-      ],
-      "narracao": "Passo dois: avance o dano na segunda wave.",
-      "provas": [
-        {
-          "cor": "amarelo",
-          "gatilho": "avance",
-          "rotulo": "2 · AVANCE O DANO NA 2ª WAVE",
-          "tipo": "etiqueta"
-        }
-      ],
-      "textoTela": "2 · AVANCE O DANO",
-      "visual": "Segunda wave chegando e Jhin com o suporte já batendo nos minions da frente."
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "terceiro",
-        "guerreiro"
-      ],
-      "narracao": "O level 2 chega depois do terceiro minion guerreiro da segunda wave.",
-      "provas": [
-        {
-          "cor": "ouro",
-          "gatilho": "level",
-          "rotulo": "LEVEL 2 NO BOT",
-          "tipo": "etiqueta"
-        },
-        {
-          "cor": "ouro",
-          "detalhe": "1ª wave inteira\n+ 3 guerreiros da 2ª",
-          "gatilho": "terceiro",
-          "rotulo": "6 + 3",
-          "tipo": "placar"
-        }
-      ],
-      "textoTela": "3º GUERREIRO",
-      "visual": "Destaque no terceiro minion guerreiro morrendo e a animação de level up de Jhin."
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "timer"
-      ],
-      "narracao": "Conta os minions. Esse é o seu timer de troca.",
-      "provas": [
-        {
-          "cor": "amarelo",
-          "detalhe": "conte os minions\nque morrem",
-          "gatilho": "timer",
-          "rotulo": "TIMER DE TROCA",
-          "tipo": "nota"
-        }
-      ],
-      "textoTela": "",
-      "visual": "Números aparecendo sobre cada minion morto, formando uma contagem até o level up."
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "avance"
-      ],
-      "narracao": "Passo três: quando faltar pouco, avance contra o adversário.",
-      "provas": [
-        {
-          "cor": "vermelho",
-          "gatilho": "avance",
-          "rotulo": "3 · AVANCE NO ADVERSÁRIO",
-          "tipo": "etiqueta"
-        }
-      ],
-      "textoTela": "3 · AVANCE",
-      "visual": "Jhin se posicionando à frente da wave, com o adversário ao alcance, antes do level up."
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "W",
-        "E"
-      ],
-      "narracao": "Deixe o W ou o E pronto para a troca.",
-      "provas": [
-        {
-          "detalhe": "recarga 12 s\nalcance 3000",
-          "gatilho": "W",
-          "imgArquivo": "biblioteca/campeoes/Jhin/habilidades/W.png",
-          "imgAsset": "e59166dddb7dd054968fb53296029ce0",
-          "rotulo": "W · Florescer Mortal",
-          "tipo": "icone"
-        },
-        {
-          "detalhe": "armadilhas\nalcance 750",
-          "gatilho": "E",
-          "imgArquivo": "biblioteca/campeoes/Jhin/habilidades/E.png",
-          "imgAsset": "af8b111741191ec1d3e251e88a60b46d",
-          "rotulo": "E · Audiência Cativa",
-          "tipo": "icone"
-        }
-      ],
-      "textoTela": "W ou E",
       "videoFundo": {
-        "asset": "574cf1eb5d7f2364c41ffe752a1d35b3",
-        "arquivo": "biblioteca/campeoes/Jhin/videos/W.mp4",
-        "dur": 7.47,
+        "asset": "7b4bf3c9f1bbb71c9fbe469b678bdf74",
+        "arquivo": "biblioteca/campeoes/Jhin/videos/P.mp4",
+        "dur": 10.27,
         "foco": [
-          0.55,
-          0.64
+          0.54,
+          0.65
         ],
         "w": 1056,
         "h": 720,
         "campeao": "Jhin"
-      },
-      "visual": "Zoom nos ícones de W e E de Jhin e depois a habilidade sendo usada na troca."
+      }
     },
     {
       "clipeInicio": null,
       "destaque": [
-        "primeiro"
+        "último hit",
+        "empurre"
       ],
-      "narracao": "Você sobe de nível primeiro e ele paga o preço.",
+      "narracao": "Na primeira wave, bata só no último hit. Não empurre.",
+      "textoTela": "NÃO EMPURRE",
+      "visual": "Primeira wave encontrando no meio da rota, com o minion de canhão ou mago destacado em círculo.",
       "provas": [
         {
-          "cor": "verde",
-          "detalhe": "uma habilidade a mais\nna troca",
-          "gatilho": "sobe",
-          "rotulo": "LEVEL 2 NA FRENTE",
-          "tipo": "nota"
+          "tipo": "etiqueta",
+          "rotulo": "1ª WAVE: SÓ O ÚLTIMO HIT",
+          "gatilho": "último",
+          "cor": "amarelo"
+        },
+        {
+          "tipo": "etiqueta",
+          "rotulo": "NÃO EMPURRE",
+          "gatilho": "empurre",
+          "cor": "vermelho"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "guarde",
+        "4º tiro"
+      ],
+      "narracao": "Guarde o quarto tiro. Ele é seu dano na troca contra o ADC.",
+      "textoTela": "GUARDE O 4º",
+      "visual": "Jhin com o quarto tiro pronto, sem atacar, e o ADC inimigo a vista.",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "GUARDE O 4º TIRO",
+          "detalhe": "é o seu dano na\ntroca contra o ADC",
+          "gatilho": "Guarde",
+          "cor": "verde"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "três minions",
+        "Q"
+      ],
+      "narracao": "Segunda wave: deixe três minions com pouca vida. Prepare o Q.",
+      "textoTela": "3 MINIONS",
+      "visual": "Três minions com a vida baixa destacados com setas, enquanto Jhin recua o AA.",
+      "provas": [
+        {
+          "tipo": "placar",
+          "rotulo": "3",
+          "detalhe": "minions com pouca vida\nna 2ª wave",
+          "gatilho": "três",
+          "cor": "azul"
+        },
+        {
+          "tipo": "icone",
+          "rotulo": "Q · Granada Dançante",
+          "imgArquivo": "biblioteca/campeoes/Jhin/habilidades/Q.png",
+          "imgAsset": "5d3a92386ab3c1f5d94f7717235a4aef",
+          "detalhe": "até 4 acertos\nalcance 550",
+          "gatilho": "Q"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "ricochete",
+        "mais dano"
+      ],
+      "narracao": "O ricochete causa mais dano quando o alvo anterior morre antes.",
+      "textoTela": "Q POTENCIALIZADO",
+      "visual": "Granada Dançante pulando entre os minions, com cada morte destacada em câmera lenta.",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "RICOCHETE",
+          "detalhe": "cada abate aumenta\no dano do próximo pulo",
+          "gatilho": "ricochete",
+          "cor": "ouro"
         }
       ],
-      "textoTela": "",
       "videoFundo": {
         "asset": "2d635cbf9a5061c06cd51201e361d564",
         "arquivo": "biblioteca/campeoes/Jhin/videos/Q.mp4",
@@ -279,94 +199,226 @@
         "w": 1056,
         "h": 720,
         "campeao": "Jhin"
-      },
-      "visual": "Jhin subindo de nível e vencendo a troca, com o adversário perdendo muita vida."
+      }
     },
     {
       "clipeInicio": null,
       "destaque": [
-        "recuar"
+        "último",
+        "ADC"
       ],
-      "narracao": "Com o level 2 na frente, o adversário precisa recuar.",
+      "narracao": "Calcule para o último ricochete cair no ADC inimigo.",
+      "textoTela": "ÚLTIMO PULO = ADC",
+      "visual": "Trajetória da granada desenhada em linha até o ADC, com zoom no impacto.",
       "provas": [
         {
-          "cor": "verde",
-          "gatilho": "recuar",
-          "rotulo": "ELES RECUAM PARA A TORRE",
-          "tipo": "etiqueta"
+          "tipo": "etiqueta",
+          "rotulo": "ÚLTIMO PULO = ADC",
+          "gatilho": "último",
+          "cor": "vermelho"
         }
       ],
-      "textoTela": "",
-      "visual": "Dupla inimiga recuando para a torre enquanto Jhin e o suporte seguram a wave."
+      "videoFundo": {
+        "asset": "2d635cbf9a5061c06cd51201e361d564",
+        "arquivo": "biblioteca/campeoes/Jhin/videos/Q.mp4",
+        "dur": 4.63,
+        "foco": [
+          0.55,
+          0.67
+        ],
+        "w": 1056,
+        "h": 720,
+        "campeao": "Jhin"
+      }
     },
     {
       "clipeInicio": null,
       "destaque": [
-        "conte",
-        "troque"
+        "empurrar"
       ],
-      "narracao": "Resumindo: ajude no dano, conte os minions, avance e troque.",
+      "narracao": "Só use o Q se isso não empurrar a wave sem necessidade.",
+      "textoTela": "CUIDADO",
+      "visual": "Wave empurrando para a torre inimiga depois de um Q mal usado, com marca de erro vermelha.",
       "provas": [
         {
-          "cor": "ouro",
-          "detalhe": "1. ajude no dano\n2. conte os minions\n3. avance e troque",
-          "gatilho": "Resumindo",
-          "rotulo": "RESUMO",
-          "tipo": "nota"
+          "tipo": "nota",
+          "rotulo": "CUIDADO",
+          "detalhe": "Q que empurra a wave\nsem necessidade",
+          "gatilho": "empurrar",
+          "cor": "amarelo"
         }
-      ],
-      "textoTela": "RESUMO",
-      "visual": "Recap rápido com os três passos aparecendo em sequência na tela."
+      ]
     },
     {
       "clipeInicio": null,
       "destaque": [
-        "Salva"
+        "seis",
+        "três"
       ],
-      "narracao": "Salva esse vídeo para o próximo ranked.",
+      "narracao": "Os seis minions da primeira wave e os três guerreiros da segunda dão o nível 2.",
+      "textoTela": "6 + 3 MINIONS",
+      "visual": "Barra de XP enchendo no último minion guerreiro, com o ícone de subir de nível piscando.",
       "provas": [
         {
-          "cor": "amarelo",
-          "gatilho": "Salva",
-          "rotulo": "SALVA PRO RANKED",
-          "tipo": "etiqueta"
-        }
-      ],
-      "textoTela": "SALVA",
-      "visual": "Ícone de salvar piscando sobre a imagem da lane."
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "level 2",
-        "farmar"
-      ],
-      "narracao": "Você contesta o level 2 ou prefere farmar? Comenta aqui.",
-      "provas": [
-        {
-          "gatilho": "Você",
-          "imgArquivo": "biblioteca/campeoes/Jhin/arte.jpg",
-          "imgAsset": "50b2b18faec1a4aff56ceeb67b3fdfb5",
-          "rotulo": "E você?",
-          "tipo": "foto"
+          "tipo": "placar",
+          "rotulo": "6 + 3",
+          "detalhe": "1ª wave inteira\n+ 3 guerreiros da 2ª",
+          "gatilho": "seis",
+          "cor": "ouro"
         },
         {
-          "cor": "azul",
-          "detalhe": "comenta aqui",
-          "gatilho": "contesta",
-          "liga": 0,
-          "rotulo": "CONTESTA OU FARMA?",
-          "tipo": "nota"
+          "tipo": "etiqueta",
+          "rotulo": "NÍVEL 2",
+          "gatilho": "nível",
+          "cor": "verde"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "W",
+        "suporte"
+      ],
+      "narracao": "Avise o suporte antes. Ponha o ponto no W, não no E.",
+      "textoTela": "PONTO NO W",
+      "visual": "Ping de atenção no suporte e a tela de habilidades com o ponto indo para o W.",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "AVISE O SUPORTE",
+          "gatilho": "Avise",
+          "cor": "azul"
+        },
+        {
+          "tipo": "icone",
+          "rotulo": "W · Florescer Mortal",
+          "imgArquivo": "biblioteca/campeoes/Jhin/habilidades/W.png",
+          "imgAsset": "e59166dddb7dd054968fb53296029ce0",
+          "detalhe": "recarga 12 s\nalcance 3000",
+          "gatilho": "W"
+        },
+        {
+          "tipo": "icone",
+          "rotulo": "E · Audiência Cativa",
+          "imgArquivo": "biblioteca/campeoes/Jhin/habilidades/E.png",
+          "imgAsset": "af8b111741191ec1d3e251e88a60b46d",
+          "detalhe": "fica para depois",
+          "gatilho": "E",
+          "riscar": true
         }
       ],
-      "textoTela": "CONTESTA OU FARMA?",
-      "visual": "Tela dividida: Jhin agressivo de um lado e Jhin farmando de outro, com a pergunta em destaque."
+      "videoFundo": {
+        "asset": "574cf1eb5d7f2364c41ffe752a1d35b3",
+        "arquivo": "biblioteca/campeoes/Jhin/videos/W.mp4",
+        "dur": 7.47,
+        "foco": [
+          0.55,
+          0.64
+        ],
+        "w": 1056,
+        "h": 720,
+        "campeao": "Jhin"
+      }
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "Q",
+        "W",
+        "raiz"
+      ],
+      "narracao": "Q no minion, marca no alvo, W em seguida. Raiz garantida.",
+      "textoTela": "Q → W → 4º TIRO",
+      "visual": "Sequência completa: Q, marca no ADC, W acertando, quarto tiro, em um único clipe com zoom no inimigo enraizado.",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "COMBO",
+          "detalhe": "Q no minion\nmarca no alvo\nW em seguida",
+          "gatilho": "Q",
+          "cor": "ouro"
+        },
+        {
+          "tipo": "etiqueta",
+          "rotulo": "RAIZ",
+          "gatilho": "Raiz",
+          "cor": "verde"
+        }
+      ],
+      "videoFundo": {
+        "asset": "574cf1eb5d7f2364c41ffe752a1d35b3",
+        "arquivo": "biblioteca/campeoes/Jhin/videos/W.mp4",
+        "dur": 7.47,
+        "foco": [
+          0.55,
+          0.64
+        ],
+        "w": 1056,
+        "h": 720,
+        "campeao": "Jhin"
+      }
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "quarto tiro",
+        "troca"
+      ],
+      "narracao": "Com o inimigo preso, solte o quarto tiro e feche a troca.",
+      "textoTela": "FECHA A TROCA",
+      "visual": "Quarto tiro no ADC preso, com a barra de vida e a mana do Jhin em evidência.",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "FECHA A TROCA",
+          "detalhe": "inimigo preso\n+ 4º tiro",
+          "gatilho": "preso",
+          "cor": "verde"
+        }
+      ],
+      "videoFundo": {
+        "asset": "7b4bf3c9f1bbb71c9fbe469b678bdf74",
+        "arquivo": "biblioteca/campeoes/Jhin/videos/P.mp4",
+        "dur": 10.27,
+        "foco": [
+          0.54,
+          0.65
+        ],
+        "w": 1056,
+        "h": 720,
+        "campeao": "Jhin"
+      }
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "patch"
+      ],
+      "narracao": "Dano e mana dependem do patch, então confira no seu cliente.",
+      "textoTela": "CONFIRA NO PATCH",
+      "visual": "Tooltips de Q e W abertos no jogo, com os valores de dano e mana legíveis.",
+      "provas": [
+        {
+          "tipo": "foto",
+          "rotulo": "Jhin",
+          "imgArquivo": "biblioteca/campeoes/Jhin/arte.jpg",
+          "imgAsset": "50b2b18faec1a4aff56ceeb67b3fdfb5",
+          "gatilho": "Dano"
+        },
+        {
+          "tipo": "etiqueta",
+          "rotulo": "CONFIRA NO PATCH 16.22",
+          "gatilho": "patch",
+          "cor": "azul"
+        }
+      ]
     }
   ],
   "cta": {
-    "texto": "Contesta o level 2 ou farma? Comenta!"
+    "texto": "Você sobe W ou E no nível 2 de Jhin? Comenta o porquê."
   },
-  "descricao": "Jhin na bot lane: como pegar o level 2 primeiro e vencer a primeira troca. Você contesta o level 2 ou prefere farmar?",
+  "descricao": "Passo a passo para Jhin chegar ao nível 2 primeiro e vencer a troca na bot lane. Você sobe W ou E no nível 2?",
   "hashtags": [
     "#leagueoflegends",
     "#lol",
@@ -375,46 +427,36 @@
     "#adc"
   ],
   "hook": {
-    "textoTela": "LEVEL 2 DECIDE TUDO"
+    "textoTela": "NÍVEL 2 PRIMEIRO"
   },
   "mudancas": [
     {
-      "antes": "Quer ganhar vantagem na bot lane jogando de Jhin? Então aprenda a conquistar o level 2 primeiro!",
-      "depois": "Quem pega o level 2 primeiro ganha a bot lane.",
-      "porque": "Gancho mais curto e afirmativo, com a promessa feita já nos primeiros segundos."
+      "antes": "Roteiro de 90s com tabela completa de dano bruto, dano após armadura e mana restante.",
+      "depois": "Roteiro de 60s focado em uma ideia: nível 2 primeiro com passiva, Q, W e quarto tiro.",
+      "porque": "O Short precisa de uma ideia só e de ritmo rápido; a tabela completa não cabe falada."
     },
     {
-      "antes": "Na primeira wave, não fique apenas esperando o último golpe. Ajude seu suporte a causar dano nos minions inimigos.",
-      "depois": "Erro comum: esperar só o último golpe na primeira wave. Peça ajuda do seu suporte. Ele precisa bater nos minions inimigos.",
-      "porque": "Apresenta o erro comum primeiro e divide a explicação em frases curtas de fala."
+      "antes": "Pedido de valores exatos de dano, mana, recarga e enraizamento do patch.",
+      "depois": "Narração sem números de habilidade e um aviso para conferir os tooltips no patch atual.",
+      "porque": "Não tenho acesso confirmado ao patch vigente e não devo inventar valores; o criador pode inserir os números verificados na edição."
     },
     {
-      "antes": "Mate os seis minions da primeira wave e avance o dano na segunda. Na bot lane, o level 2 chega depois do terceiro minion guerreiro da segunda wave.",
-      "depois": "Passo um: mate os seis minions da primeira wave. Passo dois: avance o dano na segunda wave. O level 2 chega depois do terceiro minion guerreiro da segunda wave.",
-      "porque": "Passos numerados com contador na tela aumentam a retenção e facilitam salvar o vídeo."
+      "antes": "Abertura com explicação técnica da passiva.",
+      "depois": "Gancho de erro do espectador: o quarto tiro desperdiçado custa o nível 2.",
+      "porque": "O gancho precisa prender nos primeiros segundos antes de qualquer explicação."
     },
     {
-      "antes": "Quando estiver prestes a subir de nível, aproxime-se do adversário e prepare seu W ou E para a troca.",
-      "depois": "Passo três: quando faltar pouco, avance contra o adversário. Deixe o W ou o E pronto para a troca.",
-      "porque": "Mantém a mesma instrução em frases curtas, com o terceiro passo numerado."
-    },
-    {
-      "antes": "Segue para aprender a dominar a lane de Jhin!",
-      "depois": "Salva esse vídeo para o próximo ranked. Você contesta o level 2 ou prefere farmar? Comenta aqui.",
-      "porque": "Troca o pedido genérico de seguir por uma pergunta que gera comentários e um pedido de salvar."
-    },
-    {
-      "antes": "",
-      "depois": "Resumindo: ajude no dano, conte os minions, avance e troque.",
-      "porque": "Recap final que reforça a ideia única do vídeo e preenche a duração de 60s com conteúdo útil."
+      "antes": "Final com resultado de dano e mana restante.",
+      "depois": "Final com pergunta sobre W ou E no nível 2.",
+      "porque": "Pergunta que divide o público gera mais comentários."
     }
   ],
-  "notaOriginal": 4,
+  "notaOriginal": 5,
   "notaOtimizada": 8,
-  "resumo": "Gancho direto sobre o level 2 de Jhin, três passos numerados (ajudar no dano, contar os minions, avançar e trocar com W ou E) e final que pede opinião nos comentários.",
+  "resumo": "Short de 60s para Diamante+ que ensina Jhin a chegar no nível 2 primeiro: passiva guardada, Q com ricochete preparado, W na marca e quarto tiro, sem inventar números que dependam do patch.",
   "titulos": [
-    "Jhin: o level 2 que decide a bot lane",
-    "Controle de wave de Jhin na bot lane",
-    "Pegue o level 2 primeiro com Jhin"
+    "Jhin: como pegar nível 2 primeiro na bot",
+    "Você joga a wave 2 de Jhin errado",
+    "Nível 2 do Jhin: Q, W e quarto tiro"
   ]
 }
