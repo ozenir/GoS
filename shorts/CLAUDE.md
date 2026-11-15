@@ -153,9 +153,17 @@ o que falta. Prefira os arquivos da biblioteca aos de `dados/<video>/`.
   fundoAsset/fundoArquivo: <Id>/quadros/<X>.jpg, alcances: [{valor: 1050, rotulo: "Seu E · Orbe", cor: "azul"},
   {valor: 825, rotulo: "Investida da Akali", cor: "vermelho"}], gatilho}`. Os círculos ficam em escala entre si
   (ilustrativo). Valores só do Data Dragon.
-- **Quando a cena falar de uma habilidade**, coloque o vídeo dela atrás do quadro:
-  `cena.videoFundo = {asset, arquivo: "biblioteca/campeoes/<Id>/videos/<X>.mp4", dur}` (`dur` vem do
-  `dados.json`). O vídeo roda em loop e o mural fica translúcido durante a cena.
+- **Quando a cena falar de uma habilidade do campeão em destaque**, coloque o vídeo dela atrás do quadro:
+  `cena.videoFundo = {asset, arquivo: "biblioteca/campeoes/<Id>/videos/<X>.mp4", dur, foco, w, h, campeao}`
+  (tudo vem do `dados.json`). O vídeo roda em loop, o mural fica translúcido e o campeão é enquadrado no
+  centro da largura e na faixa de baixo da tela (82% da altura), abaixo das provas e da legenda, com luz nele.
+- **O foco é sempre o campeão em destaque do vídeo** (o do briefing/matchup). Vídeo de fundo só dele;
+  habilidades de inimigos e aliados entram como ícone, foto ou alcance, nunca como vídeo de fundo.
+- **Foco de cada vídeo:** `videos[X].foco = [x, y]` em frações do quadro, onde o campeão em destaque está.
+  Vídeos com `focoMedido: false` usam o padrão `[0.55, 0.65]`. Antes de usar um vídeo pela 1ª vez, meça:
+  extraia 2 quadros (30% e 50% da duração) com grade de 10% (`drawgrid=w=iw/10:h=ih/10`), ache o campeão
+  em destaque, grave `foco` e `focoMedido: true` no `dados.json` (o script mantém essas medidas) e confira
+  numa prévia que ele aparece embaixo, nítido e sem nada por cima.
 
 ## Estúdio Shorts local (painel em http://localhost:3333) — alternativa
 

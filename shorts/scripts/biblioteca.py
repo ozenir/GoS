@@ -100,6 +100,18 @@ def quadro(video_: Path, destino: Path, forcar: bool):
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", "0.15", "-i", str(video_), "-frames:v", "1", "-q:v", "3", str(destino)], check=True)
 
 
+def tamanho(arq: Path) -> tuple[int, int]:
+    r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=p=0", str(arq)], capture_output=True, text=True)
+    try:
+        w, h = r.stdout.strip().split(",")[:2]
+        return int(w), int(h)
+    except ValueError:
+        return 1056, 720
+
+
+FOCO_PADRAO = [0.55, 0.65]  # onde o campeão costuma estar nos vídeos da Riot (centro, parte de baixo)
+
+
 def duracao(arq: Path) -> float:
     r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(arq)], capture_output=True, text=True)
     try:
@@ -110,6 +122,7 @@ def duracao(arq: Path) -> float:
 
 def campeao(cid: str, v: str, forcar: bool):
     d = BIB / cid
+    anterior = json.loads((d / "dados.json").read_text()) if (d / "dados.json").exists() else {}
     info = json.loads(baixar(f"{DD}/cdn/{v}/data/pt_BR/champion/{cid}.json"))["data"][cid]
     chave = info["key"].zfill(4)
     salvar(d / "arte.jpg", f"{DD}/cdn/img/champion/loading/{cid}_0.jpg", forcar)
@@ -127,7 +140,11 @@ def campeao(cid: str, v: str, forcar: bool):
             if not video(arq, chave, f"{letra}{n}", forcar):
                 break
             quadro(arq, d / "quadros" / f"{nome}.jpg", forcar)
-            videos[nome] = {"arquivo": f"videos/{nome}.mp4", "quadro": f"quadros/{nome}.jpg", "duracao": duracao(arq)}
+            w, h = tamanho(arq)
+            velho = anterior.get("videos", {}).get(nome, {})
+            videos[nome] = {"arquivo": f"videos/{nome}.mp4", "quadro": f"quadros/{nome}.jpg", "duracao": duracao(arq), "w": w, "h": h,
+                            # foco medido à mão (campeão em destaque no vídeo) é mantido; sem medida, usa o padrão
+                            "foco": velho.get("foco", FOCO_PADRAO), "focoMedido": velho.get("focoMedido", False)}
     (d / "interacoes").mkdir(parents=True, exist_ok=True)
     (d / "interacoes" / ".gitkeep").touch()
     dados = {"id": cid, "nome": info["name"], "titulo": info["title"], "chave": chave, "versao": v,

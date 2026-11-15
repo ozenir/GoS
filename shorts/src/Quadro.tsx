@@ -34,7 +34,8 @@ export type ProvaT = {
   alcances?: { valor: number; rotulo: string; cor?: keyof typeof CORES }[];
 };
 
-export type VideoFundoT = { url: string; dur?: number } | null;
+// foco: onde o campeão em destaque está no vídeo (frações da largura e da altura); w/h: tamanho do vídeo
+export type VideoFundoT = { url: string; dur?: number; foco?: [number, number]; w?: number; h?: number } | null;
 
 type CenaQ = {
   inicio: number;
@@ -645,6 +646,23 @@ const Fios: React.FC<{ lista: Colocada[]; t: number; fps: number }> = ({ lista, 
   );
 };
 
+// ---------------------------------------------------------------- vídeo de fundo
+// O campeão em destaque vai para o centro da largura e para a faixa de baixo da tela, abaixo das
+// provas e da legenda; o vídeo é ampliado e nunca deixa borda vazia.
+const ALVO_Y = 0.82;
+const ZOOM_VIDEO = 1.3;
+function enquadrarCampeao(v: NonNullable<VideoFundoT>, larg: number, alt: number): React.CSSProperties {
+  const vw = v.w || 1056;
+  const vh = v.h || 720;
+  const [fx, fy] = v.foco || [0.55, 0.65];
+  const k = Math.max(alt / vh, larg / vw) * ZOOM_VIDEO;
+  const W = vw * k;
+  const H = vh * k;
+  const left = Math.min(0, Math.max(larg - W, larg / 2 - fx * W));
+  const top = Math.min(0, Math.max(alt - H, alt * ALVO_Y - fy * H));
+  return { position: "absolute", left, top, width: W, height: H };
+}
+
 // ---------------------------------------------------------------- quadro
 
 export const Quadro: React.FC<{ cenas: CenaQ[]; cor1: string; cor2: string }> = ({ cenas, cor1, cor2 }) => {
@@ -692,9 +710,12 @@ export const Quadro: React.FC<{ cenas: CenaQ[]; cor1: string; cor2: string }> = 
           <Sequence key={`vf${i}`} from={Math.max(0, Math.round((c.inicio - 0.2) * fps))} durationInFrames={Math.max(1, Math.round((c.fim - c.inicio + 0.8) * fps))} layout="none">
             <AbsoluteFill style={{ opacity: fade(c) }}>
               <Loop durationInFrames={Math.max(15, Math.round((c.videoFundo.dur || 4) * fps) - 2)}>
-                <OffthreadVideo src={c.videoFundo.url} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <OffthreadVideo src={c.videoFundo.url} muted style={{ ...enquadrarCampeao(c.videoFundo, width, height), filter: "brightness(1.25) contrast(1.08) saturate(1.15)" }} />
               </Loop>
-              <AbsoluteFill style={{ background: "rgba(2,6,12,.28)" }} />
+              {/* luz no campeão: o resto do vídeo escurece */}
+              <AbsoluteFill
+                style={{ background: `radial-gradient(ellipse 50% 24% at 50% ${ALVO_Y * 100}%, rgba(255,240,200,.14) 0%, transparent 60%, rgba(2,6,12,.42) 100%)` }}
+              />
             </AbsoluteFill>
           </Sequence>
         ) : null,
@@ -714,7 +735,7 @@ export const Quadro: React.FC<{ cenas: CenaQ[]; cor1: string; cor2: string }> = 
         <div
           style={{
             position: "absolute",
-            opacity: 1 - vis * 0.72,
+            opacity: 1 - vis * 0.85,
             left: -1200,
             top: -1400,
             width: 5000,
@@ -744,6 +765,7 @@ export const Quadro: React.FC<{ cenas: CenaQ[]; cor1: string; cor2: string }> = 
       <AbsoluteFill
         style={{
           background: `radial-gradient(ellipse 80% 50% at 50% 40%, transparent 0%, transparent 50%, rgba(0,0,0,.5) 100%)`,
+          opacity: 1 - vis * 0.85,
           pointerEvents: "none",
         }}
       />
@@ -751,6 +773,7 @@ export const Quadro: React.FC<{ cenas: CenaQ[]; cor1: string; cor2: string }> = 
       <AbsoluteFill
         style={{
           background: "linear-gradient(180deg, transparent 0%, transparent 62%, rgba(0,0,0,.45) 76%, rgba(0,0,0,.6) 100%)",
+          opacity: 1 - vis * 0.7,
           pointerEvents: "none",
         }}
       />

@@ -205,7 +205,7 @@ export function props(id, base = "") {
       img: pr.imgArquivo ? url(pr.imgArquivo) : pr.img || null,
       fundo: pr.fundoArquivo ? url(pr.fundoArquivo) : pr.fundo || null,
     })),
-    videoFundo: c.videoFundo?.arquivo ? { url: url(c.videoFundo.arquivo), dur: c.videoFundo.dur || 4 } : null,
+    videoFundo: c.videoFundo?.arquivo ? { ...c.videoFundo, url: url(c.videoFundo.arquivo), dur: c.videoFundo.dur || 4 } : null,
   }));
   return {
     trilha: tr,

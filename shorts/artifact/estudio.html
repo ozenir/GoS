@@ -435,7 +435,7 @@ function trilhaAtual() {
   tr.cenas = tr.cenas.map((c, i) => ({
     ...c, textoTela: cenas[i]?.textoTela || "", clipeInicio: cenas[i]?.clipeInicio ?? null,
     provas: (cenas[i]?.provas || []).map((pr) => ({ ...pr, img: pr.imgAsset ? blobUrl(pr.imgAsset) : null, fundo: pr.fundoAsset ? blobUrl(pr.fundoAsset) : null })),
-    videoFundo: cenas[i]?.videoFundo?.asset ? { url: blobUrl(cenas[i].videoFundo.asset), dur: cenas[i].videoFundo.dur || 4 } : null,
+    videoFundo: cenas[i]?.videoFundo?.asset ? { ...cenas[i].videoFundo, url: blobUrl(cenas[i].videoFundo.asset), dur: cenas[i].videoFundo.dur || 4 } : null,
   }));
   return tr;
 }
