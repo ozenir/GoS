@@ -69,15 +69,17 @@ quando o usuário pede a otimização no chat) → aguardando_producao → produ
 
 No topo do Estúdio, o painel **Criar vídeo** roda tudo com um clique, usando o que já está salvo:
 briefing → roteiro (a página otimiza com `sample` se ainda não houver roteiro) → grava
-`pedido: {qualidade, em, auto: true, otimizar, avisado}` com `config` e `otimizado` → avisa esta sessão
-pelo conector **Claude Code Remote** (`send_message` para `config/claude.sessao`). Sem o conector, a página
-mostra a frase para copiar no chat. Os passos 5–8 vêm de `producao/estado`, só quando `pedidoEm === pedido.em`:
+`pedido: {qualidade, em, auto: true, otimizar, avisado, canal}` com `config` e `otimizado` → avisa o Claude Code:
+1º por um comentário **"Send to Claude"** no próprio Estúdio (capacidade `comments`; chega como turno
+`[Artifact comment sent to Claude]` às sessões que acompanham o artifact — responda no fio com `ArtifactComments`),
+2º pelo conector **Claude Code Remote** (`send_message` para `config/claude.sessao`; na prática falhou por tempo
+esgotado). Sem nenhum dos dois, a página mostra a frase para copiar no chat. Os passos 5–8 vêm de `producao/estado`, só quando `pedidoEm === pedido.em`:
 `passos: {roteiro, provas, narracao, render, envio}` = `rodando | ok | pulado | erro`, mais `texto` e `progresso`
 (a página mostra o texto e a % no passo que está rodando).
 
 - **Início de cada sessão:** grave o id da sessão atual (`get_session`) em `config/claude` →
   `{sessao: "session_…", atualizado}`. Sem isso o botão cai na frase para copiar.
-- **Mensagem `[Estúdio Shorts · botão Criar vídeo] …`:** é o próprio usuário clicando no botão. A fonte da
+- **Mensagem ou comentário `[Estúdio Shorts · botão Criar vídeo] …`:** é o próprio usuário clicando no botão. A fonte da
   verdade é o banco: leia `projetos/<id>`, confira que `etapa` é `aguardando_producao` e que `pedido.em` bate
   com o da mensagem; se não bater, não faça nada. Então siga "produz o vídeo" (e, se `pedido.otimizar`,
   otimize antes, com `passos.roteiro` = rodando → ok), gravando `producao/estado` com `update` a cada passo:

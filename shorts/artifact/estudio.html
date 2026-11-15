@@ -362,7 +362,7 @@ function msgErro(e) {
 }
 
 // ============================================================ estado
-let db = null, assets = null, sample = null, downloads = null, mcp = null;
+let db = null, assets = null, sample = null, downloads = null, mcp = null, comentarios = null;
 let claudeCfg = null;     // config/claude: {sessao} — sessão do Claude Code que recebe os pedidos
 let auto = null;          // criação automática em andamento nesta aba: {rodando, fase, erro, avisando, falhaAviso}
 let projetos = [];
@@ -1359,8 +1359,8 @@ function desenharAuto() {
     <ol class="passos">${passos.map((p, i) => `<li class="passo ${p.estado}" aria-label="${esc(`${i + 1}. ${p.nome}: ${{ feito: "concluída", rodando: "em andamento", espera: "esperando", erro: "com erro", pendente: "a fazer" }[p.estado]}`)}">
       <i aria-hidden="true">${ICONE[p.estado] || i + 1}</i><div><b>${i + 1}. ${esc(p.nome)}</b><small>${esc(p.txt)}</small></div></li>`).join("")}</ol>
     ${auto?.erro ? `<div class="aviso erro"><span>${esc(auto.erro)}</span></div>` : ""}
-    ${precisaAviso ? `<div class="aviso"><span>${auto?.falhaAviso ? esc(auto.falhaAviso) + " " : ""}${mcp && claudeCfg?.sessao ? "Avise o Claude Code com um clique, ou escreva no chat dele:" : "Escreva no chat do Claude Code:"} <code>${esc(fraseChat())}</code></span>
-        ${mcp && claudeCfg?.sessao ? `<button class="btn peq teal" id="aAvisar" type="button">Avisar o Claude Code</button>` : ""}
+    ${precisaAviso ? `<div class="aviso"><span>${auto?.falhaAviso ? esc(auto.falhaAviso) + " " : ""}${podeAvisar() ? "Avise o Claude Code com um clique, ou escreva no chat dele:" : "Escreva no chat do Claude Code:"} <code>${esc(fraseChat())}</code></span>
+        ${podeAvisar() ? `<button class="btn peq teal" id="aAvisar" type="button">Avisar o Claude Code</button>` : ""}
         <button class="btn peq" id="aCopiar" type="button">Copiar frase</button></div>` : ""}
     ${pronto ? `<div class="acoes" style="margin-top:10px"><button class="btn peq" type="button" data-ir="exportar">Ver o vídeo ➜</button></div>` : ""}`;
   $("#aQual")?.addEventListener("change", (e) => { guardarQualidade(e.target.value); desenharAuto(); });
@@ -1444,23 +1444,52 @@ function falhaMcp(e) {
   }
 }
 
+const podeAvisar = () => !!(comentarios || (mcp && claudeCfg?.sessao));
+const FALHA_COMENTARIO = {
+  writers_only: "Só quem edita o Estúdio pode chamar o Claude por aqui.",
+  no_session: "Nenhuma sessão do Claude Code está acompanhando o Estúdio agora. Abra o Claude Code e escreva a frase no chat.",
+  off: "Chamar o Claude por comentário não está disponível nesta tela.",
+  consent_required: "Você não permitiu que o Estúdio comente por você. Clique de novo e permita.",
+  forbidden: "Comentar pelo Estúdio está desligado para você.",
+  claude_unavailable: "O claude.ai não deixou mandar agora (o clique pode ter ficado antigo). Clique em “Avisar o Claude Code”.",
+  rate_limited: "Muitos avisos seguidos. Espere um pouco.",
+};
+
+// Avisa o Claude Code. 1º: comentário "Send to Claude" no próprio Estúdio (chega às sessões que acompanham
+// esta página). 2º: conector Claude Code Remote (send_message para config/claude.sessao).
 async function avisarClaude(pd) {
   if (!pd || !proj) return;
-  const sessao = claudeCfg?.sessao;
-  if (!mcp || !sessao) { desenharAuto(); return; }
+  if (!podeAvisar()) { desenharAuto(); return; }
   auto = { ...(auto || {}), avisando: true, falhaAviso: null };
   desenharAuto();
   const msg = `[Estúdio Shorts · botão Criar vídeo] ${pd.otimizar ? "otimiza o roteiro e " : ""}produz o vídeo "${proj.titulo || proj.id}" — projeto ${proj.id}, qualidade ${pd.qualidade}, pedido ${pd.em}. Leia o pedido no banco do Estúdio e grave o andamento em producao/estado.passos.`;
-  try {
-    await mcp.callTool(CONECTOR, "send_message", { session_id: sessao, message: msg }, { cache: false });
+  const ok = async (canal) => {
     auto.avisando = false;
-    await atualizarProj({ pedido: { ...pd, avisado: Date.now() } });
+    await atualizarProj({ pedido: { ...pd, avisado: Date.now(), canal } });
     evento("Claude Code avisado. A produção começa em instantes.", "claude");
-  } catch (e) {
-    auto.avisando = false;
-    auto.falhaAviso = falhaMcp(e);
-    evento(`Aviso automático ao Claude Code falhou: ${auto.falhaAviso}`, "erro");
+    desenharAuto();
+  };
+  let falha = null;
+  if (comentarios) {
+    let pode = "off";
+    try { pode = await comentarios.canSendToClaude(); } catch { pode = "off"; }
+    if (pode === "available") {
+      try {
+        const anchor = await comentarios.anchorFor($("#auto"));
+        await comentarios.sendToClaude({ anchor, text: msg });
+        return ok("comentario");
+      } catch (e) { falha = FALHA_COMENTARIO[e?.code] || "O comentário para o Claude não foi enviado."; }
+    } else falha = FALHA_COMENTARIO[pode] || null;
   }
+  if (mcp && claudeCfg?.sessao) {
+    try {
+      await mcp.callTool(CONECTOR, "send_message", { session_id: claudeCfg.sessao, message: msg }, { cache: false });
+      return ok("conector");
+    } catch (e) { falha = falha || falhaMcp(e); }
+  }
+  auto.avisando = false;
+  auto.falhaAviso = falha || "Não consegui avisar o Claude Code sozinho.";
+  evento(`Aviso automático ao Claude Code falhou: ${auto.falhaAviso}`, "erro");
   desenharAuto();
 }
 
@@ -1483,7 +1512,7 @@ $("#btnNovo").onclick = () => {
 desenharTudo();
 (async () => {
   const usar = (n) => (window.claude?.use ? window.claude.use(n).catch(() => null) : Promise.resolve(null));
-  [db, assets, sample, downloads, mcp] = await Promise.all([usar("db"), usar("assets"), usar("sample"), usar("downloads"), usar("mcp")]);
+  [db, assets, sample, downloads, mcp, comentarios] = await Promise.all([usar("db"), usar("assets"), usar("sample"), usar("downloads"), usar("mcp"), usar("comments")]);
   if (!db) { carregando = false; desenharTudo(); return; }
   desenharTudo();
   assinarLista();

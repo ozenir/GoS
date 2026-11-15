@@ -26,7 +26,18 @@ def norm(s: str) -> str:
     return re.sub(r"[^\w%+]", "", s)
 
 
-async def falar(texto: str, voz: str, rate: str, destino: Path):
+async def falar(texto: str, voz: str, rate: str, destino: Path, tentativas: int = 3):
+    # o serviço de voz às vezes devolve "No audio was received" por instantes: tenta de novo
+    for n in range(tentativas):
+        try:
+            return await _falar(texto, voz, rate, destino)
+        except (edge_tts.exceptions.NoAudioReceived, edge_tts.exceptions.WebSocketError, OSError):
+            if n == tentativas - 1:
+                raise
+            await asyncio.sleep(2 * (n + 1))
+
+
+async def _falar(texto: str, voz: str, rate: str, destino: Path):
     kw = {"rate": rate, "boundary": "WordBoundary"}
     proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
     if proxy:
