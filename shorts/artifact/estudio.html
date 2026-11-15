@@ -221,6 +221,34 @@ TEXTO NA TELA: gancho de 2 a 5 palavras em maiúsculas; por cena é opcional e c
 TÍTULO até ~60 caracteres; descrição de 1 frase + pergunta; 3-5 hashtags incluindo #leagueoflegends #lol.
 Não prometa bugs/exploits nem incentive scripts.`;
 
+const GUIA_MATCHUP = `Você é um coach de League of Legends (nível Desafiante) e roteirista de Shorts em português do Brasil.
+Faça uma análise DETALHADA de matchup do início da partida até o jogador completar o PRIMEIRO ITEM, incluindo a primeira volta à base.
+REGRAS:
+- Use SOMENTE itens, runas e números (recarga, custo, alcance) que estão nos DADOS abaixo (Data Dragon). Escreva os nomes exatamente como nos dados.
+- Se precisar de um número que não está nos dados, não invente: descreva sem número.
+- Leve em conta: a rota do jogador, o oponente direto (no bot, a dupla), o caçador inimigo (por onde e quando ele ganka), o caçador aliado, os roams do meio e a composição dos dois times.
+- Dê janelas de troca usando as recargas reais das habilidades inimigas (ex.: "depois que ele usar o E, que tem 14 s de recarga, troque").
+- Ordem de habilidades até o nível 3 e qual maximizar primeiro.
+- Gerenciamento de onda (empurrar, congelar), visão (onde e quando colocar sentinela), quando voltar à base.
+- Plano da 1ª volta: ouro alvo e compras exatas (componentes do 1º item, com custo dos dados).
+- O 1º item depende do campeão e das composições, não de regra fixa (ex.: campeões que escalam com mana, como Cassiopeia e Ryze, costumam começar pela Lágrima da Deusa; atiradores de dano físico, como Caitlyn e Jhin, costumam fechar Espada G. p. C. na 1ª volta). Explique o porquê.
+- Diga como jogar contra CADA campeão inimigo nesse período (os 5).
+- Respeite os fatos confirmados e as orientações do criador, se houver.
+- Frases curtas e diretas. Também escreva um roteiro de Short (30 a 60 s) com o essencial, seguindo as regras de viralização: gancho em 1,5 s, uma ideia, final com pergunta.`;
+
+const FORMATO_MATCHUP = `Responda SOMENTE com um objeto JSON neste formato:
+{"resumo": "2 frases: como é o matchup e o plano", "dificuldade": "fácil|média|difícil",
+ "runas": {"principal": "árvore", "chave": "runa-chave", "secundaria": "árvore", "porque": "1 frase"},
+ "inicio": {"itens": [{"nome": "", "custo": 0}], "nivel1": "o que fazer no nível 1", "ordemHabilidades": "ex.: Q > E > W, maximizar Q"},
+ "fases": [{"titulo": "Níveis 1 a 3", "plano": "o que fazer"}, {"titulo": "Níveis 3 a 6", "plano": ""}, {"titulo": "Até a 1ª volta", "plano": ""}],
+ "contraCada": [{"campeao": "nome", "rota": "Topo|Selva|Meio|Atirador|Suporte", "ameaca": "alta|média|baixa", "janela": "quando punir (com recargas)", "comoJogar": "1-2 frases"}],
+ "recall": {"quando": "momento ideal", "ouroAlvo": 0, "compra": [{"nome": "", "custo": 0}], "porque": "1 frase"},
+ "primeiroItem": {"nome": "", "custo": 0, "porque": "", "alternativa": "outro item e quando usar"},
+ "erros": ["erro comum 1", "erro comum 2", "erro comum 3"],
+ "short": {"notaOriginal": null, "notaOtimizada": 0, "resumo": "", "titulos": ["3 opções"], "hook": {"textoTela": "2-5 PALAVRAS"},
+   "cenas": [{"narracao": "", "textoTela": "", "destaque": [], "visual": "", "clipeInicio": null}],
+   "cta": {"texto": ""}, "descricao": "", "hashtags": ["#leagueoflegends", "#lol"], "mudancas": []}}`;
+
 const FORMATO = `Responda SOMENTE com um objeto JSON neste formato:
 {"notaOriginal": número 0-10, "notaOtimizada": número 0-10, "resumo": "1 frase sobre a estratégia",
  "titulos": ["3 opções"], "hook": {"textoTela": "2-5 PALAVRAS"},
@@ -229,7 +257,9 @@ const FORMATO = `Responda SOMENTE com um objeto JSON neste formato:
  "mudancas": [{"antes": "trecho original (vazio se for novo)", "depois": "trecho novo", "porque": "motivo em 1 frase"}]}`;
 
 // ============================================================ constantes
-const TIPOS = ["Outplay / Jogada", "Dica / Tutorial", "Build / Guia de campeão", "Curiosidade / Lore", "Notícia de patch", "Tier list / Ranking", "Humor / Fail", "Polêmica / Opinião"];
+const MATCHUP = "Matchup: até o 1º item";
+const ROTAS = ["Topo", "Selva", "Meio", "Atirador", "Suporte"];
+const TIPOS = [MATCHUP, "Outplay / Jogada", "Dica / Tutorial", "Build / Guia de campeão", "Curiosidade / Lore", "Notícia de patch", "Tier list / Ranking", "Humor / Fail", "Polêmica / Opinião"];
 const TONS = ["Energético", "Engraçado", "Sério / Analítico", "Misterioso", "Polêmico"];
 const PUBLICOS = ["Todos", "Iniciantes (Ferro–Prata)", "Intermediário (Ouro–Esmeralda)", "High elo (Diamante+)"];
 const VOZES = [
@@ -255,7 +285,7 @@ const configPadrao = () => ({
   fundo: { tipo: "gradiente", asset: null, inicio: 0, cortesPorCena: true, volume: 0 },
   musica: { asset: null, volume: 0.12 },
   estilo: { fonte: "Montserrat", tamanho: 92, corTexto: "#FFFFFF", corFalada: "#FFE600", corEnfase: "#0AC8B9", corContorno: "#000000", posicaoY: 0.66, palavrasPorBloco: 3, caixaAlta: true },
-  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true },
+  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true, patch: true },
   tema: { cor1: "#010A13", cor2: "#0A323C", corDestaque: "#C8AA6E" },
   hookDuracao: 2.4, ctaAtivo: true,
 });
@@ -309,6 +339,8 @@ let desinscrever = [];
 let carregando = true, otimizando = null;
 let playerMontado = false;
 let midias = [];          // assets enviados (vídeos e músicas)
+let ddragon = null;       // resumo do Data Dragon {versao, campeoes, itens, runas}
+let canal = { nome: "" };  // config/canal
 
 // fila: uma escrita por vez em cada documento
 const filas = new Map();
@@ -375,6 +407,7 @@ function propsDoVideo() {
     estilo: cfg.estilo, efeitos: cfg.efeitos, tema: cfg.tema,
     hook: { texto: ot?.hook?.textoTela || proj.titulo || "", duracao: cfg.hookDuracao },
     cta: { texto: ot?.cta?.texto || "", ativo: cfg.ctaAtivo },
+    patch: ddragon ? `Patch ${ddragon.patch}` : "",
   };
 }
 
@@ -521,23 +554,62 @@ function abaBriefing(el) {
     <div class="linha2">
       <div><label for="bTipo">Tipo de vídeo</label><select id="bTipo">${opt(TIPOS, b.tipo)}</select></div>
       <div><label for="bCampeao">Campeão(ões)</label><input type="text" id="bCampeao" value="${esc(b.campeao)}" placeholder="Ex.: Jinx, Thresh"></div>
-      <div><label for="bDuracao">Duração alvo</label><select id="bDuracao">${opt(["15s", "30s", "45s", "60s"], b.duracao || "30s")}</select></div>
+      <div><label for="bDuracao">Duração alvo</label><select id="bDuracao">${opt(["15s", "30s", "45s", "60s", "75s", "90s"], b.duracao || "30s")}</select></div>
       <div><label for="bTom">Tom</label><select id="bTom">${opt(TONS, b.tom)}</select></div>
       <div><label for="bPublico">Público</label><select id="bPublico">${opt(PUBLICOS, b.publico)}</select></div>
     </div>
-    <label for="bRoteiro">Roteiro (o texto que vai ser narrado)</label>
+    <div id="bMatchup" ${b.tipo === MATCHUP || (!proj && !b.tipo) ? "" : "hidden"}>
+      <div class="linha2">
+        <div><label for="mRota">Sua rota</label><select id="mRota">${opt(ROTAS, b.matchup?.rota || "Meio")}</select></div>
+        <div><label for="mCamp">Seu campeão</label><input type="text" id="mCamp" list="listaCampeoes" value="${esc(b.matchup?.campeao)}" placeholder="Ex.: Cassiopeia"></div>
+      </div>
+      <div class="linha2">
+        <div><h3 style="margin-top:12px">Seu time</h3>${ROTAS.map((r) => `<label for="mA${r}">${r}</label><input type="text" id="mA${r}" data-time="aliados" data-rota="${r}" list="listaCampeoes" value="${esc(b.matchup?.aliados?.[r])}">`).join("")}</div>
+        <div><h3 style="margin-top:12px">Time inimigo</h3>${ROTAS.map((r) => `<label for="mI${r}">${r}</label><input type="text" id="mI${r}" data-time="inimigos" data-rota="${r}" list="listaCampeoes" value="${esc(b.matchup?.inimigos?.[r])}">`).join("")}</div>
+      </div>
+      <p class="nota-rodape">${ddragon ? `Nomes e números do Data Dragon ${esc(ddragon.versao)}.` : "Carregando a lista de campeões…"} Seu campeão entra sozinho na sua rota.</p>
+    </div>
+    <datalist id="listaCampeoes">${ddragon ? Object.values(ddragon.campeoes).map((c) => `<option value="${esc(c.nome)}">`).join("") : ""}</datalist>
+    <label for="bRoteiro" id="bRoteiroRot">${b.tipo === MATCHUP ? "Roteiro (opcional: o Claude escreve a partir da análise)" : "Roteiro (o texto que vai ser narrado)"}</label>
     <textarea class="grande" id="bRoteiro" placeholder="Escreva ou cole o roteiro aqui…">${esc(b.roteiro)}</textarea>
+    <label for="bFatos">Fatos confirmados (o Claude usa exatamente estes e não inventa outros)</label>
+    <textarea id="bFatos" placeholder="Ex.: placar, draft, datas, estatísticas que você conferiu…">${esc(b.fatos)}</textarea>
     <label for="bOrient">Orientações para o Claude (opcional)</label>
     <textarea id="bOrient" placeholder="Ex.: tom de zoeira, citar o patch atual, terminar perguntando o main da galera…">${esc(b.orientacoes)}</textarea>
     <div class="acoes">
-      <button class="btn ouro" id="bEnviar" type="button">✦ Salvar e otimizar com o Claude</button>
+      <button class="btn ouro" id="bEnviar" type="button">✦ Salvar e ${b.tipo === MATCHUP ? "analisar" : "otimizar"} com o Claude</button>
       <button class="btn" id="bSalvar" type="button">Só salvar</button>
     </div>
   </div>`;
-  const ler = () => ({ titulo: $("#bTitulo").value.trim(), tipo: $("#bTipo").value, campeao: $("#bCampeao").value.trim(), duracao: $("#bDuracao").value, tom: $("#bTom").value, publico: $("#bPublico").value, roteiro: $("#bRoteiro").value, orientacoes: $("#bOrient").value });
+  const sincronizarTipo = () => {
+    const mu = $("#bTipo").value === MATCHUP;
+    $("#bMatchup").hidden = !mu;
+    $("#bRoteiroRot").textContent = mu ? "Roteiro (opcional: o Claude escreve a partir da análise)" : "Roteiro (o texto que vai ser narrado)";
+  };
+  $("#bTipo").addEventListener("change", sincronizarTipo);
+  sincronizarTipo();
+  const time = (qual) => Object.fromEntries(ROTAS.map((r) => [r, el.querySelector(`[data-time="${qual}"][data-rota="${r}"]`).value.trim()]));
+  const ler = () => {
+    const d = { titulo: $("#bTitulo").value.trim(), tipo: $("#bTipo").value, campeao: $("#bCampeao").value.trim(), duracao: $("#bDuracao").value, tom: $("#bTom").value, publico: $("#bPublico").value, roteiro: $("#bRoteiro").value, orientacoes: $("#bOrient").value, fatos: $("#bFatos").value };
+    if (d.tipo === MATCHUP) {
+      const aliados = time("aliados");
+      const meu = $("#mCamp").value.trim();
+      aliados[$("#mRota").value] = meu;
+      d.matchup = { rota: $("#mRota").value, campeao: meu, aliados, inimigos: time("inimigos") };
+      if (!d.campeao) d.campeao = meu;
+      if (!d.titulo && meu) d.titulo = `${meu} ${$("#mRota").value.toLowerCase()}: até o 1º item`;
+    }
+    return d;
+  };
   const salvar = async () => {
     const dados = ler();
-    if (!dados.roteiro.trim()) throw new Error("Escreva o roteiro primeiro.");
+    if (dados.tipo === MATCHUP) {
+      const m = dados.matchup;
+      if (!m.campeao) throw new Error("Diga qual campeão você vai jogar.");
+      if (!Object.values(m.inimigos).some(Boolean)) throw new Error("Preencha pelo menos o seu oponente no time inimigo.");
+      const desconhecidos = [m.campeao, ...Object.values(m.aliados), ...Object.values(m.inimigos)].filter((n) => n && ddragon && !campeaoPorNome(n));
+      if (desconhecidos.length) throw new Error(`Não achei no Data Dragon: ${desconhecidos.join(", ")}. Confira o nome.`);
+    } else if (!dados.roteiro.trim()) throw new Error("Escreva o roteiro primeiro.");
     if (proj) {
       const mudouRoteiro = dados.roteiro !== proj.briefing?.roteiro;
       await atualizarProj({ briefing: dados, titulo: dados.titulo || proj.titulo });
@@ -548,6 +620,7 @@ function abaBriefing(el) {
     const id = `${slug(dados.titulo)}-${Math.random().toString(36).slice(2, 6)}`;
     const agora = Date.now();
     await db.doc("projetos/" + id).set({ titulo: dados.titulo || "Vídeo sem título", briefing: dados, config: configPadrao(), etapa: "briefing", criadoEm: agora, atualizado: agora });
+    if (dados.tipo === MATCHUP) evento(`Matchup: ${dados.matchup.campeao} (${dados.matchup.rota}) contra ${Object.values(dados.matchup.inimigos).filter(Boolean).join(", ")}`, "info");
     abrir(id, "briefing");
     proj = { id };
     evento("Briefing recebido", "ok");
@@ -567,7 +640,9 @@ async function otimizar() {
   assinaturaAba = "";
   redesenharSePreciso();
   const b = (await refProj().get()).data()?.briefing || proj.briefing || {};
-  const prompt = `${GUIA}\n\nBRIEFING DO CRIADOR (JSON):\n${JSON.stringify(b, null, 1)}\n\n${FORMATO}`;
+  if (b.tipo === MATCHUP) return analisarMatchup(b);
+  const fatos = b.fatos?.trim() ? `\n\nFATOS CONFIRMADOS (use exatamente estes, não invente outros fatos, números ou estatísticas):\n${b.fatos}` : "";
+  const prompt = `${GUIA}\n\nBRIEFING DO CRIADOR (JSON):\n${JSON.stringify({ ...b, fatos: undefined }, null, 1)}${fatos}\n\n${FORMATO}`;
   atualizarProj({ etapa: "otimizando" });
   evento("Claude começou a otimizar o roteiro", "claude");
   try {
@@ -595,6 +670,96 @@ async function otimizar() {
   redesenharSePreciso();
 }
 
+function dadosParaMatchup(m) {
+  const nomes = [m.campeao, ...Object.values(m.aliados), ...Object.values(m.inimigos)].filter(Boolean);
+  const camps = {};
+  for (const n of new Set(nomes)) {
+    const c = campeaoPorNome(n);
+    if (c) camps[c.nome] = { funcoes: c.funcoes, recurso: c.recurso, alcanceAtaque: c.alcance, passiva: c.passiva, habilidades: c.hab.map((h) => `${h.t} ${h.n}: recarga ${h.cd.join("/")} s, custo ${h.custo.join("/")}, alcance ${h.alc.join("/")}`) };
+  }
+  const itens = Object.values(ddragon.itens).map((i) => `${i.nome} | ${i.custo} | ${i.tags.slice(0, 4).join(",")}${i.de?.length ? " | de: " + i.de.map((x) => ddragon.itens[x]?.nome).filter(Boolean).join(" + ") : ""}`);
+  const runas = ddragon.runas.map((r) => `${r.arvore}: chaves ${r.chaves.join(", ")}`);
+  return `DADOS (Data Dragon ${ddragon.versao}, patch ${ddragon.patch}):\nCAMPEÕES:\n${JSON.stringify(camps)}\nITENS (nome | custo total | tags | componentes):\n${itens.join("\n")}\nRUNAS:\n${runas.join("\n")}`;
+}
+
+async function analisarMatchup(b) {
+  if (!ddragon) {
+    otimizando = null;
+    toast("Os dados do jogo ainda não carregaram. Tente de novo em alguns segundos.");
+    assinaturaAba = ""; redesenharSePreciso();
+    return;
+  }
+  const m = b.matchup;
+  const fatos = b.fatos?.trim() ? `\nFATOS CONFIRMADOS (não invente outros):\n${b.fatos}` : "";
+  const pedido = `JOGADOR: ${m.campeao} na rota ${m.rota}.\nSEU TIME: ${JSON.stringify(m.aliados)}\nTIME INIMIGO: ${JSON.stringify(m.inimigos)}\nPúblico: ${b.publico || "Todos"} · Tom do Short: ${b.tom || "Energético"} · Duração do Short: ${b.duracao || "45s"}\nOrientações do criador: ${b.orientacoes || "nenhuma"}${fatos}${b.roteiro?.trim() ? `\nRascunho do criador:\n${b.roteiro}` : ""}`;
+  const prompt = `${GUIA_MATCHUP}\n\n${pedido}\n\n${dadosParaMatchup(m)}\n\n${FORMATO_MATCHUP}`;
+  atualizarProj({ etapa: "otimizando" });
+  evento(`Claude começou a análise de matchup (${m.campeao} ${m.rota})`, "claude");
+  try {
+    const r = await sample.json(prompt, {
+      cache: false, signal: otimizando.ctl.signal, modelTier: "complex",
+      onText: ({ text }) => { otimizando.texto = text; const e = $("#escrevendo"); if (e) { e.textContent = text; e.scrollTop = e.scrollHeight; } },
+    });
+    if (!r || !r.short || !Array.isArray(r.short.cenas)) throw { code: "invalid_json" };
+    const nomesItens = new Set(Object.values(ddragon.itens).map((i) => norm(i.nome)));
+    const conferir = (lista) => (lista || []).map((i) => ({ ...i, valido: nomesItens.has(norm(String(i.nome || ""))) }));
+    r.inicio = { ...(r.inicio || {}), itens: conferir(r.inicio?.itens) };
+    r.recall = { ...(r.recall || {}), compra: conferir(r.recall?.compra) };
+    if (r.primeiroItem) r.primeiroItem.valido = nomesItens.has(norm(String(r.primeiroItem.nome || "")));
+    r.versao = ddragon.versao;
+    const o = r.short;
+    o.mudancas = o.mudancas || [];
+    o.cenas = o.cenas.map((c) => ({ narracao: String(c.narracao || ""), textoTela: String(c.textoTela || ""), destaque: Array.isArray(c.destaque) ? c.destaque.map(String) : [], visual: String(c.visual || ""), clipeInicio: null }));
+    delete r.short;
+    ot = clone(o);
+    otimizando = null;
+    await atualizarProj({ matchup: r, otimizado: o, etapa: "otimizado" });
+    evento(`Análise de matchup pronta: 1º item ${r.primeiroItem?.nome || "?"}`, "claude");
+    toast("Análise pronta!");
+  } catch (e) {
+    const cancelado = e?.code === "cancelled";
+    otimizando = null;
+    if (["not_granted", "sampling_disabled", "capability_disabled", "capability_removed"].includes(e?.code)) sample = null;
+    await atualizarProj({ etapa: proj.otimizado ? "otimizado" : "briefing" });
+    const msg = cancelado ? "Análise cancelada" : e?.code === "invalid_json" ? "O Claude respondeu fora do formato. Tente de novo." : e?.code === "rate_limited" ? "Limite de uso do Claude atingido. Tente daqui a pouco." : "Não consegui analisar agora. Tente de novo ou peça no chat.";
+    evento(msg, cancelado ? "info" : "erro");
+    toast(msg);
+  }
+  assinaturaAba = "";
+  redesenharSePreciso();
+}
+
+function cartoesMatchup(g) {
+  const item = (i) => `${esc(i.nome)}${i.custo ? ` <span class="nota-rodape">(${esc(i.custo)} de ouro)</span>` : ""}${i.valido === false ? ` <span class="selo erro" title="Nome não encontrado no Data Dragon">confira</span>` : ""}`;
+  const amea = { alta: "erro", média: "rodando", baixa: "ok" };
+  return `
+  <div class="cartao destaque">
+    <h2>Guia até o 1º item</h2>
+    <p style="margin-top:0">${esc(g.resumo)}</p>
+    <div class="notas"><span class="selo ${amea[g.dificuldade === "difícil" ? "alta" : g.dificuldade === "fácil" ? "baixa" : "média"]}">Dificuldade: ${esc(g.dificuldade || "?")}</span><span class="nota-rodape">Dados do Data Dragon ${esc(g.versao || "")}</span></div>
+  </div>
+  <div class="linha2" style="gap:14px">
+    <div class="cartao"><h3>Começo</h3>
+      <p style="margin:0 0 6px"><b>Itens iniciais:</b> ${(g.inicio?.itens || []).map(item).join(" + ") || "–"}</p>
+      <p style="margin:0 0 6px"><b>Runas:</b> ${esc(g.runas?.chave)} (${esc(g.runas?.principal)}) + ${esc(g.runas?.secundaria)}. <span class="nota-rodape">${esc(g.runas?.porque)}</span></p>
+      <p style="margin:0 0 6px"><b>Nível 1:</b> ${esc(g.inicio?.nivel1)}</p>
+      <p style="margin:0"><b>Habilidades:</b> ${esc(g.inicio?.ordemHabilidades)}</p></div>
+    <div class="cartao"><h3>1º item</h3>
+      <p style="font:400 1.7rem var(--f-titulo);color:var(--ouro);margin:0">${item(g.primeiroItem || {})}</p>
+      <p style="margin:6px 0">${esc(g.primeiroItem?.porque)}</p>
+      <p class="nota-rodape" style="margin:0">Alternativa: ${esc(g.primeiroItem?.alternativa)}</p></div>
+  </div>
+  <div class="cartao"><h3>Fase por fase</h3>
+    ${(g.fases || []).map((f) => `<div class="mudanca"><div class="depois"><b>${esc(f.titulo)}</b></div><div>${esc(f.plano)}</div></div>`).join("")}</div>
+  <div class="cartao"><h3>Contra cada um</h3>
+    ${(g.contraCada || []).map((c) => `<div class="mudanca"><div class="depois"><b>${esc(c.campeao)}</b> <span class="nota-rodape">${esc(c.rota)}</span> <span class="selo ${amea[c.ameaca] || ""}">ameaça ${esc(c.ameaca)}</span></div><div>${esc(c.comoJogar)}</div>${c.janela ? `<div class="pq">Janela: ${esc(c.janela)}</div>` : ""}</div>`).join("")}</div>
+  <div class="cartao"><h3>1ª volta à base</h3>
+    <p style="margin:0 0 6px"><b>Quando:</b> ${esc(g.recall?.quando)}${g.recall?.ouroAlvo ? ` · <b>ouro alvo:</b> ${esc(g.recall.ouroAlvo)}` : ""}</p>
+    <p style="margin:0 0 6px"><b>Compra:</b> ${(g.recall?.compra || []).map(item).join(" + ") || "–"}</p>
+    <p class="nota-rodape" style="margin:0">${esc(g.recall?.porque)}</p></div>
+  ${(g.erros || []).length ? `<div class="cartao"><h3>Erros comuns</h3><ul style="margin:0;padding-left:1.2rem">${g.erros.map((e) => `<li>${esc(e)}</li>`).join("")}</ul></div>` : ""}`;
+}
+
 function pedirNoChat() {
   atualizarProj({ etapa: "aguardando_claude" });
   evento("Pedido de otimização enviado ao Claude Code (chat)", "claude");
@@ -604,7 +769,8 @@ function pedirNoChat() {
 function abaOtimizacao(el) {
   const o = proj.otimizado;
   if (otimizando) {
-    el.innerHTML = `<div class="cartao destaque"><h2>Otimizando o roteiro</h2>
+    el.innerHTML = `<div class="cartao destaque">
+      <h2>${proj.briefing?.tipo === MATCHUP ? "Analisando o matchup" : "Otimizando o roteiro"}</h2>
       <div class="esperando"><div class="pulso"></div><div><b>O Claude está revisando o seu roteiro…</b><br><span class="nota-rodape">Ele analisa gancho, ritmo, retenção e final com base nos Shorts de LoL que viralizam. Leva de 20 segundos a 1 minuto.</span></div></div>
       <div class="escrevendo" id="escrevendo">${esc(otimizando.texto || "Pensando…")}</div>
       <div class="acoes"><button class="btn" id="oParar" type="button">Parar</button></div></div>`;
@@ -615,35 +781,35 @@ function abaOtimizacao(el) {
     const esperando = proj.etapa === "aguardando_claude";
     el.innerHTML = `
     <div class="cartao destaque">
-      <h2>Otimização do roteiro</h2>
+      <h2>${proj.briefing?.tipo === MATCHUP ? "Análise de matchup" : "Otimização do roteiro"}</h2>
       ${esperando
         ? `<div class="esperando"><div class="pulso"></div><div><b>Aguardando o Claude Code</b><br><span class="nota-rodape">Escreva <code>otimiza o roteiro</code> no chat. A página atualiza sozinha quando ele terminar.</span></div></div>`
         : `<p>Este vídeo ainda não foi otimizado.</p>`}
       <div class="acoes">
-        ${sample ? `<button class="btn ouro" id="oOtimizar" type="button">✦ Otimizar agora com o Claude</button>` : ""}
+        ${sample ? `<button class="btn ouro" id="oOtimizar" type="button">✦ ${proj.briefing?.tipo === MATCHUP ? "Analisar" : "Otimizar"} agora com o Claude</button>` : ""}
         ${esperando ? "" : `<button class="btn" id="oChat" type="button">Pedir no chat do Claude Code</button>`}
       </div>
       ${sample ? `<p class="nota-rodape">“Otimizar agora” usa a sua conta do Claude direto nesta página (pede sua permissão na primeira vez).</p>` : ""}
     </div>
-    <div class="cartao"><h3>Roteiro original</h3><p style="white-space:pre-wrap;margin:0">${esc(proj.briefing?.roteiro)}</p></div>`;
+    ${proj.briefing?.roteiro?.trim() ? `<div class="cartao"><h3>Roteiro original</h3><p style="white-space:pre-wrap;margin:0">${esc(proj.briefing?.roteiro)}</p></div>` : ""}`;
     $("#oOtimizar")?.addEventListener("click", otimizar);
     $("#oChat")?.addEventListener("click", pedirNoChat);
     return;
   }
-  el.innerHTML = `
+  el.innerHTML = `${proj.matchup ? cartoesMatchup(proj.matchup) : ""}
   <div class="cartao destaque">
-    <h2>Roteiro otimizado</h2>
-    <div class="notas">
+    <h2>${proj.matchup ? "Roteiro do Short" : "Roteiro otimizado"}</h2>
+    ${o.notaOriginal != null ? `<div class="notas">
       <div class="nota antes"><small>Original</small><b>${esc(o.notaOriginal ?? "–")}</b></div>
       <div class="seta" aria-hidden="true">➜</div>
       <div class="nota depois"><small>Otimizado</small><b>${esc(o.notaOtimizada ?? "–")}</b></div>
       <p style="flex:1;min-width:200px;margin:0">${esc(o.resumo)}</p>
-    </div>
+    </div>` : `<p style="margin:0">${esc(o.resumo)}</p>`}
   </div>
   <div class="cartao"><h3>Gancho na tela</h3><p style="font:400 1.9rem var(--f-titulo);color:var(--ouro);margin:0">${esc(o.hook?.textoTela)}</p></div>
-  <div class="cartao"><h3>O que mudou e por quê</h3>
-    ${(o.mudancas || []).map((m) => `<div class="mudanca">${m.antes ? `<div class="antes">${esc(m.antes)}</div>` : ""}<div class="depois">${esc(m.depois)}</div><div class="pq">→ ${esc(m.porque)}</div></div>`).join("")}
-  </div>
+  ${(o.mudancas || []).length ? `<div class="cartao"><h3>O que mudou e por quê</h3>
+    ${o.mudancas.map((m) => `<div class="mudanca">${m.antes ? `<div class="antes">${esc(m.antes)}</div>` : ""}<div class="depois">${esc(m.depois)}</div><div class="pq">→ ${esc(m.porque)}</div></div>`).join("")}
+  </div>` : ""}
   <div class="cartao"><h3>Roteiro final</h3>
     <ol style="margin:0;padding-left:1.2rem">${(o.cenas || []).map((c) => `<li style="margin-bottom:6px">${esc(c.narracao)}${c.textoTela ? ` <span class="selo claude">${esc(c.textoTela)}</span>` : ""}</li>`).join("")}</ol>
   </div>
@@ -749,6 +915,27 @@ const formatar = (c, v) =>
   c.endsWith("volume") || c === "estilo.posicaoY" ? `${Math.round(v * 100)}%` :
   c === "estilo.tamanho" ? `${v}px` : c === "hookDuracao" ? `${(+v).toFixed(1)}s` : String(v);
 
+function assinarConfig() {
+  db.doc("config/ddragon").onSnapshot(async (s) => {
+    const d = s.exists ? s.data() : null;
+    if (!d?.assetId || ddragon?.versao === d.versao) return;
+    try {
+      ddragon = await (await fetch(blobUrl(d.assetId))).json();
+      ddragon.patch = d.patch || ddragon.versao.split(".").slice(0, 2).join(".");
+      const dl = document.getElementById("listaCampeoes");
+      if (dl) dl.innerHTML = Object.values(ddragon.campeoes).map((c) => `<option value="${esc(c.nome)}">`).join("");
+      atualizarPlayer();
+    } catch { ddragon = null; }
+  }, () => {});
+  db.doc("config/canal").onSnapshot((s) => { canal = s.exists ? s.data() : { nome: "" }; if (aba === "exportar") desenharAba(); }, () => {});
+}
+const campeaoPorNome = (nome) => {
+  if (!ddragon || !nome) return null;
+  const n = norm(nome);
+  const e = Object.entries(ddragon.campeoes).find(([id, c]) => norm(c.nome) === n || norm(id) === n);
+  return e ? { id: e[0], ...e[1] } : null;
+};
+
 function assinarMidias() {
   db.collection("midias").orderBy("criadoEm", "desc").limit(200).onSnapshot((s) => {
     midias = s.docs.map((d) => d.data());
@@ -817,6 +1004,7 @@ function abaVisual(el) {
     ${chk("efeitos.hook", "Gancho grande no início")}
     ${faixa("hookDuracao", "Duração do gancho", 1, 4, 0.2)}
     ${chk("efeitos.barraProgresso", "Barra de progresso (ajuda a segurar até o fim)")}
+    ${chk("efeitos.patch", "Selo do patch no canto")}
     ${chk("efeitos.flash", "Flash na troca de cena")}
     ${chk("efeitos.zoomPunch", "Zoom na troca de cena")}
     ${chk("ctaAtivo", "Chamada final (CTA)")}
@@ -877,6 +1065,11 @@ function abaVisual(el) {
 }
 
 // ============================================================ 5. produzir
+const AVISO_RIOT = (nome) => `${nome || "[Nome do canal]"} foi criado sob a política "Legal Jibber Jabber" da Riot Games, usando recursos da Riot Games. A Riot Games não endossa nem patrocina este projeto.`;
+function descricaoCompleta(o) {
+  const patch = ddragon ? `\n\nPatch atual: ${ddragon.patch}.` : "";
+  return `${o.descricao}${patch}\n\n${AVISO_RIOT(canal.nome)}`;
+}
 async function baixar(r) {
   try {
     const blob = await (await fetch(blobUrl(r.id))).blob();
@@ -911,10 +1104,16 @@ function abaExportar(el) {
   </div>
   <div class="cartao">
     <h3>Kit de publicação</h3>
+    <div class="linha2"><div><label for="kCanal">Nome do canal (vai no aviso da Riot)</label><input type="text" id="kCanal" value="${esc(canal.nome)}" placeholder="Ex.: Pick Estranho LoL"></div>
+      <div><label>Patch atual</label><p style="margin:6px 0 0">${ddragon ? `Patch ${esc(ddragon.patch)} (Data Dragon ${esc(ddragon.versao)})` : "Carregando…"}</p></div></div>
     ${(o.titulos || []).length ? `<label>Títulos sugeridos</label>${o.titulos.map((t) => `<div class="copiavel"><span>${esc(t)}</span>${copiar(t)}</div>`).join("")}` : `<p class="nota-rodape">Títulos, descrição e hashtags aparecem aqui depois da otimização.</p>`}
-    ${o.descricao ? `<label>Descrição</label><div class="copiavel"><span>${esc(o.descricao)}</span>${copiar(o.descricao)}</div>` : ""}
+    ${o.descricao ? (() => { const d = descricaoCompleta(o); return `<label>Descrição (com patch e aviso da Riot)</label><div class="copiavel"><span style="white-space:pre-wrap">${esc(d)}</span>${copiar(d)}</div>`; })() : ""}
     ${(o.hashtags || []).length ? `<label>Hashtags</label><div class="copiavel"><span>${esc(o.hashtags.join(" "))}</span>${copiar(o.hashtags.join(" "))}</div>` : ""}
   </div>`;
+  $("#kCanal")?.addEventListener("change", (e) => {
+    const nome = e.target.value.trim();
+    gravar(db.doc("config/canal"), () => db.doc("config/canal").set({ nome })).then(() => toast("Nome do canal salvo"));
+  });
   $("#pPedir")?.addEventListener("click", async () => {
     const qualidade = $("#pQual").value;
     await atualizarProj({ etapa: "aguardando_producao", pedido: { qualidade, em: Date.now() }, otimizado: clone(ot), config: clone(cfg) });
@@ -956,5 +1155,6 @@ desenharTudo();
   desenharTudo();
   assinarLista();
   assinarMidias();
+  assinarConfig();
 })();
 </script>

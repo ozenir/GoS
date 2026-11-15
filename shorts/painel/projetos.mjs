@@ -46,7 +46,7 @@ export const configPadrao = () => ({
     palavrasPorBloco: 3,
     caixaAlta: true,
   },
-  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true },
+  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true, patch: true },
   tema: { cor1: "#010A13", cor2: "#0A323C", corDestaque: "#C8AA6E" },
   hookDuracao: 2.4,
   ctaAtivo: true,
@@ -206,7 +206,14 @@ export function props(id, base = "") {
     tema: cfg.tema,
     hook: { texto: ot.hook?.textoTela || b.titulo || "", duracao: cfg.hookDuracao },
     cta: { texto: ot.cta?.texto || "", ativo: cfg.ctaAtivo },
+    patch: patchAtual(),
   };
+}
+
+// patch do Data Dragon baixado por scripts/ddragon.py (dados/ddragon/resumo.json)
+export function patchAtual() {
+  const r = ler(join(RAIZ, "dados", "ddragon", "resumo.json"));
+  return r?.versao ? `Patch ${r.versao.split(".").slice(0, 2).join(".")}` : "";
 }
 
 export function renders(id) {

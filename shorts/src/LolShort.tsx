@@ -53,10 +53,12 @@ export type LolShortProps = {
     barraProgresso: boolean;
     flash: boolean;
     zoomPunch: boolean;
+    patch?: boolean;
   };
   tema: { cor1: string; cor2: string; corDestaque: string };
   hook: { texto: string; duracao?: number };
   cta: { texto: string; ativo: boolean };
+  patch?: string; // ex.: "Patch 16.22" (selo no canto, o vídeo inteiro)
 };
 
 export const FPS_LOL = 30;
@@ -452,6 +454,28 @@ export const LolShort: React.FC<LolShortProps> = (p) => {
         />
       ) : null}
 
+      {/* selo do patch */}
+      {p.efeitos.patch !== false && p.patch ? (
+        <div
+          style={{
+            position: "absolute",
+            top: 150,
+            right: 40,
+            padding: "10px 22px",
+            borderRadius: 999,
+            background: "rgba(0,0,0,.6)",
+            border: `3px solid ${p.tema.corDestaque}`,
+            color: "white",
+            fontFamily: p.estilo.fonte,
+            fontWeight: pesoDaFonte(p.estilo.fonte),
+            fontSize: 38,
+            letterSpacing: 1,
+          }}
+        >
+          {p.patch}
+        </div>
+      ) : null}
+
       {/* áudio */}
       {p.audio ? <Audio src={p.audio} /> : null}
       {p.musica?.url ? <Audio src={p.musica.url} volume={p.musica.volume} loop /> : null}
@@ -500,8 +524,9 @@ export const exemploLol: LolShortProps = {
     palavrasPorBloco: 3,
     caixaAlta: true,
   },
-  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true },
+  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true, patch: true },
   tema: { cor1: "#010A13", cor2: "#0A323C", corDestaque: "#C8AA6E" },
+  patch: "Patch 16.22",
   hook: { texto: "BUILD PROIBIDA", duracao: 2.4 },
   cta: { texto: "Comenta qual campeão!", ativo: true },
 };

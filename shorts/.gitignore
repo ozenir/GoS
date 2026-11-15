@@ -16,3 +16,5 @@ projetos/*/narracao.m4a
 projetos/*/props-render.json
 projetos/*/narracao.mp4
 projetos/*/artifact-doc.json
+clipes/*
+!clipes/.gitkeep

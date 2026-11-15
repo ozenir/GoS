@@ -17,6 +17,10 @@ em **português do Brasil**.
 | `painel/`      | servidor local, render, ponte com o Artifact, CLI               |
 | `projetos/`    | um diretório por vídeo do painel (briefing, roteiro, config)    |
 | `docs/`        | `viral-lol.md`: guia de otimização de roteiros de LoL           |
+| `dados/`       | dados oficiais do Data Dragon (`scripts/ddragon.py`), por vídeo e `ddragon/resumo.json` |
+| `roteiros/`    | roteiros em Markdown: fala + `[o que aparece na tela]`         |
+| `publicacao/`  | título, descrição (com patch e aviso da Riot) e hashtags       |
+| `clipes/`      | gameplay gravado pelo usuário (Ferramenta de Treino)           |
 | `scripts/`     | automações (instalar, cortar silêncios, legendas, montar)       |
 | `public/atual/`| área temporária que o `montar.sh` preenche para o Remotion       |
 
@@ -62,6 +66,33 @@ quando o usuário pede a otimização no chat) → aguardando_producao → produ
 
 O `hash` liga narração e roteiro: `sha1(JSON.stringify([narrações das cenas com texto, voz, velocidade]))`
 (12 primeiros hex) — igual em `painel/projetos.mjs` e na página.
+
+## Dados do jogo (Data Dragon) — nunca use números de memória
+
+```bash
+.venv/bin/python scripts/ddragon.py campeao Taliyah --outros Jhin,Rakan --pasta dados/<video>
+.venv/bin/python scripts/ddragon.py resumo --pasta dados/ddragon   # todos os campeões, itens e runas
+```
+
+O resumo vai para o Artifact como asset JSON, apontado por `config/ddragon` (`{versao, patch, assetId}`):
+ao sair patch novo, rode `resumo`, envie o arquivo (`Artifact publish asset:true`) e atualize esse doc.
+Nomes em pt_BR são os do Data Dragon (ex.: BF Sword = "Espada G. p. C.").
+
+## Guia de matchup (tipo "Matchup: até o 1º item")
+
+No briefing o usuário escolhe rota, seu campeão e os dois times por posição. A página manda ao
+Claude (`sample`, nível "complex") os dados dos 10 campeões, a tabela de itens com custo e as runas,
+e grava `projetos/<id>.matchup` (`resumo, dificuldade, runas, inicio, fases, contraCada, recall,
+primeiroItem, erros`) + o roteiro do Short em `otimizado`. Itens fora do Data Dragon são marcados
+"confira". Se o usuário pedir no chat, faça a mesma análise e grave no mesmo formato.
+
+## Vídeos em duas fases (roteiro primeiro, narração gravada depois)
+
+Fase 1: `roteiros/<slug>.md`, lista de clipes para a Ferramenta de Treino, `publicacao/<slug>.txt`,
+dados em `dados/<slug>/`; espelhe o projeto no Artifact (`projetos/<slug>`, etapa "otimizado") e PARE.
+Fase 2 (quando a narração estiver em `brutos/`): transcrição (faster-whisper), corte de silêncios e
+repetições, legendas palavra a palavra, animações, mostrar cortes e cenas ANTES de renderizar,
+exportar `saida/<slug>_v1.mp4`.
 
 ## Estúdio Shorts local (painel em http://localhost:3333) — alternativa
 
