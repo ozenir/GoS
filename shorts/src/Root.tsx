@@ -1,3 +1,4 @@
+import "./fontes-css";
 import { Composition } from "remotion";
 import { Teste } from "./Teste";
 import { Short, ShortProps } from "./Short";

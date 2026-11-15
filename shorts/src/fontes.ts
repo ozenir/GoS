@@ -1,9 +1,5 @@
-// Fontes gratuitas (Fontsource / SIL OFL), empacotadas junto com o projeto.
-import "@fontsource/anton";
-import "@fontsource/bebas-neue";
-import "@fontsource/montserrat/900.css";
-import "@fontsource/bangers";
-import "@fontsource/luckiest-guy";
+// Fontes gratuitas (SIL OFL). No render/painel local vêm do Fontsource
+// (src/fontes-css.ts); no Artifact vêm do Google Fonts.
 
 export const FONTES = [
   { id: "Montserrat", nome: "Montserrat Black", peso: 900 },

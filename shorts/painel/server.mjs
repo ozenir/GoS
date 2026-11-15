@@ -115,6 +115,7 @@ function renderizar(id, qualidade) {
   P.setProgresso(id, 0, "Preparando (empacotando o projeto)");
   const args = ["render", "src/index.ts", "LolShort", join(pasta, nome), `--props=${arqProps}`];
   if (previa) args.push("--scale=0.5", "--crf=28");
+  else args.push("--crf=21"); // cabe no limite de 15 MB do Artifact em vídeos de até ~60s
   rodar(id, join(RAIZ, "node_modules/.bin/remotion"), args, {
     aoLinha: (l) => {
       const r = l.match(/Rendered (\d+)\/(\d+)/);

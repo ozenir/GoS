@@ -1,0 +1,960 @@
+<title>Estúdio Shorts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Luckiest+Guy&family=Montserrat:wght@900&display=swap">
+<style>
+/* Layout: cabeçalho fixo, etapas em pílulas, coluna de trabalho + coluna do "celular" com o player.
+   Visual de um só tema, escuro, inspirado no cliente do jogo (azul-marinho, dourado hextech, turquesa). */
+:root {
+  color-scheme: dark;
+  --fundo: #010a13;
+  --fundo2: #091428;
+  --painel: #0b1a2e;
+  --campo: #050f1c;
+  --borda: #1e2d42;
+  --ouro: #c8aa6e;
+  --ouro-claro: #f0e6d2;
+  --ouro-esc: #785a28;
+  --teal: #0ac8b9;
+  --texto: #e8e2d4;
+  --suave: #8f9bab;
+  --erro: #ff6b6b;
+  --ok: #3ddc97;
+  --sobre-ouro: #1a1408;
+  --sobre-teal: #021614;
+  --raio: 10px;
+  --f-titulo: "Bebas Neue", "Arial Narrow", Impact, sans-serif;
+  --f-texto: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--fundo); }
+body {
+  margin: 0;
+  color: var(--texto);
+  font: 15px/1.5 var(--f-texto);
+  min-height: 100%;
+  background: radial-gradient(1100px 520px at 75% -10%, #0a323c66, transparent), var(--fundo);
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--fundo); }
+h2, h3 { font-family: var(--f-titulo); letter-spacing: .04em; font-weight: 400; margin: 0 0 .5rem; text-wrap: balance; }
+h2 { font-size: 1.9rem; color: var(--ouro-claro); }
+h3 { font-size: 1.25rem; color: var(--ouro); }
+a { color: var(--teal); }
+button, input, select, textarea { font: inherit; }
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+.envolve { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.topo {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: #010a13ee; border-bottom: 1px solid var(--borda); backdrop-filter: blur(8px);
+}
+.topo .envolve { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding-block: 10px; }
+.marca { font-family: var(--f-titulo); font-size: 1.6rem; letter-spacing: .08em; color: var(--ouro-claro); display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.marca b { color: var(--ouro); font-weight: 400; }
+.losango { width: 13px; height: 13px; background: var(--teal); transform: rotate(45deg); box-shadow: 0 0 12px var(--teal); }
+#seletor { flex: 1 1 220px; max-width: 420px; margin-left: auto; }
+
+.etapas { display: flex; gap: 6px; padding-block: 12px; overflow-x: auto; }
+.etapas button {
+  background: var(--fundo2); border: 1px solid var(--borda); color: var(--suave);
+  padding: 7px 14px 7px 7px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  display: flex; align-items: center; gap: 8px;
+}
+.etapas button i { font-style: normal; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--borda); color: var(--texto); font-size: .8rem; font-weight: 700; }
+.etapas button.feito i { background: var(--ouro-esc); color: var(--ouro-claro); }
+.etapas button.ativo { border-color: var(--ouro); color: var(--ouro-claro); background: var(--painel); }
+.etapas button.ativo i { background: var(--ouro); color: var(--fundo); }
+.etapas button:disabled { opacity: .45; cursor: not-allowed; }
+
+.grade { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; padding-block: 0 48px; align-items: start; }
+.trabalho { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.lateral { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 70px); display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+@media (max-width: 900px) {
+  .grade { grid-template-columns: minmax(0, 1fr); }
+  .lateral { position: static; order: -1; }
+  .celular { max-width: 280px; margin: 0 auto; }
+}
+
+.cartao { background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio); padding: 16px; min-width: 0; }
+.cartao.destaque { border-color: var(--ouro-esc); }
+.celular { aspect-ratio: 9 / 16; width: 100%; max-width: 100%; border-radius: 24px; overflow: hidden; border: 3px solid #23272e; box-shadow: 0 0 0 1px var(--ouro-esc), 0 20px 50px #000a; background: #000; }
+#player { width: 100%; height: 100%; }
+.dica { font-size: .82rem; color: var(--suave); text-align: center; }
+
+label { display: block; font-size: .82rem; color: var(--suave); margin: 10px 0 4px; }
+input[type=text], input[type=number], textarea, select {
+  width: 100%; background: var(--campo); color: var(--texto); border: 1px solid var(--borda);
+  border-radius: 8px; padding: 9px 11px;
+}
+textarea { min-height: 90px; resize: vertical; }
+textarea.grande { min-height: 200px; }
+input:focus, textarea:focus, select:focus { outline: 2px solid var(--ouro-esc); border-color: var(--ouro); }
+input[type=range] { width: 100%; accent-color: var(--ouro); }
+input[type=color] { width: 44px; height: 34px; border: 1px solid var(--borda); background: none; border-radius: 6px; padding: 2px; }
+input[type=file] { max-width: 100%; color: var(--suave); }
+.linha2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0 14px; }
+.check { display: flex; align-items: center; gap: 8px; color: var(--texto); font-size: .92rem; margin: 8px 0; cursor: pointer; }
+.cores { display: flex; flex-wrap: wrap; gap: 14px; }
+.cores label { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin: 6px 0; }
+.valor { color: var(--ouro-claro); font-variant-numeric: tabular-nums; }
+.nota-rodape { color: var(--suave); font-size: .82rem; }
+
+.btn { background: var(--fundo2); color: var(--ouro-claro); border: 1px solid var(--ouro-esc); padding: 9px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: .92rem; }
+.btn:hover { border-color: var(--ouro); }
+.btn.ouro { background: linear-gradient(180deg, var(--ouro), #a4814a); color: var(--sobre-ouro); border-color: var(--ouro-claro); }
+.btn.teal { background: linear-gradient(180deg, var(--teal), #087f77); color: var(--sobre-teal); border-color: #8ff3ea; }
+.btn.peq { padding: 5px 10px; font-size: .8rem; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+
+.status .etq { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.status b { min-width: 0; overflow-wrap: anywhere; }
+.selo { font-size: .75rem; padding: 2px 10px; border-radius: 999px; background: var(--borda); color: var(--texto); white-space: nowrap; }
+.selo.ok { background: #3ddc9722; color: var(--ok); }
+.selo.claude { background: #0ac8b922; color: var(--teal); }
+.selo.erro { background: #ff6b6b22; color: var(--erro); }
+.selo.rodando { background: #c8aa6e22; color: var(--ouro); }
+.barra { height: 8px; background: var(--campo); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.barra > div { height: 100%; background: linear-gradient(90deg, var(--ouro-esc), var(--ouro)); transition: width .4s; }
+
+.linha { list-style: none; margin: 0; padding: 0; max-height: 280px; overflow: auto; font-size: .84rem; }
+.linha li { padding: 6px 0 6px 16px; border-left: 2px solid var(--borda); position: relative; overflow-wrap: anywhere; }
+.linha li::before { content: ""; position: absolute; left: -5px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--suave); }
+.linha li.ok::before { background: var(--ok); }
+.linha li.claude::before { background: var(--teal); }
+.linha li.erro::before { background: var(--erro); }
+.linha small { color: var(--suave); display: block; }
+
+.notas { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.nota { text-align: center; padding: 10px 18px; border-radius: 10px; background: var(--campo); border: 1px solid var(--borda); }
+.nota b { display: block; font: 400 2.4rem/1 var(--f-titulo); font-variant-numeric: tabular-nums; }
+.nota.antes b { color: var(--suave); }
+.nota.depois b { color: var(--ok); }
+.seta { font-size: 1.6rem; color: var(--ouro); }
+.mudanca { border-left: 3px solid var(--ouro-esc); padding: 6px 12px; margin: 10px 0; background: var(--campo); border-radius: 0 8px 8px 0; }
+.mudanca .antes { color: var(--suave); text-decoration: line-through; }
+.mudanca .depois { color: var(--ouro-claro); }
+.mudanca .pq { color: var(--teal); font-size: .86rem; }
+.copiavel { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--borda); }
+.copiavel span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.esperando { display: flex; gap: 14px; align-items: flex-start; }
+.pulso { width: 18px; height: 18px; border-radius: 50%; background: var(--teal); animation: pulso 1.2s infinite; flex: none; margin-top: 3px; }
+@keyframes pulso { 0% { box-shadow: 0 0 0 0 #0ac8b9aa; } 100% { box-shadow: 0 0 0 16px #0ac8b900; } }
+.escrevendo { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--suave); background: var(--campo); border-radius: 8px; padding: 10px; max-height: 160px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 10px; }
+
+.cena { border: 1px solid var(--borda); border-radius: var(--raio); padding: 12px; background: #071222; }
+.cenas { display: flex; flex-direction: column; gap: 10px; }
+.cena header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cena header b { font-family: var(--f-titulo); font-size: 1.2rem; color: var(--ouro); letter-spacing: .05em; }
+.cena header .tempo { color: var(--suave); font-size: .8rem; background: none; border: 0; cursor: pointer; padding: 0; font-variant-numeric: tabular-nums; }
+.cena header .esp { flex: 1; }
+.cena .visual { font-size: .82rem; color: var(--teal); margin-top: 6px; }
+.aviso { background: #c8aa6e18; border: 1px solid var(--ouro-esc); color: var(--ouro-claro); border-radius: 8px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.aviso span { flex: 1; min-width: 200px; }
+.aviso.erro { border-color: var(--erro); color: var(--erro); background: #ff6b6b14; }
+
+.render { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--borda); }
+.render video { width: 110px; max-width: 100%; aspect-ratio: 9/16; border-radius: 8px; background: #000; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.presets button { display: flex; align-items: center; gap: 6px; }
+.presets i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+.vazio { text-align: center; padding: 28px 10px; color: var(--suave); }
+code { background: var(--campo); padding: 1px 6px; border-radius: 5px; color: var(--ouro-claro); }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(120px); background: var(--ouro); color: var(--sobre-ouro); padding: 10px 18px; border-radius: 8px; font-weight: 600; transition: transform .25s; z-index: 20; max-width: calc(100% - 32px); }
+.toast.on { transform: translateX(-50%) translateY(0); }
+@media (prefers-reduced-motion: reduce) { .pulso { animation: none; } .toast, .barra > div { transition: none; } }
+</style>
+
+<header class="topo">
+  <div class="envolve">
+    <div class="marca"><span class="losango"></span>ESTÚDIO <b>SHORTS</b></div>
+    <select id="seletor" aria-label="Escolher vídeo"></select>
+    <button id="btnNovo" class="btn ouro" type="button">+ Novo vídeo</button>
+  </div>
+</header>
+
+<div class="envolve">
+  <nav class="etapas" id="etapas" aria-label="Etapas do vídeo">
+    <button type="button" data-aba="briefing"><i>1</i>Briefing</button>
+    <button type="button" data-aba="otimizacao"><i>2</i>Otimização</button>
+    <button type="button" data-aba="roteiro"><i>3</i>Roteiro</button>
+    <button type="button" data-aba="visual"><i>4</i>Visual &amp; voz</button>
+    <button type="button" data-aba="exportar"><i>5</i>Produzir</button>
+  </nav>
+
+  <main class="grade">
+    <section class="trabalho" id="conteudo"></section>
+    <aside class="lateral">
+      <div class="cartao status" id="status"></div>
+      <div class="celular"><div id="player"></div></div>
+      <div class="dica" id="dicaPlayer"></div>
+      <div class="cartao">
+        <h3>Criação</h3>
+        <ol class="linha" id="linha"></ol>
+      </div>
+    </aside>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="player.js"></script>
+<script>
+"use strict";
+// ============================================================ guia de otimização (vai no pedido ao Claude)
+const GUIA = `Você é roteirista de YouTube Shorts/TikTok de League of Legends em português do Brasil.
+Otimize o roteiro para viralizar, respeitando as orientações do criador acima destas regras.
+O algoritmo mede retenção nos primeiros 3s, % assistido (replay) e interação (comentários pesam mais).
+REGRAS:
+1. Gancho em até 1,5s. Nada de "fala galera", apresentação de canal ou contexto. Formas que funcionam: segredo ("a Riot vai nerfar isso"), erro do espectador ("você está buildando X errado"), número + resultado ("de Prata a Platina em 30 jogos"), desafio ("um Teemo consegue 1v5?"), reação ("o outplay mais injusto que já vi"), comparação, pergunta direta, notícia de patch.
+2. Uma ideia por vídeo. Várias dicas viram "3 dicas" com contador na tela.
+3. Lacuna de curiosidade: prometa no início, entregue no fim.
+4. Frases curtas e faladas, 6 a 12 palavras. Corte "tipo", "basicamente", "na verdade". Ritmo de ~3 palavras/segundo.
+5. Cada cena = uma mudança visual (a cada 2-3s).
+6. Números concretos. Não invente estatísticas do jogo: só use números que estejam no roteiro ou nas orientações; se faltar, use resultado visual ("derrete o tanque").
+7. Termos que a comunidade usa (outplay, flash, ult, combo, gank, elo, meta, patch, build, runa, mid/top/jg/adc/sup). Nomes de campeões e itens escritos certo.
+8. Final que gera comentário (pergunta polêmica, desafio) ou que encaixa no começo (loop).
+9. Duração: respeite a duração alvo (~3 palavras por segundo de narração).
+ESTRUTURAS: Outplay = reação como gancho, contexto em 1 frase, a jogada, o truque, pergunta. Dica = erro comum, porquê, passos numerados, prova, CTA. Build = promessa de resultado, um item por cena com motivo, power spike, "salva pra não esquecer". Curiosidade/Lore = fato chocante, detalhes, virada no fim. Patch = o que mudou, quem ganha/perde, opinião forte, "concorda?". Tier list = começar do último, guardar o 1º para o fim. Humor = antecipar a desgraça, setup, fail, comentário curto. Polêmica = opinião forte, 2-3 argumentos, "comenta se discorda".
+TEXTO NA TELA: gancho de 2 a 5 palavras em maiúsculas; por cena é opcional e curtinho (número, palavra-chave). Destaques: 1-2 palavras por cena (campeão, número, verbo de impacto).
+TÍTULO até ~60 caracteres; descrição de 1 frase + pergunta; 3-5 hashtags incluindo #leagueoflegends #lol.
+Não prometa bugs/exploits nem incentive scripts.`;
+
+const FORMATO = `Responda SOMENTE com um objeto JSON neste formato:
+{"notaOriginal": número 0-10, "notaOtimizada": número 0-10, "resumo": "1 frase sobre a estratégia",
+ "titulos": ["3 opções"], "hook": {"textoTela": "2-5 PALAVRAS"},
+ "cenas": [{"narracao": "frase falada", "textoTela": "opcional ou vazio", "destaque": ["palavras"], "visual": "o que mostrar do gameplay", "clipeInicio": null}],
+ "cta": {"texto": "chamada curta para comentar"}, "descricao": "pronta para colar", "hashtags": ["#leagueoflegends", "#lol"],
+ "mudancas": [{"antes": "trecho original (vazio se for novo)", "depois": "trecho novo", "porque": "motivo em 1 frase"}]}`;
+
+// ============================================================ constantes
+const TIPOS = ["Outplay / Jogada", "Dica / Tutorial", "Build / Guia de campeão", "Curiosidade / Lore", "Notícia de patch", "Tier list / Ranking", "Humor / Fail", "Polêmica / Opinião"];
+const TONS = ["Energético", "Engraçado", "Sério / Analítico", "Misterioso", "Polêmico"];
+const PUBLICOS = ["Todos", "Iniciantes (Ferro–Prata)", "Intermediário (Ouro–Esmeralda)", "High elo (Diamante+)"];
+const VOZES = [
+  { id: "pt-BR-AntonioNeural", nome: "Antonio (masculina)" },
+  { id: "pt-BR-FranciscaNeural", nome: "Francisca (feminina)" },
+  { id: "pt-BR-ThalitaMultilingualNeural", nome: "Thalita (feminina)" },
+];
+const PRESETS = {
+  Hextech: { tema: { cor1: "#010A13", cor2: "#0A323C", corDestaque: "#C8AA6E" }, cores: { corFalada: "#FFE600", corEnfase: "#0AC8B9" } },
+  Noxus: { tema: { cor1: "#120404", cor2: "#4A0C0C", corDestaque: "#E8403A" }, cores: { corFalada: "#FFD400", corEnfase: "#FF4D4D" } },
+  Ionia: { tema: { cor1: "#12061A", cor2: "#4A1A4F", corDestaque: "#FF8FD8" }, cores: { corFalada: "#FFE600", corEnfase: "#FF8FD8" } },
+  Shurima: { tema: { cor1: "#140D02", cor2: "#5A3B0C", corDestaque: "#FFC845" }, cores: { corFalada: "#FFC845", corEnfase: "#4FD1FF" } },
+  Piltover: { tema: { cor1: "#0B0F14", cor2: "#1D3B4F", corDestaque: "#F2A93B" }, cores: { corFalada: "#F2A93B", corEnfase: "#3FD0FF" } },
+  Clean: { tema: { cor1: "#0A0A0A", cor2: "#2A2A2A", corDestaque: "#FFFFFF" }, cores: { corFalada: "#22FF88", corEnfase: "#22D3FF" } },
+};
+const ETAPAS = {
+  briefing: ["Briefing", ""], otimizando: ["Claude otimizando", "claude"], aguardando_claude: ["Aguardando o Claude", "claude"],
+  otimizado: ["Roteiro otimizado", "ok"], aguardando_producao: ["Pedido de produção", "claude"], produzindo: ["Produzindo", "rodando"],
+  pronto: ["Vídeo pronto", "ok"], erro: ["Erro", "erro"],
+};
+const configPadrao = () => ({
+  voz: "pt-BR-AntonioNeural", velocidade: 10,
+  fundo: { tipo: "gradiente", asset: null, inicio: 0, cortesPorCena: true, volume: 0 },
+  musica: { asset: null, volume: 0.12 },
+  estilo: { fonte: "Montserrat", tamanho: 92, corTexto: "#FFFFFF", corFalada: "#FFE600", corEnfase: "#0AC8B9", corContorno: "#000000", posicaoY: 0.66, palavrasPorBloco: 3, caixaAlta: true },
+  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true },
+  tema: { cor1: "#010A13", cor2: "#0A323C", corDestaque: "#C8AA6E" },
+  hookDuracao: 2.4, ctaAtivo: true,
+});
+
+// ============================================================ utilidades
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const fmtT = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+const fmtMB = (b) => `${(b / 1048576).toFixed(1)} MB`;
+const clone = (o) => JSON.parse(JSON.stringify(o ?? null));
+const blobUrl = (id) => (id ? "/_blob/" + id : null);
+const mesclar = (base, o) => {
+  const r = clone(base);
+  for (const k of Object.keys(o || {})) r[k] = o[k] && typeof o[k] === "object" && !Array.isArray(o[k]) && r[k] && typeof r[k] === "object" ? mesclar(r[k], o[k]) : o[k];
+  return r;
+};
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => t.classList.remove("on"), 2800);
+}
+const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^\w%+]/g, "");
+const slug = (s) => (s || "video").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 32) || "video";
+async function sha1(texto) {
+  const buf = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(texto));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 12);
+}
+function msgErro(e) {
+  const c = e?.code;
+  if (c === "quota_exceeded") return "O espaço de dados desta página está cheio.";
+  if (c === "invalid_argument") return "Você não tem permissão para editar esta página.";
+  if (c === "too_large" || c === "payload_too_large") return "Arquivo grande demais (máx. 20 MB).";
+  return e?.message || "Não deu certo. Tente de novo.";
+}
+
+// ============================================================ estado
+let db = null, assets = null, sample = null, downloads = null;
+let projetos = [];
+let proj = null;          // {id, ...documento}
+let eventos = [];
+let producao = null;      // documento escrito pelo Claude Code
+let cfg = null, ot = null;
+let hashAtual = "";
+let aba = "briefing";
+let sujo = 0;             // edições locais ainda não gravadas
+let assinaturaAba = "";
+let desinscrever = [];
+let carregando = true, otimizando = null;
+let playerMontado = false;
+let midias = [];          // assets enviados (vídeos e músicas)
+
+// fila: uma escrita por vez em cada documento
+const filas = new Map();
+function gravar(ref, fn) {
+  const p = (filas.get(ref.path) || Promise.resolve()).then(fn).catch((e) => toast(msgErro(e)));
+  filas.set(ref.path, p);
+  return p;
+}
+const refProj = () => db.doc("projetos/" + proj.id);
+function evento(msg, tipo = "info") {
+  if (!db || !proj) return;
+  db.collection(`projetos/${proj.id}/eventos`).add({ t: Date.now(), msg, tipo }).catch(() => {});
+}
+function atualizarProj(dados) {
+  if (!db || !proj) return Promise.resolve();
+  sujo++;
+  return gravar(refProj(), () => refProj().update({ ...dados, atualizado: Date.now() })).finally(() => sujo--);
+}
+
+// ============================================================ cenas, trilha e props do player
+function cenasDoRoteiro(roteiro) {
+  return (roteiro || "").replace(/\s+/g, " ").split(/(?<=[.!?…])\s+/).map((s) => s.trim()).filter(Boolean).map((narracao) => ({ narracao, destaque: [] }));
+}
+const cenasComFala = () => (ot?.cenas || []).filter((c) => (c.narracao || "").trim());
+
+function trilhaEstimada(cenas) {
+  const fator = 1 + (cfg.velocidade || 0) / 100;
+  let t = 0.15;
+  const out = cenas.map((c) => {
+    const alvo = new Set((c.destaque || []).flatMap((d) => d.split(/\s+/)).map(norm));
+    const ini = t;
+    const palavras = c.narracao.trim().split(/\s+/).map((w) => {
+      const dur = Math.max(0.16, (w.length * 0.062 + 0.07) / fator);
+      const p = { texto: w.replace(/[.,!?;:…]+$/, ""), inicio: +t.toFixed(3), fim: +(t + dur).toFixed(3), destaque: alvo.has(norm(w)) };
+      t += dur;
+      return p;
+    });
+    t += 0.25;
+    return { inicio: +ini.toFixed(3), fim: +(t - 0.25).toFixed(3), palavras };
+  });
+  return { duracao: +t.toFixed(3), cenas: out };
+}
+
+async function recalcularHash() {
+  if (!cfg || !ot) return;
+  hashAtual = await sha1(JSON.stringify([cenasComFala().map((c) => c.narracao.trim()), cfg.voz, cfg.velocidade]));
+}
+const narracaoEmDia = () => !!(producao?.audio?.id && producao.trilha && producao.hash === hashAtual);
+
+function trilhaAtual() {
+  const cenas = cenasComFala();
+  const tr = narracaoEmDia() ? clone(producao.trilha) : trilhaEstimada(cenas);
+  tr.cenas = tr.cenas.map((c, i) => ({ ...c, textoTela: cenas[i]?.textoTela || "", clipeInicio: cenas[i]?.clipeInicio ?? null }));
+  return tr;
+}
+
+function propsDoVideo() {
+  if (!proj || !cfg) return window.EstudioPlayer.exemplo;
+  return {
+    trilha: trilhaAtual(),
+    audio: narracaoEmDia() ? blobUrl(producao.audio.id) : null,
+    fundo: { ...cfg.fundo, url: cfg.fundo.tipo === "video" && cfg.fundo.asset ? blobUrl(cfg.fundo.asset.id) : null },
+    musica: { url: cfg.musica.asset ? blobUrl(cfg.musica.asset.id) : null, volume: cfg.musica.volume },
+    estilo: cfg.estilo, efeitos: cfg.efeitos, tema: cfg.tema,
+    hook: { texto: ot?.hook?.textoTela || proj.titulo || "", duracao: cfg.hookDuracao },
+    cta: { texto: ot?.cta?.texto || "", ativo: cfg.ctaAtivo },
+  };
+}
+
+function atualizarPlayer() {
+  if (!window.EstudioPlayer) return;
+  const props = propsDoVideo();
+  if (!playerMontado) { window.EstudioPlayer.montar($("#player"), props); playerMontado = true; }
+  else window.EstudioPlayer.atualizar(props);
+  $("#dicaPlayer").textContent = proj
+    ? `${fmtT(props.trilha.duracao)} · ${narracaoEmDia() ? "com narração" : "tempo estimado, ainda sem narração"} · ${props.trilha.cenas.length} cenas`
+    : "Exemplo. Crie um vídeo para ver o seu aqui.";
+}
+const recalcularEPlayer = async () => { await recalcularHash(); atualizarPlayer(); atualizarTempos(); };
+
+// ============================================================ assinaturas do banco
+function assinarLista() {
+  const tempo = setTimeout(() => { if (carregando) { carregando = false; desenharStatus("Não consegui carregar seus vídeos ainda. Verifique a conexão."); } }, 10000);
+  db.collection("projetos").orderBy("atualizado", "desc").limit(100).onSnapshot((s) => {
+    clearTimeout(tempo);
+    carregando = false;
+    projetos = s.docs.map((d) => ({ id: d.id, ...d.data() }));
+    desenharSeletor();
+    if (!proj && !abrir.feito) {
+      abrir.feito = true;
+      const id = location.hash.slice(1);
+      const alvo = projetos.find((p) => p.id === id) || projetos[0];
+      if (alvo) abrir(alvo.id);
+      else desenharTudo();
+    }
+  }, (e) => { clearTimeout(tempo); toast(msgErro(e)); });
+}
+
+function abrir(id, novaAba) {
+  desinscrever.forEach((u) => u());
+  desinscrever = [];
+  proj = { id, carregando: true };
+  eventos = [];
+  producao = null;
+  cfg = null; ot = null;
+  assinaturaAba = "";
+  aba = novaAba || null;
+  try { history.replaceState(null, "", "#" + id); } catch {}
+  desenharSeletor();
+  desinscrever.push(db.doc("projetos/" + id).onSnapshot(async (s) => {
+    if (!s.exists) return;
+    const d = s.data();
+    proj = { id, ...d };
+    if (!sujo && !s.metadata.hasPendingWrites) {
+      cfg = mesclar(configPadrao(), d.config);
+      ot = clone(d.otimizado) || { cenas: cenasDoRoteiro(d.briefing?.roteiro) };
+      if (!ot.cenas?.length) ot.cenas = cenasDoRoteiro(d.briefing?.roteiro);
+    }
+    if (!aba) aba = { briefing: "briefing", otimizando: "otimizacao", aguardando_claude: "otimizacao", otimizado: "otimizacao", aguardando_producao: "exportar", produzindo: "exportar", pronto: "exportar" }[d.etapa] || "roteiro";
+    await recalcularHash();
+    redesenharSePreciso();
+    desenharSeletor();
+  }, (e) => toast(msgErro(e))));
+  desinscrever.push(db.collection(`projetos/${id}/eventos`).orderBy("t", "desc").limit(60).onSnapshot((s) => {
+    eventos = s.docs.map((d) => d.data());
+    desenharStatus();
+  }, () => {}));
+  desinscrever.push(db.doc(`projetos/${id}/producao/estado`).onSnapshot((s) => {
+    producao = s.exists ? s.data() : null;
+    redesenharSePreciso(true);
+  }, () => {}));
+}
+
+function redesenharSePreciso(producaoMudou) {
+  const ass = [aba, proj?.etapa, JSON.stringify(proj?.otimizado?.mudancas || null).length, producao?.renders?.length || 0, producao?.etapa, narracaoEmDia(), !!proj?.carregando].join("|");
+  desenharEtapas();
+  desenharStatus();
+  atualizarPlayer();
+  const digitando = document.activeElement?.matches?.("#conteudo input, #conteudo textarea, #conteudo select");
+  if (ass !== assinaturaAba && !digitando) {
+    assinaturaAba = ass;
+    desenharAba();
+  } else if (producaoMudou && aba === "exportar" && !digitando) {
+    desenharAba();
+  } else atualizarTempos();
+}
+
+// ============================================================ desenho geral
+function desenharSeletor() {
+  const sel = $("#seletor");
+  sel.innerHTML = `<option value="">${projetos.length ? "Escolha um vídeo" : "Nenhum vídeo ainda"}</option>` +
+    projetos.map((p) => `<option value="${esc(p.id)}">${esc(p.titulo || p.id)} · ${esc(ETAPAS[p.etapa]?.[0] || "")}</option>`).join("");
+  sel.value = proj?.id || "";
+}
+
+function desenharTudo() {
+  desenharSeletor();
+  desenharEtapas();
+  desenharAba();
+  desenharStatus();
+  atualizarPlayer();
+}
+
+function desenharEtapas() {
+  const feitas = { briefing: !!proj, otimizacao: !!proj?.otimizado?.mudancas, roteiro: narracaoEmDia(), visual: narracaoEmDia(), exportar: (producao?.renders || []).length > 0 };
+  document.querySelectorAll("#etapas button").forEach((b) => {
+    const a = b.dataset.aba;
+    b.classList.toggle("ativo", a === (aba || "briefing"));
+    b.classList.toggle("feito", !!feitas[a] && a !== aba);
+    b.disabled = (!proj || proj.carregando) && a !== "briefing";
+  });
+}
+
+function desenharStatus(aviso) {
+  if (!proj || proj.carregando) {
+    $("#status").innerHTML = `<div class="etq"><b>${aviso ? esc(aviso) : carregando && db ? "Carregando seus vídeos…" : "Nenhum vídeo aberto"}</b></div>`;
+    $("#linha").innerHTML = `<li>Mande um roteiro na etapa Briefing para começar.</li>`;
+    return;
+  }
+  const [nome, classe] = ETAPAS[proj.etapa] || [proj.etapa, ""];
+  const p = producao;
+  const prog = p && p.progresso != null && proj.etapa === "produzindo"
+    ? `<div class="barra"><div style="width:${Math.round(p.progresso * 100)}%"></div></div><small class="nota-rodape">${esc(p.texto || "")}</small>` : "";
+  $("#status").innerHTML = `<div class="etq"><b>${esc(proj.titulo || proj.id)}</b><span class="selo ${classe}">${esc(nome)}</span></div>${prog}`;
+  $("#linha").innerHTML = eventos.length
+    ? eventos.map((l) => `<li class="${esc(l.tipo)}">${esc(l.msg)}<small>${new Date(l.t).toLocaleString("pt-BR")}</small></li>`).join("")
+    : `<li>Nada por aqui ainda.</li>`;
+}
+
+function desenharAba() {
+  const el = $("#conteudo");
+  if (!db) {
+    el.innerHTML = `<div class="cartao destaque"><h2>Estúdio Shorts</h2><p>Para criar e salvar vídeos, abra esta página no claude.ai com a sua conta. Ao lado você vê um exemplo do vídeo que o estúdio monta.</p></div>`;
+    return;
+  }
+  if (proj?.carregando) { el.innerHTML = `<div class="cartao"><p class="vazio">Abrindo o vídeo…</p></div>`; return; }
+  ({ briefing: abaBriefing, otimizacao: abaOtimizacao, roteiro: abaRoteiro, visual: abaVisual, exportar: abaExportar }[aba || "briefing"])(el);
+}
+
+// ============================================================ 1. briefing
+function abaBriefing(el) {
+  const b = proj?.briefing || {};
+  const opt = (lista, v) => lista.map((x) => `<option ${x === v ? "selected" : ""}>${esc(x)}</option>`).join("");
+  el.innerHTML = `
+  <div class="cartao destaque">
+    <h2>${proj ? "Briefing do vídeo" : "Novo vídeo"}</h2>
+    <p class="nota-rodape" style="margin-top:0">Cole o roteiro e diga o que você quer. Depois o Claude revisa e otimiza com base no que viraliza em Shorts de League of Legends.</p>
+    <label for="bTitulo">Título ou ideia do vídeo</label>
+    <input type="text" id="bTitulo" value="${esc(b.titulo ?? proj?.titulo)}" placeholder="Ex.: Build de Jinx que ninguém usa">
+    <div class="linha2">
+      <div><label for="bTipo">Tipo de vídeo</label><select id="bTipo">${opt(TIPOS, b.tipo)}</select></div>
+      <div><label for="bCampeao">Campeão(ões)</label><input type="text" id="bCampeao" value="${esc(b.campeao)}" placeholder="Ex.: Jinx, Thresh"></div>
+      <div><label for="bDuracao">Duração alvo</label><select id="bDuracao">${opt(["15s", "30s", "45s", "60s"], b.duracao || "30s")}</select></div>
+      <div><label for="bTom">Tom</label><select id="bTom">${opt(TONS, b.tom)}</select></div>
+      <div><label for="bPublico">Público</label><select id="bPublico">${opt(PUBLICOS, b.publico)}</select></div>
+    </div>
+    <label for="bRoteiro">Roteiro (o texto que vai ser narrado)</label>
+    <textarea class="grande" id="bRoteiro" placeholder="Escreva ou cole o roteiro aqui…">${esc(b.roteiro)}</textarea>
+    <label for="bOrient">Orientações para o Claude (opcional)</label>
+    <textarea id="bOrient" placeholder="Ex.: tom de zoeira, citar o patch atual, terminar perguntando o main da galera…">${esc(b.orientacoes)}</textarea>
+    <div class="acoes">
+      <button class="btn ouro" id="bEnviar" type="button">✦ Salvar e otimizar com o Claude</button>
+      <button class="btn" id="bSalvar" type="button">Só salvar</button>
+    </div>
+  </div>`;
+  const ler = () => ({ titulo: $("#bTitulo").value.trim(), tipo: $("#bTipo").value, campeao: $("#bCampeao").value.trim(), duracao: $("#bDuracao").value, tom: $("#bTom").value, publico: $("#bPublico").value, roteiro: $("#bRoteiro").value, orientacoes: $("#bOrient").value });
+  const salvar = async () => {
+    const dados = ler();
+    if (!dados.roteiro.trim()) throw new Error("Escreva o roteiro primeiro.");
+    if (proj) {
+      const mudouRoteiro = dados.roteiro !== proj.briefing?.roteiro;
+      await atualizarProj({ briefing: dados, titulo: dados.titulo || proj.titulo });
+      if (mudouRoteiro && !proj.otimizado) { ot = { cenas: cenasDoRoteiro(dados.roteiro) }; recalcularEPlayer(); }
+      evento("Briefing editado");
+      return proj.id;
+    }
+    const id = `${slug(dados.titulo)}-${Math.random().toString(36).slice(2, 6)}`;
+    const agora = Date.now();
+    await db.doc("projetos/" + id).set({ titulo: dados.titulo || "Vídeo sem título", briefing: dados, config: configPadrao(), etapa: "briefing", criadoEm: agora, atualizado: agora });
+    abrir(id, "briefing");
+    proj = { id };
+    evento("Briefing recebido", "ok");
+    return id;
+  };
+  $("#bSalvar").onclick = () => salvar().then(() => toast("Briefing salvo")).catch((e) => toast(msgErro(e)));
+  $("#bEnviar").onclick = async () => {
+    try { await salvar(); aba = "otimizacao"; otimizar(); } catch (e) { toast(msgErro(e)); }
+  };
+}
+
+// ============================================================ 2. otimização
+async function otimizar() {
+  if (!proj?.id) return;
+  if (!sample) { pedirNoChat(); return; }
+  otimizando = { texto: "", ctl: new AbortController() };
+  assinaturaAba = "";
+  redesenharSePreciso();
+  const b = (await refProj().get()).data()?.briefing || proj.briefing || {};
+  const prompt = `${GUIA}\n\nBRIEFING DO CRIADOR (JSON):\n${JSON.stringify(b, null, 1)}\n\n${FORMATO}`;
+  atualizarProj({ etapa: "otimizando" });
+  evento("Claude começou a otimizar o roteiro", "claude");
+  try {
+    const o = await sample.json(prompt, {
+      cache: false, signal: otimizando.ctl.signal,
+      onText: ({ text }) => { otimizando.texto = text; const e = $("#escrevendo"); if (e) { e.textContent = text; e.scrollTop = e.scrollHeight; } },
+    });
+    if (!o || !Array.isArray(o.cenas) || !o.cenas.some((c) => c && String(c.narracao || "").trim())) throw { code: "invalid_json" };
+    o.cenas = o.cenas.map((c) => ({ narracao: String(c.narracao || ""), textoTela: String(c.textoTela || ""), destaque: Array.isArray(c.destaque) ? c.destaque.map(String) : [], visual: String(c.visual || ""), clipeInicio: null }));
+    ot = clone(o);
+    otimizando = null;
+    await atualizarProj({ otimizado: o, etapa: "otimizado" });
+    evento(`Roteiro otimizado pelo Claude (nota ${o.notaOriginal ?? "?"} → ${o.notaOtimizada ?? "?"})`, "claude");
+    toast("Roteiro otimizado!");
+  } catch (e) {
+    const cancelado = e?.code === "cancelled";
+    otimizando = null;
+    if (e?.code === "not_granted" || e?.code === "sampling_disabled" || e?.code === "capability_disabled" || e?.code === "capability_removed") sample = null;
+    await atualizarProj({ etapa: proj.otimizado ? "otimizado" : "briefing" });
+    const msg = cancelado ? "Otimização cancelada" : e?.code === "invalid_json" ? "O Claude respondeu fora do formato. Tente de novo." : e?.code === "rate_limited" ? "Limite de uso do Claude atingido. Tente daqui a pouco." : "Não consegui otimizar agora. Tente de novo ou peça no chat.";
+    evento(msg, cancelado ? "info" : "erro");
+    toast(msg);
+  }
+  assinaturaAba = "";
+  redesenharSePreciso();
+}
+
+function pedirNoChat() {
+  atualizarProj({ etapa: "aguardando_claude" });
+  evento("Pedido de otimização enviado ao Claude Code (chat)", "claude");
+  toast("Agora peça no chat: “otimiza o roteiro”.");
+}
+
+function abaOtimizacao(el) {
+  const o = proj.otimizado;
+  if (otimizando) {
+    el.innerHTML = `<div class="cartao destaque"><h2>Otimizando o roteiro</h2>
+      <div class="esperando"><div class="pulso"></div><div><b>O Claude está revisando o seu roteiro…</b><br><span class="nota-rodape">Ele analisa gancho, ritmo, retenção e final com base nos Shorts de LoL que viralizam. Leva de 20 segundos a 1 minuto.</span></div></div>
+      <div class="escrevendo" id="escrevendo">${esc(otimizando.texto || "Pensando…")}</div>
+      <div class="acoes"><button class="btn" id="oParar" type="button">Parar</button></div></div>`;
+    $("#oParar").onclick = () => otimizando?.ctl.abort();
+    return;
+  }
+  if (proj.etapa === "aguardando_claude" || !o?.cenas || !o.mudancas) {
+    const esperando = proj.etapa === "aguardando_claude";
+    el.innerHTML = `
+    <div class="cartao destaque">
+      <h2>Otimização do roteiro</h2>
+      ${esperando
+        ? `<div class="esperando"><div class="pulso"></div><div><b>Aguardando o Claude Code</b><br><span class="nota-rodape">Escreva <code>otimiza o roteiro</code> no chat. A página atualiza sozinha quando ele terminar.</span></div></div>`
+        : `<p>Este vídeo ainda não foi otimizado.</p>`}
+      <div class="acoes">
+        ${sample ? `<button class="btn ouro" id="oOtimizar" type="button">✦ Otimizar agora com o Claude</button>` : ""}
+        ${esperando ? "" : `<button class="btn" id="oChat" type="button">Pedir no chat do Claude Code</button>`}
+      </div>
+      ${sample ? `<p class="nota-rodape">“Otimizar agora” usa a sua conta do Claude direto nesta página (pede sua permissão na primeira vez).</p>` : ""}
+    </div>
+    <div class="cartao"><h3>Roteiro original</h3><p style="white-space:pre-wrap;margin:0">${esc(proj.briefing?.roteiro)}</p></div>`;
+    $("#oOtimizar")?.addEventListener("click", otimizar);
+    $("#oChat")?.addEventListener("click", pedirNoChat);
+    return;
+  }
+  el.innerHTML = `
+  <div class="cartao destaque">
+    <h2>Roteiro otimizado</h2>
+    <div class="notas">
+      <div class="nota antes"><small>Original</small><b>${esc(o.notaOriginal ?? "–")}</b></div>
+      <div class="seta" aria-hidden="true">➜</div>
+      <div class="nota depois"><small>Otimizado</small><b>${esc(o.notaOtimizada ?? "–")}</b></div>
+      <p style="flex:1;min-width:200px;margin:0">${esc(o.resumo)}</p>
+    </div>
+  </div>
+  <div class="cartao"><h3>Gancho na tela</h3><p style="font:400 1.9rem var(--f-titulo);color:var(--ouro);margin:0">${esc(o.hook?.textoTela)}</p></div>
+  <div class="cartao"><h3>O que mudou e por quê</h3>
+    ${(o.mudancas || []).map((m) => `<div class="mudanca">${m.antes ? `<div class="antes">${esc(m.antes)}</div>` : ""}<div class="depois">${esc(m.depois)}</div><div class="pq">→ ${esc(m.porque)}</div></div>`).join("")}
+  </div>
+  <div class="cartao"><h3>Roteiro final</h3>
+    <ol style="margin:0;padding-left:1.2rem">${(o.cenas || []).map((c) => `<li style="margin-bottom:6px">${esc(c.narracao)}${c.textoTela ? ` <span class="selo claude">${esc(c.textoTela)}</span>` : ""}</li>`).join("")}</ol>
+  </div>
+  <div class="acoes">
+    <button class="btn ouro" id="oIr" type="button">Aprovar e ajustar o roteiro ➜</button>
+    ${sample ? `<button class="btn" id="oRefazer" type="button">Otimizar de novo</button>` : `<button class="btn" id="oChat" type="button">Pedir nova versão no chat</button>`}
+  </div>`;
+  $("#oIr").onclick = () => { aba = "roteiro"; assinaturaAba = ""; redesenharSePreciso(); };
+  $("#oRefazer")?.addEventListener("click", otimizar);
+  $("#oChat")?.addEventListener("click", pedirNoChat);
+}
+
+// ============================================================ 3. roteiro
+const salvarRoteiro = debounce(() => atualizarProj({ otimizado: clone(ot) }), 700);
+
+function atualizarTempos() {
+  if (!cfg || !ot) return;
+  const cs = trilhaAtual().cenas;
+  document.querySelectorAll(".cena").forEach((el, i) => {
+    const t = el.querySelector(".tempo");
+    if (t && cs[i]) t.textContent = `▶ ${cs[i].inicio.toFixed(1)}s – ${cs[i].fim.toFixed(1)}s`;
+  });
+  const av = $("#avisoNarracao");
+  if (av) av.hidden = narracaoEmDia();
+}
+
+function avisoNarracao() {
+  return `<div class="aviso" id="avisoNarracao" ${narracaoEmDia() ? "hidden" : ""}>
+    <span>${producao?.trilha ? "O roteiro ou a voz mudou desde a última narração. O player está usando tempos estimados." : "Ainda sem narração: o player usa tempos estimados. A voz é gerada na etapa Produzir."}</span>
+    <button class="btn peq" type="button" data-ir="exportar">Ir para Produzir</button></div>`;
+}
+const ligarIr = (el) => el.querySelectorAll("[data-ir]").forEach((b) => b.addEventListener("click", () => { aba = b.dataset.ir; assinaturaAba = ""; redesenharSePreciso(); }));
+
+function abaRoteiro(el) {
+  ot.hook = ot.hook || { textoTela: "" };
+  ot.cta = ot.cta || { texto: "" };
+  el.innerHTML = `
+  ${avisoNarracao()}
+  <div class="cartao destaque">
+    <h2>Roteiro</h2>
+    <label for="rHook">Gancho: texto grande na tela nos primeiros segundos</label>
+    <input type="text" id="rHook" data-r="hook.textoTela" value="${esc(ot.hook.textoTela)}" placeholder="Ex.: BUILD PROIBIDA">
+    <label for="rCta">Chamada final (CTA)</label>
+    <input type="text" id="rCta" data-r="cta.texto" value="${esc(ot.cta.texto)}" placeholder="Ex.: Comenta seu main">
+  </div>
+  <div class="cenas" id="cenas">${ot.cenas.map((c, i) => `
+    <div class="cena" data-i="${i}">
+      <header><b>Cena ${i + 1}</b><button class="tempo" type="button" title="Ver esta cena no player"></button><span class="esp"></span>
+        <button class="btn peq" type="button" data-mover="-1" ${i === 0 ? "disabled" : ""} aria-label="Subir cena">↑</button>
+        <button class="btn peq" type="button" data-mover="1" ${i === ot.cenas.length - 1 ? "disabled" : ""} aria-label="Descer cena">↓</button>
+        <button class="btn peq" type="button" data-remover aria-label="Remover cena">✕</button></header>
+      <label for="c${i}n">Narração</label>
+      <textarea id="c${i}n" data-c="narracao" rows="2" style="min-height:60px">${esc(c.narracao)}</textarea>
+      <div class="linha2">
+        <div><label for="c${i}t">Texto na tela (opcional)</label><input type="text" id="c${i}t" data-c="textoTela" value="${esc(c.textoTela)}"></div>
+        <div><label for="c${i}d">Palavras de destaque (vírgula)</label><input type="text" id="c${i}d" data-c="destaque" value="${esc((c.destaque || []).join(", "))}"></div>
+        <div><label for="c${i}g">Trecho do gameplay (segundo)</label><input type="number" id="c${i}g" min="0" step="0.5" data-c="clipeInicio" value="${c.clipeInicio ?? ""}" placeholder="automático"></div>
+      </div>
+      ${c.visual ? `<div class="visual">🎬 Sugestão de imagem: ${esc(c.visual)}</div>` : ""}
+      <div class="acoes" hidden data-confirmar><span class="nota-rodape">Remover esta cena?</span><button class="btn peq" type="button" data-sim>Remover</button><button class="btn peq" type="button" data-nao>Manter</button></div>
+    </div>`).join("")}
+  </div>
+  <div class="acoes"><button class="btn" id="rAdd" type="button">+ Adicionar cena</button></div>`;
+
+  el.querySelectorAll("[data-r]").forEach((inp) => inp.addEventListener("input", () => {
+    const [a, b] = inp.dataset.r.split(".");
+    ot[a][b] = inp.value;
+    atualizarPlayer();
+    salvarRoteiro();
+  }));
+  el.querySelectorAll(".cena").forEach((box) => {
+    const i = +box.dataset.i;
+    box.querySelectorAll("[data-c]").forEach((inp) => inp.addEventListener("input", () => {
+      const k = inp.dataset.c;
+      if (k === "destaque") ot.cenas[i].destaque = inp.value.split(",").map((s) => s.trim()).filter(Boolean);
+      else if (k === "clipeInicio") ot.cenas[i].clipeInicio = inp.value === "" ? null : +inp.value;
+      else ot.cenas[i][k] = inp.value;
+      recalcularEPlayer();
+      salvarRoteiro();
+    }));
+    box.querySelector(".tempo").onclick = () => window.EstudioPlayer.irPara(trilhaAtual().cenas[i]?.inicio || 0);
+    box.querySelectorAll("[data-mover]").forEach((b) => b.addEventListener("click", () => {
+      const j = i + +b.dataset.mover;
+      [ot.cenas[i], ot.cenas[j]] = [ot.cenas[j], ot.cenas[i]];
+      abaRoteiro(el); recalcularEPlayer(); salvarRoteiro();
+    }));
+    const conf = box.querySelector("[data-confirmar]");
+    box.querySelector("[data-remover]").onclick = () => { conf.hidden = false; };
+    box.querySelector("[data-nao]").onclick = () => { conf.hidden = true; };
+    box.querySelector("[data-sim]").onclick = () => { ot.cenas.splice(i, 1); abaRoteiro(el); recalcularEPlayer(); salvarRoteiro(); };
+  });
+  $("#rAdd").onclick = () => { ot.cenas.push({ narracao: "", destaque: [], textoTela: "" }); abaRoteiro(el); };
+  ligarIr(el);
+  atualizarTempos();
+}
+
+// ============================================================ 4. visual & voz
+const salvarConfig = debounce(() => atualizarProj({ config: clone(cfg) }), 600);
+const pegar = (o, c) => c.split(".").reduce((a, k) => a?.[k], o);
+const por = (o, c, v) => { const ks = c.split("."); const u = ks.pop(); ks.reduce((a, k) => a[k], o)[u] = v; };
+const formatar = (c, v) =>
+  c === "velocidade" ? `${v > 0 ? "+" : ""}${v}%` :
+  c.endsWith("volume") || c === "estilo.posicaoY" ? `${Math.round(v * 100)}%` :
+  c === "estilo.tamanho" ? `${v}px` : c === "hookDuracao" ? `${(+v).toFixed(1)}s` : String(v);
+
+function assinarMidias() {
+  db.collection("midias").orderBy("criadoEm", "desc").limit(200).onSnapshot((s) => {
+    midias = s.docs.map((d) => d.data());
+    if (aba === "visual" && !document.activeElement?.matches?.("#conteudo input, #conteudo select")) desenharAba();
+  }, () => {});
+}
+
+function abaVisual(el) {
+  const opcoes = (lista, atual, vazio) => (vazio ? `<option value="">${vazio}</option>` : "") +
+    lista.map((x) => `<option value="${esc(x.id)}" ${x.id === atual ? "selected" : ""}>${esc(x.nome)}</option>`).join("");
+  const lista = (tipo) => midias.filter((m) => m.tipo === tipo).map((m) => ({ id: m.id, nome: `${m.nome}${m.bytes ? ` (${fmtMB(m.bytes)})` : ""}` }));
+  const videos = lista("gameplay");
+  const sons = lista("musica");
+  if (cfg.fundo.asset && !videos.some((v) => v.id === cfg.fundo.asset.id)) videos.unshift({ id: cfg.fundo.asset.id, nome: cfg.fundo.asset.nome || "vídeo enviado" });
+  if (cfg.musica.asset && !sons.some((v) => v.id === cfg.musica.asset.id)) sons.unshift({ id: cfg.musica.asset.id, nome: cfg.musica.asset.nome || "música enviada" });
+  const faixa = (c, rot, min, max, passo) => `<label for="f-${c}">${rot}: <span class="valor" data-v="${c}">${formatar(c, pegar(cfg, c))}</span></label><input type="range" id="f-${c}" data-cfg="${c}" data-num min="${min}" max="${max}" step="${passo}" value="${pegar(cfg, c)}">`;
+  const chk = (c, rot) => `<label class="check"><input type="checkbox" data-cfg="${c}" ${pegar(cfg, c) ? "checked" : ""}> ${rot}</label>`;
+  const cor = (c, rot) => `<label>${rot}<input type="color" data-cfg="${c}" value="${pegar(cfg, c)}"></label>`;
+  el.innerHTML = `
+  ${avisoNarracao()}
+  <div class="cartao destaque">
+    <h2>Voz</h2>
+    <div class="linha2">
+      <div><label for="vVoz">Narrador</label><select id="vVoz" data-cfg="voz">${opcoes(VOZES, cfg.voz)}</select></div>
+      <div>${faixa("velocidade", "Velocidade", -20, 40, 5)}</div>
+    </div>
+    <p class="nota-rodape">Vozes gratuitas em português (Microsoft Edge TTS). A narração é gerada na etapa Produzir.</p>
+  </div>
+  <div class="cartao">
+    <h3>Fundo</h3>
+    <label class="check"><input type="radio" name="fundo" value="gradiente" ${cfg.fundo.tipo === "gradiente" ? "checked" : ""}> Animado (hexágonos e partículas)</label>
+    <label class="check"><input type="radio" name="fundo" value="video" ${cfg.fundo.tipo === "video" ? "checked" : ""}> Meu gameplay</label>
+    <div class="linha2">
+      <div><label for="vFundo">Vídeo enviado</label><select id="vFundo" data-midia="fundo">${opcoes(videos, cfg.fundo.asset?.id, "Nenhum")}</select></div>
+      <div><label for="vUpV">Enviar gameplay (até 20 MB)</label><input type="file" id="vUpV" accept="video/mp4,video/webm,video/quicktime" data-upload="fundo" ${assets ? "" : "disabled"}></div>
+      <div><label for="vIni">Começar no segundo</label><input type="number" id="vIni" min="0" step="0.5" data-cfg="fundo.inicio" data-num value="${cfg.fundo.inicio}"></div>
+    </div>
+    ${chk("fundo.cortesPorCena", "Corte e zoom a cada cena (usa o “trecho do gameplay” de cada cena)")}
+    ${faixa("fundo.volume", "Som do jogo", 0, 1, 0.05)}
+  </div>
+  <div class="cartao">
+    <h3>Música</h3>
+    <div class="linha2">
+      <div><label for="vMus">Trilha enviada</label><select id="vMus" data-midia="musica">${opcoes(sons, cfg.musica.asset?.id, "Sem música")}</select></div>
+      <div><label for="vUpM">Enviar música</label><input type="file" id="vUpM" accept=".m4a,.mp4,audio/mp4,video/mp4" data-upload="musica" ${assets ? "" : "disabled"}></div>
+    </div>
+    <p class="nota-rodape">Aqui a música precisa estar em .m4a ou .mp4. Tem MP3? Mande no chat do Claude Code que ele converte e coloca na lista.</p>
+    ${faixa("musica.volume", "Volume da música", 0, 0.6, 0.02)}
+    <p class="nota-rodape">Use só músicas livres de direitos (Biblioteca de Áudio do YouTube, Pixabay).</p>
+  </div>
+  <div class="cartao">
+    <h3>Legenda</h3>
+    <div class="linha2">
+      <div><label for="vFonte">Fonte</label><select id="vFonte" data-cfg="estilo.fonte">${opcoes(window.EstudioPlayer.fontes.map((f) => ({ id: f.id, nome: f.nome })), cfg.estilo.fonte)}</select></div>
+      <div>${faixa("estilo.tamanho", "Tamanho", 56, 140, 2)}</div>
+      <div>${faixa("estilo.palavrasPorBloco", "Palavras por vez", 1, 6, 1)}</div>
+      <div>${faixa("estilo.posicaoY", "Altura na tela", 0.3, 0.8, 0.01)}</div>
+    </div>
+    ${chk("estilo.caixaAlta", "CAIXA ALTA")}
+    <div class="cores">${cor("estilo.corTexto", "Texto")}${cor("estilo.corFalada", "Palavra falada")}${cor("estilo.corEnfase", "Destaque")}${cor("estilo.corContorno", "Contorno")}</div>
+  </div>
+  <div class="cartao">
+    <h3>Tema e efeitos</h3>
+    <div class="presets">${Object.entries(PRESETS).map(([n, p]) => `<button class="btn peq" type="button" data-preset="${n}"><i style="background:${p.tema.corDestaque}"></i>${n}</button>`).join("")}</div>
+    <div class="cores">${cor("tema.cor1", "Fundo escuro")}${cor("tema.cor2", "Fundo claro")}${cor("tema.corDestaque", "Cor de destaque")}</div>
+    ${chk("efeitos.hook", "Gancho grande no início")}
+    ${faixa("hookDuracao", "Duração do gancho", 1, 4, 0.2)}
+    ${chk("efeitos.barraProgresso", "Barra de progresso (ajuda a segurar até o fim)")}
+    ${chk("efeitos.flash", "Flash na troca de cena")}
+    ${chk("efeitos.zoomPunch", "Zoom na troca de cena")}
+    ${chk("ctaAtivo", "Chamada final (CTA)")}
+  </div>`;
+
+  el.querySelectorAll("[data-cfg]").forEach((inp) => {
+    const ev = inp.type === "checkbox" || inp.tagName === "SELECT" ? "change" : "input";
+    inp.addEventListener(ev, () => {
+      let v = inp.type === "checkbox" ? inp.checked : inp.value;
+      if (inp.dataset.num !== undefined) v = +v;
+      por(cfg, inp.dataset.cfg, v);
+      const lbl = el.querySelector(`[data-v="${inp.dataset.cfg}"]`);
+      if (lbl) lbl.textContent = formatar(inp.dataset.cfg, v);
+      recalcularEPlayer();
+      salvarConfig();
+    });
+  });
+  el.querySelectorAll("input[name=fundo]").forEach((r) => r.addEventListener("change", () => {
+    cfg.fundo.tipo = r.value;
+    if (r.value === "video" && !cfg.fundo.asset) toast("Escolha ou envie um vídeo de gameplay");
+    atualizarPlayer(); salvarConfig();
+  }));
+  el.querySelectorAll("[data-midia]").forEach((s) => s.addEventListener("change", () => {
+    const alvo = s.dataset.midia;
+    const m = midias.find((x) => x.id === s.value);
+    const valor = s.value ? { id: s.value, nome: m?.nome || (alvo === "fundo" ? cfg.fundo.asset?.nome : cfg.musica.asset?.nome) || "" } : null;
+    if (alvo === "fundo") { cfg.fundo.asset = valor; if (valor) { cfg.fundo.tipo = "video"; el.querySelector("input[name=fundo][value=video]").checked = true; } }
+    else cfg.musica.asset = valor;
+    atualizarPlayer(); salvarConfig();
+  }));
+  el.querySelectorAll("[data-preset]").forEach((b) => b.addEventListener("click", () => {
+    const p = PRESETS[b.dataset.preset];
+    cfg.tema = { ...p.tema };
+    Object.assign(cfg.estilo, p.cores);
+    abaVisual(el); atualizarPlayer(); salvarConfig();
+  }));
+  el.querySelectorAll("[data-upload]").forEach((inp) => inp.addEventListener("change", async () => {
+    const f = inp.files[0];
+    if (!f) return;
+    const musica = inp.dataset.upload === "musica";
+    if (f.size > 20 * 1048576) { toast("Arquivo maior que 20 MB. Corte um trecho menor."); inp.value = ""; return; }
+    if (musica && !/\.(m4a|mp4)$/i.test(f.name)) { toast("Esse formato não entra aqui. Mande a música no chat que eu converto."); inp.value = ""; return; }
+    toast(`Enviando ${f.name}…`);
+    inp.disabled = true;
+    try {
+      const tipoArq = musica ? "video/mp4" : ({ webm: "video/webm", mov: "video/quicktime" }[f.name.split(".").pop().toLowerCase()] || "video/mp4");
+      const r = await assets.upload(f, { type: tipoArq });
+      const valor = { id: r.id, nome: f.name };
+      await db.collection("midias").add({ id: r.id, nome: f.name, tipo: musica ? "musica" : "gameplay", bytes: f.size, criadoEm: Date.now() });
+      if (!musica) cfg.fundo = { ...cfg.fundo, tipo: "video", asset: valor };
+      else cfg.musica.asset = valor;
+      abaVisual(el); atualizarPlayer(); salvarConfig();
+      evento(`Arquivo enviado: ${f.name}`, "ok");
+      toast("Arquivo enviado");
+    } catch (e) { toast(msgErro(e)); inp.disabled = false; }
+  }));
+  ligarIr(el);
+}
+
+// ============================================================ 5. produzir
+async function baixar(r) {
+  try {
+    const blob = await (await fetch(blobUrl(r.id))).blob();
+    await downloads.save({ filename: r.nome, data: blob });
+  } catch (e) { if (e?.code !== "cancelled" && e?.code !== "declined") toast("Não consegui baixar. Segure o vídeo e use “Salvar vídeo”."); }
+}
+
+function abaExportar(el) {
+  const o = proj.otimizado || {};
+  const pedido = proj.etapa === "aguardando_producao";
+  const rodando = proj.etapa === "produzindo";
+  const copiar = (txt) => `<button class="btn peq" type="button" data-copiar="${esc(txt)}">Copiar</button>`;
+  const renders = [...(producao?.renders || [])].reverse();
+  const frase = `produz o vídeo ${proj.titulo || proj.id}`;
+  el.innerHTML = `
+  ${avisoNarracao().replace('<button class="btn peq" type="button" data-ir="exportar">Ir para Produzir</button>', "")}
+  <div class="cartao destaque">
+    <h2>Produzir</h2>
+    <p class="nota-rodape" style="margin-top:0">A narração e o vídeo em MP4 são feitos pelo Claude Code, que tem o editor de vídeo. Você pede aqui, ele produz e o vídeo aparece nesta página.</p>
+    ${rodando ? `<div class="esperando"><div class="pulso"></div><div><b>Produzindo…</b><br><span class="nota-rodape">${esc(producao?.texto || "")}</span></div></div>`
+      : pedido ? `<div class="esperando"><div class="pulso"></div><div><b>Pedido enviado.</b> Agora escreva no chat do Claude Code:<div class="copiavel"><span><code>${esc(frase)}</code></span>${copiar(frase)}</div></div></div>`
+      : `<div class="linha2"><div><label for="pQual">Qualidade</label><select id="pQual"><option value="final">Final 1080x1920</option><option value="previa">Prévia rápida 540x960</option></select></div></div>
+         <div class="acoes"><button class="btn ouro" id="pPedir" type="button">🎬 Pedir narração e vídeo</button></div>`}
+    ${pedido || rodando ? `<div class="acoes"><button class="btn peq" id="pCancelar" type="button">Cancelar pedido</button></div>` : ""}
+  </div>
+  <div class="cartao">
+    <h3>Vídeos prontos</h3>
+    ${renders.length ? renders.map((r, i) => `<div class="render"><video src="${blobUrl(r.id)}" controls preload="metadata" playsinline></video>
+        <div><b>${esc(r.nome)}</b><br><small class="nota-rodape">${esc(r.qualidade === "previa" ? "Prévia" : "Final")} · ${r.bytes ? fmtMB(r.bytes) : ""} · ${r.data ? new Date(r.data).toLocaleString("pt-BR") : ""}</small>
+        ${downloads ? `<div class="acoes" style="margin-top:8px"><button class="btn peq" type="button" data-baixar="${i}">⬇ Baixar MP4</button></div>` : ""}</div></div>`).join("")
+      : `<p class="vazio">Nenhum vídeo produzido ainda.</p>`}
+  </div>
+  <div class="cartao">
+    <h3>Kit de publicação</h3>
+    ${(o.titulos || []).length ? `<label>Títulos sugeridos</label>${o.titulos.map((t) => `<div class="copiavel"><span>${esc(t)}</span>${copiar(t)}</div>`).join("")}` : `<p class="nota-rodape">Títulos, descrição e hashtags aparecem aqui depois da otimização.</p>`}
+    ${o.descricao ? `<label>Descrição</label><div class="copiavel"><span>${esc(o.descricao)}</span>${copiar(o.descricao)}</div>` : ""}
+    ${(o.hashtags || []).length ? `<label>Hashtags</label><div class="copiavel"><span>${esc(o.hashtags.join(" "))}</span>${copiar(o.hashtags.join(" "))}</div>` : ""}
+  </div>`;
+  $("#pPedir")?.addEventListener("click", async () => {
+    const qualidade = $("#pQual").value;
+    await atualizarProj({ etapa: "aguardando_producao", pedido: { qualidade, em: Date.now() }, otimizado: clone(ot), config: clone(cfg) });
+    evento(`Pedido de produção (${qualidade === "previa" ? "prévia" : "final"}) enviado ao Claude Code`, "claude");
+  });
+  $("#pCancelar")?.addEventListener("click", async () => {
+    await atualizarProj({ etapa: proj.otimizado ? "otimizado" : "briefing", pedido: null });
+    evento("Pedido de produção cancelado");
+  });
+  renders.forEach((r, i) => el.querySelector(`[data-baixar="${i}"]`)?.addEventListener("click", () => baixar(r)));
+  el.querySelectorAll("[data-copiar]").forEach((b) => b.addEventListener("click", () => {
+    try {
+      navigator.clipboard.writeText(b.dataset.copiar).then(() => toast("Copiado"), () => toast("Selecione o texto e copie"));
+    } catch { toast("Selecione o texto e copie"); }
+  }));
+}
+
+// ============================================================ início
+document.querySelectorAll("#etapas button").forEach((b) => b.addEventListener("click", () => {
+  aba = b.dataset.aba;
+  assinaturaAba = "";
+  redesenharSePreciso();
+}));
+$("#seletor").onchange = (e) => { if (e.target.value) abrir(e.target.value); };
+$("#btnNovo").onclick = () => {
+  desinscrever.forEach((u) => u());
+  desinscrever = [];
+  proj = null; cfg = null; ot = null; producao = null; eventos = [];
+  aba = "briefing"; assinaturaAba = "";
+  try { history.replaceState(null, "", "#"); } catch {}
+  desenharTudo();
+};
+
+desenharTudo();
+(async () => {
+  const usar = (n) => (window.claude?.use ? window.claude.use(n).catch(() => null) : Promise.resolve(null));
+  [db, assets, sample, downloads] = await Promise.all([usar("db"), usar("assets"), usar("sample"), usar("downloads")]);
+  if (!db) { carregando = false; desenharTudo(); return; }
+  desenharTudo();
+  assinarLista();
+  assinarMidias();
+})();
+</script>

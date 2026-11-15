@@ -1,11 +1,10 @@
 {
-  "titulo": "Jinx build crit",
-  "tipo": "Build / Guia de campeão",
   "campeao": "Jinx",
   "duracao": "30s",
-  "tom": "Energético",
+  "orientacoes": "tom energético, quero que termine perguntando a build da galera",
   "publico": "Todos",
   "roteiro": "Fala galera, hoje eu vou mostrar uma build de Jinx que eu tenho usado. Basicamente você faz Kraken primeiro e depois Gume. Com isso o dano fica muito alto no meio do jogo. A Jinx fica forte demais. Testa aí.",
-  "orientacoes": "tom energético, quero que termine perguntando a build da galera",
-  "criadoEm": "2026-11-15T16:37:53.981Z"
+  "tipo": "Build / Guia de campeão",
+  "titulo": "Jinx build crit",
+  "tom": "Energético"
 }

@@ -2,31 +2,33 @@
   "voz": "pt-BR-AntonioNeural",
   "velocidade": 10,
   "fundo": {
-    "tipo": "gradiente",
-    "arquivo": null,
-    "inicio": 0,
+    "asset": null,
     "cortesPorCena": true,
-    "volume": 0
+    "inicio": 0,
+    "tipo": "gradiente",
+    "volume": 0,
+    "arquivo": null
   },
   "musica": {
-    "arquivo": null,
-    "volume": 0.12
+    "asset": null,
+    "volume": 0.12,
+    "arquivo": null
   },
   "estilo": {
-    "fonte": "Montserrat",
-    "tamanho": 92,
-    "corTexto": "#FFFFFF",
-    "corFalada": "#FFE600",
-    "corEnfase": "#0AC8B9",
+    "caixaAlta": true,
     "corContorno": "#000000",
-    "posicaoY": 0.66,
+    "corEnfase": "#0AC8B9",
+    "corFalada": "#FFE600",
+    "corTexto": "#FFFFFF",
+    "fonte": "Montserrat",
     "palavrasPorBloco": 3,
-    "caixaAlta": true
+    "posicaoY": 0.66,
+    "tamanho": 92
   },
   "efeitos": {
-    "hook": true,
     "barraProgresso": true,
     "flash": true,
+    "hook": true,
     "zoomPunch": true
   },
   "tema": {

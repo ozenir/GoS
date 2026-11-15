@@ -2,6 +2,7 @@
 import { Player, PlayerRef } from "@remotion/player";
 import { createRef } from "react";
 import { createRoot, Root } from "react-dom/client";
+import "../src/fontes-css";
 import { FONTES } from "../src/fontes";
 import { LolShort, LolShortProps, duracaoEmFrames, exemploLol, FPS_LOL } from "../src/LolShort";
 

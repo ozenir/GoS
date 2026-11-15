@@ -13,7 +13,8 @@ em **português do Brasil**.
 | `musicas/`     | trilhas sonoras (use só músicas livres de direitos)             |
 | `saida/`       | vídeos finalizados                                              |
 | `src/`         | composições Remotion (`Teste`, `Short`, `LolShort`)             |
-| `painel/`      | Estúdio Shorts: painel web, servidor, CLI                       |
+| `artifact/`    | Estúdio Shorts publicado no claude.ai (página + player)         |
+| `painel/`      | servidor local, render, ponte com o Artifact, CLI               |
 | `projetos/`    | um diretório por vídeo do painel (briefing, roteiro, config)    |
 | `docs/`        | `viral-lol.md`: guia de otimização de roteiros de LoL           |
 | `scripts/`     | automações (instalar, cortar silêncios, legendas, montar)       |
@@ -22,7 +23,47 @@ em **português do Brasil**.
 Mídia (`referencias/`, `brutos/`, `musicas/`, `saida/`) está no `.gitignore`:
 vídeos não vão para o git.
 
-## Estúdio Shorts (painel visual) — fluxo principal
+## Estúdio Shorts no claude.ai (Artifact) — fluxo principal
+
+O usuário usa o estúdio dentro do Claude: **https://claude.ai/artifact/DVKauETTpSPB5qkWRwYavF**
+(fonte: `artifact/estudio.html` + `artifact/player.js`, gerado por `node painel/build.mjs`;
+republicar com a ferramenta Artifact no mesmo `file_path`, `files: {"player.js": "artifact/player.js"}`).
+Capacidades: `db` (dados), `assets` (vídeos), `sample` (otimização feita pela própria página
+com a conta do usuário), `downloads`.
+
+Banco da página (ferramenta `ArtifactData`, `url` acima):
+- `projetos/<id>`: `{titulo, briefing, otimizado, config, etapa, pedido, criadoEm, atualizado}`.
+  `config.fundo.asset` / `config.musica.asset` = `{id, nome}` de assets enviados.
+- `projetos/<id>/eventos/<auto>`: `{t, msg, tipo: info|ok|claude|erro}` — linha do tempo.
+- `projetos/<id>/producao/estado`: escrito pelo Claude Code —
+  `{etapa, progresso, texto, hash, trilha, audio: {id}, renders: [{id, nome, qualidade, bytes, data}]}`.
+- `midias/<auto>`: `{id, nome, tipo: gameplay|musica, bytes, criadoEm}`.
+
+Etapas (`projetos/<id>.etapa`): briefing → otimizando → otimizado (ou aguardando_claude
+quando o usuário pede a otimização no chat) → aguardando_producao → produzindo → pronto | erro.
+
+**"otimiza o roteiro" (no chat):** leia o projeto (`ArtifactData get`), otimize seguindo
+`docs/viral-lol.md` e grave `otimizado` + `etapa: "otimizado"` (update com `if_version`) e um evento.
+
+**"produz o vídeo …" (no chat):**
+1. `npm run painel` em segundo plano, se o servidor local (porta 3333) não estiver no ar.
+2. `ArtifactData get` do projeto com `out_dir` → `node painel/ponte.mjs importar <arquivo.json> <id>`.
+   Se avisar que falta mídia, baixe o asset com `Artifact read` (`path` = id do asset,
+   `out_dir` = `brutos/` ou `musicas/`), garanta o nome `<assetId>.mp4` e importe de novo.
+3. Marque `etapa: "produzindo"` no projeto e `producao/estado` com `etapa/texto/progresso`.
+4. `node painel/ponte.mjs produzir <id> <final|previa>` (narração edge-tts + render Remotion).
+5. Envie `projetos/<id>/narracao.mp4` e o MP4 de `saida/<id>/` com `Artifact publish asset:true`
+   (só tipos de vídeo/imagem; áudio vai como MP4; limite 15 MB por arquivo).
+6. `node painel/ponte.mjs estado <id> --audio <assetId> --render "<assetId>|<nome>|<qualidade>|<bytes>"`
+   → grave `projetos/<id>/producao.json` em `producao/estado` (`file_path`), `etapa: "pronto"` no
+   projeto e um evento. A página mostra o vídeo e passa a usar a narração real no player.
+7. Música em MP3 mandada no chat: converta com `ffmpeg -i x.mp3 -c:a aac -vn x.mp4`, envie como
+   asset e adicione um documento em `midias` (`tipo: "musica"`).
+
+O `hash` liga narração e roteiro: `sha1(JSON.stringify([narrações das cenas com texto, voz, velocidade]))`
+(12 primeiros hex) — igual em `painel/projetos.mjs` e na página.
+
+## Estúdio Shorts local (painel em http://localhost:3333) — alternativa
 
 ```bash
 npm run painel        # empacota o player e sobe http://localhost:3333
