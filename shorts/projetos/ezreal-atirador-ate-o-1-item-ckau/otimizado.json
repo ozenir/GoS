@@ -1,0 +1,229 @@
+{
+ "cenas": [
+  {
+   "clipeInicio": null,
+   "destaque": [
+    "E",
+    "Camille"
+   ],
+   "narracao": "Se você usa o E do Ezreal para dar dano, a Camille vai te matar.",
+   "textoTela": "GUARDE ESSE E",
+   "visual": "Close no Ezreal usando E para frente e sendo enganchado logo depois.",
+   "provas": [
+    {
+     "tipo": "icone",
+     "rotulo": "E · Translocação Arcana",
+     "imgAsset": "9e6ab8c2bc55f57818b1b379ae95f7fc",
+     "imgArquivo": "dados/ezreal-adc/habilidade_E.png",
+     "detalhe": "alcance 475\n70 de mana\nrecarga 26 s (nv. 1)",
+     "gatilho": "E"
+    },
+    {
+     "tipo": "foto",
+     "rotulo": "Camille suporte",
+     "imgAsset": "398b01492023e6c6beda72f50c298be2",
+     "imgArquivo": "dados/ezreal-adc/arte/Camille.jpg",
+     "gatilho": "Camille",
+     "carimbo": "PERIGO"
+    }
+   ]
+  },
+  {
+   "clipeInicio": null,
+   "destaque": [
+    "800",
+    "475"
+   ],
+   "narracao": "O gancho dela tem 800 de alcance. Seu E tem 475. Você não ganha fugindo antes. Você ganha reagindo depois.",
+   "textoTela": "800 vs 475",
+   "visual": "Linhas de alcance comparando os dois.",
+   "provas": [
+    {
+     "tipo": "icone",
+     "rotulo": "Gancho da Camille",
+     "imgAsset": "671b1738294349e6fb6416488a942ad7",
+     "imgArquivo": "dados/ezreal-adc/camille_E.png",
+     "detalhe": "E · Disparo de Gancho\nalcance 800",
+     "gatilho": "gancho",
+     "cor": "vermelho"
+    },
+    {
+     "tipo": "icone",
+     "rotulo": "Seu E",
+     "imgAsset": "9e6ab8c2bc55f57818b1b379ae95f7fc",
+     "imgArquivo": "dados/ezreal-adc/habilidade_E.png",
+     "detalhe": "Translocação Arcana\nalcance 475",
+     "gatilho": "Seu",
+     "liga": 0
+    },
+    {
+     "tipo": "etiqueta",
+     "rotulo": "REAJA, NÃO FUJA ANTES",
+     "gatilho": "reagindo",
+     "cor": "verde"
+    }
+   ]
+  },
+  {
+   "clipeInicio": null,
+   "destaque": [
+    "2º salto"
+   ],
+   "narracao": "Espere o segundo salto do gancho. Aí use o E para trás.",
+   "textoTela": "DEPOIS DO 2º SALTO",
+   "visual": "Câmera lenta: Camille pula da parede e Ezreal desvia com E.",
+   "provas": [
+    {
+     "tipo": "nota",
+     "rotulo": "1º SALTO",
+     "detalhe": "ela pula na parede\n— segure o E",
+     "gatilho": "Espere",
+     "cor": "amarelo"
+    },
+    {
+     "tipo": "nota",
+     "rotulo": "2º SALTO",
+     "detalhe": "ela vem em você\n— agora sim",
+     "gatilho": "segundo",
+     "cor": "vermelho"
+    },
+    {
+     "tipo": "etiqueta",
+     "rotulo": "E PARA TRÁS",
+     "gatilho": "trás",
+     "cor": "verde"
+    }
+   ]
+  },
+  {
+   "clipeInicio": null,
+   "destaque": [
+    "16 s",
+    "Q",
+    "W"
+   ],
+   "narracao": "O gancho dela tem 16 segundos de recarga. Errou? Volte e troque com Q e W.",
+   "textoTela": "16 s PARA PUNIR",
+   "visual": "Contador de 16 s na tela enquanto Ezreal cutuca.",
+   "provas": [
+    {
+     "tipo": "nota",
+     "rotulo": "16 s",
+     "detalhe": "recarga do gancho\nno nível 1",
+     "gatilho": "gancho",
+     "cor": "vermelho"
+    },
+    {
+     "tipo": "etiqueta",
+     "rotulo": "ERROU? PUNA",
+     "gatilho": "Errou",
+     "cor": "verde"
+    },
+    {
+     "tipo": "icone",
+     "rotulo": "Q · Disparo Místico",
+     "imgAsset": "e927004937e8d508620a250cd588d083",
+     "imgArquivo": "dados/ezreal-adc/habilidade_Q.png",
+     "detalhe": "28 de mana\nalcance 1150",
+     "gatilho": "Q"
+    },
+    {
+     "tipo": "icone",
+     "rotulo": "W · Fluxo Essencial",
+     "imgAsset": "2b2ef050474c9c4b67b89d105e9f8506",
+     "imgArquivo": "dados/ezreal-adc/habilidade_W.png",
+     "detalhe": "50 de mana\nalcance 1150",
+     "gatilho": "W"
+    }
+   ]
+  },
+  {
+   "clipeInicio": null,
+   "destaque": [
+    "parede"
+   ],
+   "narracao": "E longe das paredes. Sem parede, sem gancho.",
+   "textoTela": "LONGE DA PAREDE",
+   "visual": "Mapa da rota bot com as paredes perigosas marcadas.",
+   "provas": [
+    {
+     "tipo": "nota",
+     "rotulo": "PAREDE",
+     "detalhe": "é de lá que\nela engancha",
+     "gatilho": "paredes",
+     "cor": "vermelho"
+    },
+    {
+     "tipo": "foto",
+     "rotulo": "Gancho sem parede",
+     "imgAsset": "398b01492023e6c6beda72f50c298be2",
+     "imgArquivo": "dados/ezreal-adc/arte/Camille.jpg",
+     "gatilho": "gancho",
+     "riscar": true,
+     "carimbo": "SEM GANCHO"
+    }
+   ]
+  },
+  {
+   "clipeInicio": null,
+   "destaque": [
+    "E"
+   ],
+   "narracao": "Você guarda o E ou usa para dar dano?",
+   "textoTela": "E VOCÊ?",
+   "visual": "Ezreal parado com o E pronto e um ponto de interrogação.",
+   "provas": [
+    {
+     "tipo": "foto",
+     "rotulo": "Ezreal",
+     "imgAsset": "d2af4e4359e103c023432d2007c6887c",
+     "imgArquivo": "dados/ezreal-adc/arte/Ezreal.jpg",
+     "gatilho": "Você"
+    },
+    {
+     "tipo": "nota",
+     "rotulo": "GUARDA?",
+     "detalhe": "resposta ao gancho",
+     "gatilho": "guarda",
+     "cor": "verde",
+     "liga": 0
+    },
+    {
+     "tipo": "nota",
+     "rotulo": "OU DANO?",
+     "detalhe": "e morre pra Camille",
+     "gatilho": "dano",
+     "cor": "vermelho",
+     "liga": 0
+    }
+   ]
+  }
+ ],
+ "cta": {
+  "texto": "Comenta como você usa o E do Ezreal."
+ },
+ "descricao": "Ezreal contra Camille suporte: segure a Translocação Arcana para o gancho e puna os 16 s de recarga. Patch 16.22.",
+ "hashtags": [
+  "#leagueoflegends",
+  "#lol",
+  "#ezreal",
+  "#camille",
+  "#lolbrasil"
+ ],
+ "hook": {
+  "textoTela": "GUARDE ESSE E"
+ },
+ "mudancas": [
+  "Duração reduzida de 90 s para cerca de 45 s, para seguir a regra de 30 a 60 s e de uma ideia por vídeo.",
+  "Foco em uma única ideia: guardar o E para o gancho de Camille.",
+  "Final com pergunta direta para gerar comentários."
+ ],
+ "notaOriginal": null,
+ "notaOtimizada": 8,
+ "resumo": "Contra Camille suporte, o E do Ezreal não é para causar dano: ele é a resposta ao gancho.",
+ "titulos": [
+  "Ezreal vs Camille suporte: o erro que te mata",
+  "Pare de usar o E do Ezreal assim",
+  "Como sobreviver à Camille no bot"
+ ]
+}

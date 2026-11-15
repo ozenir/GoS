@@ -1,0 +1,48 @@
+{
+  "etapa": "pronto",
+  "log": [
+    {
+      "t": "2026-11-15T17:54:30.566Z",
+      "msg": "Gerando narração (pt-BR-AntonioNeural, 6 cenas)",
+      "tipo": "info"
+    },
+    {
+      "t": "2026-11-15T17:54:50.486Z",
+      "msg": "Narração pronta (35.3s)",
+      "tipo": "ok"
+    },
+    {
+      "t": "2026-11-15T17:54:50.720Z",
+      "msg": "Renderizando prévia 540x960 → ezreal-atirador-ate-o-1-item-ckau-v1-previa.mp4",
+      "tipo": "info"
+    },
+    {
+      "t": "2026-11-15T17:55:35.512Z",
+      "msg": "Vídeo pronto: saida/ezreal-atirador-ate-o-1-item-ckau/ezreal-atirador-ate-o-1-item-ckau-v1-previa.mp4",
+      "tipo": "ok"
+    },
+    {
+      "t": "2026-11-15T17:55:54.907Z",
+      "msg": "Renderizando prévia 540x960 → ezreal-atirador-ate-o-1-item-ckau-v2-previa.mp4",
+      "tipo": "info"
+    },
+    {
+      "t": "2026-11-15T17:56:37.199Z",
+      "msg": "Vídeo pronto: saida/ezreal-atirador-ate-o-1-item-ckau/ezreal-atirador-ate-o-1-item-ckau-v2-previa.mp4",
+      "tipo": "ok"
+    },
+    {
+      "t": "2026-11-15T17:56:55.565Z",
+      "msg": "Renderizando prévia 540x960 → ezreal-atirador-ate-o-1-item-ckau-v2-previa.mp4",
+      "tipo": "info"
+    },
+    {
+      "t": "2026-11-15T17:57:37.802Z",
+      "msg": "Vídeo pronto: saida/ezreal-atirador-ate-o-1-item-ckau/ezreal-atirador-ate-o-1-item-ckau-v2-previa.mp4",
+      "tipo": "ok"
+    }
+  ],
+  "atualizado": "2026-11-15T17:57:37.802Z",
+  "progresso": null,
+  "progressoTexto": null
+}

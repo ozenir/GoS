@@ -1,0 +1,511 @@
+{
+ "fonte": "narracao",
+ "hash": "da7275d51de6",
+ "duracao": 35.286,
+ "cenas": [
+  {
+   "inicio": 0.15,
+   "fim": 4.614,
+   "palavras": [
+    {
+     "texto": "Se",
+     "inicio": 0.245,
+     "fim": 0.45,
+     "destaque": false
+    },
+    {
+     "texto": "você",
+     "inicio": 0.461,
+     "fim": 0.78,
+     "destaque": false
+    },
+    {
+     "texto": "usa",
+     "inicio": 0.791,
+     "fim": 1.098,
+     "destaque": false
+    },
+    {
+     "texto": "o",
+     "inicio": 1.109,
+     "fim": 1.166,
+     "destaque": false
+    },
+    {
+     "texto": "E",
+     "inicio": 1.177,
+     "fim": 1.223,
+     "destaque": true
+    },
+    {
+     "texto": "do",
+     "inicio": 1.234,
+     "fim": 1.348,
+     "destaque": false
+    },
+    {
+     "texto": "Ezreal",
+     "inicio": 1.359,
+     "fim": 1.78,
+     "destaque": false
+    },
+    {
+     "texto": "para",
+     "inicio": 1.791,
+     "fim": 1.961,
+     "destaque": false
+    },
+    {
+     "texto": "dar",
+     "inicio": 1.973,
+     "fim": 2.143,
+     "destaque": false
+    },
+    {
+     "texto": "dano",
+     "inicio": 2.155,
+     "fim": 2.495,
+     "destaque": false
+    },
+    {
+     "texto": "a",
+     "inicio": 2.745,
+     "fim": 2.802,
+     "destaque": false
+    },
+    {
+     "texto": "Camille",
+     "inicio": 2.814,
+     "fim": 3.2,
+     "destaque": true
+    },
+    {
+     "texto": "vai",
+     "inicio": 3.211,
+     "fim": 3.359,
+     "destaque": false
+    },
+    {
+     "texto": "te",
+     "inicio": 3.37,
+     "fim": 3.45,
+     "destaque": false
+    },
+    {
+     "texto": "matar",
+     "inicio": 3.461,
+     "fim": 3.814,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 4.714,
+   "fim": 15.586,
+   "palavras": [
+    {
+     "texto": "O",
+     "inicio": 4.809,
+     "fim": 4.923,
+     "destaque": false
+    },
+    {
+     "texto": "gancho",
+     "inicio": 4.934,
+     "fim": 5.275,
+     "destaque": false
+    },
+    {
+     "texto": "dela",
+     "inicio": 5.287,
+     "fim": 5.559,
+     "destaque": false
+    },
+    {
+     "texto": "tem",
+     "inicio": 5.571,
+     "fim": 5.719,
+     "destaque": false
+    },
+    {
+     "texto": "800 de",
+     "inicio": 5.73,
+     "fim": 6.423,
+     "destaque": false
+    },
+    {
+     "texto": "alcance",
+     "inicio": 6.434,
+     "fim": 6.946,
+     "destaque": false
+    },
+    {
+     "texto": "Seu",
+     "inicio": 7.725,
+     "fim": 8.044,
+     "destaque": false
+    },
+    {
+     "texto": "E",
+     "inicio": 8.055,
+     "fim": 8.112,
+     "destaque": false
+    },
+    {
+     "texto": "tem",
+     "inicio": 8.123,
+     "fim": 8.294,
+     "destaque": false
+    },
+    {
+     "texto": "475",
+     "inicio": 8.305,
+     "fim": 9.782,
+     "destaque": true
+    },
+    {
+     "texto": "Você",
+     "inicio": 10.566,
+     "fim": 10.862,
+     "destaque": false
+    },
+    {
+     "texto": "não",
+     "inicio": 10.873,
+     "fim": 11.009,
+     "destaque": false
+    },
+    {
+     "texto": "ganha",
+     "inicio": 11.021,
+     "fim": 11.305,
+     "destaque": false
+    },
+    {
+     "texto": "fugindo",
+     "inicio": 11.316,
+     "fim": 11.805,
+     "destaque": false
+    },
+    {
+     "texto": "antes",
+     "inicio": 11.816,
+     "fim": 12.271,
+     "destaque": false
+    },
+    {
+     "texto": "Você",
+     "inicio": 13.055,
+     "fim": 13.396,
+     "destaque": false
+    },
+    {
+     "texto": "ganha",
+     "inicio": 13.407,
+     "fim": 13.68,
+     "destaque": false
+    },
+    {
+     "texto": "reagindo",
+     "inicio": 13.691,
+     "fim": 14.214,
+     "destaque": false
+    },
+    {
+     "texto": "depois",
+     "inicio": 14.225,
+     "fim": 14.782,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 15.686,
+   "fim": 20.558,
+   "palavras": [
+    {
+     "texto": "Espere",
+     "inicio": 15.781,
+     "fim": 16.156,
+     "destaque": false
+    },
+    {
+     "texto": "o",
+     "inicio": 16.168,
+     "fim": 16.191,
+     "destaque": false
+    },
+    {
+     "texto": "segundo",
+     "inicio": 16.202,
+     "fim": 16.634,
+     "destaque": false
+    },
+    {
+     "texto": "salto",
+     "inicio": 16.645,
+     "fim": 17.02,
+     "destaque": true
+    },
+    {
+     "texto": "do",
+     "inicio": 17.031,
+     "fim": 17.145,
+     "destaque": false
+    },
+    {
+     "texto": "gancho",
+     "inicio": 17.156,
+     "fim": 17.588,
+     "destaque": false
+    },
+    {
+     "texto": "Aí",
+     "inicio": 18.368,
+     "fim": 18.663,
+     "destaque": false
+    },
+    {
+     "texto": "use",
+     "inicio": 18.675,
+     "fim": 18.97,
+     "destaque": false
+    },
+    {
+     "texto": "o",
+     "inicio": 18.981,
+     "fim": 19.05,
+     "destaque": false
+    },
+    {
+     "texto": "E",
+     "inicio": 19.061,
+     "fim": 19.106,
+     "destaque": false
+    },
+    {
+     "texto": "para",
+     "inicio": 19.118,
+     "fim": 19.345,
+     "destaque": false
+    },
+    {
+     "texto": "trás",
+     "inicio": 19.356,
+     "fim": 19.766,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 20.658,
+   "fim": 27.498,
+   "palavras": [
+    {
+     "texto": "O",
+     "inicio": 20.753,
+     "fim": 20.856,
+     "destaque": false
+    },
+    {
+     "texto": "gancho",
+     "inicio": 20.867,
+     "fim": 21.231,
+     "destaque": false
+    },
+    {
+     "texto": "dela",
+     "inicio": 21.242,
+     "fim": 21.503,
+     "destaque": false
+    },
+    {
+     "texto": "tem",
+     "inicio": 21.515,
+     "fim": 21.628,
+     "destaque": false
+    },
+    {
+     "texto": "16 segundos",
+     "inicio": 21.64,
+     "fim": 22.515,
+     "destaque": false
+    },
+    {
+     "texto": "de",
+     "inicio": 22.526,
+     "fim": 22.606,
+     "destaque": false
+    },
+    {
+     "texto": "recarga",
+     "inicio": 22.617,
+     "fim": 23.128,
+     "destaque": false
+    },
+    {
+     "texto": "Errou",
+     "inicio": 23.908,
+     "fim": 24.351,
+     "destaque": false
+    },
+    {
+     "texto": "Volte",
+     "inicio": 25.135,
+     "fim": 25.51,
+     "destaque": false
+    },
+    {
+     "texto": "e",
+     "inicio": 25.522,
+     "fim": 25.544,
+     "destaque": false
+    },
+    {
+     "texto": "troque",
+     "inicio": 25.556,
+     "fim": 25.874,
+     "destaque": false
+    },
+    {
+     "texto": "com",
+     "inicio": 25.885,
+     "fim": 26.056,
+     "destaque": false
+    },
+    {
+     "texto": "Q",
+     "inicio": 26.067,
+     "fim": 26.192,
+     "destaque": true
+    },
+    {
+     "texto": "e",
+     "inicio": 26.203,
+     "fim": 26.272,
+     "destaque": false
+    },
+    {
+     "texto": "W.",
+     "inicio": 26.283,
+     "fim": 26.692,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "inicio": 27.598,
+   "fim": 32.158,
+   "palavras": [
+    {
+     "texto": "E",
+     "inicio": 27.693,
+     "fim": 27.796,
+     "destaque": false
+    },
+    {
+     "texto": "longe",
+     "inicio": 27.807,
+     "fim": 28.182,
+     "destaque": false
+    },
+    {
+     "texto": "das",
+     "inicio": 28.193,
+     "fim": 28.364,
+     "destaque": false
+    },
+    {
+     "texto": "paredes",
+     "inicio": 28.375,
+     "fim": 28.978,
+     "destaque": false
+    },
+    {
+     "texto": "Sem",
+     "inicio": 29.757,
+     "fim": 30.03,
+     "destaque": false
+    },
+    {
+     "texto": "parede",
+     "inicio": 30.041,
+     "fim": 30.484,
+     "destaque": true
+    },
+    {
+     "texto": "sem",
+     "inicio": 30.723,
+     "fim": 30.962,
+     "destaque": false
+    },
+    {
+     "texto": "gancho",
+     "inicio": 30.973,
+     "fim": 31.359,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 32.258,
+   "fim": 35.186,
+   "palavras": [
+    {
+     "texto": "Você",
+     "inicio": 32.353,
+     "fim": 32.683,
+     "destaque": false
+    },
+    {
+     "texto": "guarda",
+     "inicio": 32.694,
+     "fim": 33.035,
+     "destaque": false
+    },
+    {
+     "texto": "o",
+     "inicio": 33.047,
+     "fim": 33.126,
+     "destaque": false
+    },
+    {
+     "texto": "E",
+     "inicio": 33.138,
+     "fim": 33.228,
+     "destaque": true
+    },
+    {
+     "texto": "ou",
+     "inicio": 33.24,
+     "fim": 33.456,
+     "destaque": false
+    },
+    {
+     "texto": "usa",
+     "inicio": 33.467,
+     "fim": 33.694,
+     "destaque": false
+    },
+    {
+     "texto": "para",
+     "inicio": 33.706,
+     "fim": 33.876,
+     "destaque": false
+    },
+    {
+     "texto": "dar",
+     "inicio": 33.888,
+     "fim": 34.058,
+     "destaque": false
+    },
+    {
+     "texto": "dano",
+     "inicio": 34.069,
+     "fim": 34.399,
+     "destaque": false
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,29 @@
+{
+  "campeao": "Ezreal",
+  "duracao": "90s",
+  "fatos": "",
+  "matchup": {
+    "aliados": {
+      "Atirador": "Ezreal",
+      "Meio": "Orianna",
+      "Selva": "Cho'Gath",
+      "Suporte": "Karma",
+      "Topo": "Vayne"
+    },
+    "campeao": "Ezreal",
+    "inimigos": {
+      "Atirador": "Corki",
+      "Meio": "Cassiopeia",
+      "Selva": "Naafiri",
+      "Suporte": "Camille",
+      "Topo": "Gnar"
+    },
+    "rota": "Atirador"
+  },
+  "orientacoes": "",
+  "publico": "Intermediário (Ouro–Esmeralda)",
+  "roteiro": "",
+  "tipo": "Matchup: até o 1º item",
+  "titulo": "Ezreal atirador: até o 1º item",
+  "tom": "Sério / Analítico"
+}
