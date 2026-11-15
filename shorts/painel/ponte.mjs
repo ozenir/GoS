@@ -63,9 +63,16 @@ if (cmd === "importar") {
     // imagens das provas: asset do Artifact -> arquivo local (mapa em dados/assets.json)
     const mapa = existsSync(join(P.RAIZ, "dados/assets.json")) ? JSON.parse(readFileSync(join(P.RAIZ, "dados/assets.json"), "utf8")) : {};
     const porId = Object.fromEntries(Object.entries(mapa).map(([arq, id]) => [id, arq]));
-    for (const c of doc.otimizado.cenas || []) for (const pr of c.provas || []) {
-      if (pr.imgAsset && porId[pr.imgAsset]) pr.imgArquivo = porId[pr.imgAsset];
-      else if (pr.imgAsset) avisos.push(`baixe a imagem da prova "${pr.rotulo}": asset ${pr.imgAsset} -> dados/, e registre em dados/assets.json`);
+    for (const c of doc.otimizado.cenas || []) {
+      for (const pr of c.provas || []) {
+        if (pr.imgAsset && porId[pr.imgAsset]) pr.imgArquivo = porId[pr.imgAsset];
+        else if (pr.imgAsset) avisos.push(`baixe a imagem da prova "${pr.rotulo}": asset ${pr.imgAsset} -> dados/, e registre em dados/assets.json`);
+        if (pr.fundoAsset && porId[pr.fundoAsset]) pr.fundoArquivo = porId[pr.fundoAsset];
+        else if (pr.fundoAsset) avisos.push(`baixe o fundo da prova "${pr.rotulo}": asset ${pr.fundoAsset}`);
+      }
+      const vf = c.videoFundo;
+      if (vf?.asset && porId[vf.asset]) vf.arquivo = porId[vf.asset];
+      else if (vf?.asset) avisos.push(`baixe o vídeo de fundo da cena: asset ${vf.asset}`);
     }
     writeFileSync(join(d, "otimizado.json"), JSON.stringify(doc.otimizado, null, 2));
   }

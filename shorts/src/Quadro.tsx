@@ -6,6 +6,9 @@ import {
   AbsoluteFill,
   Easing,
   Img,
+  Loop,
+  OffthreadVideo,
+  Sequence,
   continueRender,
   delayRender,
   interpolate,
@@ -16,7 +19,7 @@ import {
 } from "remotion";
 
 export type ProvaT = {
-  tipo: "foto" | "icone" | "nota" | "placar" | "etiqueta";
+  tipo: "foto" | "icone" | "nota" | "placar" | "etiqueta" | "alcance";
   img?: string | null;
   rotulo: string;
   detalhe?: string;
@@ -26,13 +29,19 @@ export type ProvaT = {
   gatilho?: string; // palavra da fala que faz a prova aparecer
   liga?: number | null; // índice, dentro da mesma cena, da prova ligada pelo fio; padrão: a anterior; null = sem fio
   pos?: [number, number]; // posição manual, relativa ao centro do grupo da cena
+  // tipo "alcance": círculos do campeão (img) até cada distância, sobre um quadro do jogo (fundo)
+  fundo?: string | null;
+  alcances?: { valor: number; rotulo: string; cor?: keyof typeof CORES }[];
 };
+
+export type VideoFundoT = { url: string; dur?: number } | null;
 
 type CenaQ = {
   inicio: number;
   fim: number;
   palavras: { texto: string; inicio: number; fim: number }[];
   provas?: ProvaT[];
+  videoFundo?: VideoFundoT; // vídeo da habilidade atrás do quadro durante a cena
 };
 
 const CORES = {
@@ -58,6 +67,7 @@ const TAM: Record<ProvaT["tipo"], [number, number]> = {
   nota: [470, 300],
   placar: [700, 420],
   etiqueta: [520, 120],
+  alcance: [820, 960],
 };
 
 // arranjos dentro de um grupo (cena), por quantidade de provas
@@ -69,6 +79,26 @@ const ARRANJOS: [number, number][][] = [
   [[-300, -420], [300, -380], [0, 40], [-300, 470], [300, 500]],
   [[-300, -520], [300, -480], [-300, 0], [300, 40], [-300, 520], [300, 560]],
 ];
+
+// cena com prova de alcance (cartão grande): ele fica no centro e as outras provas
+// se empilham à esquerda e à direita, sem cobrir os círculos
+function layoutComAlcance(provas: ProvaT[]): [number, number][] | null {
+  const ia = provas.findIndex((p) => p.tipo === "alcance");
+  if (ia < 0) return null;
+  const [wa] = TAM.alcance;
+  const out: [number, number][] = provas.map(() => [0, 0]);
+  const y = [-430, -430];
+  let lado = 0;
+  provas.forEach((p, k) => {
+    if (k === ia) return;
+    const [w, h] = TAM[p.tipo] || TAM.nota;
+    const sinal = lado === 0 ? -1 : 1;
+    out[k] = [sinal * (wa / 2 + 30 + w / 2), y[lado] + h / 2];
+    y[lado] += h + 40;
+    lado = 1 - lado;
+  });
+  return out;
+}
 
 type Colocada = ProvaT & {
   i: number;
@@ -87,6 +117,8 @@ export function montarQuadro(cenas: CenaQ[]) {
   let ultimo = -1;
   // empilha os grupos pelo tamanho real de cada um, sem sobrepor
   const posDe = (provas: ProvaT[]) => {
+    const auto = layoutComAlcance(provas);
+    if (auto) return provas.map((p, k) => p.pos || auto[k]);
     const arr = ARRANJOS[Math.min(Math.max(provas.length, 1), ARRANJOS.length) - 1];
     return provas.map((p, k) => p.pos || arr[k % arr.length] || [0, 0]);
   };
@@ -106,11 +138,12 @@ export function montarQuadro(cenas: CenaQ[]) {
     const cx = 1300 + (ci % 2 === 0 ? -360 : 360);
     const cy = centros[ci];
     const arr = ARRANJOS[Math.min(provas.length, ARRANJOS.length) - 1];
+    const auto = layoutComAlcance(provas);
     let cursor = c.inicio;
     const inicioCena = lista.length;
     provas.forEach((p, k) => {
       const [w, h] = TAM[p.tipo] || TAM.nota;
-      const base = p.pos || arr[k % arr.length] || [0, 0];
+      const base = p.pos || auto?.[k] || arr[k % arr.length] || [0, 0];
       const jx = (random(`jx${ci}-${k}`) - 0.5) * 70;
       const jy = (random(`jy${ci}-${k}`) - 0.5) * 70;
       // quando aparece: na palavra-gatilho; senão, espalhado pela cena
@@ -298,6 +331,113 @@ const Risco: React.FC<{ local: number; w: number; h: number }> = ({ local, w, h 
   );
 };
 
+// Alcance ilustrativo: o campeão no centro de um quadro do jogo e um círculo por distância,
+// em escala entre si (o maior encosta na borda). Os anéis crescem e o número conta até o valor.
+const SEQ_CORES: (keyof typeof CORES)[] = ["azul", "vermelho", "verde", "amarelo", "ouro"];
+const CartaoAlcance: React.FC<{ c: Colocada; estilo: React.CSSProperties; fixacao: React.ReactNode; local: number; cor: string }> = ({
+  c,
+  estilo,
+  fixacao,
+  local,
+  cor,
+}) => {
+  const lado = c.w - 48;
+  const meio = lado / 2;
+  const lista = (c.alcances || []).filter((a) => a && a.valor > 0);
+  const max = Math.max(1, ...lista.map((a) => a.valor));
+  const R = meio - 34;
+  const ordem = lista.map((a, i) => ({ ...a, i, cor: CORES[a.cor || SEQ_CORES[i % SEQ_CORES.length]] }));
+  return (
+    <div style={{ ...estilo, background: "#0b1220", border: `6px solid ${cor}`, padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
+      {fixacao}
+      <div style={{ position: "relative", width: lado, height: lado, overflow: "hidden", background: "#16251a" }}>
+        {c.fundo ? (
+          <Img src={c.fundo} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "brightness(.62) saturate(1.1)" }} />
+        ) : null}
+        <svg width={lado} height={lado} style={{ position: "absolute", inset: 0 }}>
+          <defs>
+            <filter id={`brilho${c.i}`} x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="5" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          {[...ordem].sort((a, b) => b.valor - a.valor).map((a) => {
+            const p = interpolate(local, [8 + a.i * 14, 30 + a.i * 14], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) });
+            const r = (a.valor / max) * R * p;
+            const ang = (-40 - a.i * 38) * (Math.PI / 180);
+            return (
+              <g key={a.i} opacity={p > 0 ? 1 : 0}>
+                <circle cx={meio} cy={meio} r={r} fill={`${a.cor}1f`} stroke={a.cor} strokeWidth={7} filter={`url(#brilho${c.i})`} />
+                <line x1={meio} y1={meio} x2={meio + Math.cos(ang) * r} y2={meio + Math.sin(ang) * r} stroke={a.cor} strokeWidth={4} strokeDasharray="14 10" />
+              </g>
+            );
+          })}
+        </svg>
+        {ordem.map((a) => {
+          const p = interpolate(local, [8 + a.i * 14, 30 + a.i * 14], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) });
+          if (p <= 0) return null;
+          const r = (a.valor / max) * R * p;
+          const ang = (-40 - a.i * 38) * (Math.PI / 180);
+          return (
+            <div
+              key={a.i}
+              style={{
+                position: "absolute",
+                left: meio + Math.cos(ang) * r,
+                top: meio + Math.sin(ang) * r,
+                transform: "translate(-50%,-50%)",
+                background: "rgba(5,10,18,.85)",
+                border: `3px solid ${a.cor}`,
+                borderRadius: 10,
+                padding: "2px 14px",
+                fontFamily: "Anton, Impact, sans-serif",
+                fontSize: 46,
+                color: "white",
+                lineHeight: 1.1,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {Math.round(a.valor * p)}
+            </div>
+          );
+        })}
+        {c.img ? (
+          <Img
+            src={c.img}
+            style={{
+              position: "absolute",
+              left: meio - 62,
+              top: meio - 62,
+              width: 124,
+              height: 124,
+              borderRadius: "50%",
+              border: `6px solid ${cor}`,
+              boxShadow: `0 0 26px ${cor}aa`,
+              objectFit: "cover",
+            }}
+          />
+        ) : null}
+        <div style={{ position: "absolute", left: 18, top: 14, fontFamily: "Montserrat, sans-serif", fontWeight: 900, fontSize: 38, color: "white", textTransform: "uppercase", textShadow: "0 3px 10px #000" }}>
+          {c.rotulo}
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        {ordem.map((a) => (
+          <div key={a.i} style={{ display: "flex", alignItems: "center", gap: 12, fontFamily: "'Special Elite', 'Courier New', monospace", fontSize: 30, color: "#e9e4d6" }}>
+            <span style={{ width: 22, height: 22, borderRadius: "50%", background: a.cor, boxShadow: `0 0 10px ${a.cor}`, flex: "none" }} />
+            <span>
+              {a.rotulo}: <b style={{ color: a.cor }}>{a.valor}</b>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const Cartao: React.FC<{ c: Colocada; local: number; fps: number; foco: boolean; antigo: boolean }> = ({
   c,
   local,
@@ -401,6 +541,8 @@ const Cartao: React.FC<{ c: Colocada; local: number; fps: number; foco: boolean;
         ) : null}
       </div>
     );
+  } else if (c.tipo === "alcance") {
+    corpo = <CartaoAlcance c={c} estilo={estilo} fixacao={fixacao} local={local} cor={cor} />;
   } else if (c.tipo === "etiqueta") {
     corpo = (
       <div
@@ -533,8 +675,30 @@ export const Quadro: React.FC<{ cenas: CenaQ[]; cor1: string; cor2: string }> = 
   for (const c of lista) if (c.t <= t) focoIdx = c.i;
   const cenaFoco = focoIdx >= 0 ? lista[focoIdx].cena : 0;
 
+  // vídeo da habilidade atrás do quadro: o mural fica translúcido enquanto ele aparece
+  const fade = (c: CenaQ) =>
+    c.videoFundo?.url
+      ? Math.min(
+          interpolate(t, [c.inicio - 0.2, c.inicio + 0.35], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+          interpolate(t, [c.fim + 0.1, c.fim + 0.6], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+        )
+      : 0;
+  const vis = Math.max(0, ...cenas.map(fade));
+
   return (
     <AbsoluteFill style={{ backgroundColor: cor1, overflow: "hidden" }}>
+      {cenas.map((c, i) =>
+        c.videoFundo?.url ? (
+          <Sequence key={`vf${i}`} from={Math.max(0, Math.round((c.inicio - 0.2) * fps))} durationInFrames={Math.max(1, Math.round((c.fim - c.inicio + 0.8) * fps))} layout="none">
+            <AbsoluteFill style={{ opacity: fade(c) }}>
+              <Loop durationInFrames={Math.max(15, Math.round((c.videoFundo.dur || 4) * fps) - 2)}>
+                <OffthreadVideo src={c.videoFundo.url} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              </Loop>
+              <AbsoluteFill style={{ background: "rgba(2,6,12,.28)" }} />
+            </AbsoluteFill>
+          </Sequence>
+        ) : null,
+      )}
       <div
         style={{
           position: "absolute",
@@ -550,6 +714,7 @@ export const Quadro: React.FC<{ cenas: CenaQ[]; cor1: string; cor2: string }> = 
         <div
           style={{
             position: "absolute",
+            opacity: 1 - vis * 0.72,
             left: -1200,
             top: -1400,
             width: 5000,

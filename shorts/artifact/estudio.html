@@ -434,7 +434,8 @@ function trilhaAtual() {
   const tr = narracaoEmDia() ? clone(producao.trilha) : trilhaEstimada(cenas);
   tr.cenas = tr.cenas.map((c, i) => ({
     ...c, textoTela: cenas[i]?.textoTela || "", clipeInicio: cenas[i]?.clipeInicio ?? null,
-    provas: (cenas[i]?.provas || []).map((pr) => ({ ...pr, img: pr.imgAsset ? blobUrl(pr.imgAsset) : null })),
+    provas: (cenas[i]?.provas || []).map((pr) => ({ ...pr, img: pr.imgAsset ? blobUrl(pr.imgAsset) : null, fundo: pr.fundoAsset ? blobUrl(pr.fundoAsset) : null })),
+    videoFundo: cenas[i]?.videoFundo?.asset ? { url: blobUrl(cenas[i].videoFundo.asset), dur: cenas[i].videoFundo.dur || 4 } : null,
   }));
   return tr;
 }
@@ -963,7 +964,7 @@ function abaRoteiro(el) {
           ${pr.imgAsset ? `<img src="${blobUrl(pr.imgAsset)}" alt="">` : `<span class="sem ${pr.tipo === "foto" || pr.tipo === "icone" ? "" : "ok"}">${pr.tipo === "foto" || pr.tipo === "icone" ? "falta imagem" : esc(pr.tipo)}</span>`}
           <input type="text" data-p="rotulo" value="${esc(pr.rotulo)}" aria-label="Texto da prova" placeholder="texto da prova">
           <input type="text" data-p="gatilho" value="${esc(pr.gatilho)}" aria-label="Palavra que faz aparecer" placeholder="palavra">
-          <select data-p="tipo" aria-label="Tipo da prova">${["foto", "icone", "nota", "etiqueta", "placar"].map((t) => `<option ${t === pr.tipo ? "selected" : ""}>${t}</option>`).join("")}</select>
+          <select data-p="tipo" aria-label="Tipo da prova">${["foto", "icone", "nota", "etiqueta", "placar", "alcance"].map((t) => `<option ${t === pr.tipo ? "selected" : ""}>${t}</option>`).join("")}</select>
           <label class="btn peq" title="Enviar imagem">🖼<input type="file" accept="image/png,image/jpeg,image/webp" data-pimg hidden ${assets ? "" : "disabled"}></label>
           <button class="btn peq" type="button" data-premover aria-label="Remover prova">✕</button>
         </div>`).join("")}

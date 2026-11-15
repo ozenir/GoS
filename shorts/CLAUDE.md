@@ -18,6 +18,7 @@ em **português do Brasil**.
 | `projetos/`    | um diretório por vídeo do painel (briefing, roteiro, config)    |
 | `docs/`        | `viral-lol.md`: guia de otimização de roteiros de LoL           |
 | `dados/`       | dados oficiais do Data Dragon (`scripts/ddragon.py`), por vídeo e `ddragon/resumo.json` |
+| `biblioteca/`  | mídia reaproveitável por campeão: vídeos das habilidades, quadros, ícones, arte (`scripts/biblioteca.py`) |
 | `roteiros/`    | roteiros em Markdown: fala + `[o que aparece na tela]`         |
 | `publicacao/`  | título, descrição (com patch e aviso da Riot) e hashtags       |
 | `clipes/`      | gameplay gravado pelo usuário (Ferramenta de Treino)           |
@@ -127,7 +128,7 @@ exportar `saida/<slug>_v1.mp4`.
 ## Quadro de investigação (provas animadas)
 
 `src/Quadro.tsx`, ligado por `config.efeitos.quadro`. Cada cena tem `provas`:
-`{tipo: foto|icone|nota|etiqueta|placar, rotulo, detalhe, imgAsset (Artifact) / imgArquivo (local),
+`{tipo: foto|icone|nota|etiqueta|placar|alcance, rotulo, detalhe, imgAsset (Artifact) / imgArquivo (local),
 gatilho (palavra da fala que faz aparecer), carimbo, cor (ouro|verde|vermelho|azul|amarelo), riscar,
 liga (índice da prova ligada pelo fio, dentro da cena; null = sem fio), pos [dx, dy]}`.
 As provas caem presas por alfinete/fita, o fio vermelho liga uma à outra, a câmera chega perto da
@@ -139,6 +140,22 @@ Imagens: o Claude baixa sozinho as oficiais do jogo do Data Dragon (arte de carr
 `dados/assets.json` (o importador usa esse mapa). O que não é do Data Dragon (gameplay, prints,
 logos) o usuário envia pela prova (🖼) na aba Roteiro, que lista as imagens que faltam.
 Não usar fotos de pessoas reais (jogadores) sem direito de uso: prefira arte do campeão ou nota.
+
+## Biblioteca por campeão, círculos de alcance e vídeo da habilidade
+
+`biblioteca/campeoes/<Id>/` guarda, para cada campeão, os vídeos oficiais das habilidades e da passiva,
+um quadro parado de cada vídeo, ícones, arte e dados (veja `biblioteca/README.md`). Antes de baixar
+qualquer coisa de um campeão, rode `.venv/bin/python scripts/biblioteca.py campeao <Nome>`: ele só baixa
+o que falta. Prefira os arquivos da biblioteca aos de `dados/<video>/`.
+
+- **Quando a fala citar um alcance**, use uma prova `alcance` (cartão grande; as outras provas da cena
+  ficam nas laterais): `{tipo: "alcance", rotulo: "Alcance", imgAsset/imgArquivo: <Id>/icone.png,
+  fundoAsset/fundoArquivo: <Id>/quadros/<X>.jpg, alcances: [{valor: 1050, rotulo: "Seu E · Orbe", cor: "azul"},
+  {valor: 825, rotulo: "Investida da Akali", cor: "vermelho"}], gatilho}`. Os círculos ficam em escala entre si
+  (ilustrativo). Valores só do Data Dragon.
+- **Quando a cena falar de uma habilidade**, coloque o vídeo dela atrás do quadro:
+  `cena.videoFundo = {asset, arquivo: "biblioteca/campeoes/<Id>/videos/<X>.mp4", dur}` (`dur` vem do
+  `dados.json`). O vídeo roda em loop e o mural fica translúcido durante a cena.
 
 ## Estúdio Shorts local (painel em http://localhost:3333) — alternativa
 

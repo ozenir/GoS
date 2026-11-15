@@ -13,7 +13,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { pesoDaFonte } from "./fontes";
-import { ProvaT, Quadro } from "./Quadro";
+import { ProvaT, Quadro, VideoFundoT } from "./Quadro";
 
 // ---------- Tipos (o painel e o servidor produzem exatamente isto) ----------
 
@@ -25,6 +25,7 @@ export type CenaT = {
   clipeInicio?: number | null;
   palavras: PalavraT[];
   provas?: ProvaT[]; // quadro de investigação
+  videoFundo?: VideoFundoT; // vídeo da habilidade atrás do quadro
 };
 export type Trilha = { duracao: number; cenas: CenaT[] };
 

@@ -183,6 +183,7 @@ export function trilha(id) {
     textoTela: comTexto[i]?.textoTela || "",
     clipeInicio: comTexto[i]?.clipeInicio ?? null,
     provas: comTexto[i]?.provas || [],
+    videoFundo: comTexto[i]?.videoFundo || null,
   }));
   return { trilha: tr, narracaoAtual: !!atual, narracaoExiste: !!real, hash: h };
 }
@@ -199,7 +200,12 @@ export function props(id, base = "") {
   const v = narracaoAtual ? statSync(join(d, "narracao.m4a")).mtimeMs | 0 : 0;
   tr.cenas = tr.cenas.map((c) => ({
     ...c,
-    provas: (c.provas || []).map((pr) => ({ ...pr, img: pr.imgArquivo ? url(pr.imgArquivo) : pr.img || null })),
+    provas: (c.provas || []).map((pr) => ({
+      ...pr,
+      img: pr.imgArquivo ? url(pr.imgArquivo) : pr.img || null,
+      fundo: pr.fundoArquivo ? url(pr.fundoArquivo) : pr.fundo || null,
+    })),
+    videoFundo: c.videoFundo?.arquivo ? { url: url(c.videoFundo.arquivo), dur: c.videoFundo.dur || 4 } : null,
   }));
   return {
     trilha: tr,

@@ -7,7 +7,7 @@ import * as P from "./projetos.mjs";
 
 const PORTA = Number(process.env.PORTA || 3333);
 const RAIZ = P.RAIZ;
-const PASTAS_PUBLICAS = ["brutos", "musicas", "projetos", "saida", "referencias", "dados", "clipes"];
+const PASTAS_PUBLICAS = ["brutos", "musicas", "projetos", "saida", "referencias", "dados", "clipes", "biblioteca"];
 const PEDIDOS = join(RAIZ, "painel", "pedidos.log");
 const tarefas = new Map(); // id -> processo em andamento
 

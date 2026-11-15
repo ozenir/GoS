@@ -28,5 +28,13 @@
  "dados/xerath-mid/jarvan_E.png": "ff9c2edf6afde862c778b76bf28fa3b0",
  "dados/xerath-mid/itens/3802.png": "e0e82a89ad7a8ce61b7b0e9824352bf2",
  "dados/xerath-mid/itens/6655.png": "c08e2a2553863dd8461d10346f92b708",
- "dados/xerath-mid/itens/2055.png": "341e9240597076106dcb84e814a06610"
+ "dados/xerath-mid/itens/2055.png": "341e9240597076106dcb84e814a06610",
+ "biblioteca/campeoes/Xerath/icone.png": "ebbb167d486fec38f54cfac095615d53",
+ "biblioteca/campeoes/Xerath/quadros/E.jpg": "c5bd43ae68007806aea9f6076083c401",
+ "biblioteca/campeoes/JarvanIV/icone.png": "fd86231b8c11925e381b7ec1cdec6792",
+ "biblioteca/campeoes/JarvanIV/quadros/E.jpg": "d1a764e927c2c5d598d2195ec339eee5",
+ "biblioteca/campeoes/Xerath/videos/E.mp4": "81d49d34efdd9a98d2cc583361e8222e",
+ "biblioteca/campeoes/Xerath/videos/Q.mp4": "9b44dd6023cd11ae884cb7eebdb420c9",
+ "biblioteca/campeoes/Akali/videos/W.mp4": "eb4ea500e49dd71556b5086cbb2d4147",
+ "biblioteca/campeoes/JarvanIV/videos/E.mp4": "286df7f0bc833c0aa63043832fa6bc00"
 }
