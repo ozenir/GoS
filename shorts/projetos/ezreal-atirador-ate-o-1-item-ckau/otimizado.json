@@ -3,213 +3,108 @@
     {
       "clipeInicio": null,
       "destaque": [
-        "E",
-        "Camille"
+        "E"
       ],
-      "narracao": "Se você usa o E do Ezreal para dar dano, a Camille vai te matar.",
-      "textoTela": "GUARDE ESSE E",
-      "visual": "Close no Ezreal usando E para frente e sendo enganchado logo depois.",
+      "narracao": "Xerath contra Akali: o erro que todo Diamante comete é gastar o E cedo.",
+      "textoTela": "NÃO USE O E",
+      "visual": "Xerath erra o Orbe e a Akali avança em cima dele",
       "provas": [
         {
-          "tipo": "icone",
-          "rotulo": "E · Translocação Arcana",
-          "imgArquivo": "dados/ezreal-adc/habilidade_E.png",
-          "imgAsset": "9e6ab8c2bc55f57818b1b379ae95f7fc",
-          "gatilho": "E"
+          "tipo": "foto",
+          "rotulo": "Xerath (você)",
+          "imgArquivo": "dados/xerath-mid/arte/Xerath.jpg",
+          "imgAsset": "1fcb7444364f290888557592cb46bb0f",
+          "gatilho": "Xerath"
         },
         {
           "tipo": "foto",
-          "rotulo": "Camille suporte",
-          "imgArquivo": "dados/ezreal-adc/arte/Camille.jpg",
-          "imgAsset": "398b01492023e6c6beda72f50c298be2",
-          "gatilho": "Camille",
-          "carimbo": "PERIGO"
-        }
-      ]
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "475",
-        "70",
-        "26 s"
-      ],
-      "narracao": "O E é sua única fuga: 475 de alcance, 70 de mana e 26 segundos de recarga no nível 1. Gastou no dano, ficou sem saída contra o gancho.",
-      "textoTela": "SUA ÚNICA FUGA",
-      "visual": "Ícone do E com os números aparecendo um a um e um cadeado fechando.",
-      "provas": [
-        {
-          "tipo": "icone",
-          "rotulo": "Sua única fuga",
-          "imgArquivo": "dados/ezreal-adc/habilidade_E.png",
-          "imgAsset": "9e6ab8c2bc55f57818b1b379ae95f7fc",
-          "detalhe": "alcance 475\n70 de mana\nrecarga 26 s (nv. 1)",
-          "gatilho": "fuga"
+          "rotulo": "Akali",
+          "imgArquivo": "dados/xerath-mid/arte/Akali.jpg",
+          "imgAsset": "edb7eb01b72c539f5b93f500c8e9f96e",
+          "gatilho": "Akali",
+          "carimbo": "MEIO"
         },
         {
           "tipo": "nota",
-          "rotulo": "SEM E = SEM SAÍDA",
-          "detalhe": "gastou no dano?\nficou exposto",
-          "gatilho": "Gastou",
-          "cor": "vermelho"
-        }
-      ]
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "800",
-        "475"
-      ],
-      "narracao": "O gancho dela tem 800 de alcance. Seu E tem 475.",
-      "textoTela": "800 vs 475",
-      "visual": "Linhas de alcance comparando os dois.",
-      "provas": [
-        {
-          "tipo": "icone",
-          "rotulo": "Gancho da Camille",
-          "imgArquivo": "dados/ezreal-adc/camille_E.png",
-          "imgAsset": "671b1738294349e6fb6416488a942ad7",
-          "detalhe": "E · Disparo de Gancho\nalcance 800",
-          "gatilho": "gancho",
+          "rotulo": "O ERRO DO DIAMANTE",
+          "detalhe": "gastar o E cedo",
+          "gatilho": "erro",
           "cor": "vermelho"
         },
         {
           "tipo": "icone",
-          "rotulo": "Seu E",
-          "imgArquivo": "dados/ezreal-adc/habilidade_E.png",
-          "imgAsset": "9e6ab8c2bc55f57818b1b379ae95f7fc",
-          "detalhe": "Translocação Arcana\nalcance 475",
-          "gatilho": "Seu",
-          "liga": 0
-        }
-      ]
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "reagindo"
-      ],
-      "narracao": "Você não ganha fugindo antes. Você ganha reagindo depois.",
-      "textoTela": "REAJA, NÃO FUJA ANTES",
-      "visual": "Ezreal parado enquanto a linha do gancho se aproxima, com a etiqueta verde surgindo.",
-      "provas": [
-        {
-          "tipo": "etiqueta",
-          "rotulo": "REAJA, NÃO FUJA ANTES",
-          "gatilho": "reagindo",
-          "cor": "verde"
-        }
-      ]
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "cedo"
-      ],
-      "narracao": "Se você usar o E cedo, ela só ajusta o gancho e chega do mesmo jeito.",
-      "textoTela": "E CEDO = MORTE",
-      "visual": "Ezreal usa E antes da hora e a Camille redireciona o gancho até ele.",
-      "provas": [
-        {
-          "tipo": "nota",
-          "rotulo": "E CEDO",
-          "detalhe": "ela ajusta o gancho\ne chega igual",
+          "rotulo": "E · Orbe Eletrizante",
+          "imgArquivo": "dados/xerath-mid/habilidade_E.png",
+          "imgAsset": "1dcb3bd52d2b3c4f3d32dc2115592d8c",
           "gatilho": "cedo",
-          "cor": "vermelho"
+          "liga": 2
         }
       ]
     },
     {
       "clipeInicio": null,
       "destaque": [
-        "1º salto"
+        "13",
+        "16"
       ],
-      "narracao": "O gancho tem dois saltos: primeiro ela se prende na parede, depois pula em você. No primeiro salto, segure o E.",
-      "textoTela": "1º SALTO: SEGURE",
-      "visual": "Camille se prendendo na parede com aviso amarelo de segurar o E.",
+      "narracao": "O Orbe Eletrizante tem 13 segundos de recarga no nível 1. A Investida Shuriken da Akali tem 16. Se você erra o seu E, ela ganha 13 segundos para entrar sem medo.",
+      "textoTela": "E: 13 s vs 16 s",
+      "visual": "Comparação das duas recargas na tela",
       "provas": [
         {
-          "tipo": "nota",
-          "rotulo": "1º SALTO",
-          "detalhe": "na parede\n— segure o E",
-          "gatilho": "primeiro",
-          "cor": "amarelo"
-        },
-        {
-          "tipo": "nota",
-          "rotulo": "2º SALTO",
-          "detalhe": "ela pula em você",
-          "gatilho": "depois",
-          "cor": "vermelho"
-        }
-      ]
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "2º salto"
-      ],
-      "narracao": "Espere o segundo salto do gancho. Aí use o E para trás.",
-      "textoTela": "DEPOIS DO 2º SALTO",
-      "visual": "Câmera lenta: Camille pula da parede e Ezreal desvia com E.",
-      "provas": [
-        {
-          "tipo": "etiqueta",
-          "rotulo": "DEPOIS DO 2º SALTO",
-          "gatilho": "segundo",
-          "cor": "amarelo"
+          "tipo": "icone",
+          "rotulo": "Orbe Eletrizante",
+          "imgArquivo": "dados/xerath-mid/habilidade_E.png",
+          "imgAsset": "1dcb3bd52d2b3c4f3d32dc2115592d8c",
+          "detalhe": "recarga 13 s (nv. 1)\nalcance 1050",
+          "gatilho": "Orbe"
         },
         {
           "tipo": "icone",
-          "rotulo": "E para trás",
-          "imgArquivo": "dados/ezreal-adc/habilidade_E.png",
-          "imgAsset": "9e6ab8c2bc55f57818b1b379ae95f7fc",
-          "gatilho": "use"
-        }
-      ]
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "exposta"
-      ],
-      "narracao": "Ela já se comprometeu no pulo e cai no vazio, sem dano e sem fuga fácil. Agora quem está exposta é ela.",
-      "textoTela": "ELA FICOU EXPOSTA",
-      "visual": "Camille aterrissando no lugar vazio enquanto Ezreal já está longe.",
-      "provas": [
-        {
-          "tipo": "foto",
-          "rotulo": "Pulou no vazio",
-          "imgArquivo": "dados/ezreal-adc/arte/Camille.jpg",
-          "imgAsset": "398b01492023e6c6beda72f50c298be2",
-          "gatilho": "vazio",
-          "carimbo": "EXPOSTA"
-        }
-      ]
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "16 s",
-        "Q",
-        "W"
-      ],
-      "narracao": "O gancho dela tem 16 segundos de recarga. Se ela errou, volte e troque com Q e W.",
-      "textoTela": "16 s PARA PUNIR",
-      "visual": "Contador de 16 s na tela enquanto Ezreal cutuca.",
-      "provas": [
-        {
-          "tipo": "nota",
-          "rotulo": "16 s",
-          "detalhe": "recarga do gancho\nno nível 1",
-          "gatilho": "recarga",
+          "rotulo": "Investida Shuriken",
+          "imgArquivo": "dados/xerath-mid/akali_E.png",
+          "imgAsset": "5e33ec74aefb08450c127a70b7eebf2e",
+          "detalhe": "recarga 16 s (nv. 1)\nalcance 825",
+          "gatilho": "Investida",
           "cor": "vermelho"
         },
         {
+          "tipo": "nota",
+          "rotulo": "ERROU O E?",
+          "detalhe": "13 s para ela\nentrar sem medo",
+          "gatilho": "erra",
+          "cor": "vermelho"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "9 s"
+      ],
+      "narracao": "Então o plano é outro. Cutuque com o Pulso Arcano, que tem 9 segundos de recarga, sempre que ela andar até a tropa para dar o último golpe. Guarde o E para quando ela usar a Investida.",
+      "textoTela": "Q no último golpe",
+      "visual": "Xerath acerta o Q enquanto a Akali dá o último golpe",
+      "provas": [
+        {
+          "tipo": "icone",
+          "rotulo": "Q · Pulso Arcano",
+          "imgArquivo": "dados/xerath-mid/habilidade_Q.png",
+          "imgAsset": "d53b1c7070b7211bdf24edd104176dfd",
+          "detalhe": "recarga 9 s (nv. 1)\nalcance 750",
+          "gatilho": "Pulso"
+        },
+        {
+          "tipo": "nota",
+          "rotulo": "ÚLTIMO GOLPE",
+          "detalhe": "ela vem até a tropa:\ncutuque",
+          "gatilho": "último",
+          "cor": "amarelo"
+        },
+        {
           "tipo": "etiqueta",
-          "rotulo": "ERROU? PUNA",
-          "gatilho": "errou",
+          "rotulo": "E SÓ DEPOIS DA INVESTIDA",
+          "gatilho": "Guarde",
           "cor": "verde"
         }
       ]
@@ -217,110 +112,82 @@
     {
       "clipeInicio": null,
       "destaque": [
-        "1150",
-        "Q",
-        "W"
+        "20 s"
       ],
-      "narracao": "Os dois têm 1150 de alcance: o Q custa 28 de mana e o W custa 50. Marque com o W e estoure com o Q.",
-      "textoTela": "W MARCA, Q ESTOURA",
-      "visual": "Ícones de Q e W com custo de mana, seguidos do combo acertando a Camille.",
+      "narracao": "E a névoa? A Proteção do Crepúsculo tem 20 segundos de recarga. Quando ela entrar, recue. Quando sair, você tem quase 20 segundos sem névoa para punir. Essa é a sua janela de troca completa: E, W e Q.",
+      "textoTela": "Névoa = 20 s",
+      "visual": "Akali sai da névoa e leva o combo completo",
       "provas": [
         {
           "tipo": "icone",
-          "rotulo": "Q · Disparo Místico",
-          "imgArquivo": "dados/ezreal-adc/habilidade_Q.png",
-          "imgAsset": "e927004937e8d508620a250cd588d083",
-          "detalhe": "28 de mana\nalcance 1150",
-          "gatilho": "Q"
+          "rotulo": "Proteção do Crepúsculo",
+          "imgArquivo": "dados/xerath-mid/akali_W.png",
+          "imgAsset": "d17d3375ae8940221b9035d75c9c1f02",
+          "detalhe": "a névoa\nrecarga 20 s (nv. 1)",
+          "gatilho": "Proteção",
+          "cor": "vermelho"
         },
         {
-          "tipo": "icone",
-          "rotulo": "W · Fluxo Essencial",
-          "imgArquivo": "dados/ezreal-adc/habilidade_W.png",
-          "imgAsset": "2b2ef050474c9c4b67b89d105e9f8506",
-          "detalhe": "50 de mana\nalcance 1150",
-          "gatilho": "W"
+          "tipo": "etiqueta",
+          "rotulo": "NÉVOA = RECUE",
+          "gatilho": "recue",
+          "cor": "amarelo"
         },
         {
           "tipo": "nota",
-          "rotulo": "COMBO",
-          "detalhe": "W marca\nQ estoura",
-          "gatilho": "Marque",
-          "cor": "ouro"
-        }
-      ]
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "janela"
-      ],
-      "narracao": "Nessa janela, ela não tem como chegar até você, então cutuque sem medo. Quando o tempo acabar, recue de novo.",
-      "textoTela": "CUTUQUE E RECUE",
-      "visual": "Contador zerando e Ezreal recuando para trás da tropa.",
-      "provas": [
-        {
-          "tipo": "etiqueta",
-          "rotulo": "JANELA PARA CUTUCAR",
+          "rotulo": "JANELA DE ~20 s",
+          "detalhe": "sem névoa:\npuna com E, W e Q",
           "gatilho": "janela",
           "cor": "verde"
         },
         {
-          "tipo": "nota",
-          "rotulo": "O TEMPO ACABOU",
-          "detalhe": "recue de novo",
-          "gatilho": "recue",
-          "cor": "amarelo"
+          "tipo": "icone",
+          "rotulo": "W · Olho da Destruição",
+          "imgArquivo": "dados/xerath-mid/habilidade_W.png",
+          "imgAsset": "bc42071166699285a582a28fed469da1",
+          "detalhe": "recarga 14 s\nalcance 1000",
+          "gatilho": "W"
         }
       ]
     },
     {
       "clipeInicio": null,
       "destaque": [
-        "parede"
+        "860"
       ],
-      "narracao": "E longe das paredes. Sem parede, sem gancho.",
-      "textoTela": "LONGE DA PAREDE",
-      "visual": "Mapa da rota bot com as paredes perigosas marcadas.",
+      "narracao": "Mas o perigo real é o Jarvan. No nível 3, o combo do Estandarte com o Ataque do Dragão alcança 860 de distância. Coloque sentinela no rio antes do terceiro minuto e jogue com a onda perto da sua torre.",
+      "textoTela": "Jarvan nível 3",
+      "visual": "Minimapa com a sentinela no rio e o caminho do Jarvan",
       "provas": [
         {
-          "tipo": "nota",
-          "rotulo": "PAREDE",
-          "detalhe": "é de lá que\nela engancha",
-          "gatilho": "paredes",
+          "tipo": "foto",
+          "rotulo": "Jarvan IV",
+          "imgArquivo": "dados/xerath-mid/arte/JarvanIV.jpg",
+          "imgAsset": "999b55d0a0fd34627006553156dd2ad8",
+          "gatilho": "Jarvan",
+          "carimbo": "PERIGO"
+        },
+        {
+          "tipo": "icone",
+          "rotulo": "Estandarte + Ataque do Dragão",
+          "imgArquivo": "dados/xerath-mid/jarvan_E.png",
+          "imgAsset": "ff9c2edf6afde862c778b76bf28fa3b0",
+          "detalhe": "Estandarte:\nalcance 860",
+          "gatilho": "Estandarte",
           "cor": "vermelho"
         },
         {
-          "tipo": "foto",
-          "rotulo": "Sem parede",
-          "imgArquivo": "dados/ezreal-adc/arte/Camille.jpg",
-          "imgAsset": "398b01492023e6c6beda72f50c298be2",
-          "gatilho": "gancho",
-          "riscar": true,
-          "carimbo": "SEM GANCHO"
-        }
-      ]
-    },
-    {
-      "clipeInicio": null,
-      "destaque": [
-        "meio"
-      ],
-      "narracao": "Na rota bot, evite andar colado às paredes da rota quando ela some do mapa. Fique no meio, em terreno aberto.",
-      "textoTela": "SUMIU? VÁ PRO MEIO",
-      "visual": "Minimapa com a Camille desaparecendo e Ezreal se movendo para o centro da rota.",
-      "provas": [
-        {
-          "tipo": "nota",
-          "rotulo": "SUMIU DO MAPA?",
-          "detalhe": "saia de perto\ndas paredes",
-          "gatilho": "some",
-          "cor": "vermelho"
+          "tipo": "icone",
+          "rotulo": "Sentinela no rio",
+          "imgArquivo": "dados/xerath-mid/itens/2055.png",
+          "imgAsset": "341e9240597076106dcb84e814a06610",
+          "detalhe": "antes do 3º minuto",
+          "gatilho": "sentinela"
         },
         {
           "tipo": "etiqueta",
-          "rotulo": "TERRENO ABERTO",
-          "gatilho": "aberto",
+          "rotulo": "ONDA PERTO DA SUA TORRE",
+          "gatilho": "onda",
           "cor": "verde"
         }
       ]
@@ -328,68 +195,109 @@
     {
       "clipeInicio": null,
       "destaque": [
-        "E"
+        "1325",
+        "1200",
+        "75"
       ],
-      "narracao": "Você guarda o E ou usa para dar dano?",
-      "textoTela": "E VOCÊ?",
-      "visual": "Ezreal parado com o E pronto e um ponto de interrogação.",
+      "narracao": "Na primeira volta, junte 1325 de ouro. Compre Capítulo Perdido por 1200, Sentinela de Controle por 75 e uma Poção de Vida. Depois feche o Eco de Luden para limpar a onda de longe e não dar brecha para roam.",
+      "textoTela": "1ª volta: 1325",
+      "visual": "Tela da loja com as compras",
       "provas": [
         {
+          "tipo": "nota",
+          "rotulo": "1ª VOLTA",
+          "detalhe": "1325 de ouro",
+          "gatilho": "volta",
+          "cor": "ouro"
+        },
+        {
+          "tipo": "icone",
+          "rotulo": "Capítulo Perdido",
+          "imgArquivo": "dados/xerath-mid/itens/3802.png",
+          "imgAsset": "e0e82a89ad7a8ce61b7b0e9824352bf2",
+          "detalhe": "1200 de ouro",
+          "gatilho": "Capítulo"
+        },
+        {
+          "tipo": "icone",
+          "rotulo": "Sentinela de Controle",
+          "imgArquivo": "dados/xerath-mid/itens/2055.png",
+          "imgAsset": "341e9240597076106dcb84e814a06610",
+          "detalhe": "75 de ouro",
+          "gatilho": "Sentinela"
+        },
+        {
+          "tipo": "icone",
+          "rotulo": "Eco de Luden",
+          "imgArquivo": "dados/xerath-mid/itens/6655.png",
+          "imgAsset": "c08e2a2553863dd8461d10346f92b708",
+          "detalhe": "limpa a onda de longe",
+          "gatilho": "Eco",
+          "carimbo": "1º ITEM"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "Cometa Arcano",
+        "Eletrocutar"
+      ],
+      "narracao": "Resumo: Pulso Arcano no último golpe, E só depois da Investida, névoa é sinal para recuar. E você, contra Akali, abre Cometa Arcano ou Eletrocutar? Comenta aí.",
+      "textoTela": "Cometa ou Eletrocutar?",
+      "visual": "Lista do resumo e a pergunta em destaque",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "RESUMO",
+          "detalhe": "Q no último golpe\nE depois da Investida\nnévoa = recuar",
+          "gatilho": "Resumo",
+          "cor": "ouro"
+        },
+        {
           "tipo": "foto",
-          "rotulo": "Ezreal",
-          "imgArquivo": "dados/ezreal-adc/arte/Ezreal.jpg",
-          "imgAsset": "d2af4e4359e103c023432d2007c6887c",
-          "gatilho": "Você"
+          "rotulo": "E você?",
+          "imgArquivo": "dados/xerath-mid/arte/Xerath.jpg",
+          "imgAsset": "1fcb7444364f290888557592cb46bb0f",
+          "gatilho": "você"
         },
         {
           "tipo": "nota",
-          "rotulo": "GUARDA?",
-          "detalhe": "resposta ao gancho",
-          "gatilho": "guarda",
-          "cor": "verde",
-          "liga": 0
-        },
-        {
-          "tipo": "nota",
-          "rotulo": "OU DANO?",
-          "detalhe": "e morre pra Camille",
-          "gatilho": "dano",
-          "cor": "vermelho",
-          "liga": 0
+          "rotulo": "COMETA OU ELETROCUTAR?",
+          "detalhe": "comenta aí",
+          "gatilho": "Cometa",
+          "cor": "azul",
+          "liga": 1
         }
       ]
     }
   ],
   "cta": {
-    "texto": "Comenta como você usa o E do Ezreal."
+    "texto": "Comente: Cometa Arcano ou Eletrocutar contra Akali?"
   },
-  "descricao": "Ezreal contra Camille suporte: segure a Translocação Arcana para o gancho e puna os 16 s de recarga. Patch 16.22.",
+  "descricao": "Xerath vs Akali no meio, do nível 1 à primeira volta: recargas reais, janelas de troca, perigo do Jarvan IV e compras exatas. Patch 16.22.",
   "hashtags": [
     "#leagueoflegends",
     "#lol",
-    "#ezreal",
-    "#camille",
-    "#lolbrasil"
+    "#xerath",
+    "#akali",
+    "#midlane"
   ],
   "hook": {
-    "textoTela": "GUARDE ESSE E"
+    "textoTela": "NÃO USE O E"
   },
   "mudancas": [
-    "Duração reduzida de 90 s para cerca de 45 s, para seguir a regra de 30 a 60 s e de uma ideia por vídeo.",
-    "Foco em uma única ideia: guardar o E para o gancho de Camille.",
-    "Final com pergunta direta para gerar comentários.",
-    {
-      "antes": "80 palavras (~32 s)",
-      "depois": "237 palavras (~95 s)",
-      "porque": "Duração escolhida no briefing: 90 s"
-    }
+    "Gancho direto no erro comum em 1,5 s",
+    "Uma ideia central: quando gastar o E",
+    "Números de recarga e ouro tirados dos dados",
+    "Final com pergunta para gerar comentários"
   ],
   "notaOriginal": null,
-  "notaOtimizada": 8,
-  "resumo": "Contra Camille suporte, o E do Ezreal não é para causar dano: ele é a resposta ao gancho.",
+  "notaOtimizada": 8.6,
+  "resumo": "Como jogar de Xerath contra Akali até a 1ª volta, usando as recargas reais: E só depois da Investida e punir quando a névoa acaba.",
   "titulos": [
-    "Ezreal vs Camille suporte: o erro que te mata",
-    "Pare de usar o E do Ezreal assim",
-    "Como sobreviver à Camille no bot"
+    "Xerath vs Akali: o erro que todo Diamante comete",
+    "Nunca use o E primeiro contra Akali",
+    "A janela de 20 segundos para punir Akali"
   ]
 }

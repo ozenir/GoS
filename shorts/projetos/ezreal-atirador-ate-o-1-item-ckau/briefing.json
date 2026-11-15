@@ -1,29 +1,29 @@
 {
-  "campeao": "Ezreal",
+  "campeao": "Xerath",
   "duracao": "90s",
   "fatos": "",
   "matchup": {
     "aliados": {
-      "Atirador": "Ezreal",
-      "Meio": "Orianna",
-      "Selva": "Cho'Gath",
+      "Atirador": "Sivir",
+      "Meio": "Xerath",
+      "Selva": "Xin Zhao",
       "Suporte": "Karma",
-      "Topo": "Vayne"
+      "Topo": "K'Sante"
     },
-    "campeao": "Ezreal",
+    "campeao": "Xerath",
     "inimigos": {
-      "Atirador": "Corki",
-      "Meio": "Cassiopeia",
-      "Selva": "Naafiri",
-      "Suporte": "Camille",
+      "Atirador": "Jhin",
+      "Meio": "Akali",
+      "Selva": "Jarvan IV",
+      "Suporte": "Rakan",
       "Topo": "Gnar"
     },
-    "rota": "Atirador"
+    "rota": "Meio"
   },
   "orientacoes": "",
-  "publico": "Intermediário (Ouro–Esmeralda)",
+  "publico": "High elo (Diamante+)",
   "roteiro": "",
   "tipo": "Matchup: até o 1º item",
-  "titulo": "Ezreal atirador: até o 1º item",
+  "titulo": "Como agir na lane de xerath até o primeiro item",
   "tom": "Sério / Analítico"
 }

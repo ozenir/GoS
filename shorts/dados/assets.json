@@ -16,5 +16,17 @@
  "dados/ezreal-adc/habilidade_E.png": "9e6ab8c2bc55f57818b1b379ae95f7fc",
  "dados/ezreal-adc/habilidade_Q.png": "e927004937e8d508620a250cd588d083",
  "dados/ezreal-adc/habilidade_W.png": "2b2ef050474c9c4b67b89d105e9f8506",
- "dados/ezreal-adc/camille_E.png": "671b1738294349e6fb6416488a942ad7"
+ "dados/ezreal-adc/camille_E.png": "671b1738294349e6fb6416488a942ad7",
+ "dados/xerath-mid/arte/Xerath.jpg": "1fcb7444364f290888557592cb46bb0f",
+ "dados/xerath-mid/arte/Akali.jpg": "edb7eb01b72c539f5b93f500c8e9f96e",
+ "dados/xerath-mid/arte/JarvanIV.jpg": "999b55d0a0fd34627006553156dd2ad8",
+ "dados/xerath-mid/habilidade_Q.png": "d53b1c7070b7211bdf24edd104176dfd",
+ "dados/xerath-mid/habilidade_W.png": "bc42071166699285a582a28fed469da1",
+ "dados/xerath-mid/habilidade_E.png": "1dcb3bd52d2b3c4f3d32dc2115592d8c",
+ "dados/xerath-mid/akali_E.png": "5e33ec74aefb08450c127a70b7eebf2e",
+ "dados/xerath-mid/akali_W.png": "d17d3375ae8940221b9035d75c9c1f02",
+ "dados/xerath-mid/jarvan_E.png": "ff9c2edf6afde862c778b76bf28fa3b0",
+ "dados/xerath-mid/itens/3802.png": "e0e82a89ad7a8ce61b7b0e9824352bf2",
+ "dados/xerath-mid/itens/6655.png": "c08e2a2553863dd8461d10346f92b708",
+ "dados/xerath-mid/itens/2055.png": "341e9240597076106dcb84e814a06610"
 }

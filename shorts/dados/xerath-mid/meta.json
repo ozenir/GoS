@@ -1,0 +1,112 @@
+{
+ "versao": "16.22.1",
+ "campeao": "Xerath",
+ "arquivos": {
+  "icone": "icones/Xerath.png",
+  "splash": "Xerath_splash.jpg",
+  "passiva": "passiva.png",
+  "Q": "habilidade_Q.png",
+  "W": "habilidade_W.png",
+  "E": "habilidade_E.png",
+  "R": "habilidade_R.png"
+ },
+ "habilidades": {
+  "Q": {
+   "nome": "Pulso Arcano",
+   "recarga": [
+    9,
+    8,
+    7,
+    6,
+    5
+   ],
+   "custo": [
+    80,
+    90,
+    100,
+    110,
+    120
+   ],
+   "alcance": [
+    750,
+    750,
+    750,
+    750,
+    750
+   ]
+  },
+  "W": {
+   "nome": "Olho da Destruição",
+   "recarga": [
+    14,
+    13,
+    12,
+    11,
+    10
+   ],
+   "custo": [
+    80,
+    90,
+    100,
+    110,
+    120
+   ],
+   "alcance": [
+    1000,
+    1000,
+    1000,
+    1000,
+    1000
+   ]
+  },
+  "E": {
+   "nome": "Orbe Eletrizante",
+   "recarga": [
+    13,
+    12.5,
+    12,
+    11.5,
+    11
+   ],
+   "custo": [
+    60,
+    65,
+    70,
+    75,
+    80
+   ],
+   "alcance": [
+    1050,
+    1050,
+    1050,
+    1050,
+    1050
+   ]
+  },
+  "R": {
+   "nome": "Ritual Arcano",
+   "recarga": [
+    130,
+    115,
+    100
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    5000,
+    5000,
+    5000
+   ]
+  }
+ },
+ "passiva": "Oscilação de Mana",
+ "outros": [
+  "Akali",
+  "JarvanIV",
+  "Rakan",
+  "Jhin"
+ ]
+}
