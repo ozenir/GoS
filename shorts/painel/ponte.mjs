@@ -2,7 +2,7 @@
 // O Claude usa assim (detalhes no CLAUDE.md):
 //   node painel/ponte.mjs importar <doc.json>            projeto do Artifact -> projetos/<id>/
 //   node painel/ponte.mjs produzir <id> [final|previa]   narração + render (servidor local precisa estar no ar)
-//   node painel/ponte.mjs estado <id> --audio <assetId> [--render <assetId>|<nome>|<qualidade>|<bytes>]...
+//   node painel/ponte.mjs estado <id> --audio <assetId> [--render <assetId>|<nome>|<qualidade>|<bytes>]... [--pedido <em>] [--passo k=v]
 //                                                        -> projetos/<id>/producao.json (para gravar no Artifact)
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -103,6 +103,10 @@ if (cmd === "importar") {
       renders.push({ id: rid, nome, qualidade, bytes: Number(bytes), data: Date.now() });
     }
   });
+  // botão "Criar vídeo": --pedido <em> liga este estado ao pedido; --passo k=v ajusta um passo (ok|pulado|erro)
+  const pedidoEm = args.includes("--pedido") ? Number(args[args.indexOf("--pedido") + 1]) : null;
+  const passos = { roteiro: "pulado", provas: "ok", narracao: "ok", render: "ok", envio: "ok" };
+  args.forEach((a, i) => { if (a === "--passo") { const [k, v] = args[i + 1].split("="); passos[k] = v; } });
   const real = JSON.parse(readFileSync(join(P.dir(id), "trilha.json"), "utf8"));
   const anterior = existsSync(join(P.dir(id), "producao.json")) ? JSON.parse(readFileSync(join(P.dir(id), "producao.json"), "utf8")) : {};
   const estado = {
@@ -113,10 +117,11 @@ if (cmd === "importar") {
     trilha: { duracao: real.duracao, cenas: real.cenas },
     audio: { id: audio },
     renders: [...(anterior.renders || []), ...renders],
+    ...(pedidoEm ? { pedidoEm, passos } : {}),
     atualizado: Date.now(),
   };
   writeFileSync(join(P.dir(id), "producao.json"), JSON.stringify(estado));
   console.log(`ok: projetos/${id}/producao.json (${(statSync(join(P.dir(id), "producao.json")).size / 1024).toFixed(1)} KB)`);
 } else {
-  console.log("uso: importar <doc.json> [id] | produzir <id> [final|previa] | estado <id> --audio <id> --render <id|nome|qualidade|bytes>");
+  console.log("uso: importar <doc.json> [id] | produzir <id> [final|previa] | estado <id> --audio <id> --render <id|nome|qualidade|bytes> [--pedido <em>] [--passo k=v]");
 }

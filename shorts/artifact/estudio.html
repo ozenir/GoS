@@ -172,9 +172,34 @@ input[type=file] { max-width: 100%; color: var(--suave); }
 .vazio { text-align: center; padding: 28px 10px; color: var(--suave); }
 code { background: var(--campo); padding: 1px 6px; border-radius: 5px; color: var(--ouro-claro); }
 
+/* criação automática: um botão + passos com estado (feito / rodando / esperando / erro / pendente) */
+.auto { margin-bottom: 14px; }
+.auto-topo { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.auto-topo h2 { margin: 0; flex: 1 1 220px; }
+.auto-topo select { width: auto; flex: 0 1 200px; }
+.auto-resumo { color: var(--suave); font-size: .86rem; margin: 6px 0 0; }
+.passos { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 760px) { .passos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.passo { display: flex; gap: 9px; align-items: flex-start; padding: 9px 10px; border: 1px solid var(--borda); border-radius: 8px; background: var(--campo); font-size: .86rem; min-width: 0; }
+.passo > div { min-width: 0; overflow-wrap: anywhere; }
+.passo b { display: block; font-weight: 600; color: var(--texto); }
+.passo small { display: block; color: var(--suave); font-size: .76rem; }
+.passo i { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: .72rem; font-weight: 700; background: var(--borda); color: var(--suave); margin-top: 1px; }
+.passo.feito { border-color: #3ddc9755; }
+.passo.feito i { background: var(--ok); color: #03140c; }
+.passo.rodando { border-color: var(--ouro); background: #c8aa6e12; }
+.passo.rodando i { background: none; border: 3px solid var(--ouro-esc); border-top-color: var(--ouro); color: transparent; animation: gira .8s linear infinite; }
+.passo.espera { border-color: var(--teal); background: #0ac8b912; }
+.passo.espera i { background: var(--teal); color: var(--sobre-teal); animation: pulso 1.2s infinite; }
+.passo.erro { border-color: var(--erro); background: #ff6b6b12; }
+.passo.erro i { background: var(--erro); color: #1a0505; }
+.passo.pendente { opacity: .7; }
+@keyframes gira { to { transform: rotate(360deg); } }
+.auto .aviso { margin-top: 12px; }
+
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(120px); background: var(--ouro); color: var(--sobre-ouro); padding: 10px 18px; border-radius: 8px; font-weight: 600; transition: transform .25s; z-index: 20; max-width: calc(100% - 32px); }
 .toast.on { transform: translateX(-50%) translateY(0); }
-@media (prefers-reduced-motion: reduce) { .pulso { animation: none; } .toast, .barra > div { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .pulso, .passo.espera i { animation: none; } .passo.rodando i { animation-duration: 3s; } .toast, .barra > div { transition: none; } }
 </style>
 
 <header class="topo">
@@ -193,6 +218,8 @@ code { background: var(--campo); padding: 1px 6px; border-radius: 5px; color: va
     <button type="button" data-aba="visual"><i>4</i>Visual &amp; voz</button>
     <button type="button" data-aba="exportar"><i>5</i>Produzir</button>
   </nav>
+
+  <section class="cartao destaque auto" id="auto" aria-live="polite" hidden></section>
 
   <main class="grade">
     <section class="trabalho" id="conteudo"></section>
@@ -335,7 +362,9 @@ function msgErro(e) {
 }
 
 // ============================================================ estado
-let db = null, assets = null, sample = null, downloads = null;
+let db = null, assets = null, sample = null, downloads = null, mcp = null;
+let claudeCfg = null;     // config/claude: {sessao} — sessão do Claude Code que recebe os pedidos
+let auto = null;          // criação automática em andamento nesta aba: {rodando, fase, erro, avisando, falhaAviso}
 let projetos = [];
 let proj = null;          // {id, ...documento}
 let eventos = [];
@@ -492,6 +521,7 @@ function redesenharSePreciso(producaoMudou) {
   const ass = [aba, proj?.etapa, JSON.stringify(proj?.otimizado?.mudancas || null).length, producao?.renders?.length || 0, producao?.etapa, narracaoEmDia(), !!proj?.carregando].join("|");
   desenharEtapas();
   desenharStatus();
+  desenharAuto();
   atualizarPlayer();
   const digitando = document.activeElement?.matches?.("#conteudo input, #conteudo textarea, #conteudo select");
   if (ass !== assinaturaAba && !digitando) {
@@ -512,6 +542,7 @@ function desenharSeletor() {
 
 function desenharTudo() {
   desenharSeletor();
+  desenharAuto();
   desenharEtapas();
   desenharAba();
   desenharStatus();
@@ -661,7 +692,7 @@ async function otimizar() {
   try {
     const o = await sample.json(prompt, {
       cache: false, signal: otimizando.ctl.signal,
-      onText: ({ text }) => { otimizando.texto = text; const e = $("#escrevendo"); if (e) { e.textContent = text; e.scrollTop = e.scrollHeight; } },
+      onText: ({ text }) => { otimizando.texto = text; const e = $("#escrevendo"); if (e) { e.textContent = text; e.scrollTop = e.scrollHeight; } pingAuto(); },
     });
     if (!o || !Array.isArray(o.cenas) || !o.cenas.some((c) => c && String(c.narracao || "").trim())) throw { code: "invalid_json" };
     o.cenas = o.cenas.map((c) => ({ narracao: String(c.narracao || ""), textoTela: String(c.textoTela || ""), destaque: Array.isArray(c.destaque) ? c.destaque.map(String) : [], visual: String(c.visual || ""), clipeInicio: null }));
@@ -711,7 +742,7 @@ async function analisarMatchup(b) {
   try {
     const r = await sample.json(prompt, {
       cache: false, signal: otimizando.ctl.signal, modelTier: "complex",
-      onText: ({ text }) => { otimizando.texto = text; const e = $("#escrevendo"); if (e) { e.textContent = text; e.scrollTop = e.scrollHeight; } },
+      onText: ({ text }) => { otimizando.texto = text; const e = $("#escrevendo"); if (e) { e.textContent = text; e.scrollTop = e.scrollHeight; } pingAuto(); },
     });
     if (!r || !r.short || !Array.isArray(r.short.cenas)) throw { code: "invalid_json" };
     const nomesItens = new Set(Object.values(ddragon.itens).map((i) => norm(i.nome)));
@@ -984,6 +1015,7 @@ function assinarConfig() {
     } catch { ddragon = null; }
   }, () => {});
   db.doc("config/canal").onSnapshot((s) => { canal = s.exists ? s.data() : { nome: "" }; if (aba === "exportar") desenharAba(); }, () => {});
+  db.doc("config/claude").onSnapshot((s) => { claudeCfg = s.exists ? s.data() : null; desenharAuto(); }, () => {});
 }
 const campeaoPorNome = (nome) => {
   if (!ddragon || !nome) return null;
@@ -1147,7 +1179,8 @@ function abaExportar(el) {
     <h2>Produzir</h2>
     <p class="nota-rodape" style="margin-top:0">A narração e o vídeo em MP4 são feitos pelo Claude Code, que tem o editor de vídeo. Você pede aqui, ele produz e o vídeo aparece nesta página.</p>
     ${rodando ? `<div class="esperando"><div class="pulso"></div><div><b>Produzindo…</b><br><span class="nota-rodape">${esc(producao?.texto || "")}</span></div></div>`
-      : pedido ? `<div class="esperando"><div class="pulso"></div><div><b>Pedido enviado.</b> Agora escreva no chat do Claude Code:<div class="copiavel"><span><code>${esc(frase)}</code></span>${copiar(frase)}</div></div></div>`
+      : pedido && proj.pedido?.avisado ? `<div class="esperando"><div class="pulso"></div><div><b>Claude Code avisado.</b><br><span class="nota-rodape">A produção começa em instantes. Acompanhe as etapas no painel Criar vídeo.</span></div></div>`
+      : pedido ? `<div class="esperando"><div class="pulso"></div><div><b>Pedido enviado.</b> Avise o Claude Code no painel Criar vídeo, ou escreva no chat dele:<div class="copiavel"><span><code>${esc(frase)}</code></span>${copiar(frase)}</div></div></div>`
       : `<div class="linha2"><div><label for="pQual">Qualidade</label><select id="pQual"><option value="final">Final 1080x1920</option><option value="previa">Prévia rápida 540x960</option></select></div></div>
          <div class="acoes"><button class="btn ouro" id="pPedir" type="button">🎬 Pedir narração e vídeo</button></div>`}
     ${pedido || rodando ? `<div class="acoes"><button class="btn peq" id="pCancelar" type="button">Cancelar pedido</button></div>` : ""}
@@ -1188,6 +1221,194 @@ function abaExportar(el) {
   }));
 }
 
+// ============================================================ criação automática (um botão, todas as etapas)
+// A página faz o que pode sozinha (roteiro com o Claude via sample, pedido com as predefinições salvas)
+// e avisa o Claude Code pelo conector "Claude Code Remote" (send_message para a sessão em config/claude).
+// O Claude Code grava o andamento em producao/estado: {pedidoEm, passos: {roteiro, provas, narracao, render, envio}}
+// com valores "rodando" | "ok" | "pulado" | "erro".
+const CONECTOR = "Claude Code Remote";
+const QUAL_AUTO = "estudio.qualidadeAuto";
+const roteiroPronto = (d) => !!(d?.otimizado?.cenas?.some((c) => String(c?.narracao || "").trim()) && (d.otimizado.mudancas || d.matchup));
+const fraseChat = () => `produz o vídeo ${proj?.titulo || proj?.id || ""}`;
+const nomeVoz = (v) => (String(v || "").match(/-([A-Za-z]+)Neural$/) || [])[1] || v || "?";
+
+function lerQualidade() { try { return localStorage.getItem(QUAL_AUTO) || "final"; } catch { return "final"; } }
+function guardarQualidade(q) { try { localStorage.setItem(QUAL_AUTO, q); } catch {} }
+
+function calcularPassos() {
+  const pd = proj.pedido || null;
+  const etapa = proj.etapa;
+  const pronto = etapa === "pronto";
+  const run = producao && pd && producao.pedidoEm === pd.em ? producao.passos || {} : {};
+  const deClaude = (k) => {
+    const v = run[k];
+    if (v === "ok" || v === "pulado") return "feito";
+    if (v === "erro" || (v === "rodando" && etapa === "erro")) return "erro";
+    if (v === "rodando") return "rodando";
+    if (pronto) return "feito";
+    return "pendente";
+  };
+  const b = proj.briefing || {};
+  const temBriefing = !!(b.titulo || b.roteiro || b.matchup);
+  const cenas = proj.otimizado?.cenas?.length || 0;
+
+  let roteiro = roteiroPronto(proj) ? "feito" : "pendente";
+  if (otimizando || etapa === "otimizando" || run.roteiro === "rodando") roteiro = "rodando";
+  else if (etapa === "aguardando_claude") roteiro = "espera";
+  else if (run.roteiro === "erro") roteiro = "erro";
+  if (roteiro === "pendente" && auto?.erro && auto.fase === "roteiro") roteiro = "erro";
+
+  const pedidoFeito = !!pd && ["aguardando_producao", "produzindo", "pronto", "erro"].includes(etapa);
+  let aviso = "pendente", avisoTxt = "Avisa o Claude Code para produzir";
+  if (pronto || etapa === "produzindo" || Object.keys(run).length) { aviso = "feito"; avisoTxt = pd?.avisado ? `Avisado às ${new Date(pd.avisado).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : "O Claude Code recebeu o pedido"; }
+  else if (auto?.avisando) { aviso = "rodando"; avisoTxt = "Enviando o pedido para a sessão do Claude Code…"; }
+  else if (pd?.avisado && etapa === "aguardando_producao") { aviso = "feito"; avisoTxt = "Avisado. Esperando o Claude Code começar"; }
+  else if (pedidoFeito && etapa === "aguardando_producao") { aviso = "espera"; avisoTxt = "Falta avisar: use o botão abaixo ou a frase no chat"; }
+
+  const prog = producao?.progresso != null && etapa === "produzindo" ? ` · ${Math.round(producao.progresso * 100)}%` : "";
+  const txtRodando = (k, padrao) => (run[k] === "rodando" && producao?.texto ? producao.texto + prog : padrao);
+  return [
+    { k: "briefing", nome: "Briefing", estado: temBriefing ? "feito" : "pendente", txt: temBriefing ? [b.tipo, b.duracao].filter(Boolean).join(" · ") || "Salvo" : "Preencha na etapa 1" },
+    { k: "roteiro", nome: "Roteiro otimizado", estado: roteiro,
+      txt: roteiro === "rodando" ? (otimizando ? `Claude escrevendo… ${otimizando.texto ? Math.round(otimizando.texto.length / 100) / 10 + " mil caracteres" : ""}` : "O Claude está otimizando") :
+        roteiro === "espera" ? "Esperando o Claude Code" : roteiro === "feito" ? `${cenas} cenas${proj.otimizado?.notaOtimizada ? ` · nota ${proj.otimizado.notaOtimizada}` : ""}` :
+        roteiro === "erro" ? "Não terminou. Veja a linha do tempo" : sample ? "O Claude escreve aqui mesmo" : "O Claude Code escreve" },
+    { k: "visual", nome: "Visual e voz", estado: pedidoFeito || pronto ? "feito" : auto?.rodando && auto.fase === "pedido" ? "rodando" : "pendente",
+      txt: cfg ? `Voz ${nomeVoz(cfg.voz)} · ${cfg.estilo?.fonte || ""} · fundo ${cfg.fundo?.tipo === "video" ? "gameplay" : "animado"}` : "Predefinições salvas" },
+    { k: "aviso", nome: "Pedido ao Claude Code", estado: aviso, txt: avisoTxt },
+    { k: "provas", nome: "Provas e imagens", estado: deClaude("provas"), txt: run.provas === "pulado" ? "Não precisou" : txtRodando("provas", cfg?.efeitos?.quadro ? "Arte e ícones oficiais no quadro" : "Quadro desligado") },
+    { k: "narracao", nome: "Narração", estado: deClaude("narracao"), txt: run.narracao === "pulado" ? "Já estava em dia" : txtRodando("narracao", `Voz ${nomeVoz(cfg?.voz)} com legenda sincronizada`) },
+    { k: "render", nome: "Vídeo (render)", estado: deClaude("render"), txt: txtRodando("render", (pd?.qualidade || lerQualidade()) === "previa" ? "Prévia 540x960" : "Final 1080x1920") },
+    { k: "envio", nome: "Vídeo no Estúdio", estado: deClaude("envio"), txt: pronto ? "Pronto para ver e baixar" : txtRodando("envio", "Aparece na etapa Produzir") },
+  ];
+}
+
+let pingT = 0;
+function pingAuto() { const n = Date.now(); if (n - pingT > 800) { pingT = n; desenharAuto(); } }
+const ICONE = { feito: "✓", erro: "!", espera: "…", rodando: "", pendente: "" };
+function desenharAuto() {
+  const el = $("#auto");
+  if (!el) return;
+  if (!db || !proj || proj.carregando) { el.hidden = true; return; }
+  el.hidden = false;
+  const passos = calcularPassos();
+  const feitos = passos.filter((p) => p.estado === "feito").length;
+  const etapa = proj.etapa;
+  const emAndamento = !!(auto?.rodando || otimizando || ["otimizando", "aguardando_claude", "aguardando_producao", "produzindo"].includes(etapa));
+  const pronto = etapa === "pronto";
+  const atual = passos.find((p) => p.estado === "rodando" || p.estado === "espera" || p.estado === "erro");
+  const resumo = pronto ? `Vídeo pronto. ${feitos} de ${passos.length} etapas concluídas.`
+    : etapa === "erro" ? "A produção parou com erro. Veja a linha do tempo e tente de novo."
+    : emAndamento ? `${feitos} de ${passos.length} etapas concluídas${atual ? `. Agora: ${atual.nome.toLowerCase()}.` : "."}`
+    : `Usa o briefing, o roteiro e o visual e voz que já estão salvos. ${feitos} de ${passos.length} etapas já concluídas.`;
+  const pd = proj.pedido;
+  const precisaAviso = etapa === "aguardando_producao" && pd && !pd.avisado && !auto?.avisando;
+  const qual = pd && emAndamento ? pd.qualidade : lerQualidade();
+  el.innerHTML = `
+    <div class="auto-topo">
+      <h2>Criar vídeo</h2>
+      <select id="aQual" aria-label="Qualidade do vídeo" ${emAndamento ? "disabled" : ""}>
+        <option value="final" ${qual === "final" ? "selected" : ""}>Final 1080x1920</option>
+        <option value="previa" ${qual === "previa" ? "selected" : ""}>Prévia rápida 540x960</option>
+      </select>
+      ${emAndamento && (pd || etapa === "aguardando_producao")
+        ? `<button class="btn" id="aCancelar" type="button" ${etapa === "produzindo" ? "disabled title=\"O Claude Code já está produzindo\"" : ""}>Cancelar</button>`
+        : `<button class="btn ouro" id="aCriar" type="button" ${emAndamento ? "disabled" : ""}>${pronto ? "🚀 Criar de novo" : "🚀 Criar vídeo com as predefinições"}</button>`}
+    </div>
+    <p class="auto-resumo">${esc(resumo)}</p>
+    <ol class="passos">${passos.map((p, i) => `<li class="passo ${p.estado}" aria-label="${esc(`${i + 1}. ${p.nome}: ${{ feito: "concluída", rodando: "em andamento", espera: "esperando", erro: "com erro", pendente: "a fazer" }[p.estado]}`)}">
+      <i aria-hidden="true">${ICONE[p.estado] || i + 1}</i><div><b>${i + 1}. ${esc(p.nome)}</b><small>${esc(p.txt)}</small></div></li>`).join("")}</ol>
+    ${auto?.erro ? `<div class="aviso erro"><span>${esc(auto.erro)}</span></div>` : ""}
+    ${precisaAviso ? `<div class="aviso"><span>${auto?.falhaAviso ? esc(auto.falhaAviso) + " " : ""}${mcp && claudeCfg?.sessao ? "Avise o Claude Code com um clique, ou escreva no chat dele:" : "Escreva no chat do Claude Code:"} <code>${esc(fraseChat())}</code></span>
+        ${mcp && claudeCfg?.sessao ? `<button class="btn peq teal" id="aAvisar" type="button">Avisar o Claude Code</button>` : ""}
+        <button class="btn peq" id="aCopiar" type="button">Copiar frase</button></div>` : ""}
+    ${pronto ? `<div class="acoes" style="margin-top:10px"><button class="btn peq" type="button" data-ir="exportar">Ver o vídeo ➜</button></div>` : ""}`;
+  $("#aQual")?.addEventListener("change", (e) => { guardarQualidade(e.target.value); desenharAuto(); });
+  $("#aCriar")?.addEventListener("click", criarVideo);
+  $("#aCancelar")?.addEventListener("click", async () => {
+    if (otimizando?.ctl) otimizando.ctl.abort();
+    auto = null;
+    await atualizarProj({ etapa: proj.otimizado ? "otimizado" : "briefing", pedido: null });
+    evento("Criação automática cancelada");
+  });
+  $("#aAvisar")?.addEventListener("click", () => avisarClaude(proj.pedido));
+  $("#aCopiar")?.addEventListener("click", () => {
+    try { navigator.clipboard.writeText(fraseChat()).then(() => toast("Copiado"), () => toast("Selecione o texto e copie")); } catch { toast("Selecione o texto e copie"); }
+  });
+  ligarIr(el);
+}
+
+async function criarVideo() {
+  if (!proj?.id || auto?.rodando) return;
+  const b = proj.briefing || {};
+  if (!(b.titulo || b.roteiro || b.matchup)) {
+    toast("Preencha e salve o briefing primeiro.");
+    aba = "briefing"; assinaturaAba = ""; redesenharSePreciso();
+    return;
+  }
+  const qualidade = $("#aQual")?.value || lerQualidade();
+  guardarQualidade(qualidade);
+  auto = { rodando: true, fase: "roteiro" };
+  desenharAuto();
+  evento(`Criação automática iniciada (${qualidade === "previa" ? "prévia" : "final"})`, "info");
+  try {
+    let pronto = roteiroPronto(proj);
+    if (!pronto && sample) {
+      await otimizar();
+      pronto = roteiroPronto((await refProj().get()).data());
+      if (!pronto) throw new Error("O roteiro não foi otimizado, então parei aqui. Veja a linha do tempo e clique de novo.");
+    }
+    auto.fase = "pedido";
+    desenharAuto();
+    const pedido = { qualidade, em: Date.now(), auto: true, otimizar: !pronto, avisado: null };
+    await atualizarProj({ etapa: "aguardando_producao", pedido, config: clone(cfg), ...(pronto ? { otimizado: clone(ot) } : {}) });
+    evento(`Pedido de produção pronto com as predefinições (voz ${nomeVoz(cfg.voz)}, ${qualidade === "previa" ? "prévia" : "final"})`, "claude");
+    auto.fase = "aviso";
+    auto.rodando = false;
+    await avisarClaude(pedido);
+  } catch (e) {
+    auto.erro = e?.message || msgErro(e);
+    evento(auto.erro, "erro");
+  }
+  if (auto) auto.rodando = false;
+  desenharAuto();
+}
+
+function falhaMcp(e) {
+  switch (e?.code) {
+    case "not_in_manifest": case "approval_required": case "consent_required":
+      return "Você não permitiu que esta página use o conector Claude Code Remote.";
+    case "server_not_connected": case "server_not_found": case "selection_required":
+      return "O conector Claude Code Remote não está ligado na sua conta (claude.ai → Configurações → Conectores).";
+    case "needs_reauth": return "Reconecte o Claude Code Remote em claude.ai → Configurações → Conectores.";
+    case "blocked_by_policy": return "Sua organização não permite enviar mensagens ao Claude Code por aqui.";
+    case "tool_error": return "A sessão do Claude Code não aceitou a mensagem (ela pode ter sido encerrada).";
+    case "server_unavailable": case "upstream_error": case "cancelled":
+      return "O Claude Code não respondeu. A mensagem pode ter chegado: espere um minuto antes de avisar de novo.";
+    default: return "Não consegui avisar o Claude Code sozinho.";
+  }
+}
+
+async function avisarClaude(pd) {
+  if (!pd || !proj) return;
+  const sessao = claudeCfg?.sessao;
+  if (!mcp || !sessao) { desenharAuto(); return; }
+  auto = { ...(auto || {}), avisando: true, falhaAviso: null };
+  desenharAuto();
+  const msg = `[Estúdio Shorts · botão Criar vídeo] ${pd.otimizar ? "otimiza o roteiro e " : ""}produz o vídeo "${proj.titulo || proj.id}" — projeto ${proj.id}, qualidade ${pd.qualidade}, pedido ${pd.em}. Leia o pedido no banco do Estúdio e grave o andamento em producao/estado.passos.`;
+  try {
+    await mcp.callTool(CONECTOR, "send_message", { session_id: sessao, message: msg }, { cache: false });
+    auto.avisando = false;
+    await atualizarProj({ pedido: { ...pd, avisado: Date.now() } });
+    evento("Claude Code avisado. A produção começa em instantes.", "claude");
+  } catch (e) {
+    auto.avisando = false;
+    auto.falhaAviso = falhaMcp(e);
+    evento(`Aviso automático ao Claude Code falhou: ${auto.falhaAviso}`, "erro");
+  }
+  desenharAuto();
+}
+
 // ============================================================ início
 document.querySelectorAll("#etapas button").forEach((b) => b.addEventListener("click", () => {
   aba = b.dataset.aba;
@@ -1207,7 +1428,7 @@ $("#btnNovo").onclick = () => {
 desenharTudo();
 (async () => {
   const usar = (n) => (window.claude?.use ? window.claude.use(n).catch(() => null) : Promise.resolve(null));
-  [db, assets, sample, downloads] = await Promise.all([usar("db"), usar("assets"), usar("sample"), usar("downloads")]);
+  [db, assets, sample, downloads, mcp] = await Promise.all([usar("db"), usar("assets"), usar("sample"), usar("downloads"), usar("mcp")]);
   if (!db) { carregando = false; desenharTudo(); return; }
   desenharTudo();
   assinarLista();

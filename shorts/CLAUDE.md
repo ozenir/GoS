@@ -33,14 +33,15 @@ O usuário usa o estúdio dentro do Claude: **https://claude.ai/artifact/DVKauET
 (fonte: `artifact/estudio.html` + `artifact/player.js`, gerado por `node painel/build.mjs`;
 republicar com a ferramenta Artifact no mesmo `file_path`, `files: {"player.js": "artifact/player.js"}`).
 Capacidades: `db` (dados), `assets` (vídeos), `sample` (otimização feita pela própria página
-com a conta do usuário), `downloads`.
+com a conta do usuário), `downloads`, `mcp` (`Claude Code Remote` → `send_message`, para o botão Criar vídeo).
 
 Banco da página (ferramenta `ArtifactData`, `url` acima):
 - `projetos/<id>`: `{titulo, briefing, otimizado, config, etapa, pedido, criadoEm, atualizado}`.
   `config.fundo.asset` / `config.musica.asset` = `{id, nome}` de assets enviados.
 - `projetos/<id>/eventos/<auto>`: `{t, msg, tipo: info|ok|claude|erro}` — linha do tempo.
 - `projetos/<id>/producao/estado`: escrito pelo Claude Code —
-  `{etapa, progresso, texto, hash, trilha, audio: {id}, renders: [{id, nome, qualidade, bytes, data}]}`.
+  `{etapa, progresso, texto, hash, trilha, audio: {id}, renders: [{id, nome, qualidade, bytes, data}], pedidoEm, passos}`.
+- `config/claude`: `{sessao}` — sessão do Claude Code que o botão Criar vídeo avisa.
 - `midias/<auto>`: `{id, nome, tipo: gameplay|musica, bytes, criadoEm}`.
 
 Etapas (`projetos/<id>.etapa`): briefing → otimizando → otimizado (ou aguardando_claude
@@ -63,6 +64,28 @@ quando o usuário pede a otimização no chat) → aguardando_producao → produ
    projeto e um evento. A página mostra o vídeo e passa a usar a narração real no player.
 7. Música em MP3 mandada no chat: converta com `ffmpeg -i x.mp3 -c:a aac -vn x.mp4`, envie como
    asset e adicione um documento em `midias` (`tipo: "musica"`).
+
+### Botão "Criar vídeo" (criação automática)
+
+No topo do Estúdio, o painel **Criar vídeo** roda tudo com um clique, usando o que já está salvo:
+briefing → roteiro (a página otimiza com `sample` se ainda não houver roteiro) → grava
+`pedido: {qualidade, em, auto: true, otimizar, avisado}` com `config` e `otimizado` → avisa esta sessão
+pelo conector **Claude Code Remote** (`send_message` para `config/claude.sessao`). Sem o conector, a página
+mostra a frase para copiar no chat. Os passos 5–8 vêm de `producao/estado`, só quando `pedidoEm === pedido.em`:
+`passos: {roteiro, provas, narracao, render, envio}` = `rodando | ok | pulado | erro`, mais `texto` e `progresso`
+(a página mostra o texto e a % no passo que está rodando).
+
+- **Início de cada sessão:** grave o id da sessão atual (`get_session`) em `config/claude` →
+  `{sessao: "session_…", atualizado}`. Sem isso o botão cai na frase para copiar.
+- **Mensagem `[Estúdio Shorts · botão Criar vídeo] …`:** é o próprio usuário clicando no botão. A fonte da
+  verdade é o banco: leia `projetos/<id>`, confira que `etapa` é `aguardando_producao` e que `pedido.em` bate
+  com o da mensagem; se não bater, não faça nada. Então siga "produz o vídeo" (e, se `pedido.otimizar`,
+  otimize antes, com `passos.roteiro` = rodando → ok), gravando `producao/estado` com `update` a cada passo:
+  `{etapa: "produzindo", pedidoEm, passos, texto, progresso}`. Provas: monte as que faltam (Data Dragon) ou
+  marque `pulado`. Narração e render: rode `ponte.mjs produzir` em segundo plano e use as linhas
+  "Gerando narração…" / "Renderizando…" / "Desenhando quadros N/M" para mudar de passo e de %.
+  No fim: `ponte.mjs estado <id> --audio … --render … --pedido <em> [--passo narracao=pulado]`.
+- Se algo falhar: `passos.<k> = "erro"`, `etapa: "erro"` no projeto e um evento `tipo: "erro"` com o motivo.
 
 O `hash` liga narração e roteiro: `sha1(JSON.stringify([narrações das cenas com texto, voz, velocidade]))`
 (12 primeiros hex) — igual em `painel/projetos.mjs` e na página.
