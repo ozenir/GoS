@@ -1,0 +1,16 @@
+{
+  "etapa": "aguardando_claude",
+  "log": [
+    {
+      "t": "2026-11-15T16:37:53.982Z",
+      "msg": "Briefing recebido",
+      "tipo": "ok"
+    },
+    {
+      "t": "2026-11-15T16:37:54.017Z",
+      "msg": "Enviado ao Claude para otimizar o roteiro",
+      "tipo": "claude"
+    }
+  ],
+  "atualizado": "2026-11-15T16:37:54.017Z"
+}

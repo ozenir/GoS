@@ -7,6 +7,6 @@ for c in node npm python3 ffmpeg ffprobe; do
 done
 [ -d .venv ] || python3 -m venv .venv
 .venv/bin/pip install -q --upgrade pip
-.venv/bin/pip install -q yt-dlp faster-whisper
+.venv/bin/pip install -q yt-dlp faster-whisper "av<19" edge-tts
 npm install --no-audit --no-fund
 echo "OK: node $(node -v), $(ffmpeg -version | head -1 | cut -d' ' -f1-3), yt-dlp $(.venv/bin/yt-dlp --version)"

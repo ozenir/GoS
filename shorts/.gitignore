@@ -9,3 +9,8 @@ musicas/*
 saida/*
 !*/.gitkeep
 public/atual/
+painel/dist/
+painel/pedidos.log
+projetos/*/narracao/
+projetos/*/narracao.m4a
+projetos/*/props-render.json

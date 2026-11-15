@@ -7,10 +7,18 @@
   "scripts": {
     "studio": "remotion studio",
     "render": "remotion render",
-    "teste": "remotion render Teste saida/teste.mp4"
+    "teste": "remotion render Teste saida/teste.mp4",
+    "painel": "node painel/build.mjs && node painel/server.mjs"
   },
   "dependencies": {
+    "@fontsource/anton": "^5.3.0",
+    "@fontsource/bangers": "^5.3.0",
+    "@fontsource/bebas-neue": "^5.3.0",
+    "@fontsource/luckiest-guy": "^5.3.0",
+    "@fontsource/montserrat": "^5.3.0",
     "@remotion/cli": "4.0.543",
+    "@remotion/player": "^4.0.543",
+    "esbuild": "^0.28.2",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "remotion": "4.0.543"
