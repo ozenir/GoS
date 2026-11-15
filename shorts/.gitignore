@@ -1,0 +1,11 @@
+node_modules/
+.venv/
+out/
+*.log
+# Mídia pesada não vai pro git (baixe/guarde por fora)
+referencias/*
+brutos/*
+musicas/*
+saida/*
+!*/.gitkeep
+public/atual/

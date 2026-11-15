@@ -1,0 +1,22 @@
+{
+  "name": "shorts",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Edição automatizada de vídeos verticais (Shorts/TikTok) com Remotion",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render",
+    "teste": "remotion render Teste saida/teste.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.543",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.543"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}
