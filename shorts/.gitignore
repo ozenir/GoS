@@ -18,3 +18,4 @@ projetos/*/narracao.mp4
 projetos/*/artifact-doc.json
 clipes/*
 !clipes/.gitkeep
+projetos/*/status.json
