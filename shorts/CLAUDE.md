@@ -87,6 +87,11 @@ mostra a frase para copiar no chat. Os passos 5–8 vêm de `producao/estado`, s
   No fim: `ponte.mjs estado <id> --audio … --render … --pedido <em> [--passo narracao=pulado]`.
 - Se algo falhar: `passos.<k> = "erro"`, `etapa: "erro"` no projeto e um evento `tipo: "erro"` com o motivo.
 
+**Duração:** a do briefing (`briefing.duracao`) manda sobre as regras gerais de Shorts. Narração real ≈ 2,5
+palavras/s (90 s ≈ 205–245 palavras). A página pede essa faixa ao Claude, confere a contagem e pede um ajuste
+se ficar fora; o botão Criar vídeo também ajusta um roteiro antigo antes de produzir. Ao produzir pelo chat,
+confira a contagem antes de narrar e, depois do render, compare a duração com o alvo.
+
 O `hash` liga narração e roteiro: `sha1(JSON.stringify([narrações das cenas com texto, voz, velocidade]))`
 (12 primeiros hex) — igual em `painel/projetos.mjs` e na página.
 

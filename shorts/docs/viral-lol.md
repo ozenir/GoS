@@ -28,7 +28,7 @@ Tudo no roteiro serve a essas três métricas.
 8. **Final que gera comentário ou loop.** Pergunta polêmica ("Qual campeão é mais
    quebrado que esse?"), desafio ("Testa e me conta"), ou última frase que encaixa
    na primeira (loop → replay).
-9. **Duração:** 20–40s é o ponto ideal. 45–60s só se cada segundo prende.
+9. **Duração:** a duração escolhida no briefing manda (narração com ~2,5 palavras por segundo: 90 s ≈ 205–245 palavras). Só sem escolha do criador vale a regra geral: 20–40s é o ponto ideal, 45–60s só se cada segundo prende.
 
 ### Fórmulas de gancho que funcionam em LoL
 

@@ -252,7 +252,7 @@ REGRAS:
 6. Números concretos. Não invente estatísticas do jogo: só use números que estejam no roteiro ou nas orientações; se faltar, use resultado visual ("derrete o tanque").
 7. Termos que a comunidade usa (outplay, flash, ult, combo, gank, elo, meta, patch, build, runa, mid/top/jg/adc/sup). Nomes de campeões e itens escritos certo.
 8. Final que gera comentário (pergunta polêmica, desafio) ou que encaixa no começo (loop).
-9. Duração: respeite a duração alvo (~3 palavras por segundo de narração).
+9. Duração: a duração alvo do criador manda (veja a regra DURAÇÃO no fim do pedido).
 ESTRUTURAS: Outplay = reação como gancho, contexto em 1 frase, a jogada, o truque, pergunta. Dica = erro comum, porquê, passos numerados, prova, CTA. Build = promessa de resultado, um item por cena com motivo, power spike, "salva pra não esquecer". Curiosidade/Lore = fato chocante, detalhes, virada no fim. Patch = o que mudou, quem ganha/perde, opinião forte, "concorda?". Tier list = começar do último, guardar o 1º para o fim. Humor = antecipar a desgraça, setup, fail, comentário curto. Polêmica = opinião forte, 2-3 argumentos, "comenta se discorda".
 TEXTO NA TELA: gancho de 2 a 5 palavras em maiúsculas; por cena é opcional e curtinho (número, palavra-chave). Destaques: 1-2 palavras por cena (campeão, número, verbo de impacto).
 TÍTULO até ~60 caracteres; descrição de 1 frase + pergunta; 3-5 hashtags incluindo #leagueoflegends #lol.
@@ -271,7 +271,7 @@ REGRAS:
 - O 1º item depende do campeão e das composições, não de regra fixa (ex.: campeões que escalam com mana, como Cassiopeia e Ryze, costumam começar pela Lágrima da Deusa; atiradores de dano físico, como Caitlyn e Jhin, costumam fechar Espada G. p. C. na 1ª volta). Explique o porquê.
 - Diga como jogar contra CADA campeão inimigo nesse período (os 5).
 - Respeite os fatos confirmados e as orientações do criador, se houver.
-- Frases curtas e diretas. Também escreva um roteiro de Short (30 a 60 s) com o essencial, seguindo as regras de viralização: gancho em 1,5 s, uma ideia, final com pergunta.`;
+- Frases curtas e diretas. Também escreva um roteiro de Short com a duração escolhida pelo criador (regra DURAÇÃO no fim do pedido), seguindo as regras de viralização: gancho em 1,5 s, uma ideia, final com pergunta.`;
 
 const FORMATO_MATCHUP = `Responda SOMENTE com um objeto JSON neste formato:
 {"resumo": "2 frases: como é o matchup e o plano", "dificuldade": "fácil|média|difícil",
@@ -677,6 +677,43 @@ function abaBriefing(el) {
 }
 
 // ============================================================ 2. otimização
+// Duração: a escolhida no briefing manda. ~2,5 palavras por segundo na narração real (edge-tts, +10%).
+const PALAVRAS_POR_S = 2.5;
+function alvoDuracao(b) {
+  const seg = parseInt(b?.duracao, 10) || 45;
+  return { seg, min: Math.round(seg * 2.3), max: Math.round(seg * 2.7) };
+}
+const contarPalavras = (cenas) => (cenas || []).reduce((n, c) => n + String(c?.narracao || "").trim().split(/\s+/).filter(Boolean).length, 0);
+const segundosDe = (n) => Math.round(n / PALAVRAS_POR_S);
+function regraDuracao(b) {
+  const a = alvoDuracao(b);
+  return `DURAÇÃO (obrigatório): o criador escolheu ${a.seg} s. A narração somada de todas as cenas deve ter entre ${a.min} e ${a.max} palavras (~${PALAVRAS_POR_S} palavras por segundo). Essa escolha vale mais que qualquer regra geral de duração de Shorts: não encurte nem alongue por conta própria. Com mais tempo, entregue mais conteúdo útil (passos, exemplos, números dos dados), sem enrolar.`;
+}
+const normCenas = (cenas) => cenas.map((c) => ({ narracao: String(c?.narracao || ""), textoTela: String(c?.textoTela || ""), destaque: Array.isArray(c?.destaque) ? c.destaque.map(String) : [], visual: String(c?.visual || ""), clipeInicio: null }));
+// se a narração ficou longe da duração escolhida, pede uma vez ao Claude para ajustar só as cenas
+async function ajustarDuracao(b, o, opts) {
+  const a = alvoDuracao(b);
+  const n = contarPalavras(o.cenas);
+  if (n >= a.min * 0.9 && n <= a.max * 1.1) return;
+  evento(`Roteiro saiu com ${n} palavras (~${segundosDe(n)} s), mas o alvo é ${a.seg} s. Pedindo ao Claude para ajustar.`, "claude");
+  try {
+    const r = await sample.json(`Este roteiro de Short de League of Legends tem ${n} palavras de narração (~${segundosDe(n)} s), mas o criador escolheu ${a.seg} s.
+Reescreva as cenas para que a narração somada tenha entre ${a.min} e ${a.max} palavras. Mantenha o gancho, a ideia central, todos os fatos e números (não invente números novos), o tom e a pergunta final. ${n < a.min ? "Acrescente conteúdo útil (mais passos, exemplos, janelas de troca, contexto), sem enrolar." : "Corte o que é menos importante."} Cada cena tem 1 ou 2 frases e uma mudança visual.
+CENAS ATUAIS:
+${JSON.stringify(o.cenas)}
+Responda SOMENTE com JSON: {"cenas": [{"narracao": "", "textoTela": "", "destaque": [], "visual": "", "clipeInicio": null}]}`, { cache: false, ...opts });
+    if (!Array.isArray(r?.cenas) || !r.cenas.some((c) => String(c?.narracao || "").trim())) return;
+    o.cenas = normCenas(r.cenas);
+    o.mudancas = [...(o.mudancas || []), { antes: `${n} palavras (~${segundosDe(n)} s)`, depois: `${contarPalavras(o.cenas)} palavras (~${segundosDe(contarPalavras(o.cenas))} s)`, porque: `Duração escolhida no briefing: ${a.seg} s` }];
+  } catch (e) {
+    if (e?.code === "cancelled") throw e;
+  }
+}
+const avisoDuracao = (b, o) => {
+  const a = alvoDuracao(b), n = contarPalavras(o.cenas);
+  return n < a.min * 0.9 || n > a.max * 1.1 ? ` Atenção: ~${segundosDe(n)} s, alvo ${a.seg} s.` : "";
+};
+
 async function otimizar() {
   if (!proj?.id) return;
   if (!sample) { pedirNoChat(); return; }
@@ -686,7 +723,7 @@ async function otimizar() {
   const b = (await refProj().get()).data()?.briefing || proj.briefing || {};
   if (b.tipo === MATCHUP) return analisarMatchup(b);
   const fatos = b.fatos?.trim() ? `\n\nFATOS CONFIRMADOS (use exatamente estes, não invente outros fatos, números ou estatísticas):\n${b.fatos}` : "";
-  const prompt = `${GUIA}\n\nBRIEFING DO CRIADOR (JSON):\n${JSON.stringify({ ...b, fatos: undefined }, null, 1)}${fatos}\n\n${FORMATO}`;
+  const prompt = `${GUIA}\n\nBRIEFING DO CRIADOR (JSON):\n${JSON.stringify({ ...b, fatos: undefined }, null, 1)}${fatos}\n\n${regraDuracao(b)}\n\n${FORMATO}`;
   atualizarProj({ etapa: "otimizando" });
   evento("Claude começou a otimizar o roteiro", "claude");
   try {
@@ -695,11 +732,13 @@ async function otimizar() {
       onText: ({ text }) => { otimizando.texto = text; const e = $("#escrevendo"); if (e) { e.textContent = text; e.scrollTop = e.scrollHeight; } pingAuto(); },
     });
     if (!o || !Array.isArray(o.cenas) || !o.cenas.some((c) => c && String(c.narracao || "").trim())) throw { code: "invalid_json" };
-    o.cenas = o.cenas.map((c) => ({ narracao: String(c.narracao || ""), textoTela: String(c.textoTela || ""), destaque: Array.isArray(c.destaque) ? c.destaque.map(String) : [], visual: String(c.visual || ""), clipeInicio: null }));
+    o.cenas = normCenas(o.cenas);
+    o.mudancas = Array.isArray(o.mudancas) ? o.mudancas : [];
+    await ajustarDuracao(b, o, { signal: otimizando.ctl.signal });
     ot = clone(o);
     otimizando = null;
     await atualizarProj({ otimizado: o, etapa: "otimizado" });
-    evento(`Roteiro otimizado pelo Claude (nota ${o.notaOriginal ?? "?"} → ${o.notaOtimizada ?? "?"})`, "claude");
+    evento(`Roteiro otimizado pelo Claude (nota ${o.notaOriginal ?? "?"} → ${o.notaOtimizada ?? "?"}, ~${segundosDe(contarPalavras(o.cenas))} s).${avisoDuracao(b, o)}`, "claude");
     toast("Roteiro otimizado!");
   } catch (e) {
     const cancelado = e?.code === "cancelled";
@@ -735,8 +774,8 @@ async function analisarMatchup(b) {
   }
   const m = b.matchup;
   const fatos = b.fatos?.trim() ? `\nFATOS CONFIRMADOS (não invente outros):\n${b.fatos}` : "";
-  const pedido = `JOGADOR: ${m.campeao} na rota ${m.rota}.\nSEU TIME: ${JSON.stringify(m.aliados)}\nTIME INIMIGO: ${JSON.stringify(m.inimigos)}\nPúblico: ${b.publico || "Todos"} · Tom do Short: ${b.tom || "Energético"} · Duração do Short: ${b.duracao || "45s"}\nOrientações do criador: ${b.orientacoes || "nenhuma"}${fatos}${b.roteiro?.trim() ? `\nRascunho do criador:\n${b.roteiro}` : ""}`;
-  const prompt = `${GUIA_MATCHUP}\n\n${pedido}\n\n${dadosParaMatchup(m)}\n\n${FORMATO_MATCHUP}`;
+  const pedido = `JOGADOR: ${m.campeao} na rota ${m.rota}.\nSEU TIME: ${JSON.stringify(m.aliados)}\nTIME INIMIGO: ${JSON.stringify(m.inimigos)}\nPúblico: ${b.publico || "Todos"} · Tom do Short: ${b.tom || "Energético"} · Duração do Short: ${alvoDuracao(b).seg} s\nOrientações do criador: ${b.orientacoes || "nenhuma"}${fatos}${b.roteiro?.trim() ? `\nRascunho do criador:\n${b.roteiro}` : ""}`;
+  const prompt = `${GUIA_MATCHUP}\n\n${pedido}\n\n${dadosParaMatchup(m)}\n\n${regraDuracao(b)}\n\n${FORMATO_MATCHUP}`;
   atualizarProj({ etapa: "otimizando" });
   evento(`Claude começou a análise de matchup (${m.campeao} ${m.rota})`, "claude");
   try {
@@ -752,13 +791,14 @@ async function analisarMatchup(b) {
     if (r.primeiroItem) r.primeiroItem.valido = nomesItens.has(norm(String(r.primeiroItem.nome || "")));
     r.versao = ddragon.versao;
     const o = r.short;
-    o.mudancas = o.mudancas || [];
-    o.cenas = o.cenas.map((c) => ({ narracao: String(c.narracao || ""), textoTela: String(c.textoTela || ""), destaque: Array.isArray(c.destaque) ? c.destaque.map(String) : [], visual: String(c.visual || ""), clipeInicio: null }));
+    o.mudancas = Array.isArray(o.mudancas) ? o.mudancas : [];
+    o.cenas = normCenas(o.cenas);
+    await ajustarDuracao(b, o, { signal: otimizando.ctl.signal, modelTier: "complex" });
     delete r.short;
     ot = clone(o);
     otimizando = null;
     await atualizarProj({ matchup: r, otimizado: o, etapa: "otimizado" });
-    evento(`Análise de matchup pronta: 1º item ${r.primeiroItem?.nome || "?"}`, "claude");
+    evento(`Análise de matchup pronta: 1º item ${r.primeiroItem?.nome || "?"}, Short de ~${segundosDe(contarPalavras(o.cenas))} s.${avisoDuracao(b, o)}`, "claude");
     toast("Análise pronta!");
   } catch (e) {
     const cancelado = e?.code === "cancelled";
@@ -1253,7 +1293,7 @@ function calcularPassos() {
   const cenas = proj.otimizado?.cenas?.length || 0;
 
   let roteiro = roteiroPronto(proj) ? "feito" : "pendente";
-  if (otimizando || etapa === "otimizando" || run.roteiro === "rodando") roteiro = "rodando";
+  if (otimizando || auto?.ajustando || etapa === "otimizando" || run.roteiro === "rodando") roteiro = "rodando";
   else if (etapa === "aguardando_claude") roteiro = "espera";
   else if (run.roteiro === "erro") roteiro = "erro";
   if (roteiro === "pendente" && auto?.erro && auto.fase === "roteiro") roteiro = "erro";
@@ -1270,8 +1310,8 @@ function calcularPassos() {
   return [
     { k: "briefing", nome: "Briefing", estado: temBriefing ? "feito" : "pendente", txt: temBriefing ? [b.tipo, b.duracao].filter(Boolean).join(" · ") || "Salvo" : "Preencha na etapa 1" },
     { k: "roteiro", nome: "Roteiro otimizado", estado: roteiro,
-      txt: roteiro === "rodando" ? (otimizando ? `Claude escrevendo… ${otimizando.texto ? Math.round(otimizando.texto.length / 100) / 10 + " mil caracteres" : ""}` : "O Claude está otimizando") :
-        roteiro === "espera" ? "Esperando o Claude Code" : roteiro === "feito" ? `${cenas} cenas${proj.otimizado?.notaOtimizada ? ` · nota ${proj.otimizado.notaOtimizada}` : ""}` :
+      txt: roteiro === "rodando" && auto?.ajustando ? `Ajustando a narração para ${auto.ajustando} s` : roteiro === "rodando" ? (otimizando ? `Claude escrevendo… ${otimizando.texto ? Math.round(otimizando.texto.length / 100) / 10 + " mil caracteres" : ""}` : "O Claude está otimizando") :
+        roteiro === "espera" ? "Esperando o Claude Code" : roteiro === "feito" ? `${cenas} cenas · ~${segundosDe(contarPalavras(proj.otimizado.cenas))} s de ${alvoDuracao(b).seg} s${proj.otimizado?.notaOtimizada ? ` · nota ${proj.otimizado.notaOtimizada}` : ""}` :
         roteiro === "erro" ? "Não terminou. Veja a linha do tempo" : sample ? "O Claude escreve aqui mesmo" : "O Claude Code escreve" },
     { k: "visual", nome: "Visual e voz", estado: pedidoFeito || pronto ? "feito" : auto?.rodando && auto.fase === "pedido" ? "rodando" : "pendente",
       txt: cfg ? `Voz ${nomeVoz(cfg.voz)} · ${cfg.estilo?.fonte || ""} · fundo ${cfg.fundo?.tipo === "video" ? "gameplay" : "animado"}` : "Predefinições salvas" },
@@ -1357,6 +1397,21 @@ async function criarVideo() {
       await otimizar();
       pronto = roteiroPronto((await refProj().get()).data());
       if (!pronto) throw new Error("O roteiro não foi otimizado, então parei aqui. Veja a linha do tempo e clique de novo.");
+    } else if (pronto && sample) {
+      // roteiro já existe: confere se bate com a duração escolhida no briefing
+      const d = (await refProj().get()).data();
+      const o = clone(d.otimizado);
+      const n0 = contarPalavras(o.cenas);
+      auto.ajustando = alvoDuracao(d.briefing).seg;
+      desenharAuto();
+      await ajustarDuracao(d.briefing || {}, o, { modelTier: d.briefing?.tipo === MATCHUP ? "complex" : undefined });
+      auto.ajustando = null;
+      if (contarPalavras(o.cenas) !== n0) {
+        ot = clone(o);
+        await atualizarProj({ otimizado: o });
+        evento(`Roteiro ajustado para ~${segundosDe(contarPalavras(o.cenas))} s (alvo ${alvoDuracao(d.briefing).seg} s)`, "claude");
+        recalcularEPlayer();
+      }
     }
     auto.fase = "pedido";
     desenharAuto();
