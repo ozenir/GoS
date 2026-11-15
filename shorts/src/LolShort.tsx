@@ -244,7 +244,7 @@ const BlocoLegenda: React.FC<{ palavras: PalavraT[]; inicioBloco: number; p: Lol
         display: "flex",
         flexWrap: "wrap",
         justifyContent: "center",
-        columnGap: "0.4em",
+        columnGap: "0.5em",
         fontFamily: e.fonte,
         fontWeight: pesoDaFonte(e.fonte),
         fontSize: e.tamanho,
@@ -263,7 +263,7 @@ const BlocoLegenda: React.FC<{ palavras: PalavraT[]; inicioBloco: number; p: Lol
             style={{
               color: cor,
               display: "inline-block",
-              transform: `scale(${falando ? 1.12 : 1})`,
+              transform: `scale(${falando ? 1.06 : 1})`,
             }}
           >
             {w.texto}

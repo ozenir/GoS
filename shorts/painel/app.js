@@ -102,7 +102,11 @@ async function abrir(id, novaAba) {
   history.replaceState(null, "", `#${id}`);
   $("#seletor").value = id;
   if (novaAba) aba = novaAba;
-  else if (!proj.otimizado && proj.status.etapa !== "aguardando_claude") aba = "briefing";
+  else
+    aba = {
+      briefing: "briefing", aguardando_claude: "otimizacao", otimizado: "otimizacao",
+      narrando: "visual", narrado: "visual", renderizando: "exportar", pronto: "exportar",
+    }[proj.status.etapa] || "roteiro";
   desenharTudo();
 }
 
@@ -207,6 +211,7 @@ function abaBriefing(el) {
       await salvar();
       await api("POST", `/api/projetos/${proj.id}/pedir-otimizacao`);
       await abrir(proj.id, "otimizacao");
+      await carregarEstado();
       toast("Enviado! O Claude vai otimizar o roteiro.");
     } catch (e) {
       toast(e.message);

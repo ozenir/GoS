@@ -156,3 +156,9 @@ input[type=color] { width: 44px; height: 34px; border: 1px solid var(--borda); b
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--ouro); color: #1a1408; padding: 10px 18px; border-radius: 8px; font-weight: 600; transition: transform .25s; z-index: 10; max-width: calc(100% - 32px); }
 .toast.on { transform: translateX(-50%) translateY(0); }
 .vazio { text-align: center; padding: 40px 10px; color: var(--suave); }
+@media (max-width: 640px) {
+  .topo { flex-wrap: wrap; }
+  #seletor { order: 3; flex-basis: 100%; max-width: none; margin-left: 0; }
+  #btnNovo { margin-left: auto; }
+  .marca { font-size: 1.35rem; }
+}

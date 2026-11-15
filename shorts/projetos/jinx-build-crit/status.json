@@ -1,5 +1,5 @@
 {
-  "etapa": "aguardando_claude",
+  "etapa": "pronto",
   "log": [
     {
       "t": "2026-11-15T16:37:53.982Z",
@@ -10,7 +10,44 @@
       "t": "2026-11-15T16:37:54.017Z",
       "msg": "Enviado ao Claude para otimizar o roteiro",
       "tipo": "claude"
+    },
+    {
+      "t": "2026-11-15T16:40:16.081Z",
+      "msg": "Roteiro otimizado pelo Claude (nota 3.5 → 8)",
+      "tipo": "claude"
+    },
+    {
+      "t": "2026-11-15T16:40:16.095Z",
+      "msg": "Gerando narração (pt-BR-AntonioNeural, 5 cenas)",
+      "tipo": "info"
+    },
+    {
+      "t": "2026-11-15T16:40:32.493Z",
+      "msg": "Narração pronta (24.6s)",
+      "tipo": "ok"
+    },
+    {
+      "t": "2026-11-15T16:40:39.008Z",
+      "msg": "Renderizando final 1080x1920 → jinx-build-crit-v1.mp4",
+      "tipo": "info"
+    },
+    {
+      "t": "2026-11-15T16:41:21.472Z",
+      "msg": "Vídeo pronto: saida/jinx-build-crit/jinx-build-crit-v1.mp4",
+      "tipo": "ok"
+    },
+    {
+      "t": "2026-11-15T16:42:17.904Z",
+      "msg": "Renderizando final 1080x1920 → jinx-build-crit-v2.mp4",
+      "tipo": "info"
+    },
+    {
+      "t": "2026-11-15T16:42:57.405Z",
+      "msg": "Vídeo pronto: saida/jinx-build-crit/jinx-build-crit-v2.mp4",
+      "tipo": "ok"
     }
   ],
-  "atualizado": "2026-11-15T16:37:54.017Z"
+  "atualizado": "2026-11-15T16:42:57.405Z",
+  "progresso": null,
+  "progressoTexto": null
 }

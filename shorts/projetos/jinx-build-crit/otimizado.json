@@ -1,0 +1,100 @@
+{
+  "notaOriginal": 3.5,
+  "notaOtimizada": 8,
+  "resumo": "Vídeo de build com promessa de resultado no primeiro segundo, um item por cena e final com pergunta para gerar comentário.",
+  "titulos": [
+    "Essa build de Jinx é injusta",
+    "Jinx com Kraken + Guinsoo DERRETE tudo",
+    "Pare de buildar Jinx assim"
+  ],
+  "hook": {
+    "textoTela": "JINX QUEBRADA?"
+  },
+  "cenas": [
+    {
+      "narracao": "Essa build deixa a Jinx injusta no meio do jogo.",
+      "textoTela": "",
+      "destaque": [
+        "Jinx",
+        "injusta"
+      ],
+      "visual": "Jinx derretendo alguém numa luta",
+      "clipeInicio": null
+    },
+    {
+      "narracao": "Primeiro item: Kraken. Todo terceiro ataque dá dano extra.",
+      "textoTela": "1º KRAKEN",
+      "destaque": [
+        "Kraken"
+      ],
+      "visual": "loja / Jinx batendo com o item",
+      "clipeInicio": null
+    },
+    {
+      "narracao": "Depois, Guinsoo. Agora seus ataques ativam o Kraken muito mais rápido.",
+      "textoTela": "2º GUINSOO",
+      "destaque": [
+        "Guinsoo"
+      ],
+      "visual": "close na velocidade de ataque",
+      "clipeInicio": null
+    },
+    {
+      "narracao": "Resultado: com dois itens, você já derrete o tanque deles.",
+      "textoTela": "2 ITENS",
+      "destaque": [
+        "derrete",
+        "tanque"
+      ],
+      "visual": "Jinx matando o tanque inimigo",
+      "clipeInicio": null
+    },
+    {
+      "narracao": "Testa na próxima partida. E você, qual build usa de Jinx?",
+      "textoTela": "",
+      "destaque": [
+        "Jinx"
+      ],
+      "visual": "Jinx dançando / tela de vitória",
+      "clipeInicio": null
+    }
+  ],
+  "cta": {
+    "texto": "Qual sua build?"
+  },
+  "descricao": "A build de Jinx que deixa ela injusta no meio do jogo. Qual você usa?",
+  "hashtags": [
+    "#leagueoflegends",
+    "#lol",
+    "#jinx",
+    "#dicaslol",
+    "#lolbrasil"
+  ],
+  "mudancas": [
+    {
+      "antes": "Fala galera, hoje eu vou mostrar uma build de Jinx que eu tenho usado.",
+      "depois": "Essa build deixa a Jinx injusta no meio do jogo.",
+      "porque": "Apresentação no início derruba a retenção; o gancho agora promete o resultado em 1 segundo."
+    },
+    {
+      "antes": "Basicamente você faz Kraken primeiro e depois Gume.",
+      "depois": "Um item por cena, com o motivo em uma frase e “1º / 2º” na tela.",
+      "porque": "Cada cena vira uma mudança visual e quem assiste acompanha a ordem sem esforço."
+    },
+    {
+      "antes": "Com isso o dano fica muito alto no meio do jogo.",
+      "depois": "Com dois itens, você já derrete o tanque deles.",
+      "porque": "Um resultado concreto e visual é mais forte que “dano muito alto”."
+    },
+    {
+      "antes": "Testa aí.",
+      "depois": "Testa na próxima partida. E você, qual build usa de Jinx?",
+      "porque": "Pergunta no final gera comentário, que pesa muito no algoritmo."
+    },
+    {
+      "antes": "",
+      "depois": "Gancho na tela: “JINX QUEBRADA?”",
+      "porque": "Texto grande nos 2 primeiros segundos segura quem assiste sem som."
+    }
+  ]
+}

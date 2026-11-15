@@ -12,12 +12,49 @@ em **português do Brasil**.
 | `brutos/`      | vídeos originais do usuário, sem edição                         |
 | `musicas/`     | trilhas sonoras (use só músicas livres de direitos)             |
 | `saida/`       | vídeos finalizados                                              |
-| `src/`         | composições Remotion (`Teste`, `Short`)                         |
+| `src/`         | composições Remotion (`Teste`, `Short`, `LolShort`)             |
+| `painel/`      | Estúdio Shorts: painel web, servidor, CLI                       |
+| `projetos/`    | um diretório por vídeo do painel (briefing, roteiro, config)    |
+| `docs/`        | `viral-lol.md`: guia de otimização de roteiros de LoL           |
 | `scripts/`     | automações (instalar, cortar silêncios, legendas, montar)       |
 | `public/atual/`| área temporária que o `montar.sh` preenche para o Remotion       |
 
 Mídia (`referencias/`, `brutos/`, `musicas/`, `saida/`) está no `.gitignore`:
 vídeos não vão para o git.
+
+## Estúdio Shorts (painel visual) — fluxo principal
+
+```bash
+npm run painel        # empacota o player e sobe http://localhost:3333
+```
+
+Na nuvem, depois de subir, avise o app com `report_preview_port` (porta 3333)
+para o usuário abrir o painel. Etapas do painel:
+
+1. **Briefing** — usuário manda título, tipo de vídeo, campeão, duração, tom,
+   público, roteiro e orientações → `projetos/<id>/briefing.json`.
+2. **Otimização** — botão "enviar para o Claude" grava `etapa: aguardando_claude`
+   e uma linha em `painel/pedidos.log`. **Quando isso acontecer (ou o usuário
+   pedir no chat), otimize o roteiro seguindo `docs/viral-lol.md`**:
+   leia com `node painel/cli.mjs ver <id>`, escreva o JSON no formato do guia e
+   grave com `node painel/cli.mjs otimizado <id> arquivo.json`. O painel
+   atualiza sozinho e mostra notas, mudanças e o porquê de cada uma.
+   Para ver pedidos pendentes: `node painel/cli.mjs listar` (etapa
+   "aguardando_claude") ou `tail painel/pedidos.log`.
+3. **Roteiro** — usuário ajusta cenas (narração, texto na tela, destaques,
+   segundo do gameplay), gancho e CTA.
+4. **Visual & voz** — voz edge-tts (Antonio/Francisca/Thalita) e velocidade,
+   fundo (animado ou gameplay de `brutos/`, upload pelo painel), música,
+   fonte/tamanho/cores/posição da legenda, temas prontos e efeitos.
+   "Gerar narração" roda `scripts/narrar.py` → `narracao.m4a` + `trilha.json`
+   (tempo de cada palavra vem do TTS; a legenda sai sincronizada).
+5. **Exportar** — prévia 540x960 ou final 1080x1920 → `saida/<id>/<id>-vN.mp4`,
+   mais kit de publicação (títulos, descrição, hashtags).
+
+Peças: `src/LolShort.tsx` (composição, mesma no player e no render),
+`painel/server.mjs` (API + render), `painel/projetos.mjs` (dados),
+`painel/app.js` (interface), `painel/player-entry.tsx` (player ao vivo).
+O edge-tts precisa do proxy da nuvem (`HTTPS_PROXY`), já tratado no script.
 
 ## Preparar a máquina
 
@@ -25,11 +62,11 @@ vídeos não vão para o git.
 scripts/instalar.sh
 ```
 
-Cria `.venv/` (yt-dlp, faster-whisper) e instala o Remotion (`node_modules/`).
+Cria `.venv/` (yt-dlp, faster-whisper, edge-tts) e instala o Remotion (`node_modules/`).
 Requer Node.js LTS, Python 3 e FFmpeg já no sistema. Ferramentas Python sempre
 via `.venv/bin/...`.
 
-## Fluxo de trabalho (um vídeo)
+## Fluxo manual (vídeo com a voz do próprio usuário)
 
 ### 1. Remover silêncios (FFmpeg)
 
