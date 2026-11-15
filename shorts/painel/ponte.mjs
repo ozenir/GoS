@@ -59,7 +59,16 @@ if (cmd === "importar") {
   }
   writeFileSync(join(d, "briefing.json"), JSON.stringify(doc.briefing || {}, null, 2));
   writeFileSync(join(d, "config.json"), JSON.stringify(cfg, null, 2));
-  if (doc.otimizado) writeFileSync(join(d, "otimizado.json"), JSON.stringify(doc.otimizado, null, 2));
+  if (doc.otimizado) {
+    // imagens das provas: asset do Artifact -> arquivo local (mapa em dados/assets.json)
+    const mapa = existsSync(join(P.RAIZ, "dados/assets.json")) ? JSON.parse(readFileSync(join(P.RAIZ, "dados/assets.json"), "utf8")) : {};
+    const porId = Object.fromEntries(Object.entries(mapa).map(([arq, id]) => [id, arq]));
+    for (const c of doc.otimizado.cenas || []) for (const pr of c.provas || []) {
+      if (pr.imgAsset && porId[pr.imgAsset]) pr.imgArquivo = porId[pr.imgAsset];
+      else if (pr.imgAsset) avisos.push(`baixe a imagem da prova "${pr.rotulo}": asset ${pr.imgAsset} -> dados/, e registre em dados/assets.json`);
+    }
+    writeFileSync(join(d, "otimizado.json"), JSON.stringify(doc.otimizado, null, 2));
+  }
   else writeFileSync(join(d, "otimizado.json"), JSON.stringify({ cenas: P.cenasAtuais(id) }, null, 2));
   if (!existsSync(join(d, "status.json"))) writeFileSync(join(d, "status.json"), JSON.stringify({ etapa: "otimizado", log: [] }));
   const { hash } = P.trilha(id);

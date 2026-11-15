@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Luckiest+Guy&family=Montserrat:wght@900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Luckiest+Guy&family=Montserrat:wght@900&family=Permanent+Marker&family=Special+Elite&display=swap">
 <style>
 /* Layout: cabeçalho fixo, etapas em pílulas, coluna de trabalho + coluna do "celular" com o player.
    Visual de um só tema, escuro, inspirado no cliente do jogo (azul-marinho, dourado hextech, turquesa). */
@@ -28,6 +28,7 @@
   --f-texto: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { background: var(--fundo); }
 body {
   margin: 0;
@@ -152,6 +153,15 @@ input[type=file] { max-width: 100%; color: var(--suave); }
 .cena .visual { font-size: .82rem; color: var(--teal); margin-top: 6px; }
 .aviso { background: #c8aa6e18; border: 1px solid var(--ouro-esc); color: var(--ouro-claro); border-radius: 8px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .aviso span { flex: 1; min-width: 200px; }
+.provas { margin-top: 12px; border-top: 1px dashed var(--borda); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.provas-tit { font-size: .82rem; color: var(--suave); }
+.prova { display: grid; grid-template-columns: 44px minmax(0, 1fr) minmax(0, 110px) 96px auto auto; gap: 6px; align-items: center; }
+.prova img, .prova .sem { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; object-position: 50% 18%; background: var(--campo); border: 1px solid var(--borda); }
+.prova .sem { display: grid; place-items: center; font-size: .62rem; color: var(--erro); text-align: center; line-height: 1.1; }
+.prova .sem.ok { color: var(--suave); }
+.prova input[type=text], .prova select { padding: 6px 8px; font-size: .85rem; }
+.prova label.btn { margin: 0; display: inline-flex; align-items: center; }
+@media (max-width: 560px) { .prova { grid-template-columns: 44px minmax(0, 1fr) auto auto; } .prova [data-p=gatilho], .prova select { grid-column: 2 / -1; } }
 .aviso.erro { border-color: var(--erro); color: var(--erro); background: #ff6b6b14; }
 
 .render { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--borda); }
@@ -285,7 +295,7 @@ const configPadrao = () => ({
   fundo: { tipo: "gradiente", asset: null, inicio: 0, cortesPorCena: true, volume: 0 },
   musica: { asset: null, volume: 0.12 },
   estilo: { fonte: "Montserrat", tamanho: 92, corTexto: "#FFFFFF", corFalada: "#FFE600", corEnfase: "#0AC8B9", corContorno: "#000000", posicaoY: 0.66, palavrasPorBloco: 3, caixaAlta: true },
-  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true, patch: true },
+  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true, patch: true, quadro: true },
   tema: { cor1: "#010A13", cor2: "#0A323C", corDestaque: "#C8AA6E" },
   hookDuracao: 2.4, ctaAtivo: true,
 });
@@ -393,7 +403,10 @@ const narracaoEmDia = () => !!(producao?.audio?.id && producao.trilha && produca
 function trilhaAtual() {
   const cenas = cenasComFala();
   const tr = narracaoEmDia() ? clone(producao.trilha) : trilhaEstimada(cenas);
-  tr.cenas = tr.cenas.map((c, i) => ({ ...c, textoTela: cenas[i]?.textoTela || "", clipeInicio: cenas[i]?.clipeInicio ?? null }));
+  tr.cenas = tr.cenas.map((c, i) => ({
+    ...c, textoTela: cenas[i]?.textoTela || "", clipeInicio: cenas[i]?.clipeInicio ?? null,
+    provas: (cenas[i]?.provas || []).map((pr) => ({ ...pr, img: pr.imgAsset ? blobUrl(pr.imgAsset) : null })),
+  }));
   return tr;
 }
 
@@ -855,6 +868,10 @@ function abaRoteiro(el) {
     <label for="rCta">Chamada final (CTA)</label>
     <input type="text" id="rCta" data-r="cta.texto" value="${esc(ot.cta.texto)}" placeholder="Ex.: Comenta seu main">
   </div>
+  ${(() => {
+    const faltam = ot.cenas.flatMap((c, i) => (c.provas || []).filter((pr) => (pr.tipo === "foto" || pr.tipo === "icone") && !pr.imgAsset).map((pr) => `${esc(pr.rotulo || "sem texto")} (cena ${i + 1})`));
+    return faltam.length ? `<div class="aviso"><span><b>Imagens que faltam:</b> ${faltam.join(" · ")}. Envie em cada prova (🖼) ou peça no chat: o Claude baixa sozinho as imagens oficiais do jogo.</span></div>` : "";
+  })()}
   <div class="cenas" id="cenas">${ot.cenas.map((c, i) => `
     <div class="cena" data-i="${i}">
       <header><b>Cena ${i + 1}</b><button class="tempo" type="button" title="Ver esta cena no player"></button><span class="esp"></span>
@@ -869,6 +886,18 @@ function abaRoteiro(el) {
         <div><label for="c${i}g">Trecho do gameplay (segundo)</label><input type="number" id="c${i}g" min="0" step="0.5" data-c="clipeInicio" value="${c.clipeInicio ?? ""}" placeholder="automático"></div>
       </div>
       ${c.visual ? `<div class="visual">🎬 Sugestão de imagem: ${esc(c.visual)}</div>` : ""}
+      <div class="provas">
+        <div class="provas-tit">Provas no quadro de investigação (${(c.provas || []).length}) · aparecem na palavra indicada</div>
+        ${(c.provas || []).map((pr, j) => `<div class="prova" data-j="${j}">
+          ${pr.imgAsset ? `<img src="${blobUrl(pr.imgAsset)}" alt="">` : `<span class="sem ${pr.tipo === "foto" || pr.tipo === "icone" ? "" : "ok"}">${pr.tipo === "foto" || pr.tipo === "icone" ? "falta imagem" : esc(pr.tipo)}</span>`}
+          <input type="text" data-p="rotulo" value="${esc(pr.rotulo)}" aria-label="Texto da prova" placeholder="texto da prova">
+          <input type="text" data-p="gatilho" value="${esc(pr.gatilho)}" aria-label="Palavra que faz aparecer" placeholder="palavra">
+          <select data-p="tipo" aria-label="Tipo da prova">${["foto", "icone", "nota", "etiqueta", "placar"].map((t) => `<option ${t === pr.tipo ? "selected" : ""}>${t}</option>`).join("")}</select>
+          <label class="btn peq" title="Enviar imagem">🖼<input type="file" accept="image/png,image/jpeg,image/webp" data-pimg hidden ${assets ? "" : "disabled"}></label>
+          <button class="btn peq" type="button" data-premover aria-label="Remover prova">✕</button>
+        </div>`).join("")}
+        <div><button class="btn peq" type="button" data-padd>+ Prova</button></div>
+      </div>
       <div class="acoes" hidden data-confirmar><span class="nota-rodape">Remover esta cena?</span><button class="btn peq" type="button" data-sim>Remover</button><button class="btn peq" type="button" data-nao>Manter</button></div>
     </div>`).join("")}
   </div>
@@ -890,6 +919,33 @@ function abaRoteiro(el) {
       recalcularEPlayer();
       salvarRoteiro();
     }));
+    box.querySelectorAll(".prova").forEach((linha) => {
+      const j = +linha.dataset.j;
+      const pr = () => ot.cenas[i].provas[j];
+      linha.querySelectorAll("[data-p]").forEach((inp) => inp.addEventListener(inp.tagName === "SELECT" ? "change" : "input", () => {
+        pr()[inp.dataset.p] = inp.value;
+        atualizarPlayer();
+        salvarRoteiro();
+      }));
+      linha.querySelector("[data-premover]").onclick = () => { ot.cenas[i].provas.splice(j, 1); abaRoteiro(el); atualizarPlayer(); salvarRoteiro(); };
+      linha.querySelector("[data-pimg]").addEventListener("change", async (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        if (f.size > 20 * 1048576) { toast("Imagem maior que 20 MB."); return; }
+        toast(`Enviando ${f.name}…`);
+        try {
+          const r = await assets.upload(f, { type: f.type || "image/jpeg" });
+          pr().imgAsset = r.id;
+          if (pr().tipo !== "foto" && pr().tipo !== "icone") pr().tipo = "foto";
+          abaRoteiro(el); atualizarPlayer(); salvarRoteiro();
+          evento(`Imagem enviada para a prova "${pr().rotulo}"`, "ok");
+        } catch (err) { toast(msgErro(err)); }
+      });
+    });
+    box.querySelector("[data-padd]").onclick = () => {
+      ot.cenas[i].provas = [...(ot.cenas[i].provas || []), { tipo: "nota", rotulo: "", gatilho: "" }];
+      abaRoteiro(el);
+    };
     box.querySelector(".tempo").onclick = () => window.EstudioPlayer.irPara(trilhaAtual().cenas[i]?.inicio || 0);
     box.querySelectorAll("[data-mover]").forEach((b) => b.addEventListener("click", () => {
       const j = i + +b.dataset.mover;
@@ -1004,6 +1060,7 @@ function abaVisual(el) {
     ${chk("efeitos.hook", "Gancho grande no início")}
     ${faixa("hookDuracao", "Duração do gancho", 1, 4, 0.2)}
     ${chk("efeitos.barraProgresso", "Barra de progresso (ajuda a segurar até o fim)")}
+    ${chk("efeitos.quadro", "Quadro de investigação (provas, fotos e fio vermelho)")}
     ${chk("efeitos.patch", "Selo do patch no canto")}
     ${chk("efeitos.flash", "Flash na troca de cena")}
     ${chk("efeitos.zoomPunch", "Zoom na troca de cena")}

@@ -13,6 +13,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { pesoDaFonte } from "./fontes";
+import { ProvaT, Quadro } from "./Quadro";
 
 // ---------- Tipos (o painel e o servidor produzem exatamente isto) ----------
 
@@ -23,6 +24,7 @@ export type CenaT = {
   textoTela?: string;
   clipeInicio?: number | null;
   palavras: PalavraT[];
+  provas?: ProvaT[]; // quadro de investigação
 };
 export type Trilha = { duracao: number; cenas: CenaT[] };
 
@@ -54,6 +56,7 @@ export type LolShortProps = {
     flash: boolean;
     zoomPunch: boolean;
     patch?: boolean;
+    quadro?: boolean; // quadro de investigação no lugar do fundo
   };
   tema: { cor1: string; cor2: string; corDestaque: string };
   hook: { texto: string; duracao?: number };
@@ -357,15 +360,17 @@ export const LolShort: React.FC<LolShortProps> = (p) => {
   const usaVideo = p.fundo.tipo === "video" && !!p.fundo.url;
   const porCena = usaVideo && p.fundo.cortesPorCena;
   const ctaDur = f(2.2);
+  const temQuadro = !!p.efeitos.quadro && cenas.some((c) => (c.provas || []).length);
 
   return (
     <AbsoluteFill style={{ backgroundColor: p.tema.cor1 }}>
       {/* fundo */}
-      {!usaVideo ? <FundoGradiente tema={p.tema} /> : null}
-      {usaVideo && !porCena ? (
+      {temQuadro ? <Quadro cenas={cenas} cor1={p.tema.cor1} cor2={p.tema.cor2} /> : null}
+      {!usaVideo && !temQuadro ? <FundoGradiente tema={p.tema} /> : null}
+      {usaVideo && !porCena && !temQuadro ? (
         <VideoFundo url={p.fundo.url!} inicio={p.fundo.inicio ?? 0} volume={p.fundo.volume ?? 0} zoom={false} />
       ) : null}
-      {porCena
+      {porCena && !temQuadro
         ? cenas.map((c, i) => {
             const de = i === 0 ? 0 : f(c.inicio);
             const ate = i === cenas.length - 1 ? durationInFrames : f(cenas[i + 1].inicio);
@@ -383,7 +388,7 @@ export const LolShort: React.FC<LolShortProps> = (p) => {
           })
         : null}
       {/* escurece um pouco para a legenda ler bem */}
-      {usaVideo ? (
+      {usaVideo && !temQuadro ? (
         <AbsoluteFill
           style={{
             background:
@@ -400,7 +405,7 @@ export const LolShort: React.FC<LolShortProps> = (p) => {
         const escondeTexto = p.efeitos.hook && i === 0 && hookDur > 0;
         return (
           <Sequence key={`c${i}`} from={de} durationInFrames={Math.max(1, ate - de)} layout="none">
-            {c.textoTela && !escondeTexto ? <TextoTela texto={c.textoTela} p={p} /> : null}
+            {c.textoTela && !escondeTexto && !temQuadro ? <TextoTela texto={c.textoTela} p={p} /> : null}
             {i > 0 && p.efeitos.flash ? (
               <Sequence durationInFrames={6} layout="none">
                 <Flash />

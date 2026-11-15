@@ -1,0 +1,565 @@
+{
+ "cenas": [
+  {
+   "clipeInicio": null,
+   "destaque": [
+    "atirador"
+   ],
+   "narracao": "O melhor atirador do mundo ganhou a final do Mundial… sem jogar de atirador.",
+   "textoTela": "",
+   "visual": "Splash da Taliyah em tela cheia, zoom lento · texto grande: \"ADC SEM ATIRADOR?\"",
+   "provas": [
+    {
+     "tipo": "nota",
+     "rotulo": "VIPER",
+     "detalhe": "BLG\n\"melhor atirador do mundo\"",
+     "gatilho": "melhor",
+     "cor": "ouro",
+     "pos": [
+      -280,
+      -120
+     ]
+    },
+    {
+     "tipo": "foto",
+     "rotulo": "...de Taliyah?",
+     "imgArquivo": "dados/taliyah-adc/arte/Taliyah.jpg",
+     "gatilho": "sem",
+     "carimbo": "SEM ADC?",
+     "pos": [
+      260,
+      260
+     ],
+     "imgAsset": "26b5cd9c3b9a72b02f0d30fda61c94cb"
+    }
+   ]
+  },
+  {
+   "clipeInicio": null,
+   "destaque": [
+    "Taliyah",
+    "Jhin",
+    "Rakan"
+   ],
+   "narracao": "Final do Mundial, jogo três. Kai'Sa, Sivir e Xayah banidas. O Viper pega Taliyah no bot, contra Jhin e Rakan. A primeira Taliyah no bot do Mundial inteiro.",
+   "textoTela": "JOGO 3 · 3 BANS DE ADC",
+   "visual": "Faixa: \"Final Mundial 2026 · Jogo 3 · BLG x Gen.G\" Cartões de banimento de Kai'Sa, Sivir e Xayah com X vermelho, um por um Confronto: ícones Taliyah + Alistar contra Jhin + Rakan Selo: \"1ª Taliyah bot do Mundial 2026\"",
+   "provas": [
+    {
+     "tipo": "nota",
+     "rotulo": "FINAL · JOGO 3",
+     "detalhe": "Mundial 2026\nBLG x Gen.G",
+     "gatilho": "Final",
+     "cor": "ouro",
+     "pos": [
+      0,
+      -1000
+     ]
+    },
+    {
+     "tipo": "foto",
+     "rotulo": "Kai'Sa",
+     "imgArquivo": "dados/taliyah-adc/arte/Kaisa.jpg",
+     "gatilho": "Kai",
+     "riscar": true,
+     "carimbo": "BANIDA",
+     "pos": [
+      -540,
+      -420
+     ],
+     "imgAsset": "52e7e4295ca1bfff015cd74196ee8f88"
+    },
+    {
+     "tipo": "foto",
+     "rotulo": "Sivir",
+     "imgArquivo": "dados/taliyah-adc/arte/Sivir.jpg",
+     "gatilho": "Sivir",
+     "riscar": true,
+     "carimbo": "BANIDA",
+     "pos": [
+      0,
+      -380
+     ],
+     "imgAsset": "35a83389f8f81073c24a31fad4bb12d7"
+    },
+    {
+     "tipo": "foto",
+     "rotulo": "Xayah",
+     "imgArquivo": "dados/taliyah-adc/arte/Xayah.jpg",
+     "gatilho": "Xayah",
+     "riscar": true,
+     "carimbo": "BANIDA",
+     "pos": [
+      540,
+      -420
+     ],
+     "imgAsset": "905020e1ec7a745958406075ec9a3a54"
+    },
+    {
+     "tipo": "foto",
+     "rotulo": "Viper: Taliyah",
+     "imgArquivo": "dados/taliyah-adc/arte/Taliyah.jpg",
+     "gatilho": "Taliyah",
+     "pos": [
+      -290,
+      300
+     ],
+     "imgAsset": "26b5cd9c3b9a72b02f0d30fda61c94cb"
+    },
+    {
+     "tipo": "foto",
+     "rotulo": "ON: Alistar",
+     "imgArquivo": "dados/taliyah-adc/arte/Alistar.jpg",
+     "gatilho": "bot",
+     "pos": [
+      -290,
+      920
+     ],
+     "liga": 4,
+     "imgAsset": "c9a32552bb345f40761cc046e7ad5aab"
+    },
+    {
+     "tipo": "foto",
+     "rotulo": "Ruler: Jhin",
+     "imgArquivo": "dados/taliyah-adc/arte/Jhin.jpg",
+     "gatilho": "Jhin",
+     "pos": [
+      290,
+      330
+     ],
+     "liga": 4,
+     "imgAsset": "3082ccd29dbab6883a94ee5ce7b62e7f"
+    },
+    {
+     "tipo": "foto",
+     "rotulo": "Duro: Rakan",
+     "imgArquivo": "dados/taliyah-adc/arte/Rakan.jpg",
+     "gatilho": "Rakan",
+     "pos": [
+      290,
+      950
+     ],
+     "imgAsset": "0630fe90bc8459c80ca984d309953aa1"
+    },
+    {
+     "tipo": "nota",
+     "rotulo": "1ª TALIYAH BOT",
+     "detalhe": "do Mundial 2026 inteiro",
+     "gatilho": "primeira",
+     "carimbo": "INÉDITO",
+     "cor": "vermelho",
+     "pos": [
+      0,
+      1500
+     ]
+    }
+   ]
+  },
+  {
+   "clipeInicio": null,
+   "destaque": [
+    "E",
+    "W",
+    "first",
+    "blood"
+   ],
+   "narracao": "Passiva: velocidade perto de paredes. Q: o dano principal, e deixa o chão manipulado. W: arremessa o inimigo. E: pedras que explodem e atordoam. R: uma parede gigante pra chegar nas lutas. O combo é E mais W: assim o Viper prendeu o Duro e a BLG fez o first blood no rio.",
+   "textoTela": "E + W = FIRST BLOOD",
+   "visual": "Cada habilidade entra quando é falada, com ícone, nome e números do Data Dragon 16.22: Passiva · Deslizar em Pedras · \"velocidade perto de paredes\" Q · Voleio Entrelaçado · recarga 7 → 3 s · 55–75 de mana · alcance 1000 W · Empurrão Sísmico · recarga 14 → 8 s · 40 → 0 de mana · alcance 900 E · Terra Desfiada · recarga 14 s · 90 de mana · alcance 950 R · Muro da Tecelã · recarga 180/150/120 s · 100",
+   "provas": [
+    {
+     "tipo": "icone",
+     "rotulo": "Deslizar em Pedras",
+     "detalhe": "PASSIVA\nvelocidade perto\nde paredes",
+     "imgArquivo": "dados/taliyah-adc/passiva.png",
+     "gatilho": "Passiva",
+     "pos": [
+      -280,
+      -1150
+     ],
+     "imgAsset": "207ae17c195c61376d5ee38a9932b7e9"
+    },
+    {
+     "tipo": "icone",
+     "rotulo": "Q · Voleio Entrelaçado",
+     "detalhe": "recarga 7 → 3 s\n55–75 de mana\nalcance 1000",
+     "imgArquivo": "dados/taliyah-adc/habilidade_Q.png",
+     "gatilho": "Q",
+     "pos": [
+      290,
+      -1100
+     ],
+     "imgAsset": "bc08814477f11820e6432bb251b73df5"
+    },
+    {
+     "tipo": "icone",
+     "rotulo": "W · Empurrão Sísmico",
+     "detalhe": "recarga 14 → 8 s\n40 → 0 de mana\nalcance 900",
+     "imgArquivo": "dados/taliyah-adc/habilidade_W.png",
+     "gatilho": "W",
+     "pos": [
+      -280,
+      -520
+     ],
+     "imgAsset": "d94ff03d0a90a915b738f0c19d4737a6"
+    },
+    {
+     "tipo": "icone",
+     "rotulo": "E · Terra Desfiada",
+     "detalhe": "recarga 14 s\n90 de mana\nalcance 950",
+     "imgArquivo": "dados/taliyah-adc/habilidade_E.png",
+     "gatilho": "E",
+     "pos": [
+      290,
+      -470
+     ],
+     "imgAsset": "e71ca874cb75c8736a6be43d0e34cc0d"
+    },
+    {
+     "tipo": "icone",
+     "rotulo": "R · Muro da Tecelã",
+     "detalhe": "recarga 180/150/120 s\n100 de mana\nalcance até 6500",
+     "imgArquivo": "dados/taliyah-adc/habilidade_R.png",
+     "gatilho": "R",
+     "pos": [
+      -280,
+      110
+     ],
+     "imgAsset": "d496a0a6c4f0087aa7160ca112cabb52"
+    },
+    {
+     "tipo": "nota",
+     "rotulo": "COMBO E + W",
+     "detalhe": "pedras no chão\n+ arremesso por cima\n= atordoado",
+     "gatilho": "combo",
+     "cor": "vermelho",
+     "liga": 3,
+     "pos": [
+      290,
+      150
+     ]
+    },
+    {
+     "tipo": "foto",
+     "rotulo": "Duro, no rio",
+     "imgArquivo": "dados/taliyah-adc/arte/Rakan.jpg",
+     "gatilho": "Duro",
+     "riscar": true,
+     "carimbo": "FIRST BLOOD",
+     "pos": [
+      0,
+      720
+     ],
+     "imgAsset": "0630fe90bc8459c80ca984d309953aa1"
+    }
+   ]
+  },
+  {
+   "clipeInicio": null,
+   "destaque": [
+    "controle"
+   ],
+   "narracao": "Daqui pra frente é análise do canal, não regra oficial. Funciona por quatro motivos: controle que nenhum atirador tem, combo com suporte de iniciação, dano em área e um R que chega antes de todo mundo.",
+   "textoTela": "ANÁLISE DO CANAL",
+   "visual": "Selo fixo no topo: \"ANÁLISE DO CANAL\" Quatro marcadores entrando um por um: CONTROLE · COMBO COM SUPORTE · DANO EM ÁREA · CHEGA ANTES COM O R",
+   "provas": [
+    {
+     "tipo": "nota",
+     "rotulo": "ANÁLISE DO CANAL",
+     "detalhe": "não é regra oficial",
+     "gatilho": "análise",
+     "cor": "amarelo",
+     "pos": [
+      0,
+      -760
+     ]
+    },
+    {
+     "tipo": "icone",
+     "rotulo": "Controle",
+     "detalhe": "que nenhum\natirador tem",
+     "imgArquivo": "dados/taliyah-adc/habilidade_W.png",
+     "gatilho": "controle",
+     "cor": "azul",
+     "pos": [
+      -280,
+      -180
+     ],
+     "imgAsset": "d94ff03d0a90a915b738f0c19d4737a6"
+    },
+    {
+     "tipo": "foto",
+     "rotulo": "combo c/ suporte",
+     "imgArquivo": "dados/taliyah-adc/arte/Alistar.jpg",
+     "gatilho": "combo",
+     "pos": [
+      290,
+      -140
+     ],
+     "imgAsset": "c9a32552bb345f40761cc046e7ad5aab"
+    },
+    {
+     "tipo": "icone",
+     "rotulo": "Dano em área",
+     "detalhe": "nas lutas",
+     "imgArquivo": "dados/taliyah-adc/habilidade_Q.png",
+     "gatilho": "dano",
+     "cor": "azul",
+     "pos": [
+      -280,
+      420
+     ],
+     "imgAsset": "bc08814477f11820e6432bb251b73df5"
+    },
+    {
+     "tipo": "icone",
+     "rotulo": "Chega antes",
+     "detalhe": "com o R",
+     "imgArquivo": "dados/taliyah-adc/habilidade_R.png",
+     "gatilho": "chega",
+     "cor": "azul",
+     "pos": [
+      290,
+      460
+     ],
+     "imgAsset": "d496a0a6c4f0087aa7160ca112cabb52"
+    }
+   ]
+  },
+  {
+   "clipeInicio": null,
+   "destaque": [
+    "tanque",
+    "mana"
+   ],
+   "narracao": "Mas tem preço: pouco dano contínuo em tanque, torre e objetivo caem devagar, tudo é skillshot e a mana acaba rápido.",
+   "textoTela": "OS PONTOS FRACOS",
+   "visual": "Selo: \"ANÁLISE DO CANAL\" Quatro marcadores em vermelho: POUCO DANO EM TANQUE · TORRE E OBJETIVO DEVAGAR · TUDO SKILLSHOT · MUITA MANA",
+   "provas": [
+    {
+     "tipo": "nota",
+     "rotulo": "POUCO DANO EM TANQUE",
+     "gatilho": "tanque",
+     "cor": "vermelho",
+     "pos": [
+      -270,
+      -330
+     ]
+    },
+    {
+     "tipo": "nota",
+     "rotulo": "TORRE E OBJETIVO DEVAGAR",
+     "gatilho": "torre",
+     "cor": "vermelho",
+     "pos": [
+      280,
+      -290
+     ]
+    },
+    {
+     "tipo": "nota",
+     "rotulo": "TUDO É SKILLSHOT",
+     "gatilho": "skillshot",
+     "cor": "vermelho",
+     "pos": [
+      -270,
+      120
+     ]
+    },
+    {
+     "tipo": "nota",
+     "rotulo": "MANA ACABA RÁPIDO",
+     "gatilho": "mana",
+     "cor": "vermelho",
+     "carimbo": "FRAQUEZAS",
+     "pos": [
+      280,
+      160
+     ]
+    }
+   ]
+  },
+  {
+   "clipeInicio": null,
+   "destaque": [
+    "Escolha",
+    "Evite"
+   ],
+   "narracao": "Escolha com outro dano físico contínuo no time, suporte que inicia e atirador inimigo parado, como o Jhin. Evite contra dois tanques, time cheio de dano mágico, poke de longe, muito dash, ou se o plano é ganhar por objetivo.",
+   "textoTela": "ESCOLHA x EVITE",
+   "visual": "Duas colunas, itens aparecendo um por um enquanto você fala: ESCOLHA (verde): outro dano físico contínuo no time · suporte de iniciação (Alistar, Rakan, Nautilus, Leona) · atirador inimigo parado (Jhin) · inimigos frágeis EVITE (vermelho): 2+ tanques inimigos · time já cheio de dano mágico · dupla de poke de longe · inimigos com muitos dashes · plano de ganhar por objetivos Rodapé pequeno: \"Anális",
+   "provas": [
+    {
+     "tipo": "etiqueta",
+     "rotulo": "✔ ESCOLHA",
+     "gatilho": "Escolha",
+     "cor": "verde",
+     "pos": [
+      -285,
+      -470
+     ],
+     "liga": null
+    },
+    {
+     "tipo": "etiqueta",
+     "rotulo": "Outro dano físico contínuo",
+     "gatilho": "físico",
+     "cor": "verde",
+     "pos": [
+      -285,
+      -320
+     ]
+    },
+    {
+     "tipo": "etiqueta",
+     "rotulo": "Suporte de iniciação",
+     "gatilho": "suporte",
+     "cor": "verde",
+     "pos": [
+      -285,
+      -170
+     ]
+    },
+    {
+     "tipo": "etiqueta",
+     "rotulo": "Atirador parado (Jhin)",
+     "gatilho": "Jhin",
+     "cor": "verde",
+     "pos": [
+      -285,
+      -20
+     ]
+    },
+    {
+     "tipo": "etiqueta",
+     "rotulo": "Inimigos frágeis",
+     "gatilho": "Jhin",
+     "cor": "verde",
+     "pos": [
+      -285,
+      130
+     ]
+    },
+    {
+     "tipo": "etiqueta",
+     "rotulo": "✘ EVITE",
+     "gatilho": "Evite",
+     "cor": "vermelho",
+     "pos": [
+      285,
+      -470
+     ],
+     "liga": null
+    },
+    {
+     "tipo": "etiqueta",
+     "rotulo": "2+ tanques inimigos",
+     "gatilho": "tanques",
+     "cor": "vermelho",
+     "pos": [
+      285,
+      -320
+     ]
+    },
+    {
+     "tipo": "etiqueta",
+     "rotulo": "Time cheio de dano mágico",
+     "gatilho": "mágico",
+     "cor": "vermelho",
+     "pos": [
+      285,
+      -170
+     ]
+    },
+    {
+     "tipo": "etiqueta",
+     "rotulo": "Poke de longe",
+     "gatilho": "poke",
+     "cor": "vermelho",
+     "pos": [
+      285,
+      -20
+     ]
+    },
+    {
+     "tipo": "etiqueta",
+     "rotulo": "Muitos dashes",
+     "gatilho": "dash",
+     "cor": "vermelho",
+     "pos": [
+      285,
+      130
+     ]
+    },
+    {
+     "tipo": "etiqueta",
+     "rotulo": "Plano de objetivos",
+     "gatilho": "objetivo",
+     "cor": "vermelho",
+     "pos": [
+      285,
+      280
+     ]
+    }
+   ]
+  },
+  {
+   "clipeInicio": null,
+   "destaque": [
+    "seis",
+    "onze"
+   ],
+   "narracao": "Resultado: seis, um e onze, e a BLG virou dois a um. Comenta qual pick estranho você quer que eu explique.",
+   "textoTela": "6 / 1 / 11",
+   "visual": "Placar grande: \"6 / 1 / 11\" · abaixo: \"23% do dano do time · 85% de participação em abates\" Texto: \"BLG 2 x 1\" → CTA \"Qual pick estranho eu explico?\"",
+   "provas": [
+    {
+     "tipo": "placar",
+     "rotulo": "6 / 1 / 11",
+     "detalhe": "23% do dano do time\n85% de participação em abates",
+     "gatilho": "Resultado",
+     "cor": "ouro",
+     "pos": [
+      0,
+      -200
+     ]
+    },
+    {
+     "tipo": "nota",
+     "rotulo": "BLG 2 x 1",
+     "detalhe": "jogo 3 vencido",
+     "gatilho": "dois",
+     "carimbo": "VITÓRIA",
+     "cor": "verde",
+     "pos": [
+      0,
+      330
+     ]
+    }
+   ]
+  }
+ ],
+ "cta": {
+  "texto": "Qual pick estranho eu explico?"
+ },
+ "descricao": "Por que o Viper jogou de Taliyah no bot no jogo 3 da final do Mundial 2026 (BLG 3 x 1 Gen.G)? O kit, o combo E + W que gerou o first blood, e quando vale escolher ou evitar esse pick. Os pontos sobre quando funciona e quando evitar são análise do canal, não regra oficial.\n\nO Mundial foi jogado no patch 16.20; os números das habilidades no vídeo são do patch 16.22.\n\nQual pick estranho você quer que eu explique? Comenta aí!",
+ "hashtags": [
+  "#leagueoflegends",
+  "#lol",
+  "#taliyah",
+  "#worlds2026",
+  "#lolbrasil"
+ ],
+ "hook": {
+  "textoTela": "ADC SEM ATIRADOR?"
+ },
+ "mudancas": [],
+ "notaOriginal": null,
+ "notaOtimizada": null,
+ "resumo": "Explica o pick do Viper em 7 trechos: gancho, contexto do draft, kit com o combo E + W, por que funciona, por que é fraca, quando escolher x evitar e o placar.",
+ "titulos": [
+  "Taliyah ADC: o pick do Viper na final do Mundial",
+  "O Viper ganhou a final SEM atirador",
+  "Por que o Viper jogou de Taliyah no bot?"
+ ]
+}

@@ -94,6 +94,22 @@ Fase 2 (quando a narração estiver em `brutos/`): transcrição (faster-whisper
 repetições, legendas palavra a palavra, animações, mostrar cortes e cenas ANTES de renderizar,
 exportar `saida/<slug>_v1.mp4`.
 
+## Quadro de investigação (provas animadas)
+
+`src/Quadro.tsx`, ligado por `config.efeitos.quadro`. Cada cena tem `provas`:
+`{tipo: foto|icone|nota|etiqueta|placar, rotulo, detalhe, imgAsset (Artifact) / imgArquivo (local),
+gatilho (palavra da fala que faz aparecer), carimbo, cor (ouro|verde|vermelho|azul|amarelo), riscar,
+liga (índice da prova ligada pelo fio, dentro da cena; null = sem fio), pos [dx, dy]}`.
+As provas caem presas por alfinete/fita, o fio vermelho liga uma à outra, a câmera chega perto da
+prova nova e depois recua para o grupo; carimbos dão tranco na câmera; fotos "revelam" como polaroid.
+
+Imagens: o Claude baixa sozinho as oficiais do jogo do Data Dragon (arte de carregamento
+`cdn/img/champion/loading/<Id>_0.jpg` para fotos, ícones de habilidade e de item), envia ao Artifact
+(`Artifact publish asset:true`, até 25 por chamada) e registra `caminho local -> assetId` em
+`dados/assets.json` (o importador usa esse mapa). O que não é do Data Dragon (gameplay, prints,
+logos) o usuário envia pela prova (🖼) na aba Roteiro, que lista as imagens que faltam.
+Não usar fotos de pessoas reais (jogadores) sem direito de uso: prefira arte do campeão ou nota.
+
 ## Estúdio Shorts local (painel em http://localhost:3333) — alternativa
 
 ```bash

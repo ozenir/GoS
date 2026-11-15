@@ -46,7 +46,7 @@ export const configPadrao = () => ({
     palavrasPorBloco: 3,
     caixaAlta: true,
   },
-  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true, patch: true },
+  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true, patch: true, quadro: true },
   tema: { cor1: "#010A13", cor2: "#0A323C", corDestaque: "#C8AA6E" },
   hookDuracao: 2.4,
   ctaAtivo: true,
@@ -182,6 +182,7 @@ export function trilha(id) {
     ...c,
     textoTela: comTexto[i]?.textoTela || "",
     clipeInicio: comTexto[i]?.clipeInicio ?? null,
+    provas: comTexto[i]?.provas || [],
   }));
   return { trilha: tr, narracaoAtual: !!atual, narracaoExiste: !!real, hash: h };
 }
@@ -196,6 +197,10 @@ export function props(id, base = "") {
   const { trilha: tr, narracaoAtual } = trilha(id);
   const url = (rel) => (rel ? `${base}/arquivos/${rel.split("/").map(encodeURIComponent).join("/")}` : null);
   const v = narracaoAtual ? statSync(join(d, "narracao.m4a")).mtimeMs | 0 : 0;
+  tr.cenas = tr.cenas.map((c) => ({
+    ...c,
+    provas: (c.provas || []).map((pr) => ({ ...pr, img: pr.imgArquivo ? url(pr.imgArquivo) : pr.img || null })),
+  }));
   return {
     trilha: tr,
     audio: narracaoAtual ? `${url(`projetos/${id}/narracao.m4a`)}?v=${v}` : null,
