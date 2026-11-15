@@ -1,0 +1,135 @@
+{
+ "id": "JarvanIV",
+ "nome": "Jarvan IV",
+ "titulo": "o Exemplo de Demacia",
+ "chave": "0059",
+ "versao": "16.22.1",
+ "alcanceAtaque": 175,
+ "habilidades": {
+  "P": {
+   "nome": "Cadência Marcial",
+   "descricao": "O primeiro ataque básico de Jarvan a um inimigo causa Dano Físico adicional com base na Vida atual dele. Este efeito não ocorrerá no mesmo inimigo novamente por alguns segundos."
+  },
+  "Q": {
+   "nome": "Ataque do Dragão",
+   "recarga": [
+    10,
+    9,
+    8,
+    7,
+    6
+   ],
+   "custo": [
+    45,
+    50,
+    55,
+    60,
+    65
+   ],
+   "alcance": [
+    770,
+    770,
+    770,
+    770,
+    770
+   ],
+   "descricao": "Jarvan IV estende sua lança, causando Dano Físico e reduzindo a Armadura de inimigos atingidos. Além disto, ela puxará Jarvan na direção de seu Estandarte Demaciano, arremessando inimigos em seu trajeto ao ar."
+  },
+  "W": {
+   "nome": "Égide de Ouro",
+   "recarga": [
+    9,
+    9,
+    9,
+    9,
+    9
+   ],
+   "custo": [
+    30,
+    30,
+    30,
+    30,
+    30
+   ],
+   "alcance": [
+    625,
+    625,
+    625,
+    625,
+    625
+   ],
+   "descricao": "Jarvan IV invoca os antigos reis de Demacia para protegê-lo do perigo e atrasar os inimigos próximos."
+  },
+  "E": {
+   "nome": "Estandarte Demaciano",
+   "recarga": [
+    12,
+    11.5,
+    11,
+    10.5,
+    10
+   ],
+   "custo": [
+    55,
+    55,
+    55,
+    55,
+    55
+   ],
+   "alcance": [
+    860,
+    860,
+    860,
+    860,
+    860
+   ],
+   "descricao": "Jarvan IV carrega o orgulho de Demacia, recebendo passivamente Velocidade de Ataque adicional. Ativar o Estandarte Demaciano permite a Jarvan IV posicionar uma bandeira demaciana que causa Dano Mágico e concede Velocidade de Ataque a campeões aliados próximos."
+  },
+  "R": {
+   "nome": "Cataclisma",
+   "recarga": [
+    120,
+    105,
+    90
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    650,
+    650,
+    650
+   ],
+   "descricao": "Jarvan IV heroicamente salta em direção ao alvo com força o suficiente para deformar o terreno, criando uma arena ao seu redor. Os inimigos próximos recebem dano no momento do impacto."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 5.87
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 4.93
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 7.33
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 13.87
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 9.07
+  }
+ }
+}

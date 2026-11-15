@@ -1,0 +1,135 @@
+{
+ "id": "Sivir",
+ "nome": "Sivir",
+ "titulo": "a Mestra da Batalha",
+ "chave": "0015",
+ "versao": "16.22.1",
+ "alcanceAtaque": 500,
+ "habilidades": {
+  "P": {
+   "nome": "Pés Ligeiros",
+   "descricao": "Sivir ganha um pequeno impulso de Velocidade de Movimento quando ela ataca um campeão inimigo."
+  },
+  "Q": {
+   "nome": "Lâmina Bumerangue",
+   "recarga": [
+    10,
+    9.5,
+    9,
+    8.5,
+    8
+   ],
+   "custo": [
+    55,
+    60,
+    65,
+    70,
+    75
+   ],
+   "alcance": [
+    1200,
+    1200,
+    1200,
+    1200,
+    1200
+   ],
+   "descricao": "Sivir arremessa sua lâmina como um bumerangue, causando dano tanto na ida quanto na volta."
+  },
+  "W": {
+   "nome": "Ricochete",
+   "recarga": [
+    12,
+    12,
+    12,
+    12,
+    12
+   ],
+   "custo": [
+    60,
+    60,
+    60,
+    60,
+    60
+   ],
+   "alcance": [
+    20,
+    20,
+    20,
+    20,
+    20
+   ],
+   "descricao": "Os próximos ataques básicos de Sivir recebem Velocidade de Ataque adicional e ricocheteiam em alvos próximos, causando dano reduzido enquanto rebatem."
+  },
+  "E": {
+   "nome": "Escudo de Feitiço",
+   "recarga": [
+    24,
+    22.5,
+    21,
+    19.5,
+    18
+   ],
+   "custo": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "alcance": [
+    20,
+    20,
+    20,
+    20,
+    20
+   ],
+   "descricao": "Cria uma barreira mágica que bloqueia a habilidade de um único inimigo lançada em Sivir. Ela recebe Vida e uma explosão de Velocidade de Movimento se uma habilidade for bloqueada."
+  },
+  "R": {
+   "nome": "Na Caçada",
+   "recarga": [
+    120,
+    100,
+    80
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    1000,
+    1000,
+    1000
+   ],
+   "descricao": "Sivir conduz os aliados até a batalha, concedendo uma explosão de Velocidade de Movimento a eles por um curto período. Além disso, os ataques de Sivir reduzem o Tempo de Recarga das habilidades."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 4.73
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 3.83
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 4.63
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 4.43
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 9.9
+  }
+ }
+}

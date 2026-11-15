@@ -1,0 +1,135 @@
+{
+ "id": "Taliyah",
+ "nome": "Taliyah",
+ "titulo": "a Tecelã de Pedras",
+ "chave": "0163",
+ "versao": "16.22.1",
+ "alcanceAtaque": 525,
+ "habilidades": {
+  "P": {
+   "nome": "Deslizar em Pedras",
+   "descricao": "Taliyah recebe Velocidade de Movimento próxima a paredes."
+  },
+  "Q": {
+   "nome": "Voleio Entrelaçado",
+   "recarga": [
+    7,
+    6,
+    5,
+    4,
+    3
+   ],
+   "custo": [
+    55,
+    60,
+    65,
+    70,
+    75
+   ],
+   "alcance": [
+    1000,
+    1000,
+    1000,
+    1000,
+    1000
+   ],
+   "descricao": "Taliyah arremessa uma rajada de pedras na direção-alvo, movimentando-se livremente durante a conjuração. Isso cria um Terreno Manipulado sob ela. Se Taliyah conjurar Voleio Entrelaçado em Terreno Manipulado, ela consome o terreno para arremessar um pedregulho fortalecido que causa Lentidão a inimigos."
+  },
+  "W": {
+   "nome": "Empurrão Sísmico",
+   "recarga": [
+    14,
+    12.5,
+    11,
+    9.5,
+    8
+   ],
+   "custo": [
+    40,
+    30,
+    20,
+    10,
+    0
+   ],
+   "alcance": [
+    900,
+    900,
+    900,
+    900,
+    900
+   ],
+   "descricao": "Taliyah faz com que uma área do terreno irrompa e arremesse inimigos na direção de sua escolha."
+  },
+  "E": {
+   "nome": "Terra Desfiada",
+   "recarga": [
+    14,
+    14,
+    14,
+    14,
+    14
+   ],
+   "custo": [
+    90,
+    90,
+    90,
+    90,
+    90
+   ],
+   "alcance": [
+    950,
+    950,
+    950,
+    950,
+    950
+   ],
+   "descricao": "Taliyah cria um campo minado de Lentidão. Caso inimigos avancem ou sejam arremessados através dele, as minas explodem, atordoando-os."
+  },
+  "R": {
+   "nome": "Muro da Tecelã",
+   "recarga": [
+    180,
+    150,
+    120
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    2500,
+    4500,
+    6500
+   ],
+   "descricao": "Taliyah cria uma parede comprida e desliza sobre ela."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 10.0
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 7.67
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 5.47
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 8.27
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 12.83
+  }
+ }
+}

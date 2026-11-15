@@ -1,0 +1,135 @@
+{
+ "id": "Akali",
+ "nome": "Akali",
+ "titulo": "a Assassina Renegada",
+ "chave": "0084",
+ "versao": "16.22.1",
+ "alcanceAtaque": 125,
+ "habilidades": {
+  "P": {
+   "nome": "Marca do Assassino",
+   "descricao": "Causar dano a Campeões com habilidades cria um círculo de energia em volta deles. Sair desse círculo fortalece o próximo Ataque de Akali com alcance e dano adicionais."
+  },
+  "Q": {
+   "nome": "Golpe dos Cinco Pontos",
+   "recarga": [
+    1.5,
+    1.5,
+    1.5,
+    1.5,
+    1.5
+   ],
+   "custo": [
+    110,
+    100,
+    90,
+    80,
+    70
+   ],
+   "alcance": [
+    550,
+    550,
+    550,
+    550,
+    550
+   ],
+   "descricao": "Akali atira cinco kunais, causando redução de velocidade e dano com base em seu Dano de Ataque adicional e Poder de Habilidade."
+  },
+  "W": {
+   "nome": "Proteção do Crepúsculo",
+   "recarga": [
+    20,
+    19,
+    18,
+    17,
+    16
+   ],
+   "custo": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "alcance": [
+    350,
+    350,
+    350,
+    350,
+    350
+   ],
+   "descricao": "Akali solta uma proteção de fumaça e recebe Velocidade de Movimento por um curto período. Enquanto estiver dentro da proteção, Akali se torna invisível e não pode ser selecionada como alvo de habilidades e ataques inimigos. Atacar ou usar habilidades fará com que ela seja revelada brevemente.  "
+  },
+  "E": {
+   "nome": "Investida Shuriken",
+   "recarga": [
+    16,
+    14.5,
+    13,
+    11.5,
+    10
+   ],
+   "custo": [
+    30,
+    30,
+    30,
+    30,
+    30
+   ],
+   "alcance": [
+    825,
+    825,
+    825,
+    825,
+    825
+   ],
+   "descricao": "Salta para trás e atira uma shuriken para a frente, causando Dano Mágico. O primeiro inimigo ou nuvem de fumaça que forem atingidos são marcados. Conjure novamente para avançar ao alvo marcado, causando dano adicional."
+  },
+  "R": {
+   "nome": "Execução Perfeita",
+   "recarga": [
+    120,
+    90,
+    60
+   ],
+   "custo": [
+    0,
+    0,
+    0
+   ],
+   "alcance": [
+    675,
+    675,
+    675
+   ],
+   "descricao": "Akali salta em uma direção, causando dano aos inimigos que atingir. Conjurar novamente: Akali avança em uma direção, executando todos os inimigos que atingir."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 8.1
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 4.17
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 12.63
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 5.17
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 6.93
+  }
+ }
+}

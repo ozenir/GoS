@@ -1,0 +1,135 @@
+{
+ "id": "Camille",
+ "nome": "Camille",
+ "titulo": "a Sombra de Aço",
+ "chave": "0164",
+ "versao": "16.22.1",
+ "alcanceAtaque": 125,
+ "habilidades": {
+  "P": {
+   "nome": "Defesa Adaptativa",
+   "descricao": "Ataques básicos contra Campeões concedem um Escudo equivalente a uma porcentagem da Vida máxima de Camille contra o tipo de dano deles (Físico ou Mágico) por um breve período."
+  },
+  "Q": {
+   "nome": "Protocolo de Precisão",
+   "recarga": [
+    9,
+    8,
+    7,
+    6,
+    5
+   ],
+   "custo": [
+    25,
+    25,
+    25,
+    25,
+    25
+   ],
+   "alcance": [
+    325,
+    325,
+    325,
+    325,
+    325
+   ],
+   "descricao": "O próximo ataque de Camille causa dano adicional e concede Velocidade de Movimento adicional. Esta habilidade pode ser conjurada novamente por um curto período de tempo, causando dano adicional consideravelmente aumentado se Camille criar um intervalo entre os dois ataques."
+  },
+  "W": {
+   "nome": "Varredura Tática",
+   "recarga": [
+    12,
+    11.5,
+    11,
+    10.5,
+    10
+   ],
+   "custo": [
+    50,
+    55,
+    60,
+    65,
+    70
+   ],
+   "alcance": [
+    610,
+    610,
+    610,
+    610,
+    610
+   ],
+   "descricao": "Camille faz um disparo em área de cone após um intervalo, causando dano. Inimigos na metade exterior têm sua velocidade reduzida e recebem dano adicional, ao mesmo tempo em que curam Camille."
+  },
+  "E": {
+   "nome": "Disparo de Gancho",
+   "recarga": [
+    16,
+    15,
+    14,
+    13,
+    12
+   ],
+   "custo": [
+    70,
+    70,
+    70,
+    70,
+    70
+   ],
+   "alcance": [
+    800,
+    800,
+    800,
+    800,
+    800
+   ],
+   "descricao": "Camille puxa a si mesma na direção de uma parede, saltando e arremessando ao ar Campeões inimigos ao aterrissar."
+  },
+  "R": {
+   "nome": "Ultimato Hextec",
+   "recarga": [
+    140,
+    115,
+    90
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    475,
+    475,
+    475
+   ],
+   "descricao": "Camille avança em direção ao Campeão alvo, ancorando-o à área. Ela também causa Dano Mágico adicional ao alvo com seus ataques básicos."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 8.77
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 7.93
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 5.73
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 10.73
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 8.1
+  }
+ }
+}

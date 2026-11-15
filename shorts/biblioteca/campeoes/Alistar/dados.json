@@ -1,0 +1,135 @@
+{
+ "id": "Alistar",
+ "nome": "Alistar",
+ "titulo": "o Minotauro",
+ "chave": "0012",
+ "versao": "16.22.1",
+ "alcanceAtaque": 125,
+ "habilidades": {
+  "P": {
+   "nome": "Urro Triunfante",
+   "descricao": "Alistar carrega seu urro ao atordoar, deslocar a posição de Campeões inimigos ou quando inimigos próximos morrem. Quando estiver com o máximo de cargas, ele cura a si mesmo e aos Campeões aliados próximos."
+  },
+  "Q": {
+   "nome": "Pulverizar",
+   "recarga": [
+    14,
+    13,
+    12,
+    11,
+    10
+   ],
+   "custo": [
+    50,
+    55,
+    60,
+    65,
+    70
+   ],
+   "alcance": [
+    365,
+    365,
+    365,
+    365,
+    365
+   ],
+   "descricao": "Alistar golpeia o chão, causando dano a inimigos próximos e arremessando-os ao ar."
+  },
+  "W": {
+   "nome": "Cabeçada",
+   "recarga": [
+    14,
+    13,
+    12,
+    11,
+    10
+   ],
+   "custo": [
+    50,
+    55,
+    60,
+    65,
+    70
+   ],
+   "alcance": [
+    650,
+    650,
+    650,
+    650,
+    650
+   ],
+   "descricao": "Alistar atinge o inimigo com sua cabeça, causando dano e jogando o alvo para trás."
+  },
+  "E": {
+   "nome": "Atropelar",
+   "recarga": [
+    12,
+    11.5,
+    11,
+    10.5,
+    10
+   ],
+   "custo": [
+    50,
+    55,
+    60,
+    65,
+    70
+   ],
+   "alcance": [
+    350,
+    350,
+    350,
+    350,
+    350
+   ],
+   "descricao": "Alistar atropela unidades inimigas próximas, ignorando colisão com unidades e recebendo acúmulos caso cause dano a um Campeão inimigo. O próximo ataque básico com o máximo de acúmulos contra um Campeão inimigo causa Dano Mágico adicional e o atordoa."
+  },
+  "R": {
+   "nome": "Vontade Indestrutível",
+   "recarga": [
+    120,
+    100,
+    80
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    1,
+    1,
+    1
+   ],
+   "descricao": "Alistar solta um urro selvagem, removendo todos os efeitos de Controle de Grupo de si mesmo, além de reduzir o Dano Físico e Mágico enquanto durar o efeito."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 6.4
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 5.97
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 5.97
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 9.5
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 11.5
+  }
+ }
+}

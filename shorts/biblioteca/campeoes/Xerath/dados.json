@@ -1,0 +1,135 @@
+{
+ "id": "Xerath",
+ "nome": "Xerath",
+ "titulo": "o Mago Ascendente",
+ "chave": "0101",
+ "versao": "16.22.1",
+ "alcanceAtaque": 525,
+ "habilidades": {
+  "P": {
+   "nome": "Oscilação de Mana",
+   "descricao": "Os ataques básicos de Xerath restauram Mana periodicamente. Sempre que Xerath abate uma unidade, esse Tempo de Recarga é reduzido."
+  },
+  "Q": {
+   "nome": "Pulso Arcano",
+   "recarga": [
+    9,
+    8,
+    7,
+    6,
+    5
+   ],
+   "custo": [
+    80,
+    90,
+    100,
+    110,
+    120
+   ],
+   "alcance": [
+    750,
+    750,
+    750,
+    750,
+    750
+   ],
+   "descricao": "Dispara um raio de energia de longo alcance, causando Dano Mágico a todos os alvos atingidos."
+  },
+  "W": {
+   "nome": "Olho da Destruição",
+   "recarga": [
+    14,
+    13,
+    12,
+    11,
+    10
+   ],
+   "custo": [
+    80,
+    90,
+    100,
+    110,
+    120
+   ],
+   "alcance": [
+    1000,
+    1000,
+    1000,
+    1000,
+    1000
+   ],
+   "descricao": "Invoca uma barragem de energia arcana, causando Dano Mágico e redução de Velocidade de Movimento a todos os inimigos em uma área. Alvos no centro recebem dano adicional e uma redução de velocidade mais forte."
+  },
+  "E": {
+   "nome": "Orbe Eletrizante",
+   "recarga": [
+    13,
+    12.5,
+    12,
+    11.5,
+    11
+   ],
+   "custo": [
+    60,
+    65,
+    70,
+    75,
+    80
+   ],
+   "alcance": [
+    1050,
+    1050,
+    1050,
+    1050,
+    1050
+   ],
+   "descricao": "Causa Dano Mágico a um inimigo e o atordoa."
+  },
+  "R": {
+   "nome": "Ritual Arcano",
+   "recarga": [
+    130,
+    115,
+    100
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    5000,
+    5000,
+    5000
+   ],
+   "descricao": "Xerath imobiliza a si mesmo e dispara diversas barragens de longa distância."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 4.23
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 7.53
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 7.33
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 4.33
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 13.87
+  }
+ }
+}

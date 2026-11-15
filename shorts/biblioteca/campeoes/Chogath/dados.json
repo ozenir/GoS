@@ -1,0 +1,135 @@
+{
+ "id": "Chogath",
+ "nome": "Cho'Gath",
+ "titulo": "o Terror do Vazio",
+ "chave": "0031",
+ "versao": "16.22.1",
+ "alcanceAtaque": 125,
+ "habilidades": {
+  "P": {
+   "nome": "Carnívoro",
+   "descricao": "Sempre que Cho'Gath abate uma unidade, ele recupera Vida e Mana. Os valores restaurados aumentam com o nível de Cho'Gath."
+  },
+  "Q": {
+   "nome": "Ruptura",
+   "recarga": [
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "custo": [
+    50,
+    50,
+    50,
+    50,
+    50
+   ],
+   "alcance": [
+    950,
+    950,
+    950,
+    950,
+    950
+   ],
+   "descricao": "Rompe o chão num local-alvo, lançando unidades inimigas ao ar e causando dano e redução de velocidade."
+  },
+  "W": {
+   "nome": "Grito Selvagem",
+   "recarga": [
+    11,
+    10.5,
+    10,
+    9.5,
+    9
+   ],
+   "custo": [
+    70,
+    75,
+    80,
+    85,
+    90
+   ],
+   "alcance": [
+    300,
+    300,
+    300,
+    300,
+    300
+   ],
+   "descricao": "Cho'Gath solta um terrível urro em inimigos em área de cone, causando Dano Mágico e Silenciamento a eles por alguns segundos."
+  },
+  "E": {
+   "nome": "Espinhos Vorpais",
+   "recarga": [
+    8,
+    7,
+    6,
+    5,
+    4
+   ],
+   "custo": [
+    30,
+    30,
+    30,
+    30,
+    30
+   ],
+   "alcance": [
+    40,
+    40,
+    40,
+    40,
+    40
+   ],
+   "descricao": "Os ataques de Cho'Gath lançam espinhos letais, causando dano e reduzindo a velocidade de unidades inimigas à sua frente."
+  },
+  "R": {
+   "nome": "Banquete",
+   "recarga": [
+    80,
+    70,
+    60
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    175,
+    175,
+    175
+   ],
+   "descricao": "Devora uma unidade inimiga, causando uma grande quantidade de Dano Verdadeiro. Se o alvo for abatido, Cho'Gath cresce, recebendo Vida máxima."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 5.23
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 3.33
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 4.57
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 5.4
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 6.5
+  }
+ }
+}

@@ -1,0 +1,133 @@
+{
+ "id": "Karma",
+ "nome": "Karma",
+ "titulo": "a Iluminada",
+ "chave": "0043",
+ "versao": "16.22.1",
+ "alcanceAtaque": 525,
+ "habilidades": {
+  "P": {
+   "nome": "Ímpeto Ardente",
+   "descricao": "As habilidades de dano de Karma reduzem o Tempo de Recarga de Mantra."
+  },
+  "Q": {
+   "nome": "Chama Interior",
+   "recarga": [
+    9,
+    8,
+    7,
+    6,
+    5
+   ],
+   "custo": [
+    40,
+    50,
+    60,
+    70,
+    80
+   ],
+   "alcance": [
+    950,
+    950,
+    950,
+    950,
+    950
+   ],
+   "descricao": "Karma dispara uma esfera de energia espiritual que explode e causa dano ao atingir uma unidade inimiga.<br><br>Efeito de Mantra: Além da explosão, Mantra aumenta o poder destrutivo de sua Chama Interior, criando um cataclisma que causa dano depois de um breve intervalo."
+  },
+  "W": {
+   "nome": "Decisão Absorta",
+   "recarga": [
+    12,
+    12,
+    12,
+    12,
+    12
+   ],
+   "custo": [
+    50,
+    55,
+    60,
+    65,
+    70
+   ],
+   "alcance": [
+    675,
+    675,
+    675,
+    675,
+    675
+   ],
+   "descricao": "Karma cria um vínculo entre ela e o inimigo-alvo, causando dano e revelando-o. Se o vínculo não for quebrado, o inimigo será enraizado e sofrerá dano novamente.<br><br>Efeito de Mantra: Karma fortalece o vínculo, se curando e prolongando a duração do enraizamento."
+  },
+  "E": {
+   "nome": "Inspiração",
+   "recarga": [
+    10,
+    9.5,
+    9,
+    8.5,
+    8
+   ],
+   "custo": [
+    60,
+    65,
+    70,
+    75,
+    80
+   ],
+   "alcance": [
+    800,
+    800,
+    800,
+    800,
+    800
+   ],
+   "descricao": "Karma invoca um escudo protetor que absorve o dano sofrido e aumenta a Velocidade de Movimento do aliado protegido.<br><br>Efeito de Mantra: o alvo irradia energia, fortalecendo o Escudo inicial e aplicando Inspiração a Campeões aliados próximos."
+  },
+  "R": {
+   "nome": "Mantra",
+   "recarga": [
+    40,
+    38,
+    36,
+    34
+   ],
+   "custo": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "alcance": [
+    1100,
+    1100,
+    1100,
+    1100
+   ],
+   "descricao": "Karma fortalece sua próxima habilidade para dar um efeito adicional. Mantra está disponível no nível 1 e não exige um ponto de habilidade."
+  }
+ },
+ "videos": {
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 6.7
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 6.8
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 6.4
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 27.53
+  }
+ }
+}
