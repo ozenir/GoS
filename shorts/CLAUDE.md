@@ -98,6 +98,26 @@ confira a contagem antes de narrar e, depois do render, compare a duração com 
 O `hash` liga narração e roteiro: `sha1(JSON.stringify([narrações das cenas com texto, voz, velocidade]))`
 (12 primeiros hex) — igual em `painel/projetos.mjs` e na página.
 
+## Minha voz (voz do usuário)
+
+Voz `"minha-voz"` no `config.voz` (lista de vozes do painel e do Estúdio). Como funciona, escolhido pelo
+usuário entre os testes (o "H"): cada cena é falada pelo Antonio (edge-tts, `pitch -2Hz`, sotaque brasileiro
+neutro, tempos das palavras exatos) e o áudio é convertido para o timbre do usuário com o **ChatterboxVC**
+(`scripts/voz_clonada.py`, modo `conversao`); os tempos das palavras acompanham a duração convertida.
+A clonagem direta do texto (modo `clonagem`) deu sotaque estranho em português e ficou só para testes.
+
+- **Amostra:** `voz/ref/referencia.wav` (10 s da gravação 3, trecho 36,9–47,4 s, "Ó, presta atenção nisso…").
+  As gravações ficam em `voz/brutos/`. **A pasta `voz/` nunca vai para o git: o repositório é público.**
+- **Ambiente:** `.venv-voz/` (Python 3.12, fora do git):
+  `uv venv -p 3.12 .venv-voz && uv pip install -p .venv-voz/bin/python --index-url https://download.pytorch.org/whl/cpu
+  --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match torch==2.6.0 torchaudio==2.6.0
+  chatterbox-tts==0.1.7 faster-whisper edge-tts "setuptools<81"`. Com placa NVIDIA, troque o índice `cpu` pelo
+  `cu124`. O 1º uso baixa os modelos do Hugging Face.
+- **Velocidade:** na nuvem (CPU), ~4 s de processamento por segundo de fala; com placa de vídeo, bem menos.
+- **Estado:** pronta, mas **não ativada**. O padrão continua sendo o Antonio e o Estúdio publicado ainda não
+  mostra a opção. Só ative (publicar o Estúdio com a opção e, se o usuário quiser, deixá-la como padrão,
+  e guardar uma cópia privada da amostra no Estúdio) quando o usuário disser que está ok.
+
 ## Dados do jogo (Data Dragon) — nunca use números de memória
 
 ```bash

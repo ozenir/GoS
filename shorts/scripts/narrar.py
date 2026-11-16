@@ -26,22 +26,24 @@ def norm(s: str) -> str:
     return re.sub(r"[^\w%+]", "", s)
 
 
-async def falar(texto: str, voz: str, rate: str, destino: Path, tentativas: int = 3):
+async def falar(texto: str, voz: str, rate: str, destino: Path, tentativas: int = 3, pitch: str | None = None):
     # o serviço de voz às vezes devolve "No audio was received" por instantes: tenta de novo
     for n in range(tentativas):
         try:
-            return await _falar(texto, voz, rate, destino)
+            return await _falar(texto, voz, rate, destino, pitch)
         except (edge_tts.exceptions.NoAudioReceived, edge_tts.exceptions.WebSocketError, OSError):
             if n == tentativas - 1:
                 raise
             await asyncio.sleep(2 * (n + 1))
 
 
-async def _falar(texto: str, voz: str, rate: str, destino: Path):
+async def _falar(texto: str, voz: str, rate: str, destino: Path, pitch: str | None = None):
     kw = {"rate": rate, "boundary": "WordBoundary"}
     proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
     if proxy:
         kw["proxy"] = proxy
+    if pitch:
+        kw["pitch"] = pitch
     com = edge_tts.Communicate(texto, voz, **kw)
     palavras = []
     with open(destino, "wb") as f:
@@ -55,17 +57,19 @@ async def _falar(texto: str, voz: str, rate: str, destino: Path):
 
 
 VOZ_CLONADA = "minha-voz"
+VOZ_BASE = "pt-BR-AntonioNeural"  # sotaque neutro; o timbre vira o do usuário na conversão
+PITCH_BASE = "-2Hz"
 RAIZ = Path(__file__).resolve().parent.parent
 
 
-def voz_clonada(textos: list[str], pasta: Path, vel: int) -> list[dict]:
-    """Gera as cenas com a voz do usuário no ambiente .venv-voz (scripts/voz_clonada.py)."""
+def voz_clonada(audios: list[str], pasta: Path) -> list[dict]:
+    """Converte as falas (voz neutra) para o timbre do usuário no ambiente .venv-voz (scripts/voz_clonada.py)."""
     py = next((p for p in [RAIZ / ".venv-voz" / "bin" / "python", RAIZ / ".venv-voz" / "Scripts" / "python.exe"] if p.exists()), None)
     if not py:
         sys.exit("Ambiente da voz clonada não instalado (.venv-voz). Veja 'Minha voz' no CLAUDE.md.")
     pasta.mkdir(parents=True, exist_ok=True)
     pedido = pasta / "pedido.json"
-    pedido.write_text(json.dumps({"cenas": textos, "saida": str(pasta), "velocidade": vel,
+    pedido.write_text(json.dumps({"modo": "conversao", "audios": audios, "saida": str(pasta),
                                   "referencia": str(RAIZ / "voz" / "ref" / "referencia.wav")}, ensure_ascii=False), encoding="utf-8")
     proc = subprocess.Popen([str(py), "-I", str(RAIZ / "scripts" / "voz_clonada.py"), str(pedido)],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8")
@@ -109,14 +113,21 @@ def main():
     lista = [c for c in ot.get("cenas", []) if c.get("narracao", "").strip()]
     if not lista:
         sys.exit("Nenhuma cena com narração.")
-    clonadas = voz_clonada([c["narracao"].strip() for c in lista], pasta / "clonada", vel) if voz == VOZ_CLONADA else None
+    # "minha-voz": fala gerada pela voz neutra (sotaque brasileiro, tempos das palavras exatos)
+    # e convertida para o timbre do usuário; os tempos acompanham a duração convertida
+    clonada = voz == VOZ_CLONADA
+    falas = []
     for i, c in enumerate(lista):
-        if clonadas:
-            audio, pal = Path(clonadas[i]["wav"]), clonadas[i]["palavras"]
-        else:
-            print(f"cena {i + 1}/{len(lista)}", flush=True)
-            audio = pasta / f"cena{i:02}.mp3"
-            pal = asyncio.run(falar(c["narracao"].strip(), voz, rate, audio))
+        print(f"cena {i + 1}/{len(lista)}", flush=True)
+        audio = pasta / f"cena{i:02}.mp3"
+        pal = asyncio.run(falar(c["narracao"].strip(), VOZ_BASE if clonada else voz, rate, audio, pitch=PITCH_BASE if clonada else None))
+        falas.append((audio, pal))
+    if clonada:
+        conv = voz_clonada([str(a) for a, _ in falas], pasta / "clonada")
+        falas = [(Path(cv["wav"]), [{**p, "inicio": p["inicio"] * cv["dur"] / cv["dur_origem"], "fim": p["fim"] * cv["dur"] / cv["dur_origem"]} for p in pal])
+                 for (_, pal), cv in zip(falas, conv)]
+    for i, c in enumerate(lista):
+        audio, pal = falas[i]
         wav = pasta / f"cena{i:02}.wav"
         dur = para_wav(audio, wav, GAP)
         wavs.append(wav)
