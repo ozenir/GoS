@@ -19,3 +19,6 @@ projetos/*/artifact-doc.json
 clipes/*
 !clipes/.gitkeep
 projetos/*/status.json
+# amostras da voz do usuário: nunca vão para o git (repositório público)
+voz/
+.venv-voz/
