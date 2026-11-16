@@ -25,6 +25,7 @@ export const ETAPAS = [
 ];
 
 export const VOZES = [
+  { id: "minha-voz", nome: "Minha voz (clonada)" },
   { id: "pt-BR-AntonioNeural", nome: "Antonio (masculina)" },
   { id: "pt-BR-FranciscaNeural", nome: "Francisca (feminina)" },
   { id: "pt-BR-ThalitaMultilingualNeural", nome: "Thalita (feminina, multilíngue)" },

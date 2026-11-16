@@ -300,6 +300,7 @@ const TIPOS = [MATCHUP, "Outplay / Jogada", "Dica / Tutorial", "Build / Guia de 
 const TONS = ["Energético", "Engraçado", "Sério / Analítico", "Misterioso", "Polêmico"];
 const PUBLICOS = ["Todos", "Iniciantes (Ferro–Prata)", "Intermediário (Ouro–Esmeralda)", "High elo (Diamante+)"];
 const VOZES = [
+  { id: "minha-voz", nome: "Minha voz (clonada)" },
   { id: "pt-BR-AntonioNeural", nome: "Antonio (masculina)" },
   { id: "pt-BR-FranciscaNeural", nome: "Francisca (feminina)" },
   { id: "pt-BR-ThalitaMultilingualNeural", nome: "Thalita (feminina)" },
@@ -318,7 +319,7 @@ const ETAPAS = {
   pronto: ["Vídeo pronto", "ok"], erro: ["Erro", "erro"],
 };
 const configPadrao = () => ({
-  voz: "pt-BR-AntonioNeural", velocidade: 10,
+  voz: "minha-voz", velocidade: 10,
   fundo: { tipo: "gradiente", asset: null, inicio: 0, cortesPorCena: true, volume: 0 },
   musica: { asset: null, volume: 0.12 },
   estilo: { fonte: "Montserrat", tamanho: 92, corTexto: "#FFFFFF", corFalada: "#FFE600", corEnfase: "#0AC8B9", corContorno: "#000000", posicaoY: 0.66, palavrasPorBloco: 3, caixaAlta: true },
@@ -1091,7 +1092,7 @@ function abaVisual(el) {
       <div><label for="vVoz">Narrador</label><select id="vVoz" data-cfg="voz">${opcoes(VOZES, cfg.voz)}</select></div>
       <div>${faixa("velocidade", "Velocidade", -20, 40, 5)}</div>
     </div>
-    <p class="nota-rodape">Vozes gratuitas em português (Microsoft Edge TTS). A narração é gerada na etapa Produzir.</p>
+    <p class="nota-rodape">"Minha voz" é a sua voz clonada a partir da sua gravação. As outras são vozes gratuitas da Microsoft. A narração é gerada na etapa Produzir.</p>
   </div>
   <div class="cartao">
     <h3>Fundo</h3>
@@ -1271,7 +1272,7 @@ const CONECTOR = "Claude Code Remote";
 const QUAL_AUTO = "estudio.qualidadeAuto";
 const roteiroPronto = (d) => !!(d?.otimizado?.cenas?.some((c) => String(c?.narracao || "").trim()) && (d.otimizado.mudancas || d.matchup));
 const fraseChat = () => `produz o vídeo ${proj?.titulo || proj?.id || ""}`;
-const nomeVoz = (v) => (String(v || "").match(/-([A-Za-z]+)Neural$/) || [])[1] || v || "?";
+const nomeVoz = (v) => (v === "minha-voz" ? "minha voz" : (String(v || "").match(/-([A-Za-z]+)Neural$/) || [])[1] || v || "?");
 
 function lerQualidade() { try { return localStorage.getItem(QUAL_AUTO) || "final"; } catch { return "final"; } }
 function guardarQualidade(q) { try { localStorage.setItem(QUAL_AUTO, q); } catch {} }

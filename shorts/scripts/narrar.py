@@ -11,7 +11,7 @@ Gera projetos/<id>/narracao.m4a   (áudio único)
 O tempo das palavras vem do próprio TTS (WordBoundary), então a legenda fica
 sincronizada sem precisar do Whisper.
 """
-import argparse, asyncio, json, os, re, subprocess, sys, unicodedata, wave
+import argparse, asyncio, json, os, re, shutil, subprocess, sys, unicodedata, wave
 from pathlib import Path
 
 import edge_tts
@@ -54,6 +54,33 @@ async def _falar(texto: str, voz: str, rate: str, destino: Path):
     return palavras
 
 
+VOZ_CLONADA = "minha-voz"
+RAIZ = Path(__file__).resolve().parent.parent
+
+
+def voz_clonada(textos: list[str], pasta: Path, vel: int) -> list[dict]:
+    """Gera as cenas com a voz do usuário no ambiente .venv-voz (scripts/voz_clonada.py)."""
+    py = next((p for p in [RAIZ / ".venv-voz" / "bin" / "python", RAIZ / ".venv-voz" / "Scripts" / "python.exe"] if p.exists()), None)
+    if not py:
+        sys.exit("Ambiente da voz clonada não instalado (.venv-voz). Veja 'Minha voz' no CLAUDE.md.")
+    pasta.mkdir(parents=True, exist_ok=True)
+    pedido = pasta / "pedido.json"
+    pedido.write_text(json.dumps({"cenas": textos, "saida": str(pasta), "velocidade": vel,
+                                  "referencia": str(RAIZ / "voz" / "ref" / "referencia.wav")}, ensure_ascii=False), encoding="utf-8")
+    proc = subprocess.Popen([str(py), "-I", str(RAIZ / "scripts" / "voz_clonada.py"), str(pedido)],
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8")
+    ultima = ""
+    for linha in proc.stdout:
+        linha = linha.rstrip()
+        if linha.startswith("{"):
+            ultima = linha
+        elif linha.startswith(("cena ", "voz clonada", "  cena", "amostra")):
+            print(linha, flush=True)
+    if proc.wait() != 0 or not ultima:
+        sys.exit("Falha na voz clonada.")
+    return json.loads(ultima)["cenas"]
+
+
 def para_wav(src: Path, dst: Path, pad: float):
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(src), "-af", f"apad=pad_dur={pad}",
                     "-ar", str(TAXA), "-ac", "1", str(dst)], check=True)
@@ -75,19 +102,23 @@ def main():
 
     pasta = proj / "narracao"
     pasta.mkdir(exist_ok=True)
-    for f in pasta.glob("*"):
-        f.unlink()
+    shutil.rmtree(pasta, ignore_errors=True)
+    pasta.mkdir(exist_ok=True)
 
     cenas_out, wavs, t = [], [], 0.15
     lista = [c for c in ot.get("cenas", []) if c.get("narracao", "").strip()]
     if not lista:
         sys.exit("Nenhuma cena com narração.")
+    clonadas = voz_clonada([c["narracao"].strip() for c in lista], pasta / "clonada", vel) if voz == VOZ_CLONADA else None
     for i, c in enumerate(lista):
-        print(f"cena {i + 1}/{len(lista)}", flush=True)
-        mp3 = pasta / f"cena{i:02}.mp3"
-        pal = asyncio.run(falar(c["narracao"].strip(), voz, rate, mp3))
+        if clonadas:
+            audio, pal = Path(clonadas[i]["wav"]), clonadas[i]["palavras"]
+        else:
+            print(f"cena {i + 1}/{len(lista)}", flush=True)
+            audio = pasta / f"cena{i:02}.mp3"
+            pal = asyncio.run(falar(c["narracao"].strip(), voz, rate, audio))
         wav = pasta / f"cena{i:02}.wav"
-        dur = para_wav(mp3, wav, GAP)
+        dur = para_wav(audio, wav, GAP)
         wavs.append(wav)
         alvo = {norm(d) for d in c.get("destaque", []) for d in d.split()}
         palavras = [{"texto": p["texto"], "inicio": round(t + p["inicio"], 3),
@@ -112,6 +143,10 @@ def main():
                     "-c:a", "aac", "-b:a", "192k", str(proj / "narracao.m4a")], check=True)
     for f in pasta.glob("*.wav"):
         f.unlink()
+    if (pasta / "clonada").exists():
+        for f in (pasta / "clonada").glob("*"):
+            f.unlink()
+        (pasta / "clonada").rmdir()
 
     trilha = {"fonte": "narracao", "hash": a.hash, "duracao": round(t, 3), "cenas": cenas_out}
     (proj / "trilha.json").write_text(json.dumps(trilha, ensure_ascii=False, indent=1), encoding="utf-8")
