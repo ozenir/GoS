@@ -1,5 +1,5 @@
 {
- "coletadoEm": "2026-11-17T16:45:00",
+ "coletadoEm": "2026-11-17T17:12:00",
  "semana": "10 a 17 de novembro de 2026",
  "temas": [
   {
@@ -10,6 +10,7 @@
     "Teaser oficial: 2,0 mi de views em 2 dias",
     "League Next First Look: 1,1 mi",
     "Necrit (2 vídeos): 1,3 mi",
+    "TikTok da Ilha das Lendas sobre o \"LoL 2\": 283 mil e 223 mil em ~43 h (os vídeos de criador que mais cresceram na semana)",
     "Baiano reage ao teaser (Cortes da Ilha): 200 mil",
     "~40 matérias em 7 dias (G1, Estadão, Omelete, Terra…)"
    ],
@@ -25,6 +26,10 @@
     {
      "nome": "Cortes da Ilha · Baiano reage",
      "url": "https://www.youtube.com/watch?v=_ZwaTQqOerU"
+    },
+    {
+     "nome": "TikTok · Ilha das Lendas",
+     "url": "https://www.tiktok.com/@ilhadaslendas/video/7708525522694835476"
     }
    ],
    "fatos": "A Riot anunciou League of Legends: New Dawn (Nova Alvorada) durante a final do Worlds 2026. É uma atualização para 2027, com cliente novo e mapa e visual reformulados. A Riot não apresentou como um jogo novo; o Meddler disse que todos os campeões e skins serão mantidos. Mais detalhes em janeiro de 2027.",
@@ -42,7 +47,7 @@
    "calor": 96,
    "porque": "A final mais assistida da semana: a Bilibili Gaming venceu a Gen.G por 3 a 1 em Brooklyn e levou o primeiro Mundial da história do time. O jogo 1 durou 53 minutos.",
    "numeros": [
-    "Transmissão LoL Esports: 7,1 mi de views",
+    "Transmissão LoL Esports: 7,05 mi de views",
     "Transmissão em chinês: 2,2 mi",
     "Live do Baiano (Ilha das Lendas): 789 mil",
     "Cortes da Ilha \"a final mais disputada\": 217 mil"
@@ -76,7 +81,7 @@
    "calor": 82,
    "porque": "O mid da BLG foi eleito MVP da final, e a câmera dele no jogo 4 virou um dos vídeos mais vistos da semana.",
    "numeros": [
-    "\"Knight's FULL GAME 4 Pro View\": 1,8 mi de views em 2 dias"
+    "\"Knight's FULL GAME 4 Pro View\": 1,85 mi no YouTube e 591 mil no TikTok em 26 h"
    ],
    "fontes": [
     {
@@ -258,22 +263,22 @@
    "pos": 9
   },
   {
-   "tema": "CBLOL: reta final da fase regular",
-   "calor": 30,
-   "porque": "O CBLOL entra na reta final do split 2, com briga por vaga nos playoffs; tema local com torcida fiel.",
+   "tema": "Sedes de 2027: Worlds no Japão e na Coreia, MSI na Espanha",
+   "calor": 32,
+   "porque": "A Riot revelou onde serão os grandes torneios de 2027, e o assunto aparece em várias matérias da semana.",
    "numeros": [
-    "Pichau Arena: cronograma do fim da fase regular e destaques do split",
-    "Sinal menor que os anteriores (sem vídeo grande na semana)"
+    "Matérias na Mais Esports, jwave e Alternativa Nerd (13 e 14/11)",
+    "Junto vem o anúncio de torneios maiores no LoL Esports 2027"
    ],
    "fontes": [
     {
      "nome": "Google Notícias",
-     "url": "https://news.google.com/search?q=CBLOL&hl=pt-BR"
+     "url": "https://news.google.com/search?q=Worlds%202027%20Jap%C3%A3o%20Coreia%20MSI%20Espanha&hl=pt-BR"
     }
    ],
-   "fatos": "",
+   "fatos": "A Riot anunciou que o Worlds 2027 será no Japão e na Coreia do Sul e que o MSI 2027 será na Espanha.",
    "ideia": {
-    "titulo": "Quem vai pros playoffs do CBLOL?",
+    "titulo": "Worlds no Japão e MSI na Espanha: o que muda?",
     "tipo": "Notícia de patch",
     "campeao": "",
     "tom": "Energético",
@@ -284,6 +289,7 @@
  ],
  "fontesUsadas": [
   "YouTube (vídeos da semana mais vistos, buscas pt-BR e inglês, canais BR como Ilha das Lendas, Cortes da Ilha, BaianoTV, CBLOL)",
+  "TikTok (perfis grandes de LoL: Ilha das Lendas, LoL Esports, Riot, CBLOL, Mylon, Caedrel…)",
   "Google Notícias (pt-BR, 7 dias)",
   "X: buscas na web (a busca do X exige login)",
   "Google Trends Brasil (sem LoL entre as buscas do dia)",

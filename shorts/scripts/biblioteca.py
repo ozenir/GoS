@@ -6,6 +6,7 @@
 Para cada campeão cria biblioteca/campeoes/<Id>/:
     dados.json            nome, chave, versão do Data Dragon e habilidades (recarga, custo, alcance)
     arte.jpg / icone.png  arte de carregamento e ícone quadrado (Data Dragon)
+    splash.jpg            splash art horizontal (fundo em tela cheia no estilo viral)
     habilidades/<X>.png   ícones da passiva (P) e de Q, W, E, R
     videos/<X>.mp4        vídeo oficial da habilidade (o mesmo das páginas de campeão da Riot),
                           recomprimido e sem som; habilidades com mais de um vídeo ganham <X>2.mp4…
@@ -127,6 +128,7 @@ def campeao(cid: str, v: str, forcar: bool):
     chave = info["key"].zfill(4)
     salvar(d / "arte.jpg", f"{DD}/cdn/img/champion/loading/{cid}_0.jpg", forcar)
     salvar(d / "icone.png", f"{DD}/cdn/{v}/img/champion/{cid}.png", forcar)
+    salvar(d / "splash.jpg", f"{DD}/cdn/img/champion/splash/{cid}_0.jpg", forcar)  # horizontal, para o estilo viral
     salvar(d / "habilidades" / "P.png", f"{DD}/cdn/{v}/img/passive/{info['passive']['image']['full']}", forcar)
     hab = {"P": {"nome": info["passive"]["name"], "descricao": info["passive"]["description"]}}
     for letra, s in zip("QWER", info["spells"]):

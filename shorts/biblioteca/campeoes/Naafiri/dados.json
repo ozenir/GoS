@@ -109,27 +109,62 @@
   "P": {
    "arquivo": "videos/P.mp4",
    "quadro": "quadros/P.jpg",
-   "duracao": 19.83
+   "duracao": 19.83,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
   },
   "Q": {
    "arquivo": "videos/Q.mp4",
    "quadro": "quadros/Q.jpg",
-   "duracao": 8.27
+   "duracao": 8.27,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
   },
   "W": {
    "arquivo": "videos/W.mp4",
    "quadro": "quadros/W.jpg",
-   "duracao": 11.8
+   "duracao": 11.8,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
   },
   "E": {
    "arquivo": "videos/E.mp4",
    "quadro": "quadros/E.jpg",
-   "duracao": 7.97
+   "duracao": 7.97,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
   },
   "R": {
    "arquivo": "videos/R.mp4",
    "quadro": "quadros/R.jpg",
-   "duracao": 8.9
+   "duracao": 8.9,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
   }
  }
 }

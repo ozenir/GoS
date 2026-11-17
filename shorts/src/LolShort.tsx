@@ -14,6 +14,7 @@ import {
 } from "remotion";
 import { pesoDaFonte } from "./fontes";
 import { ProvaT, Quadro, VideoFundoT } from "./Quadro";
+import { Figurinhas, FundoViral, MidiaViral } from "./Viral";
 
 // ---------- Tipos (o painel e o servidor produzem exatamente isto) ----------
 
@@ -63,6 +64,9 @@ export type LolShortProps = {
   hook: { texto: string; duracao?: number };
   cta: { texto: string; ativo: boolean };
   patch?: string; // ex.: "Patch 16.22" (selo no canto, o vídeo inteiro)
+  // "quadro" = quadro de investigação (padrão); "viral" = imagem real em tela cheia com cortes rápidos
+  layout?: "quadro" | "viral";
+  midia?: MidiaViral; // vídeos das habilidades e splash do campeão em destaque (estilo viral)
 };
 
 export const FPS_LOL = 30;
@@ -361,17 +365,21 @@ export const LolShort: React.FC<LolShortProps> = (p) => {
   const usaVideo = p.fundo.tipo === "video" && !!p.fundo.url;
   const porCena = usaVideo && p.fundo.cortesPorCena;
   const ctaDur = f(2.2);
-  const temQuadro = !!p.efeitos.quadro && cenas.some((c) => (c.provas || []).length);
+  const viral = p.layout === "viral";
+  const temQuadro = !viral && !!p.efeitos.quadro && cenas.some((c) => (c.provas || []).length);
 
   return (
     <AbsoluteFill style={{ backgroundColor: p.tema.cor1 }}>
       {/* fundo */}
+      {viral ? (
+        <FundoViral cenas={cenas} duracao={p.trilha.duracao + 0.5} midia={p.midia || null} gameplay={usaVideo ? { url: p.fundo.url!, inicio: p.fundo.inicio } : null} />
+      ) : null}
       {temQuadro ? <Quadro cenas={cenas} cor1={p.tema.cor1} cor2={p.tema.cor2} /> : null}
-      {!usaVideo && !temQuadro ? <FundoGradiente tema={p.tema} /> : null}
-      {usaVideo && !porCena && !temQuadro ? (
+      {!viral && !usaVideo && !temQuadro ? <FundoGradiente tema={p.tema} /> : null}
+      {!viral && usaVideo && !porCena && !temQuadro ? (
         <VideoFundo url={p.fundo.url!} inicio={p.fundo.inicio ?? 0} volume={p.fundo.volume ?? 0} zoom={false} />
       ) : null}
-      {porCena && !temQuadro
+      {!viral && porCena && !temQuadro
         ? cenas.map((c, i) => {
             const de = i === 0 ? 0 : f(c.inicio);
             const ate = i === cenas.length - 1 ? durationInFrames : f(cenas[i + 1].inicio);
@@ -389,7 +397,7 @@ export const LolShort: React.FC<LolShortProps> = (p) => {
           })
         : null}
       {/* escurece um pouco para a legenda ler bem */}
-      {usaVideo && !temQuadro ? (
+      {!viral && usaVideo && !temQuadro ? (
         <AbsoluteFill
           style={{
             background:
@@ -406,7 +414,7 @@ export const LolShort: React.FC<LolShortProps> = (p) => {
         const escondeTexto = p.efeitos.hook && i === 0 && hookDur > 0;
         return (
           <Sequence key={`c${i}`} from={de} durationInFrames={Math.max(1, ate - de)} layout="none">
-            {c.textoTela && !escondeTexto && !temQuadro ? <TextoTela texto={c.textoTela} p={p} /> : null}
+            {c.textoTela && !escondeTexto && !temQuadro && !(viral && (c.provas || []).length) ? <TextoTela texto={c.textoTela} p={p} /> : null}
             {i > 0 && p.efeitos.flash ? (
               <Sequence durationInFrames={6} layout="none">
                 <Flash />
@@ -415,6 +423,9 @@ export const LolShort: React.FC<LolShortProps> = (p) => {
           </Sequence>
         );
       })}
+
+      {/* estilo viral: provas viram figurinhas no topo, na hora da palavra-gatilho */}
+      {viral ? <Figurinhas cenas={cenas} /> : null}
 
       {/* legendas */}
       {cenas.flatMap((c, ci) =>
