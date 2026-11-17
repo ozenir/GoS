@@ -17,7 +17,7 @@ em **português do Brasil**.
 | `painel/`      | servidor local, render, ponte com o Artifact, CLI               |
 | `projetos/`    | um diretório por vídeo do painel (briefing, roteiro, config)    |
 | `docs/`        | `viral-lol.md`: guia de otimização de roteiros de LoL           |
-| `dados/`       | dados oficiais do Data Dragon (`scripts/ddragon.py`), por vídeo e `ddragon/resumo.json` |
+| `dados/`       | dados oficiais do Data Dragon (`scripts/ddragon.py`), por vídeo e `ddragon/resumo.json`; `tendencias/` (temas em alta) |
 | `biblioteca/`  | mídia reaproveitável por campeão: vídeos das habilidades, quadros, ícones, arte (`scripts/biblioteca.py`) |
 | `roteiros/`    | roteiros em Markdown: fala + `[o que aparece na tela]`         |
 | `publicacao/`  | título, descrição (com patch e aviso da Riot) e hashtags       |
@@ -101,6 +101,22 @@ campeões, itens e runas). O bloco mostra "Baseado em: …" e marca a opção qu
 de o usuário parar de digitar (só com o campo de roteiro vazio e sem roteiro otimizado); senão, pelo botão
 "Gerar 3 opções". "Usar este" coloca o texto no campo de roteiro (e o título, se estiver vazio); o usuário
 edita e segue como antes. Escrever à mão continua igual.
+
+### Temas em alta (botão "🔥 Em alta")
+
+Painel no topo do Estúdio com os **10 temas mais em alta do LoL**, lidos do doc `tendencias/atual`:
+`{coletadoEm, semana, fontesUsadas, comoLer, temas: [{pos, tema, calor 0–100, porque, numeros[], fontes[{nome,url}],
+fatos (só o que foi conferido nas fontes), ideia: {titulo, tipo, campeao, tom, publico}}]}`. "Criar vídeo com este
+tema" abre um vídeo novo com o briefing preenchido (os `fatos` vão para "Fatos confirmados"). "Atualizar temas"
+manda um comentário "Send to Claude" `[Estúdio Shorts · Temas em alta] atualiza…`. Para atualizar (pelo botão ou
+quando o usuário pedir no chat):
+1. `.venv/bin/python scripts/tendencias.py` → `dados/tendencias/AAAA-MM-DD.json` com os sinais brutos:
+   YouTube (vídeos da semana por views, buscas pt-BR/inglês e canais BR grandes: Ilha das Lendas, Cortes da Ilha,
+   BaianoTV, CBLOL…), Google Notícias (pt-BR, 7 dias), Google Trends Brasil e o site oficial.
+2. Complete com buscas na web (WebSearch) sobre o que se comenta no X: a busca do X exige login e o Reddit bloqueia.
+3. Agrupe por tema, dê o "calor" pelo alcance (views) e pela repercussão (quantas fontes), escreva o porquê, os
+   números, as fontes e só fatos conferidos; ideia de Short com tipo, tom e público da lista do Estúdio.
+4. Grave em `dados/tendencias/top10-AAAA-MM-DD.json` e no doc `tendencias/atual` (`ArtifactData set`), responda no fio.
 
 **Duração:** a do briefing (`briefing.duracao`) manda sobre as regras gerais de Shorts. Narração real ≈ 2,5
 palavras/s (90 s ≈ 205–245 palavras). A página pede essa faixa ao Claude, confere a contagem e pede um ajuste

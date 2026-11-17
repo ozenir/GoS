@@ -172,6 +172,23 @@ input[type=file] { max-width: 100%; color: var(--suave); }
 .vazio { text-align: center; padding: 28px 10px; color: var(--suave); }
 code { background: var(--campo); padding: 1px 6px; border-radius: 5px; color: var(--ouro-claro); }
 
+/* temas em alta */
+.alta { margin-bottom: 14px; }
+.alta-topo { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.alta-topo h2 { margin: 0; flex: 1 1 220px; }
+.temas { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 900px) { .temas { grid-template-columns: minmax(0, 1fr); } }
+.tema { border: 1px solid var(--borda); border-radius: 8px; background: var(--campo); padding: 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tema header { display: flex; gap: 10px; align-items: baseline; }
+.tema .pos { font: 400 1.9rem/1 var(--f-titulo); color: var(--ouro); min-width: 1.6em; }
+.tema h3 { margin: 0; font-size: 1.15rem; color: var(--ouro-claro); overflow-wrap: anywhere; }
+.tema .calor { height: 6px; background: var(--borda); border-radius: 99px; overflow: hidden; }
+.tema .calor > div { height: 100%; background: linear-gradient(90deg, #ffb347, #ff5e3a); }
+.tema p { margin: 0; font-size: .88rem; }
+.tema ul { margin: 0; padding-left: 1.1rem; font-size: .8rem; color: var(--suave); }
+.tema .fontes { font-size: .78rem; color: var(--suave); overflow-wrap: anywhere; }
+.tema .btn { align-self: flex-start; margin-top: auto; }
+
 /* roteiro automático (aba Briefing): 3 opções do Claude, a escolhida vai para o campo de roteiro */
 .auto-roteiro { margin-top: 12px; border: 1px dashed var(--ouro-esc); border-radius: var(--raio); padding: 12px; background: #c8aa6e0a; }
 .auto-roteiro .topo-auto { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -219,6 +236,7 @@ code { background: var(--campo); padding: 1px 6px; border-radius: 5px; color: va
   <div class="envolve">
     <div class="marca"><span class="losango"></span>ESTÚDIO <b>SHORTS</b></div>
     <select id="seletor" aria-label="Escolher vídeo"></select>
+    <button id="btnAlta" class="btn" type="button">🔥 Em alta</button>
     <button id="btnNovo" class="btn ouro" type="button">+ Novo vídeo</button>
   </div>
 </header>
@@ -232,6 +250,7 @@ code { background: var(--campo); padding: 1px 6px; border-radius: 5px; color: va
     <button type="button" data-aba="exportar"><i>5</i>Produzir</button>
   </nav>
 
+  <section class="cartao destaque alta" id="alta" hidden></section>
   <section class="cartao destaque auto" id="auto" aria-live="polite" hidden></section>
 
   <main class="grade">
@@ -380,7 +399,10 @@ function msgErro(e) {
 let db = null, assets = null, sample = null, downloads = null, mcp = null, comentarios = null;
 let claudeCfg = null;     // config/claude: {sessao} — sessão do Claude Code que recebe os pedidos
 let auto = null;          // criação automática em andamento nesta aba: {rodando, fase, erro, avisando, falhaAviso}
-let permissoes = null;    // capacidade embutida "permissions" (saber se o Claude já pode ser chamado sem clique)
+let permissoes = null;
+let tendencias = null;    // tendencias/atual: os 10 temas mais em alta do LoL (escrito pelo Claude Code)
+let briefingInicial = null; // pré-preenchimento do briefing de um vídeo novo (ex.: tema em alta)
+let altaAberta = false, altaPedido = "";    // capacidade embutida "permissions" (saber se o Claude já pode ser chamado sem clique)
 let roteiroAuto = { assinatura: "", carregando: false, texto: "", opcoes: [], erro: "", escolhida: -1, ctl: null };
 let projetos = [];
 let proj = null;          // {id, ...documento}
@@ -607,7 +629,7 @@ function desenharAba() {
 
 // ============================================================ 1. briefing
 function abaBriefing(el) {
-  const b = proj?.briefing || {};
+  const b = proj?.briefing || (!proj && briefingInicial) || {};
   const opt = (lista, v) => lista.map((x) => `<option ${x === v ? "selected" : ""}>${esc(x)}</option>`).join("");
   el.innerHTML = `
   <div class="cartao destaque">
@@ -686,6 +708,7 @@ function abaBriefing(el) {
     const agora = Date.now();
     await db.doc("projetos/" + id).set({ titulo: dados.titulo || "Vídeo sem título", briefing: dados, config: configPadrao(), etapa: "briefing", criadoEm: agora, atualizado: agora });
     if (dados.tipo === MATCHUP) evento(`Matchup: ${dados.matchup.campeao} (${dados.matchup.rota}) contra ${Object.values(dados.matchup.inimigos).filter(Boolean).join(", ")}`, "info");
+    briefingInicial = null;
     abrir(id, "briefing");
     proj = { id };
     evento("Briefing recebido", "ok");
@@ -708,8 +731,10 @@ function abaBriefing(el) {
 
 // ============================================================ roteiro automático (3 opções a partir do briefing)
 let lerBriefing = null;
+const TIPOS_DE_CAMPEAO = ["Dica / Tutorial", "Build / Guia de campeão"];
 const prontoParaAuto = (d) =>
-  d.tipo === MATCHUP ? !!(d.matchup?.campeao && Object.values(d.matchup.inimigos || {}).some(Boolean)) : !!(d.campeao?.trim() && d.titulo?.trim());
+  d.tipo === MATCHUP ? !!(d.matchup?.campeao && Object.values(d.matchup.inimigos || {}).some(Boolean))
+    : !!(d.titulo?.trim() && (d.campeao?.trim() || !TIPOS_DE_CAMPEAO.includes(d.tipo)));
 const resumoBriefing = (d) => [d.titulo && `“${d.titulo}”`, d.tipo, d.tipo === MATCHUP ? d.matchup?.campeao : d.campeao, d.duracao, d.tom, d.publico].filter(Boolean);
 const assinaturaAuto = (d) => JSON.stringify([d.titulo, d.tipo, d.campeao, d.duracao, d.tom, d.publico, d.orientacoes, d.fatos, d.matchup || null]);
 // o que cada tom e cada público pedem do texto (vão como requisito no pedido ao Claude)
@@ -753,7 +778,7 @@ function promptRoteiros(d) {
   const req = [
     `TÍTULO: "${d.titulo}". O roteiro é sobre exatamente isso e entrega o que o título promete.`,
     `TIPO DE VÍDEO: "${d.tipo}". Use a estrutura desse tipo (veja ESTRUTURAS acima).`,
-    `CAMPEÃO: ${camp}. É o centro do roteiro e aparece pelo nome.`,
+    camp ? `CAMPEÃO: ${camp}. É o centro do roteiro e aparece pelo nome.` : `CAMPEÃO: nenhum específico; o assunto é o do título. Cite campeões só se fizer sentido e sem inventar fatos.`,
     `DURAÇÃO: ${a.seg} s, ou seja, entre ${a.min} e ${a.max} palavras de narração (~${PALAVRAS_POR_S} palavras por segundo).`,
     `TOM: "${d.tom}": ${DESC_TOM[d.tom] || d.tom}.`,
     `PÚBLICO: "${d.publico}": ${DESC_PUBLICO[d.publico] || d.publico}.`,
@@ -828,7 +853,7 @@ function desenharRoteiroAuto() {
   const pronto = prontoParaAuto(d);
   const a = alvoDuracao(d);
   const mudou = roteiroAuto.opcoes.length && roteiroAuto.assinatura !== assinaturaAuto(d);
-  const falta = d.tipo === MATCHUP ? "seu campeão e pelo menos o oponente" : [!d.titulo?.trim() && "o título", !d.campeao?.trim() && "o campeão"].filter(Boolean).join(" e ");
+  const falta = d.tipo === MATCHUP ? "seu campeão e pelo menos o oponente" : [!d.titulo?.trim() && "o título", !d.campeao?.trim() && TIPOS_DE_CAMPEAO.includes(d.tipo) && "o campeão"].filter(Boolean).join(" e ");
   const base = roteiroAuto.opcoes.length || roteiroAuto.carregando ? roteiroAuto.base || [] : resumoBriefing(d);
   let corpo = "";
   if (roteiroAuto.carregando) {
@@ -1259,6 +1284,12 @@ function assinarConfig() {
   }, () => {});
   db.doc("config/canal").onSnapshot((s) => { canal = s.exists ? s.data() : { nome: "" }; if (aba === "exportar") desenharAba(); }, () => {});
   db.doc("config/claude").onSnapshot((s) => { claudeCfg = s.exists ? s.data() : null; desenharAuto(); }, () => {});
+  db.doc("tendencias/atual").onSnapshot((s) => {
+    const novo = s.exists ? s.data() : null;
+    if (altaPedido && novo?.coletadoEm && novo.coletadoEm !== tendencias?.coletadoEm) altaPedido = "";
+    tendencias = novo;
+    desenharAlta();
+  }, () => {});
 }
 const campeaoPorNome = (nome) => {
   if (!ddragon || !nome) return null;
@@ -1696,6 +1727,70 @@ async function avisarClaude(pd) {
   desenharAuto();
 }
 
+// ============================================================ temas em alta
+function desenharAlta() {
+  const el = $("#alta");
+  if (!el) return;
+  $("#btnAlta")?.classList.toggle("ouro", altaAberta);
+  if (!altaAberta || !db) { el.hidden = true; return; }
+  el.hidden = false;
+  const t = tendencias;
+  const quando = t?.coletadoEm ? new Date(t.coletadoEm).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+  el.innerHTML = `
+    <div class="alta-topo">
+      <h2>🔥 Temas em alta no LoL</h2>
+      <button class="btn peq" type="button" id="altaAtualizar" ${altaPedido ? "disabled" : ""}>${altaPedido ? "Pedido enviado…" : "Atualizar temas"}</button>
+      <button class="btn peq" type="button" id="altaFechar">Fechar</button>
+    </div>
+    <p class="nota-rodape" style="margin:6px 0 0">${t ? `Semana de ${esc(t.semana || "")} · coletado em ${esc(quando)} · fontes: ${esc((t.fontesUsadas || []).map((f) => f.split(" (")[0]).join(", "))}. ${esc(t.comoLer || "")}` : "Ainda não há temas coletados. Clique em “Atualizar temas”."}</p>
+    ${altaPedido ? `<div class="aviso" style="margin-top:10px"><span>${esc(altaPedido)}</span></div>` : ""}
+    ${t?.temas?.length ? `<ol class="temas">${t.temas.map((x, i) => `
+      <li class="tema">
+        <header><span class="pos">${x.pos || i + 1}</span><h3>${esc(x.tema)}</h3></header>
+        <div class="calor" title="calor ${esc(x.calor)} de 100"><div style="width:${Math.max(4, Math.min(100, +x.calor || 0))}%"></div></div>
+        <p>${esc(x.porque)}</p>
+        ${(x.numeros || []).length ? `<ul>${x.numeros.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
+        ${(x.fontes || []).length ? `<div class="fontes">Fontes: ${x.fontes.map((f) => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.nome)}</a>`).join(" · ")}</div>` : ""}
+        ${x.ideia ? `<p class="nota-rodape"><b>Ideia de Short:</b> “${esc(x.ideia.titulo)}” · ${esc(x.ideia.tipo)}${x.ideia.campeao ? ` · ${esc(x.ideia.campeao)}` : ""}</p>` : ""}
+        <button class="btn peq ouro" type="button" data-tema="${i}">Criar vídeo com este tema</button>
+      </li>`).join("")}</ol>` : ""}`;
+  $("#altaFechar").onclick = () => { altaAberta = false; desenharAlta(); };
+  $("#altaAtualizar").onclick = pedirTemas;
+  el.querySelectorAll("[data-tema]").forEach((b) => b.addEventListener("click", () => criarComTema(t.temas[+b.dataset.tema])));
+}
+
+function criarComTema(x) {
+  const ideia = x.ideia || {};
+  briefingInicial = {
+    titulo: ideia.titulo || x.tema, tipo: TIPOS.includes(ideia.tipo) ? ideia.tipo : "Curiosidade / Lore", campeao: ideia.campeao || "",
+    duracao: "45s", tom: TONS.includes(ideia.tom) ? ideia.tom : "Energético", publico: PUBLICOS.includes(ideia.publico) ? ideia.publico : "Todos",
+    roteiro: "", fatos: x.fatos || "",
+    orientacoes: `Tema em alta: ${x.tema}. ${x.porque} Fontes: ${(x.fontes || []).map((f) => f.nome).join(", ")}.`,
+  };
+  altaAberta = false;
+  desenharAlta();
+  manterInicial = true;
+  $("#btnNovo").click();
+  toast("Briefing preenchido com o tema. Confira e ajuste.");
+}
+
+async function pedirTemas() {
+  const msg = "[Estúdio Shorts · Temas em alta] atualiza a lista dos 10 temas mais em alta do League of Legends (rode scripts/tendencias.py, complete com buscas na web e grave em tendencias/atual).";
+  altaPedido = "Pedido enviado ao Claude Code. A lista atualiza sozinha aqui quando ele terminar.";
+  desenharAlta();
+  try {
+    let pode = "off";
+    try { pode = comentarios ? await comentarios.canSendToClaude() : "off"; } catch { pode = "off"; }
+    if (pode === "available") { await comentarios.sendToClaude({ anchor: await comentarios.anchorFor($("#alta")), text: msg }); return; }
+    if (mcp && claudeCfg?.sessao) { await mcp.callTool(CONECTOR, "send_message", { session_id: claudeCfg.sessao, message: msg }, { cache: false }); return; }
+    throw new Error("sem canal");
+  } catch {
+    altaPedido = "";
+    desenharAlta();
+    toast("Não consegui avisar o Claude Code. Peça no chat: “atualiza os temas em alta”.");
+  }
+}
+
 // ============================================================ início
 document.querySelectorAll("#etapas button").forEach((b) => b.addEventListener("click", () => {
   aba = b.dataset.aba;
@@ -1703,7 +1798,11 @@ document.querySelectorAll("#etapas button").forEach((b) => b.addEventListener("c
   redesenharSePreciso();
 }));
 $("#seletor").onchange = (e) => { if (e.target.value) abrir(e.target.value); };
+$("#btnAlta").onclick = () => { altaAberta = !altaAberta; desenharAlta(); if (altaAberta) $("#alta").scrollIntoView({ behavior: "smooth", block: "start" }); };
+let manterInicial = false;
 $("#btnNovo").onclick = () => {
+  if (!manterInicial) briefingInicial = null;
+  manterInicial = false;
   desinscrever.forEach((u) => u());
   desinscrever = [];
   proj = null; cfg = null; ot = null; producao = null; eventos = [];
