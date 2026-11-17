@@ -92,11 +92,12 @@ esgotado). Sem nenhum dos dois, a página mostra a frase para copiar no chat. Os
 
 ### Roteiro automático (aba Briefing)
 
-Bloco "✦ Roteiro automático" logo abaixo do campo de roteiro: com o tipo e o campeão (ou, no matchup, seu
-campeão e o oponente) preenchidos, a página pede ao Claude (`sample`) **3 roteiros com ângulos diferentes**
-(erro comum, segredo, desafio, número + resultado, mini-história), seguindo tom, público, duração (faixa de
-palavras de `regraDuracao`), orientações e fatos, com os dados do Data Dragon dos campeões citados (no matchup,
-os 10 campeões, itens e runas). Se a permissão do `sample` já foi dada, as opções aparecem sozinhas ~2 s depois
+Bloco "✦ Roteiro automático" logo abaixo do campo de roteiro: com **título e campeão** preenchidos (no matchup,
+seu campeão e o oponente; o título sai sozinho), a página pede ao Claude (`sample`) **3 roteiros com ângulos
+diferentes** (erro comum, segredo, desafio, número + resultado, mini-história). Título, tipo, campeão, duração
+(faixa de palavras), tom (`DESC_TOM`) e público (`DESC_PUBLICO`) vão como **REQUISITOS OBRIGATÓRIOS** no topo do
+pedido, acima das regras gerais, junto com orientações, fatos e os dados do Data Dragon (no matchup, os 10
+campeões, itens e runas). O bloco mostra "Baseado em: …" e marca a opção que não cita o campeão ou foge da duração. Se a permissão do `sample` já foi dada, as opções aparecem sozinhas ~2 s depois
 de o usuário parar de digitar (só com o campo de roteiro vazio e sem roteiro otimizado); senão, pelo botão
 "Gerar 3 opções". "Usar este" coloca o texto no campo de roteiro (e o título, se estiver vazio); o usuário
 edita e segue como antes. Escrever à mão continua igual.

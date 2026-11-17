@@ -709,8 +709,23 @@ function abaBriefing(el) {
 // ============================================================ roteiro automático (3 opções a partir do briefing)
 let lerBriefing = null;
 const prontoParaAuto = (d) =>
-  d.tipo === MATCHUP ? !!(d.matchup?.campeao && Object.values(d.matchup.inimigos || {}).some(Boolean)) : !!((d.campeao || d.titulo || "").trim());
+  d.tipo === MATCHUP ? !!(d.matchup?.campeao && Object.values(d.matchup.inimigos || {}).some(Boolean)) : !!(d.campeao?.trim() && d.titulo?.trim());
+const resumoBriefing = (d) => [d.titulo && `“${d.titulo}”`, d.tipo, d.tipo === MATCHUP ? d.matchup?.campeao : d.campeao, d.duracao, d.tom, d.publico].filter(Boolean);
 const assinaturaAuto = (d) => JSON.stringify([d.titulo, d.tipo, d.campeao, d.duracao, d.tom, d.publico, d.orientacoes, d.fatos, d.matchup || null]);
+// o que cada tom e cada público pedem do texto (vão como requisito no pedido ao Claude)
+const DESC_TOM = {
+  "Energético": "ritmo rápido, frases curtas e de impacto, exclamações, empolgação do começo ao fim",
+  "Engraçado": "zoeira e ironia com situações do jogo, comparações engraçadas, sem perder a informação",
+  "Sério / Analítico": "explicação calma e precisa, causa e consequência, números, sem gírias exageradas",
+  "Misterioso": "suspense, perguntas que prendem, revela a resposta aos poucos e só no fim",
+  "Polêmico": "opinião forte e direta, provoca o espectador a discordar nos comentários",
+};
+const DESC_PUBLICO = {
+  "Todos": "linguagem simples; termos do jogo explicados de passagem quando forem essenciais",
+  "Iniciantes (Ferro–Prata)": "explica o básico sem pressa, evita siglas sem explicação, um conceito por vez",
+  "Intermediário (Ouro–Esmeralda)": "pode usar termos comuns (wave, gank, trade, recall) sem explicar; foca em decisões e timing",
+  "High elo (Diamante+)": "vai direto ao detalhe técnico: janelas de recarga, controle de wave, matchups; nada de básico",
+};
 const ANGULOS = "erro comum que o público comete; segredo ou detalhe pouco conhecido; desafio ou opinião polêmica; número + resultado concreto; mini-história de partida";
 
 function dadosDosCampeoes(nomes) {
@@ -733,16 +748,28 @@ function promptRoteiros(d) {
   } else {
     contexto = dadosDosCampeoes(String(d.campeao || "").split(/\s*[,;/]\s*|\s+e\s+/));
   }
+  const a = alvoDuracao(d);
+  const camp = d.tipo === MATCHUP ? d.matchup?.campeao : d.campeao;
+  const req = [
+    `TÍTULO: "${d.titulo}". O roteiro é sobre exatamente isso e entrega o que o título promete.`,
+    `TIPO DE VÍDEO: "${d.tipo}". Use a estrutura desse tipo (veja ESTRUTURAS acima).`,
+    `CAMPEÃO: ${camp}. É o centro do roteiro e aparece pelo nome.`,
+    `DURAÇÃO: ${a.seg} s, ou seja, entre ${a.min} e ${a.max} palavras de narração (~${PALAVRAS_POR_S} palavras por segundo).`,
+    `TOM: "${d.tom}": ${DESC_TOM[d.tom] || d.tom}.`,
+    `PÚBLICO: "${d.publico}": ${DESC_PUBLICO[d.publico] || d.publico}.`,
+    d.orientacoes?.trim() ? `ORIENTAÇÕES DO CRIADOR: ${d.orientacoes.trim()}` : "",
+  ].filter(Boolean).map((r, i) => `${i + 1}. ${r}`).join("\n");
   return `${GUIA}
 
-TAREFA: escreva 3 roteiros DIFERENTES para este Short, prontos para narrar em voz alta. Cada um com um ângulo próprio (escolha 3 entre: ${ANGULOS}). Os três seguem o briefing (tipo, tom, público, orientações) e usam só fatos e números do briefing ou dos dados abaixo; se faltar um número, descreva sem número.
+REQUISITOS OBRIGATÓRIOS DO CRIADOR (valem para os 3 roteiros e mandam sobre qualquer regra geral acima):
+${req}
 
-BRIEFING DO CRIADOR (JSON):
+TAREFA: escreva 3 roteiros DIFERENTES que cumpram TODOS os requisitos, prontos para narrar em voz alta. Mude só o ângulo de cada um (escolha 3 entre: ${ANGULOS}). Use só fatos e números do briefing ou dos dados abaixo; se faltar um número, descreva sem número.
+
+BRIEFING COMPLETO (JSON):
 ${JSON.stringify(briefing, null, 1)}${fatos}
 
 ${contexto}
-
-${regraDuracao(d)} A regra vale para CADA um dos 3 roteiros.
 
 Responda SOMENTE com JSON:
 {"opcoes": [{"angulo": "2 a 4 palavras", "titulo": "até 60 caracteres", "gancho": "2 a 5 PALAVRAS para a tela", "roteiro": "texto narrado completo, frases curtas, sem marcações de cena nem de tempo"}]}`;
@@ -763,7 +790,7 @@ async function gerarRoteiros() {
   if (!sample || !lerBriefing || roteiroAuto.carregando) return;
   const d = lerBriefing();
   if (!prontoParaAuto(d)) return;
-  roteiroAuto = { assinatura: assinaturaAuto(d), carregando: true, texto: "", opcoes: [], erro: "", escolhida: -1, ctl: new AbortController() };
+  roteiroAuto = { assinatura: assinaturaAuto(d), base: resumoBriefing(d), carregando: true, texto: "", opcoes: [], erro: "", escolhida: -1, ctl: new AbortController() };
   desenharRoteiroAuto();
   try {
     const r = await sample.json(promptRoteiros(d), {
@@ -801,7 +828,8 @@ function desenharRoteiroAuto() {
   const pronto = prontoParaAuto(d);
   const a = alvoDuracao(d);
   const mudou = roteiroAuto.opcoes.length && roteiroAuto.assinatura !== assinaturaAuto(d);
-  const falta = d.tipo === MATCHUP ? "seu campeão e pelo menos o oponente" : "o campeão ou o título";
+  const falta = d.tipo === MATCHUP ? "seu campeão e pelo menos o oponente" : [!d.titulo?.trim() && "o título", !d.campeao?.trim() && "o campeão"].filter(Boolean).join(" e ");
+  const base = roteiroAuto.opcoes.length || roteiroAuto.carregando ? roteiroAuto.base || [] : resumoBriefing(d);
   let corpo = "";
   if (roteiroAuto.carregando) {
     corpo = `<div class="esperando" style="margin-top:10px"><div class="pulso"></div><div><b>O Claude está escrevendo 3 opções…</b><br><span class="nota-rodape" id="rAutoProg">Pensando…</span></div></div>`;
@@ -811,24 +839,30 @@ function desenharRoteiroAuto() {
     corpo = `${mudou ? `<div class="aviso" style="margin-top:10px"><span>Você mudou o briefing depois destas opções.</span><button class="btn peq" type="button" data-rgerar>Gerar de novo</button></div>` : ""}
       <div class="opcoes">${roteiroAuto.opcoes.map((o, i) => {
         const n = o.roteiro.split(/\s+/).filter(Boolean).length;
+        const camp = (d.tipo === MATCHUP ? d.matchup?.campeao : d.campeao) || "";
+        const citaCamp = !camp || camp.split(/\s*[,;/]\s*/).some((c) => c && norm(o.roteiro).includes(norm(c)));
+        const durOk = n >= a.min * 0.9 && n <= a.max * 1.1;
+        const alertas = [!citaCamp && `não cita ${camp}`, !durOk && `duração fora do alvo`].filter(Boolean);
         return `<div class="opcao ${roteiroAuto.escolhida === i ? "escolhida" : ""}">
           <span class="selo claude" style="align-self:flex-start">${esc(o.angulo || `Opção ${i + 1}`)}</span>
           ${o.gancho ? `<div class="gancho">${esc(o.gancho)}</div>` : ""}
           ${o.titulo ? `<div class="meta"><b>Título:</b> ${esc(o.titulo)}</div>` : ""}
           <div class="texto">${esc(o.roteiro)}</div>
           <div class="meta">~${segundosDe(n)} s · ${n} palavras (alvo ${a.seg} s)</div>
+          ${alertas.length ? `<div class="meta" style="color:var(--erro)">⚠ ${esc(alertas.join(" · "))}</div>` : ""}
           <button class="btn peq ${roteiroAuto.escolhida === i ? "" : "ouro"}" type="button" data-rusar="${i}">${roteiroAuto.escolhida === i ? "✓ No campo de roteiro" : "Usar este"}</button>
         </div>`;
       }).join("")}</div>`;
   } else if (!pronto) {
-    corpo = `<p class="nota-rodape" style="margin:8px 0 0">Preencha o tipo e ${falta}: o Claude sugere 3 roteiros com base no que você colocar aqui (tom, público, duração, orientações e fatos).</p>`;
+    corpo = `<p class="nota-rodape" style="margin:8px 0 0">Falta ${esc(falta)}. Com título, tipo, campeão, duração, tom e público preenchidos, o Claude sugere 3 roteiros que seguem exatamente essas escolhas.</p>`;
   } else {
     corpo = `<p class="nota-rodape" style="margin:8px 0 0">Com o que já está preenchido, o Claude escreve 3 opções com ângulos diferentes. Você escolhe uma, edita à vontade, ou escreve a sua.</p>`;
   }
+  const chips = base.length ? `<p class="nota-rodape" style="margin:6px 0 0">${roteiroAuto.opcoes.length || roteiroAuto.carregando ? "Baseado em" : "Vai usar"}: ${base.map((x) => `<span class="selo">${esc(x)}</span>`).join(" ")}</p>` : "";
   el.innerHTML = `<div class="topo-auto"><b>✦ Roteiro automático</b>
       ${roteiroAuto.carregando ? `<button class="btn peq" type="button" data-rparar>Parar</button>`
         : `<button class="btn peq ${roteiroAuto.opcoes.length ? "" : "ouro"}" type="button" data-rgerar ${pronto ? "" : "disabled"}>${roteiroAuto.opcoes.length ? "Gerar outras 3" : "Gerar 3 opções"}</button>`}
-    </div>${corpo}`;
+    </div>${pronto || roteiroAuto.opcoes.length ? chips : ""}${corpo}`;
   el.querySelectorAll("[data-rgerar]").forEach((b) => b.addEventListener("click", gerarRoteiros));
   el.querySelector("[data-rparar]")?.addEventListener("click", () => roteiroAuto.ctl?.abort());
   el.querySelectorAll("[data-rusar]").forEach((b) => b.addEventListener("click", () => {
