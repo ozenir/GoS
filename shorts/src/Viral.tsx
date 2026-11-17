@@ -57,6 +57,12 @@ export function montarTrilhaViral(cenas: CenaV[], duracao: number, midia: MidiaV
   const fundo = midia?.splash || null;
   const out: Trecho[] = [];
   let rodizio = 0;
+  let seguidos = 0; // trechos de vídeo em sequência: a cada 3, a splash entra para variar
+  const variar = (t: Omit<Trecho, "de" | "ate" | "k" | "fundo">) => {
+    if (t.tipo === "video" && seguidos >= 3 && fundo) { seguidos = 0; return { tipo: "splash" as const, url: fundo, ini: 0 }; }
+    seguidos = t.tipo === "video" ? seguidos + 1 : 0;
+    return t;
+  };
   for (let t = 0, k = 0; t < duracao; t += SEG_VIRAL, k++) {
     const meio = t + SEG_VIRAL / 2;
     const cena = cenas.find((c, i) => meio >= c.inicio && (meio < (cenas[i + 1]?.inicio ?? 1e9))) || cenas[cenas.length - 1];
@@ -70,7 +76,7 @@ export function montarTrilhaViral(cenas: CenaV[], duracao: number, midia: MidiaV
     const letra = cena ? habilidadeCitada(cena, videos) : null;
     const citado = letra ? videos.find((v) => v.letra === letra) : null;
     if (citado) {
-      out.push({ ...base, tipo: "video", url: citado.url, dur: citado.dur, foco: citado.foco, w: citado.w, h: citado.h, ini: (k * 1.7) % Math.max(0.1, citado.dur - SEG_VIRAL) });
+      out.push({ ...base, ...variar({ tipo: "video", url: citado.url, dur: citado.dur, foco: citado.foco, w: citado.w, h: citado.h, ini: (k * 1.7) % Math.max(0.1, citado.dur - SEG_VIRAL) }) });
       continue;
     }
     // sem habilidade citada: gameplay do usuário (se houver), splash e vídeos em rodízio
@@ -86,7 +92,7 @@ export function montarTrilhaViral(cenas: CenaV[], duracao: number, midia: MidiaV
     if (midia?.splash) opcoes.push({ tipo: "splash", url: midia.splash, ini: 0 });
     for (const v of videos) opcoes.push({ tipo: "video", url: v.url, dur: v.dur, foco: v.foco, w: v.w, h: v.h, ini: (k * 1.3) % Math.max(0.1, v.dur - SEG_VIRAL) });
     if (opcoes.length) {
-      out.push({ ...base, ...opcoes[rodizio % opcoes.length] });
+      out.push({ ...base, ...variar(opcoes[rodizio % opcoes.length]) });
       rodizio++;
     }
   }
@@ -94,7 +100,7 @@ export function montarTrilhaViral(cenas: CenaV[], duracao: number, midia: MidiaV
 }
 
 // vídeo horizontal numa faixa alta no meio da tela, centrado no campeão (mostra ~2/3 da largura do vídeo:
-// a ação inteira aparece mesmo quando o foco não foi medido); o resto da tela é a splash desfocada
+// a ação inteira aparece mesmo quando o foco não foi medido); o resto da tela é o mesmo vídeo desfocado
 export const FAIXA = 1150;
 function enquadrarFaixa(t: Trecho, larg: number, zoom: number): React.CSSProperties {
   const vw = t.w || 1056;
@@ -106,15 +112,6 @@ function enquadrarFaixa(t: Trecho, larg: number, zoom: number): React.CSSPropert
   const left = Math.min(0, Math.max(larg - W, larg / 2 - fx * W));
   return { position: "absolute", left, top: (FAIXA - H) / 2, width: W, height: H };
 }
-
-const FundoDesfocado: React.FC<{ url?: string | null }> = ({ url }) =>
-  url ? (
-    <AbsoluteFill style={{ overflow: "hidden" }}>
-      <Img src={url} style={{ position: "absolute", inset: -80, width: "calc(100% + 160px)", height: "calc(100% + 160px)", objectFit: "cover", filter: "blur(28px) brightness(.7) saturate(1.25)" }} />
-    </AbsoluteFill>
-  ) : (
-    <AbsoluteFill style={{ background: "radial-gradient(circle at 50% 40%, #12304a, #05070c 70%)" }} />
-  );
 
 const TrechoViral: React.FC<{ t: Trecho }> = ({ t }) => {
   const frame = useCurrentFrame();
@@ -138,8 +135,16 @@ const TrechoViral: React.FC<{ t: Trecho }> = ({ t }) => {
     );
   }
   return (
-    <AbsoluteFill style={{ background: "#000" }}>
-      <FundoDesfocado url={t.fundo} />
+    <AbsoluteFill style={{ background: "#000", overflow: "hidden" }}>
+      {/* o próprio vídeo, ampliado e desfocado, preenche em cima e embaixo (como os Shorts de gameplay) */}
+      <Loop durationInFrames={Math.max(15, Math.round((t.dur || 4) * fps) - 2)}>
+        <OffthreadVideo
+          src={t.url}
+          muted
+          startFrom={Math.round(t.ini * fps)}
+          style={{ position: "absolute", left: -120, top: -120, width: width + 240, height: height + 240, objectFit: "cover", filter: "blur(30px) brightness(.8) saturate(1.35)" }}
+        />
+      </Loop>
       <div
         style={{
           position: "absolute", left: 0, width, top: (height - FAIXA) / 2 - 40, height: FAIXA, overflow: "hidden",
