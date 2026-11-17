@@ -7,29 +7,29 @@
         "quarto tiro"
       ],
       "narracao": "Seu Jhin perde o nível 2 porque desperdiça o quarto tiro.",
-      "textoTela": "VOCÊ ERRA ISSO",
-      "visual": "Jhin na bot lane no minuto 1:50 com a barra de XP em zoom e o quarto tiro desperdiçado em um minion.",
       "provas": [
         {
-          "tipo": "nota",
-          "rotulo": "NÍVEL 2 PERDIDO",
+          "cor": "vermelho",
           "detalhe": "desperdiçou\no 4º tiro",
           "gatilho": "perde",
-          "cor": "vermelho"
+          "rotulo": "NÍVEL 2 PERDIDO",
+          "tipo": "nota"
         }
       ],
+      "textoTela": "VOCÊ ERRA ISSO",
       "videoFundo": {
-        "asset": "7b4bf3c9f1bbb71c9fbe469b678bdf74",
         "arquivo": "biblioteca/campeoes/Jhin/videos/P.mp4",
+        "asset": "7b4bf3c9f1bbb71c9fbe469b678bdf74",
+        "campeao": "Jhin",
         "dur": 10.27,
         "foco": [
           0.54,
           0.65
         ],
-        "w": 1056,
         "h": 720,
-        "campeao": "Jhin"
-      }
+        "w": 1056
+      },
+      "visual": "Jhin na bot lane no minuto 1:50 com a barra de XP em zoom e o quarto tiro desperdiçado em um minion."
     },
     {
       "clipeInicio": null,
@@ -38,37 +38,37 @@
         "crítico"
       ],
       "narracao": "Primeiro, a passiva. Os três primeiros tiros são normais, o quarto é crítico.",
-      "textoTela": "4 TIROS",
-      "visual": "Contador dos quatro disparos no HUD, com zoom na arma recarregando entre os tiros.",
       "provas": [
         {
-          "tipo": "icone",
-          "rotulo": "Passiva · Sussurro",
+          "detalhe": "só 4 tiros por vez",
+          "gatilho": "passiva",
           "imgArquivo": "biblioteca/campeoes/Jhin/habilidades/P.png",
           "imgAsset": "6fcbb8dbbcd2f36b5035220e7c89f00c",
-          "detalhe": "só 4 tiros por vez",
-          "gatilho": "passiva"
+          "rotulo": "Passiva · Sussurro",
+          "tipo": "icone"
         },
         {
-          "tipo": "placar",
-          "rotulo": "4",
+          "cor": "ouro",
           "detalhe": "o 4º tiro é\nsempre crítico",
           "gatilho": "quarto",
-          "cor": "ouro"
+          "rotulo": "4",
+          "tipo": "placar"
         }
       ],
+      "textoTela": "4 TIROS",
       "videoFundo": {
-        "asset": "7b4bf3c9f1bbb71c9fbe469b678bdf74",
         "arquivo": "biblioteca/campeoes/Jhin/videos/P.mp4",
+        "asset": "7b4bf3c9f1bbb71c9fbe469b678bdf74",
+        "campeao": "Jhin",
         "dur": 10.27,
         "foco": [
           0.54,
           0.65
         ],
-        "w": 1056,
         "h": 720,
-        "campeao": "Jhin"
-      }
+        "w": 1056
+      },
+      "visual": "Contador dos quatro disparos no HUD, com zoom na arma recarregando entre os tiros."
     },
     {
       "clipeInicio": null,
@@ -76,29 +76,29 @@
         "vida perdida"
       ],
       "narracao": "O quarto tiro também causa dano extra pela vida perdida do alvo.",
-      "textoTela": "VIDA PERDIDA",
-      "visual": "Quarto tiro acertando o ADC inimigo, com a barra de vida em zoom.",
       "provas": [
         {
-          "tipo": "nota",
-          "rotulo": "4º TIRO EXECUTA",
+          "cor": "vermelho",
           "detalhe": "dano extra pela\nvida perdida do alvo",
           "gatilho": "vida",
-          "cor": "vermelho"
+          "rotulo": "4º TIRO EXECUTA",
+          "tipo": "nota"
         }
       ],
+      "textoTela": "VIDA PERDIDA",
       "videoFundo": {
-        "asset": "7b4bf3c9f1bbb71c9fbe469b678bdf74",
         "arquivo": "biblioteca/campeoes/Jhin/videos/P.mp4",
+        "asset": "7b4bf3c9f1bbb71c9fbe469b678bdf74",
+        "campeao": "Jhin",
         "dur": 10.27,
         "foco": [
           0.54,
           0.65
         ],
-        "w": 1056,
         "h": 720,
-        "campeao": "Jhin"
-      }
+        "w": 1056
+      },
+      "visual": "Quarto tiro acertando o ADC inimigo, com a barra de vida em zoom."
     },
     {
       "clipeInicio": null,
@@ -107,22 +107,22 @@
         "empurre"
       ],
       "narracao": "Na primeira wave, bata só no último hit. Não empurre.",
-      "textoTela": "NÃO EMPURRE",
-      "visual": "Primeira wave encontrando no meio da rota, com o minion de canhão ou mago destacado em círculo.",
       "provas": [
         {
-          "tipo": "etiqueta",
-          "rotulo": "1ª WAVE: SÓ O ÚLTIMO HIT",
+          "cor": "amarelo",
           "gatilho": "último",
-          "cor": "amarelo"
+          "rotulo": "1ª WAVE: SÓ O ÚLTIMO HIT",
+          "tipo": "etiqueta"
         },
         {
-          "tipo": "etiqueta",
-          "rotulo": "NÃO EMPURRE",
+          "cor": "vermelho",
           "gatilho": "empurre",
-          "cor": "vermelho"
+          "rotulo": "NÃO EMPURRE",
+          "tipo": "etiqueta"
         }
-      ]
+      ],
+      "textoTela": "NÃO EMPURRE",
+      "visual": "Primeira wave encontrando no meio da rota, com o minion de canhão ou mago destacado em círculo."
     },
     {
       "clipeInicio": null,
@@ -131,17 +131,17 @@
         "4º tiro"
       ],
       "narracao": "Guarde o quarto tiro. Ele é seu dano na troca contra o ADC.",
-      "textoTela": "GUARDE O 4º",
-      "visual": "Jhin com o quarto tiro pronto, sem atacar, e o ADC inimigo a vista.",
       "provas": [
         {
-          "tipo": "nota",
-          "rotulo": "GUARDE O 4º TIRO",
+          "cor": "verde",
           "detalhe": "é o seu dano na\ntroca contra o ADC",
           "gatilho": "Guarde",
-          "cor": "verde"
+          "rotulo": "GUARDE O 4º TIRO",
+          "tipo": "nota"
         }
-      ]
+      ],
+      "textoTela": "GUARDE O 4º",
+      "visual": "Jhin com o quarto tiro pronto, sem atacar, e o ADC inimigo a vista."
     },
     {
       "clipeInicio": null,
@@ -150,25 +150,25 @@
         "Q"
       ],
       "narracao": "Segunda wave: deixe três minions com pouca vida. Prepare o Q.",
-      "textoTela": "3 MINIONS",
-      "visual": "Três minions com a vida baixa destacados com setas, enquanto Jhin recua o AA.",
       "provas": [
         {
-          "tipo": "placar",
-          "rotulo": "3",
+          "cor": "azul",
           "detalhe": "minions com pouca vida\nna 2ª wave",
           "gatilho": "três",
-          "cor": "azul"
+          "rotulo": "3",
+          "tipo": "placar"
         },
         {
-          "tipo": "icone",
-          "rotulo": "Q · Granada Dançante",
+          "detalhe": "até 4 acertos\nalcance 550",
+          "gatilho": "Q",
           "imgArquivo": "biblioteca/campeoes/Jhin/habilidades/Q.png",
           "imgAsset": "5d3a92386ab3c1f5d94f7717235a4aef",
-          "detalhe": "até 4 acertos\nalcance 550",
-          "gatilho": "Q"
+          "rotulo": "Q · Granada Dançante",
+          "tipo": "icone"
         }
-      ]
+      ],
+      "textoTela": "3 MINIONS",
+      "visual": "Três minions com a vida baixa destacados com setas, enquanto Jhin recua o AA."
     },
     {
       "clipeInicio": null,
@@ -177,29 +177,29 @@
         "mais dano"
       ],
       "narracao": "O ricochete causa mais dano quando o alvo anterior morre antes.",
-      "textoTela": "Q POTENCIALIZADO",
-      "visual": "Granada Dançante pulando entre os minions, com cada morte destacada em câmera lenta.",
       "provas": [
         {
-          "tipo": "nota",
-          "rotulo": "RICOCHETE",
+          "cor": "ouro",
           "detalhe": "cada abate aumenta\no dano do próximo pulo",
           "gatilho": "ricochete",
-          "cor": "ouro"
+          "rotulo": "RICOCHETE",
+          "tipo": "nota"
         }
       ],
+      "textoTela": "Q POTENCIALIZADO",
       "videoFundo": {
-        "asset": "2d635cbf9a5061c06cd51201e361d564",
         "arquivo": "biblioteca/campeoes/Jhin/videos/Q.mp4",
+        "asset": "2d635cbf9a5061c06cd51201e361d564",
+        "campeao": "Jhin",
         "dur": 4.63,
         "foco": [
           0.55,
           0.67
         ],
-        "w": 1056,
         "h": 720,
-        "campeao": "Jhin"
-      }
+        "w": 1056
+      },
+      "visual": "Granada Dançante pulando entre os minions, com cada morte destacada em câmera lenta."
     },
     {
       "clipeInicio": null,
@@ -208,28 +208,28 @@
         "ADC"
       ],
       "narracao": "Calcule para o último ricochete cair no ADC inimigo.",
-      "textoTela": "ÚLTIMO PULO = ADC",
-      "visual": "Trajetória da granada desenhada em linha até o ADC, com zoom no impacto.",
       "provas": [
         {
-          "tipo": "etiqueta",
-          "rotulo": "ÚLTIMO PULO = ADC",
+          "cor": "vermelho",
           "gatilho": "último",
-          "cor": "vermelho"
+          "rotulo": "ÚLTIMO PULO = ADC",
+          "tipo": "etiqueta"
         }
       ],
+      "textoTela": "ÚLTIMO PULO = ADC",
       "videoFundo": {
-        "asset": "2d635cbf9a5061c06cd51201e361d564",
         "arquivo": "biblioteca/campeoes/Jhin/videos/Q.mp4",
+        "asset": "2d635cbf9a5061c06cd51201e361d564",
+        "campeao": "Jhin",
         "dur": 4.63,
         "foco": [
           0.55,
           0.67
         ],
-        "w": 1056,
         "h": 720,
-        "campeao": "Jhin"
-      }
+        "w": 1056
+      },
+      "visual": "Trajetória da granada desenhada em linha até o ADC, com zoom no impacto."
     },
     {
       "clipeInicio": null,
@@ -237,17 +237,17 @@
         "empurrar"
       ],
       "narracao": "Só use o Q se isso não empurrar a wave sem necessidade.",
-      "textoTela": "CUIDADO",
-      "visual": "Wave empurrando para a torre inimiga depois de um Q mal usado, com marca de erro vermelha.",
       "provas": [
         {
-          "tipo": "nota",
-          "rotulo": "CUIDADO",
+          "cor": "amarelo",
           "detalhe": "Q que empurra a wave\nsem necessidade",
           "gatilho": "empurrar",
-          "cor": "amarelo"
+          "rotulo": "CUIDADO",
+          "tipo": "nota"
         }
-      ]
+      ],
+      "textoTela": "CUIDADO",
+      "visual": "Wave empurrando para a torre inimiga depois de um Q mal usado, com marca de erro vermelha."
     },
     {
       "clipeInicio": null,
@@ -256,23 +256,23 @@
         "três"
       ],
       "narracao": "Os seis minions da primeira wave e os três guerreiros da segunda dão o nível 2.",
-      "textoTela": "6 + 3 MINIONS",
-      "visual": "Barra de XP enchendo no último minion guerreiro, com o ícone de subir de nível piscando.",
       "provas": [
         {
-          "tipo": "placar",
-          "rotulo": "6 + 3",
+          "cor": "ouro",
           "detalhe": "1ª wave inteira\n+ 3 guerreiros da 2ª",
           "gatilho": "seis",
-          "cor": "ouro"
+          "rotulo": "6 + 3",
+          "tipo": "placar"
         },
         {
-          "tipo": "etiqueta",
-          "rotulo": "NÍVEL 2",
+          "cor": "verde",
           "gatilho": "nível",
-          "cor": "verde"
+          "rotulo": "NÍVEL 2",
+          "tipo": "etiqueta"
         }
-      ]
+      ],
+      "textoTela": "6 + 3 MINIONS",
+      "visual": "Barra de XP enchendo no último minion guerreiro, com o ícone de subir de nível piscando."
     },
     {
       "clipeInicio": null,
@@ -281,45 +281,45 @@
         "suporte"
       ],
       "narracao": "Avise o suporte antes. Ponha o ponto no W, não no E.",
-      "textoTela": "PONTO NO W",
-      "visual": "Ping de atenção no suporte e a tela de habilidades com o ponto indo para o W.",
       "provas": [
         {
-          "tipo": "etiqueta",
-          "rotulo": "AVISE O SUPORTE",
+          "cor": "azul",
           "gatilho": "Avise",
-          "cor": "azul"
+          "rotulo": "AVISE O SUPORTE",
+          "tipo": "etiqueta"
         },
         {
-          "tipo": "icone",
-          "rotulo": "W · Florescer Mortal",
+          "detalhe": "recarga 12 s\nalcance 3000",
+          "gatilho": "W",
           "imgArquivo": "biblioteca/campeoes/Jhin/habilidades/W.png",
           "imgAsset": "e59166dddb7dd054968fb53296029ce0",
-          "detalhe": "recarga 12 s\nalcance 3000",
-          "gatilho": "W"
+          "rotulo": "W · Florescer Mortal",
+          "tipo": "icone"
         },
         {
-          "tipo": "icone",
-          "rotulo": "E · Audiência Cativa",
-          "imgArquivo": "biblioteca/campeoes/Jhin/habilidades/E.png",
-          "imgAsset": "af8b111741191ec1d3e251e88a60b46d",
           "detalhe": "fica para depois",
           "gatilho": "E",
-          "riscar": true
+          "imgArquivo": "biblioteca/campeoes/Jhin/habilidades/E.png",
+          "imgAsset": "af8b111741191ec1d3e251e88a60b46d",
+          "riscar": true,
+          "rotulo": "E · Audiência Cativa",
+          "tipo": "icone"
         }
       ],
+      "textoTela": "PONTO NO W",
       "videoFundo": {
-        "asset": "574cf1eb5d7f2364c41ffe752a1d35b3",
         "arquivo": "biblioteca/campeoes/Jhin/videos/W.mp4",
+        "asset": "574cf1eb5d7f2364c41ffe752a1d35b3",
+        "campeao": "Jhin",
         "dur": 7.47,
         "foco": [
           0.55,
           0.64
         ],
-        "w": 1056,
         "h": 720,
-        "campeao": "Jhin"
-      }
+        "w": 1056
+      },
+      "visual": "Ping de atenção no suporte e a tela de habilidades com o ponto indo para o W."
     },
     {
       "clipeInicio": null,
@@ -329,35 +329,35 @@
         "raiz"
       ],
       "narracao": "Q no minion, marca no alvo, W em seguida. Raiz garantida.",
-      "textoTela": "Q → W → 4º TIRO",
-      "visual": "Sequência completa: Q, marca no ADC, W acertando, quarto tiro, em um único clipe com zoom no inimigo enraizado.",
       "provas": [
         {
-          "tipo": "nota",
-          "rotulo": "COMBO",
+          "cor": "ouro",
           "detalhe": "Q no minion\nmarca no alvo\nW em seguida",
           "gatilho": "Q",
-          "cor": "ouro"
+          "rotulo": "COMBO",
+          "tipo": "nota"
         },
         {
-          "tipo": "etiqueta",
-          "rotulo": "RAIZ",
+          "cor": "verde",
           "gatilho": "Raiz",
-          "cor": "verde"
+          "rotulo": "RAIZ",
+          "tipo": "etiqueta"
         }
       ],
+      "textoTela": "Q → W → 4º TIRO",
       "videoFundo": {
-        "asset": "574cf1eb5d7f2364c41ffe752a1d35b3",
         "arquivo": "biblioteca/campeoes/Jhin/videos/W.mp4",
+        "asset": "574cf1eb5d7f2364c41ffe752a1d35b3",
+        "campeao": "Jhin",
         "dur": 7.47,
         "foco": [
           0.55,
           0.64
         ],
-        "w": 1056,
         "h": 720,
-        "campeao": "Jhin"
-      }
+        "w": 1056
+      },
+      "visual": "Sequência completa: Q, marca no ADC, W acertando, quarto tiro, em um único clipe com zoom no inimigo enraizado."
     },
     {
       "clipeInicio": null,
@@ -366,29 +366,29 @@
         "troca"
       ],
       "narracao": "Com o inimigo preso, solte o quarto tiro e feche a troca.",
-      "textoTela": "FECHA A TROCA",
-      "visual": "Quarto tiro no ADC preso, com a barra de vida e a mana do Jhin em evidência.",
       "provas": [
         {
-          "tipo": "nota",
-          "rotulo": "FECHA A TROCA",
+          "cor": "verde",
           "detalhe": "inimigo preso\n+ 4º tiro",
           "gatilho": "preso",
-          "cor": "verde"
+          "rotulo": "FECHA A TROCA",
+          "tipo": "nota"
         }
       ],
+      "textoTela": "FECHA A TROCA",
       "videoFundo": {
-        "asset": "7b4bf3c9f1bbb71c9fbe469b678bdf74",
         "arquivo": "biblioteca/campeoes/Jhin/videos/P.mp4",
+        "asset": "7b4bf3c9f1bbb71c9fbe469b678bdf74",
+        "campeao": "Jhin",
         "dur": 10.27,
         "foco": [
           0.54,
           0.65
         ],
-        "w": 1056,
         "h": 720,
-        "campeao": "Jhin"
-      }
+        "w": 1056
+      },
+      "visual": "Quarto tiro no ADC preso, com a barra de vida e a mana do Jhin em evidência."
     },
     {
       "clipeInicio": null,
@@ -396,23 +396,23 @@
         "patch"
       ],
       "narracao": "Dano e mana dependem do patch, então confira no seu cliente.",
-      "textoTela": "CONFIRA NO PATCH",
-      "visual": "Tooltips de Q e W abertos no jogo, com os valores de dano e mana legíveis.",
       "provas": [
         {
-          "tipo": "foto",
-          "rotulo": "Jhin",
+          "gatilho": "Dano",
           "imgArquivo": "biblioteca/campeoes/Jhin/arte.jpg",
           "imgAsset": "50b2b18faec1a4aff56ceeb67b3fdfb5",
-          "gatilho": "Dano"
+          "rotulo": "Jhin",
+          "tipo": "foto"
         },
         {
-          "tipo": "etiqueta",
-          "rotulo": "CONFIRA NO PATCH 16.22",
+          "cor": "azul",
           "gatilho": "patch",
-          "cor": "azul"
+          "rotulo": "CONFIRA NO PATCH 16.22",
+          "tipo": "etiqueta"
         }
-      ]
+      ],
+      "textoTela": "CONFIRA NO PATCH",
+      "visual": "Tooltips de Q e W abertos no jogo, com os valores de dano e mana legíveis."
     }
   ],
   "cta": {

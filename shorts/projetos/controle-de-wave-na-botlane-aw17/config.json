@@ -21,9 +21,9 @@
     "corFalada": "#FFE600",
     "corTexto": "#FFFFFF",
     "fonte": "Montserrat",
-    "palavrasPorBloco": 3,
-    "posicaoY": 0.66,
-    "tamanho": 92
+    "palavrasPorBloco": 2,
+    "posicaoY": 0.62,
+    "tamanho": 108
   },
   "efeitos": {
     "barraProgresso": true,
@@ -38,6 +38,29 @@
     "cor2": "#0A323C",
     "corDestaque": "#C8AA6E"
   },
-  "hookDuracao": 2.4,
-  "ctaAtivo": true
+  "hookDuracao": 2,
+  "ctaAtivo": true,
+  "layout": "viral",
+  "antesViral": {
+    "efeitos": {
+      "barraProgresso": true,
+      "flash": true,
+      "hook": true,
+      "patch": true,
+      "quadro": true,
+      "zoomPunch": true
+    },
+    "estilo": {
+      "caixaAlta": true,
+      "corContorno": "#000000",
+      "corEnfase": "#0AC8B9",
+      "corFalada": "#FFE600",
+      "corTexto": "#FFFFFF",
+      "fonte": "Montserrat",
+      "palavrasPorBloco": 3,
+      "posicaoY": 0.66,
+      "tamanho": 92
+    },
+    "hookDuracao": 2.4
+  }
 }
