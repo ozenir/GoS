@@ -1,6 +1,6 @@
 # Estilo viral — análise dos Shorts de LoL que mais crescem
 
-Coleta de 17/11/2026: `scripts/virais.py` mediu 478 Shorts e TikToks de LoL dos últimos 10 dias
+Coleta de 17/11/2026 (refeita às 14:31): `scripts/virais.py` mediu 455 Shorts e TikToks de LoL dos últimos 10 dias
 (`dados/virais/2026-11-17.json`). Métrica principal: **velocidade** = visualizações por hora desde a publicação.
 
 - **TikTok**: perfis grandes de LoL (`CONTAS_TIKTOK`), porque a busca e as hashtags do TikTok bloqueiam robôs.
@@ -19,7 +19,8 @@ banco em `virais/atual`.
 | Ilha das Lendas: “🚨 LOL 2 com Morgana curando…” (TikTok, 68 s) | ~6,6 mil views/h | Tela dividida: rosto em cima, imagem oficial embaixo. Manchete nos 2 primeiros segundos, legenda amarela de uma linha, imagem trocando a cada ~3 s |
 | Ilha das Lendas: “🚨 Não vai ter runas no LoL 2” (TikTok, 55 s) | ~5,1 mil/h | Polêmica numa frase, imagem do anúncio, opinião e pergunta no fim |
 | Skill Capped: “The Most BROKEN Change Nobody Noticed” (YouTube) | ≥4,2 mil/h | Splash e gameplay em tela cheia, legenda de 1 palavra, corte a cada 2–3 s |
-| LoocaLoL: “The secret to beating ANY ranged top” (YouTube) | ≥3,2 mil/h | Câmera do criador em cima, partida embaixo, uma dica só |
+| LoocaLoL: “The secret to beating ANY ranged top” (YouTube) | ≥470/h (semana) | Câmera do criador em cima, partida embaixo, uma dica só |
+| Caedrel: “Massive changes coming to LoL Esports in 2027” (TikTok, 76 s) | ~3,2 mil/h | Tela dividida: streamer em cima, manchetes e imagens das notícias embaixo, legenda verde no meio |
 | Shorts de build (Pyke tank, 60% de vitória) | ≥1,3 mil/h | Gameplay numa faixa vertical no meio e as laterais desfocadas; número no gancho |
 
 Os vídeos de esporte eletrônico (lolesports) são os mais rápidos de todos, mas vivem de clipes oficiais de partidas

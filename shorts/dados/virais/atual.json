@@ -1,6 +1,6 @@
 {
- "coletadoEm": "2026-11-17T18:00:00-03:00",
- "janela": "Shorts e TikToks de LoL publicados nos últimos 10 dias (478 vídeos medidos)",
+ "coletadoEm": "2026-11-17T14:31-03:00",
+ "janela": "Shorts e TikToks de LoL publicados nos últimos 10 dias (455 vídeos medidos)",
  "comoLer": "Velocidade = visualizações por hora desde a publicação. No YouTube a idade é o limite do filtro da busca (hoje ou esta semana), então a velocidade é um mínimo.",
  "modelos": [
   {
@@ -8,9 +8,9 @@
    "canal": "@ilhadaslendas",
    "titulo": "🚨 LOL 2 COM MORGANA CURANDO E VAYNE ATRAVESSANDO PAREDES",
    "url": "https://www.tiktok.com/@ilhadaslendas/video/7708525522694835476",
-   "views": 282600,
-   "horas": 42.7,
-   "velocidade": 6619,
+   "views": 283100,
+   "horas": 43.2,
+   "velocidade": 6547,
    "duracao": 68,
    "formato": "Notícia urgente em tela dividida: rosto em cima, imagem oficial do jogo embaixo",
    "copiamos": [
@@ -25,9 +25,9 @@
    "canal": "@ilhadaslendas",
    "titulo": "🚨 NÃO VAI TER RUNAS NO LOL 2",
    "url": "https://www.tiktok.com/@ilhadaslendas/video/7708509867304111380",
-   "views": 223100,
-   "horas": 43.7,
-   "velocidade": 5104,
+   "views": 223500,
+   "horas": 44.3,
+   "velocidade": 5050,
    "duracao": 55,
    "formato": "Mesmo formato: polêmica em uma frase, imagem do anúncio, opinião no fim",
    "copiamos": [
@@ -41,9 +41,9 @@
    "canal": "Skill Capped",
    "titulo": "The Most BROKEN Change Nobody Noticed",
    "url": "https://www.youtube.com/shorts/NFR7hreQRAU",
-   "views": 711000,
-   "horas": 168,
-   "velocidade": 4232,
+   "views": 719000,
+   "horas": 168.0,
+   "velocidade": 4280,
    "duracao": null,
    "formato": "Splash art e gameplay em tela cheia, legenda de 1 palavra, corte a cada 2–3 s",
    "copiamos": [
@@ -53,18 +53,18 @@
    ]
   },
   {
-   "plataforma": "YouTube",
-   "canal": "LoocaLoL",
-   "titulo": "The secret to beating ANY ranged top",
-   "url": "https://www.youtube.com/shorts/ONVoGgBGW_s",
-   "views": 76000,
-   "horas": 24,
-   "velocidade": 3166,
-   "duracao": null,
-   "formato": "Dica: câmera do criador em cima e a partida embaixo, legenda curta",
+   "plataforma": "TikTok",
+   "canal": "@caedrel",
+   "titulo": "MASSIVE CHANGES COMING TO LOL ESPORTS IN 2027",
+   "url": "https://www.tiktok.com/@caedrel/video/7708102556840496417",
+   "views": 223700,
+   "horas": 70.6,
+   "velocidade": 3169,
+   "duracao": 76,
+   "formato": "Notícia em tela dividida: streamer em cima, manchetes e imagens das notícias embaixo, legenda verde na linha do meio",
    "copiamos": [
-    "Uma dica só, dita em poucas frases",
-    "Imagem do jogo mostrando exatamente o que a fala diz"
+    "Várias notícias em sequência rápida, cada uma com a imagem oficial",
+    "Manchete da notícia aparece na tela enquanto é falada"
    ]
   },
   {
@@ -72,9 +72,9 @@
    "canal": "@mylonlol",
    "titulo": "Esse LoL só pode estar me escutando 🤡",
    "url": "https://www.tiktok.com/@mylonlol/video/7708887728900902162",
-   "views": 53400,
-   "horas": 19.3,
-   "velocidade": 2771,
+   "views": 54100,
+   "horas": 19.8,
+   "velocidade": 2730,
    "duracao": 154,
    "formato": "Reação com rosto em cima e partida embaixo",
    "copiamos": [
@@ -94,6 +94,21 @@
    "copiamos": [
     "Vídeo horizontal numa faixa alta no meio e o resto desfocado",
     "Número concreto no gancho (60%)"
+   ]
+  },
+  {
+   "plataforma": "YouTube",
+   "canal": "LoocaLoL",
+   "titulo": "The secret to beating ANY ranged top",
+   "url": "https://www.youtube.com/shorts/ONVoGgBGW_s",
+   "views": 79000,
+   "horas": 168.0,
+   "velocidade": 470,
+   "duracao": null,
+   "formato": "Dica: câmera do criador em cima e a partida embaixo, legenda curta",
+   "copiamos": [
+    "Uma dica só, dita em poucas frases",
+    "Imagem do jogo mostrando exatamente o que a fala diz"
    ]
   }
  ],
