@@ -172,6 +172,19 @@ input[type=file] { max-width: 100%; color: var(--suave); }
 .vazio { text-align: center; padding: 28px 10px; color: var(--suave); }
 code { background: var(--campo); padding: 1px 6px; border-radius: 5px; color: var(--ouro-claro); }
 
+/* roteiro automático (aba Briefing): 3 opções do Claude, a escolhida vai para o campo de roteiro */
+.auto-roteiro { margin-top: 12px; border: 1px dashed var(--ouro-esc); border-radius: var(--raio); padding: 12px; background: #c8aa6e0a; }
+.auto-roteiro .topo-auto { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.auto-roteiro .topo-auto b { flex: 1 1 200px; color: var(--ouro-claro); }
+.opcoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+@media (max-width: 900px) { .opcoes { grid-template-columns: minmax(0, 1fr); } }
+.opcao { border: 1px solid var(--borda); border-radius: 8px; background: var(--campo); padding: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.opcao.escolhida { border-color: var(--ok); box-shadow: 0 0 0 1px var(--ok); }
+.opcao .gancho { font: 400 1.35rem/1.1 var(--f-titulo); color: var(--ouro); letter-spacing: .03em; }
+.opcao .texto { font-size: .86rem; max-height: 210px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--texto); }
+.opcao .meta { font-size: .76rem; color: var(--suave); }
+.opcao .btn { align-self: flex-start; margin-top: auto; }
+
 /* criação automática: um botão + passos com estado (feito / rodando / esperando / erro / pendente) */
 .auto { margin-bottom: 14px; }
 .auto-topo { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
@@ -299,8 +312,9 @@ const ROTAS = ["Topo", "Selva", "Meio", "Atirador", "Suporte"];
 const TIPOS = [MATCHUP, "Outplay / Jogada", "Dica / Tutorial", "Build / Guia de campeão", "Curiosidade / Lore", "Notícia de patch", "Tier list / Ranking", "Humor / Fail", "Polêmica / Opinião"];
 const TONS = ["Energético", "Engraçado", "Sério / Analítico", "Misterioso", "Polêmico"];
 const PUBLICOS = ["Todos", "Iniciantes (Ferro–Prata)", "Intermediário (Ouro–Esmeralda)", "High elo (Diamante+)"];
+const VOZ_PROPRIA_ATIVA = false; // "Minha voz": só liga quando o usuário aprovar
 const VOZES = [
-  { id: "minha-voz", nome: "Minha voz (clonada)" },
+  ...(VOZ_PROPRIA_ATIVA ? [{ id: "minha-voz", nome: "Minha voz (clonada)" }] : []),
   { id: "pt-BR-AntonioNeural", nome: "Antonio (masculina)" },
   { id: "pt-BR-FranciscaNeural", nome: "Francisca (feminina)" },
   { id: "pt-BR-ThalitaMultilingualNeural", nome: "Thalita (feminina)" },
@@ -366,6 +380,8 @@ function msgErro(e) {
 let db = null, assets = null, sample = null, downloads = null, mcp = null, comentarios = null;
 let claudeCfg = null;     // config/claude: {sessao} — sessão do Claude Code que recebe os pedidos
 let auto = null;          // criação automática em andamento nesta aba: {rodando, fase, erro, avisando, falhaAviso}
+let permissoes = null;    // capacidade embutida "permissions" (saber se o Claude já pode ser chamado sem clique)
+let roteiroAuto = { assinatura: "", carregando: false, texto: "", opcoes: [], erro: "", escolhida: -1, ctl: null };
 let projetos = [];
 let proj = null;          // {id, ...documento}
 let eventos = [];
@@ -488,6 +504,8 @@ function abrir(id, novaAba) {
   desinscrever.forEach((u) => u());
   desinscrever = [];
   proj = { id, carregando: true };
+  if (roteiroAuto.ctl) roteiroAuto.ctl.abort();
+  roteiroAuto = { assinatura: "", carregando: false, texto: "", opcoes: [], erro: "", escolhida: -1, ctl: null };
   eventos = [];
   producao = null;
   cfg = null; ot = null;
@@ -617,7 +635,8 @@ function abaBriefing(el) {
     </div>
     <datalist id="listaCampeoes">${ddragon ? Object.values(ddragon.campeoes).map((c) => `<option value="${esc(c.nome)}">`).join("") : ""}</datalist>
     <label for="bRoteiro" id="bRoteiroRot">${b.tipo === MATCHUP ? "Roteiro (opcional: o Claude escreve a partir da análise)" : "Roteiro (o texto que vai ser narrado)"}</label>
-    <textarea class="grande" id="bRoteiro" placeholder="Escreva ou cole o roteiro aqui…">${esc(b.roteiro)}</textarea>
+    <textarea class="grande" id="bRoteiro" placeholder="Escreva ou cole o roteiro aqui, ou escolha uma das opções automáticas abaixo…">${esc(b.roteiro)}</textarea>
+    <div class="auto-roteiro" id="rAuto"></div>
     <label for="bFatos">Fatos confirmados (o Claude usa exatamente estes e não inventa outros)</label>
     <textarea id="bFatos" placeholder="Ex.: placar, draft, datas, estatísticas que você conferiu…">${esc(b.fatos)}</textarea>
     <label for="bOrient">Orientações para o Claude (opcional)</label>
@@ -676,6 +695,154 @@ function abaBriefing(el) {
   $("#bEnviar").onclick = async () => {
     try { await salvar(); aba = "otimizacao"; otimizar(); } catch (e) { toast(msgErro(e)); }
   };
+  // roteiro automático: redesenha o bloco a cada mudança e, com a permissão já dada, gera sozinho
+  lerBriefing = ler;
+  const aoMudar = debounce(() => { desenharRoteiroAuto(); talvezGerarSozinho(); }, 2200);
+  el.querySelectorAll("input, select, textarea").forEach((c) => c.addEventListener(c.tagName === "SELECT" ? "change" : "input", () => {
+    if (c.id !== "bRoteiro") aoMudar();
+    else desenharRoteiroAuto();
+  }));
+  desenharRoteiroAuto();
+  talvezGerarSozinho();
+}
+
+// ============================================================ roteiro automático (3 opções a partir do briefing)
+let lerBriefing = null;
+const prontoParaAuto = (d) =>
+  d.tipo === MATCHUP ? !!(d.matchup?.campeao && Object.values(d.matchup.inimigos || {}).some(Boolean)) : !!((d.campeao || d.titulo || "").trim());
+const assinaturaAuto = (d) => JSON.stringify([d.titulo, d.tipo, d.campeao, d.duracao, d.tom, d.publico, d.orientacoes, d.fatos, d.matchup || null]);
+const ANGULOS = "erro comum que o público comete; segredo ou detalhe pouco conhecido; desafio ou opinião polêmica; número + resultado concreto; mini-história de partida";
+
+function dadosDosCampeoes(nomes) {
+  if (!ddragon) return "";
+  const linhas = [];
+  for (const n of new Set(nomes.filter(Boolean))) {
+    const c = campeaoPorNome(n);
+    if (c) linhas.push(`${c.nome} (${c.funcoes.join("/")}, alcance de ataque ${c.alcance}, passiva ${c.passiva}): ` + c.hab.map((h) => `${h.t} ${h.n}: recarga ${h.cd.join("/")} s, custo ${h.custo.join("/")}, alcance ${h.alc.join("/")}`).join(" · "));
+  }
+  return linhas.length ? `DADOS DO JOGO (Data Dragon ${ddragon.versao}, patch ${ddragon.patch}); use só estes números:\n${linhas.join("\n")}` : "";
+}
+
+function promptRoteiros(d) {
+  const fatos = d.fatos?.trim() ? `\nFATOS CONFIRMADOS (use exatamente estes, não invente outros):\n${d.fatos}` : "";
+  const briefing = { titulo: d.titulo, tipo: d.tipo, campeao: d.campeao, duracao: d.duracao, tom: d.tom, publico: d.publico, orientacoes: d.orientacoes };
+  let contexto = "";
+  if (d.tipo === MATCHUP && d.matchup) {
+    const m = d.matchup;
+    contexto = `MATCHUP: o espectador joga de ${m.campeao} na rota ${m.rota}.\nSEU TIME: ${JSON.stringify(m.aliados)}\nTIME INIMIGO: ${JSON.stringify(m.inimigos)}\nO assunto é como jogar do início até o 1º item.\n${ddragon ? dadosParaMatchup(m) : ""}`;
+  } else {
+    contexto = dadosDosCampeoes(String(d.campeao || "").split(/\s*[,;/]\s*|\s+e\s+/));
+  }
+  return `${GUIA}
+
+TAREFA: escreva 3 roteiros DIFERENTES para este Short, prontos para narrar em voz alta. Cada um com um ângulo próprio (escolha 3 entre: ${ANGULOS}). Os três seguem o briefing (tipo, tom, público, orientações) e usam só fatos e números do briefing ou dos dados abaixo; se faltar um número, descreva sem número.
+
+BRIEFING DO CRIADOR (JSON):
+${JSON.stringify(briefing, null, 1)}${fatos}
+
+${contexto}
+
+${regraDuracao(d)} A regra vale para CADA um dos 3 roteiros.
+
+Responda SOMENTE com JSON:
+{"opcoes": [{"angulo": "2 a 4 palavras", "titulo": "até 60 caracteres", "gancho": "2 a 5 PALAVRAS para a tela", "roteiro": "texto narrado completo, frases curtas, sem marcações de cena nem de tempo"}]}`;
+}
+
+async function talvezGerarSozinho() {
+  if (!sample || !lerBriefing || roteiroAuto.carregando || aba !== "briefing") return;
+  const d = lerBriefing();
+  if (!prontoParaAuto(d) || d.roteiro.trim() || proj?.otimizado) return;
+  if (assinaturaAuto(d) === roteiroAuto.assinatura) return;
+  // sem a permissão já dada, o 1º pedido precisa vir de um clique (o botão no bloco)
+  const est = permissoes ? await permissoes.state("sample").catch(() => "unavailable") : "unavailable";
+  if (est !== "granted") return;
+  gerarRoteiros();
+}
+
+async function gerarRoteiros() {
+  if (!sample || !lerBriefing || roteiroAuto.carregando) return;
+  const d = lerBriefing();
+  if (!prontoParaAuto(d)) return;
+  roteiroAuto = { assinatura: assinaturaAuto(d), carregando: true, texto: "", opcoes: [], erro: "", escolhida: -1, ctl: new AbortController() };
+  desenharRoteiroAuto();
+  try {
+    const r = await sample.json(promptRoteiros(d), {
+      cache: false, signal: roteiroAuto.ctl.signal, modelTier: d.tipo === MATCHUP ? "complex" : undefined,
+      onText: ({ text }) => {
+        roteiroAuto.texto = text;
+        const e = document.getElementById("rAutoProg");
+        if (e) e.textContent = `${Math.round(text.length / 100) / 10} mil caracteres escritos…`;
+      },
+    });
+    const opcoes = (Array.isArray(r?.opcoes) ? r.opcoes : [])
+      .filter((o) => o && String(o.roteiro || "").trim())
+      .slice(0, 3)
+      .map((o) => ({ angulo: String(o.angulo || ""), titulo: String(o.titulo || ""), gancho: String(o.gancho || ""), roteiro: String(o.roteiro).trim() }));
+    if (!opcoes.length) throw { code: "invalid_json" };
+    roteiroAuto = { ...roteiroAuto, carregando: false, opcoes, ctl: null };
+  } catch (e) {
+    if (["not_granted", "sampling_disabled", "capability_disabled", "capability_removed"].includes(e?.code)) sample = null;
+    roteiroAuto = {
+      ...roteiroAuto, carregando: false, ctl: null,
+      erro: e?.code === "cancelled" ? "" : e?.code === "invalid_json" ? "O Claude respondeu fora do formato. Tente de novo." : e?.code === "rate_limited" ? "Limite de uso do Claude atingido. Tente daqui a pouco." : "Não consegui gerar as opções agora. Tente de novo.",
+    };
+  }
+  desenharRoteiroAuto();
+}
+
+function desenharRoteiroAuto() {
+  const el = document.getElementById("rAuto");
+  if (!el || !lerBriefing) return;
+  if (!sample) {
+    el.innerHTML = `<p class="nota-rodape" style="margin:0">Roteiro automático: precisa do Claude nesta página (abra o Estúdio no claude.ai com a sua conta). Você pode escrever o roteiro à mão acima.</p>`;
+    return;
+  }
+  const d = lerBriefing();
+  const pronto = prontoParaAuto(d);
+  const a = alvoDuracao(d);
+  const mudou = roteiroAuto.opcoes.length && roteiroAuto.assinatura !== assinaturaAuto(d);
+  const falta = d.tipo === MATCHUP ? "seu campeão e pelo menos o oponente" : "o campeão ou o título";
+  let corpo = "";
+  if (roteiroAuto.carregando) {
+    corpo = `<div class="esperando" style="margin-top:10px"><div class="pulso"></div><div><b>O Claude está escrevendo 3 opções…</b><br><span class="nota-rodape" id="rAutoProg">Pensando…</span></div></div>`;
+  } else if (roteiroAuto.erro) {
+    corpo = `<div class="aviso erro" style="margin-top:10px"><span>${esc(roteiroAuto.erro)}</span></div>`;
+  } else if (roteiroAuto.opcoes.length) {
+    corpo = `${mudou ? `<div class="aviso" style="margin-top:10px"><span>Você mudou o briefing depois destas opções.</span><button class="btn peq" type="button" data-rgerar>Gerar de novo</button></div>` : ""}
+      <div class="opcoes">${roteiroAuto.opcoes.map((o, i) => {
+        const n = o.roteiro.split(/\s+/).filter(Boolean).length;
+        return `<div class="opcao ${roteiroAuto.escolhida === i ? "escolhida" : ""}">
+          <span class="selo claude" style="align-self:flex-start">${esc(o.angulo || `Opção ${i + 1}`)}</span>
+          ${o.gancho ? `<div class="gancho">${esc(o.gancho)}</div>` : ""}
+          ${o.titulo ? `<div class="meta"><b>Título:</b> ${esc(o.titulo)}</div>` : ""}
+          <div class="texto">${esc(o.roteiro)}</div>
+          <div class="meta">~${segundosDe(n)} s · ${n} palavras (alvo ${a.seg} s)</div>
+          <button class="btn peq ${roteiroAuto.escolhida === i ? "" : "ouro"}" type="button" data-rusar="${i}">${roteiroAuto.escolhida === i ? "✓ No campo de roteiro" : "Usar este"}</button>
+        </div>`;
+      }).join("")}</div>`;
+  } else if (!pronto) {
+    corpo = `<p class="nota-rodape" style="margin:8px 0 0">Preencha o tipo e ${falta}: o Claude sugere 3 roteiros com base no que você colocar aqui (tom, público, duração, orientações e fatos).</p>`;
+  } else {
+    corpo = `<p class="nota-rodape" style="margin:8px 0 0">Com o que já está preenchido, o Claude escreve 3 opções com ângulos diferentes. Você escolhe uma, edita à vontade, ou escreve a sua.</p>`;
+  }
+  el.innerHTML = `<div class="topo-auto"><b>✦ Roteiro automático</b>
+      ${roteiroAuto.carregando ? `<button class="btn peq" type="button" data-rparar>Parar</button>`
+        : `<button class="btn peq ${roteiroAuto.opcoes.length ? "" : "ouro"}" type="button" data-rgerar ${pronto ? "" : "disabled"}>${roteiroAuto.opcoes.length ? "Gerar outras 3" : "Gerar 3 opções"}</button>`}
+    </div>${corpo}`;
+  el.querySelectorAll("[data-rgerar]").forEach((b) => b.addEventListener("click", gerarRoteiros));
+  el.querySelector("[data-rparar]")?.addEventListener("click", () => roteiroAuto.ctl?.abort());
+  el.querySelectorAll("[data-rusar]").forEach((b) => b.addEventListener("click", () => {
+    const o = roteiroAuto.opcoes[+b.dataset.rusar];
+    const campo = document.getElementById("bRoteiro");
+    campo.value = o.roteiro;
+    const tit = document.getElementById("bTitulo");
+    if (tit && !tit.value.trim() && o.titulo) tit.value = o.titulo;
+    roteiroAuto.escolhida = +b.dataset.rusar;
+    roteiroAuto.assinatura = assinaturaAuto(lerBriefing()); // o título preenchido aqui não conta como mudança
+    desenharRoteiroAuto();
+    campo.scrollIntoView({ behavior: "smooth", block: "center" });
+    toast("Roteiro no campo. Ajuste à vontade e salve.");
+  }));
 }
 
 // ============================================================ 2. otimização
@@ -1506,6 +1673,7 @@ $("#btnNovo").onclick = () => {
   desinscrever.forEach((u) => u());
   desinscrever = [];
   proj = null; cfg = null; ot = null; producao = null; eventos = [];
+  roteiroAuto = { assinatura: "", carregando: false, texto: "", opcoes: [], erro: "", escolhida: -1, ctl: null };
   aba = "briefing"; assinaturaAba = "";
   try { history.replaceState(null, "", "#"); } catch {}
   desenharTudo();
@@ -1514,7 +1682,7 @@ $("#btnNovo").onclick = () => {
 desenharTudo();
 (async () => {
   const usar = (n) => (window.claude?.use ? window.claude.use(n).catch(() => null) : Promise.resolve(null));
-  [db, assets, sample, downloads, mcp, comentarios] = await Promise.all([usar("db"), usar("assets"), usar("sample"), usar("downloads"), usar("mcp"), usar("comments")]);
+  [db, assets, sample, downloads, mcp, comentarios, permissoes] = await Promise.all([usar("db"), usar("assets"), usar("sample"), usar("downloads"), usar("mcp"), usar("comments"), usar("permissions")]);
   if (!db) { carregando = false; desenharTudo(); return; }
   desenharTudo();
   assinarLista();

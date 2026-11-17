@@ -90,6 +90,17 @@ esgotado). Sem nenhum dos dois, a página mostra a frase para copiar no chat. Os
   No fim: `ponte.mjs estado <id> --audio … --render … --pedido <em> [--passo narracao=pulado]`.
 - Se algo falhar: `passos.<k> = "erro"`, `etapa: "erro"` no projeto e um evento `tipo: "erro"` com o motivo.
 
+### Roteiro automático (aba Briefing)
+
+Bloco "✦ Roteiro automático" logo abaixo do campo de roteiro: com o tipo e o campeão (ou, no matchup, seu
+campeão e o oponente) preenchidos, a página pede ao Claude (`sample`) **3 roteiros com ângulos diferentes**
+(erro comum, segredo, desafio, número + resultado, mini-história), seguindo tom, público, duração (faixa de
+palavras de `regraDuracao`), orientações e fatos, com os dados do Data Dragon dos campeões citados (no matchup,
+os 10 campeões, itens e runas). Se a permissão do `sample` já foi dada, as opções aparecem sozinhas ~2 s depois
+de o usuário parar de digitar (só com o campo de roteiro vazio e sem roteiro otimizado); senão, pelo botão
+"Gerar 3 opções". "Usar este" coloca o texto no campo de roteiro (e o título, se estiver vazio); o usuário
+edita e segue como antes. Escrever à mão continua igual.
+
 **Duração:** a do briefing (`briefing.duracao`) manda sobre as regras gerais de Shorts. Narração real ≈ 2,5
 palavras/s (90 s ≈ 205–245 palavras). A página pede essa faixa ao Claude, confere a contagem e pede um ajuste
 se ficar fora; o botão Criar vídeo também ajusta um roteiro antigo antes de produzir. Ao produzir pelo chat,
@@ -115,7 +126,7 @@ A clonagem direta do texto (modo `clonagem`) deu sotaque estranho em português 
   `cu124`. O 1º uso baixa os modelos do Hugging Face.
 - **Velocidade:** na nuvem (CPU), ~4 s de processamento por segundo de fala; com placa de vídeo, bem menos.
 - **Estado:** pronta, mas **não ativada**. O padrão continua sendo o Antonio e o Estúdio publicado ainda não
-  mostra a opção. Só ative (publicar o Estúdio com a opção e, se o usuário quiser, deixá-la como padrão,
+  mostra a opção (`VOZ_PROPRIA_ATIVA = false` em `artifact/estudio.html`). Só ative (publicar o Estúdio com a opção e, se o usuário quiser, deixá-la como padrão,
   e guardar uma cópia privada da amostra no Estúdio) quando o usuário disser que está ok.
 
 ## Dados do jogo (Data Dragon) — nunca use números de memória
