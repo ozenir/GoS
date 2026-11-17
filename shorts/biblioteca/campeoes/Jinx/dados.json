@@ -1,0 +1,170 @@
+{
+ "id": "Jinx",
+ "nome": "Jinx",
+ "titulo": "o Gatilho Desenfreado",
+ "chave": "0222",
+ "versao": "16.22.1",
+ "alcanceAtaque": 525,
+ "habilidades": {
+  "P": {
+   "nome": "Anime-se!",
+   "descricao": "Jinx recebe um aumento drástico de Velocidade de Movimento e de Velocidade de Ataque sempre que ajuda a destruir uma estrutura ou a abater um Campeão inimigo ou monstro épico da selva."
+  },
+  "Q": {
+   "nome": "Trocando!",
+   "recarga": [
+    0.9,
+    0.9,
+    0.9,
+    0.9,
+    0.9
+   ],
+   "custo": [
+    20,
+    20,
+    20,
+    20,
+    20
+   ],
+   "alcance": [
+    600,
+    600,
+    600,
+    600,
+    600
+   ],
+   "descricao": "Jinx modifica seus ataques básicos ao trocar entre Pow-Pow, sua metralhadora, e Fishbones, seu lança-mísseis. Ataques com Pow-Pow concedem Velocidade de Ataque, enquanto ataques com Fishbones causam dano em área de ação e recebem aumento de alcance, mas drenam Mana e reduzem a Velocidade de Ataque."
+  },
+  "W": {
+   "nome": "Zap!",
+   "recarga": [
+    8,
+    7,
+    6,
+    5,
+    4
+   ],
+   "custo": [
+    40,
+    45,
+    50,
+    55,
+    60
+   ],
+   "alcance": [
+    1450,
+    1450,
+    1450,
+    1450,
+    1450
+   ],
+   "descricao": "Jinx usa Zapper, sua pistola de choques, para disparar um projétil que causa dano ao primeiro inimigo atingido, reduzindo sua velocidade e revelando-o."
+  },
+  "E": {
+   "nome": "Mordidinha Flamejante!",
+   "recarga": [
+    24,
+    20.5,
+    17,
+    13.5,
+    10
+   ],
+   "custo": [
+    90,
+    90,
+    90,
+    90,
+    90
+   ],
+   "alcance": [
+    925,
+    925,
+    925,
+    925,
+    925
+   ],
+   "descricao": "Jinx arremessa uma fileira de granadas-armadilha que explodem após 5 segundos, deixando os inimigos em chamas. As Mordidinhas Flamejantes morderão campeões inimigos que caminharem sobre elas, enraizando-os no local."
+  },
+  "R": {
+   "nome": "Super Mega Míssil da Morte!",
+   "recarga": [
+    85,
+    65,
+    45
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    25000,
+    25000,
+    25000
+   ],
+   "descricao": "Jinx dispara um super-míssil no mapa, que acumula dano ao longo de seu trajeto. O míssil explodirá ao colidir com um campeão inimigo, causando dano a ele e a inimigos ao seu redor, com base em sua Vida removida."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 14.23,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 13.73,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 6.37,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 9.03,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 7.47,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  }
+ }
+}

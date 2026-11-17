@@ -51,7 +51,30 @@ export const configPadrao = () => ({
   tema: { cor1: "#010A13", cor2: "#0A323C", corDestaque: "#C8AA6E" },
   hookDuracao: 2.4,
   ctaAtivo: true,
+  // "quadro" = quadro de investigação; "viral" = imagem real em tela cheia com cortes rápidos (docs/virais.md)
+  layout: "quadro",
 });
+
+// mídia do campeão em destaque na biblioteca (biblioteca/campeoes/<Id>/): splash e vídeos das habilidades
+const normNome = (s) => (s || "").normalize("NFD").replace(/[^A-Za-z0-9]/g, "").toLowerCase();
+export function midiaDoCampeao(nome, url) {
+  if (!nome) return null;
+  const bib = join(RAIZ, "biblioteca", "campeoes");
+  if (!existsSync(bib)) return null;
+  const n = normNome(nome);
+  const id = readdirSync(bib).find((cid) => normNome(cid) === n || normNome(ler(join(bib, cid, "dados.json"), {}).nome) === n);
+  if (!id) return null;
+  const dd = ler(join(bib, id, "dados.json"), {});
+  const rel = (f) => `biblioteca/campeoes/${id}/${f}`;
+  return {
+    campeao: dd.nome || id,
+    splash: existsSync(join(bib, id, "splash.jpg")) ? url(rel("splash.jpg")) : null,
+    videos: Object.entries(dd.videos || {}).map(([nomeV, v]) => ({
+      url: url(rel(v.arquivo)), dur: v.duracao || 4, foco: v.foco, w: v.w, h: v.h,
+      letra: nomeV[0], nome: dd.habilidades?.[nomeV[0]]?.nome,
+    })),
+  };
+}
 
 const ler = (arq, padrao = null) => {
   try {
@@ -219,6 +242,8 @@ export function props(id, base = "") {
     hook: { texto: ot.hook?.textoTela || b.titulo || "", duracao: cfg.hookDuracao },
     cta: { texto: ot.cta?.texto || "", ativo: cfg.ctaAtivo },
     patch: patchAtual(),
+    layout: cfg.layout || "quadro",
+    midia: midiaDoCampeao(b.campeao || b.matchup?.campeao, url),
   };
 }
 

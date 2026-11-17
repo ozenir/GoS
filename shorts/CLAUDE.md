@@ -333,3 +333,18 @@ baixa referências — só para estudo, não republicar conteúdo de terceiros.
 
 Gratuito para pessoa física e empresas com até 3 funcionários. Acima disso exige
 licença paga (remotion.dev/license).
+
+## Estilo viral (painel ⚡ Estilo viral)
+
+Análise completa em `docs/virais.md`. Resumo: `config.layout` = `"quadro"` (padrão) ou `"viral"`. No viral, o fundo
+é imagem real em tela cheia (vídeos das habilidades e splash do campeão em destaque, da biblioteca), corte a cada
+2,4 s, provas viram figurinhas no topo e a legenda fica com 2 palavras. Os botões “Gerar prévia” e “Aprovar e produzir
+final” usam o mesmo pedido do Criar vídeo (comentário “[Estúdio Shorts · botão Criar vídeo] …”), com o config já em
+`layout: "viral"`.
+
+- Pedido de produção viral de um campeão que não está em `config/biblioteca`: rode `scripts/biblioteca.py campeao X`
+  (o render já funciona), e para o player da página envie splash e vídeos como assets e atualize `config/biblioteca`
+  com `scripts/biblioteca_estudio.py` (passo a passo em `docs/virais.md`).
+- Comentário “[Estúdio Shorts · Estilo viral] busca de novo…”: rode `scripts/virais.py`, veja os mais rápidos
+  (baixe só TikTok; não contorne o bloqueio de download do YouTube), atualize `dados/virais/atual.json`
+  (modelos, receita, comparação) e grave em `virais/atual`. Responda e resolva o comentário.

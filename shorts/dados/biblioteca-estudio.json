@@ -1,0 +1,322 @@
+{
+ "campeoes": {
+  "Jhin": {
+   "nome": "Jhin",
+   "splash": "20a2157ebe1e193cf61213ed23fb5e93",
+   "videos": [
+    {
+     "asset": "7b4bf3c9f1bbb71c9fbe469b678bdf74",
+     "dur": 10.27,
+     "foco": [
+      0.54,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "P",
+     "nome": "Sussurro"
+    },
+    {
+     "asset": "2d635cbf9a5061c06cd51201e361d564",
+     "dur": 4.63,
+     "foco": [
+      0.55,
+      0.67
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "Q",
+     "nome": "Granada Dançante"
+    },
+    {
+     "asset": "574cf1eb5d7f2364c41ffe752a1d35b3",
+     "dur": 7.47,
+     "foco": [
+      0.55,
+      0.64
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "W",
+     "nome": "Florescer Mortal"
+    },
+    {
+     "asset": "498b0307ae1e5374c5678f7527eaae52",
+     "dur": 9.4,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "E",
+     "nome": "Audiência Cativa"
+    },
+    {
+     "asset": "8883679c6003d189da5fa323c73d675b",
+     "dur": 14.7,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "R",
+     "nome": "Aclamação"
+    }
+   ]
+  },
+  "Xerath": {
+   "nome": "Xerath",
+   "splash": "251648ab987290e92ebe996105261496",
+   "videos": [
+    {
+     "asset": "48d2af708417e7411ee06b748b173d96",
+     "dur": 4.23,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "P",
+     "nome": "Oscilação de Mana"
+    },
+    {
+     "asset": "9b44dd6023cd11ae884cb7eebdb420c9",
+     "dur": 7.53,
+     "foco": [
+      0.58,
+      0.63
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "Q",
+     "nome": "Pulso Arcano"
+    },
+    {
+     "asset": "6cf29bf9aa113ea0d96155f11518126b",
+     "dur": 7.33,
+     "foco": [
+      0.62,
+      0.55
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "W",
+     "nome": "Olho da Destruição"
+    },
+    {
+     "asset": "81d49d34efdd9a98d2cc583361e8222e",
+     "dur": 4.33,
+     "foco": [
+      0.59,
+      0.63
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "E",
+     "nome": "Orbe Eletrizante"
+    },
+    {
+     "asset": "4f01c7860034cb9213e559ac17a3cf2a",
+     "dur": 13.87,
+     "foco": [
+      0.57,
+      0.64
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "R",
+     "nome": "Ritual Arcano"
+    }
+   ]
+  },
+  "Ezreal": {
+   "nome": "Ezreal",
+   "splash": "d4b1ae838d987cdc59d5c80bd73a0cc6",
+   "videos": [
+    {
+     "asset": "2af801487969d2afacbea9707b7b63a1",
+     "dur": 6.67,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "Q",
+     "nome": "Disparo Místico"
+    },
+    {
+     "asset": "a8b6c7770c274a0b74e904ad2ffdf42d",
+     "dur": 3.8,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "W",
+     "nome": "Fluxo Essencial"
+    },
+    {
+     "asset": "d3f06ad7f96be7c24bc2fe7aa041576f",
+     "dur": 2.03,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "E",
+     "nome": "Translocação Arcana"
+    },
+    {
+     "asset": "957bc7353a0da19610ac712e9e718cb1",
+     "dur": 3.6,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "R",
+     "nome": "Barragem Incendiária"
+    }
+   ]
+  },
+  "Taliyah": {
+   "nome": "Taliyah",
+   "splash": "4d8b8c614a1b18edfba8efd236f705ab",
+   "videos": [
+    {
+     "asset": "4a003d92c31ebf61ef2c6d1c738e7056",
+     "dur": 10.0,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "P",
+     "nome": "Deslizar em Pedras"
+    },
+    {
+     "asset": "f37285013cc9967d85e4823d9ed748cd",
+     "dur": 7.67,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "Q",
+     "nome": "Voleio Entrelaçado"
+    },
+    {
+     "asset": "ae40c7538239c4a6973ff7decf4d7f0b",
+     "dur": 5.47,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "W",
+     "nome": "Empurrão Sísmico"
+    },
+    {
+     "asset": "bf5b441d1cd19c3c73aca4001d522ea3",
+     "dur": 8.27,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "E",
+     "nome": "Terra Desfiada"
+    },
+    {
+     "asset": "e2c2c065342f3a711c770a3bd78a8afb",
+     "dur": 12.83,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "R",
+     "nome": "Muro da Tecelã"
+    }
+   ]
+  },
+  "Jinx": {
+   "nome": "Jinx",
+   "splash": "fdeb528a79aabf682c1c142a0c75639a",
+   "videos": [
+    {
+     "asset": "e4a5cfd6f33470e7c8d5c0441e835f8f",
+     "dur": 14.23,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "P",
+     "nome": "Anime-se!"
+    },
+    {
+     "asset": "6ed6673acc89fba4d8b0a0096b393a1d",
+     "dur": 13.73,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "Q",
+     "nome": "Trocando!"
+    },
+    {
+     "asset": "c75605f83ff321a6844b2b7364eecb3e",
+     "dur": 6.37,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "W",
+     "nome": "Zap!"
+    },
+    {
+     "asset": "73de876675f73b7073e480a60132b6f8",
+     "dur": 9.03,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "E",
+     "nome": "Mordidinha Flamejante!"
+    },
+    {
+     "asset": "04229769291f73fc276e153ba3ed07bf",
+     "dur": 7.47,
+     "foco": [
+      0.55,
+      0.65
+     ],
+     "w": 1056,
+     "h": 720,
+     "letra": "R",
+     "nome": "Super Mega Míssil da Morte!"
+    }
+   ]
+  }
+ }
+}

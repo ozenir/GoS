@@ -174,6 +174,21 @@ code { background: var(--campo); padding: 1px 6px; border-radius: 5px; color: va
 
 /* temas em alta */
 .alta { margin-bottom: 14px; }
+.viral .passos-v { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 12px 0; }
+.viral .passo-v { border: 1px solid var(--borda, #2a3a44); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.viral .passo-v b { font-size: .95rem; }
+.viral .passo-v.feito { border-color: #2ecc71; }
+.viral .modelos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin: 10px 0; padding: 0; list-style: none; }
+.viral .modelo { border: 1px solid var(--borda, #2a3a44); border-radius: 12px; padding: 10px 12px; }
+.viral .modelo h4 { margin: 4px 0; font-size: .95rem; line-height: 1.25; overflow-wrap: anywhere; }
+.viral .modelo .num { color: var(--ouro, #C8AA6E); font-weight: 700; font-size: .85rem; }
+.viral .modelo ul { margin: 6px 0 0; padding-left: 1.1rem; font-size: .85rem; }
+.viral .tabela { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.viral .tabela th, .viral .tabela td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--borda, #2a3a44); vertical-align: top; }
+.viral .rolagem { overflow-x: auto; }
+.estilos { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.estilos label { border: 1px solid var(--borda, #2a3a44); border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; }
+.estilos label:has(input:checked) { border-color: var(--ouro, #C8AA6E); }
 .alta-topo { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .alta-topo h2 { margin: 0; flex: 1 1 220px; }
 .temas { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -237,6 +252,7 @@ code { background: var(--campo); padding: 1px 6px; border-radius: 5px; color: va
     <div class="marca"><span class="losango"></span>ESTÚDIO <b>SHORTS</b></div>
     <select id="seletor" aria-label="Escolher vídeo"></select>
     <button id="btnAlta" class="btn" type="button">🔥 Em alta</button>
+    <button id="btnViral" class="btn" type="button">⚡ Estilo viral</button>
     <button id="btnNovo" class="btn ouro" type="button">+ Novo vídeo</button>
   </div>
 </header>
@@ -251,6 +267,7 @@ code { background: var(--campo); padding: 1px 6px; border-radius: 5px; color: va
   </nav>
 
   <section class="cartao destaque alta" id="alta" hidden></section>
+  <section class="cartao destaque alta viral" id="viral" hidden></section>
   <section class="cartao destaque auto" id="auto" aria-live="polite" hidden></section>
 
   <main class="grade">
@@ -359,7 +376,14 @@ const configPadrao = () => ({
   efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true, patch: true, quadro: true },
   tema: { cor1: "#010A13", cor2: "#0A323C", corDestaque: "#C8AA6E" },
   hookDuracao: 2.4, ctaAtivo: true,
+  layout: "quadro", // "quadro" = quadro de investigação; "viral" = imagem real em tela cheia, cortes a cada 2,4 s
 });
+// predefinição do estilo viral (o que os Shorts de LoL que mais crescem fazem; ver painel ⚡ Estilo viral)
+const VIRAL = {
+  estilo: { tamanho: 108, palavrasPorBloco: 2, posicaoY: 0.62, corTexto: "#FFFFFF", corFalada: "#FFE600", corContorno: "#000000", caixaAlta: true },
+  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true },
+  hookDuracao: 2,
+};
 
 // ============================================================ utilidades
 const $ = (s, el = document) => el.querySelector(s);
@@ -400,6 +424,9 @@ let db = null, assets = null, sample = null, downloads = null, mcp = null, comen
 let claudeCfg = null;     // config/claude: {sessao} — sessão do Claude Code que recebe os pedidos
 let auto = null;          // criação automática em andamento nesta aba: {rodando, fase, erro, avisando, falhaAviso}
 let permissoes = null;
+let biblioteca = null;    // config/biblioteca: splash e vídeos das habilidades por campeão (assets), para o estilo viral
+let virais = null;        // virais/atual: modelos de Shorts de LoL que mais cresceram e a receita aplicada
+let viralAberto = false, viralPedido = "";
 let tendencias = null;    // tendencias/atual: os 10 temas mais em alta do LoL (escrito pelo Claude Code)
 let briefingInicial = null; // pré-preenchimento do briefing de um vídeo novo (ex.: tema em alta)
 let altaAberta = false, altaPedido = "";    // capacidade embutida "permissions" (saber se o Claude já pode ser chamado sem clique)
@@ -490,6 +517,25 @@ function propsDoVideo() {
     hook: { texto: ot?.hook?.textoTela || proj.titulo || "", duracao: cfg.hookDuracao },
     cta: { texto: ot?.cta?.texto || "", ativo: cfg.ctaAtivo },
     patch: ddragon ? `Patch ${ddragon.patch}` : "",
+    layout: cfg.layout || "quadro",
+    midia: midiaDoProjeto(),
+  };
+}
+
+// campeão em destaque do vídeo (briefing ou matchup) e a mídia dele na biblioteca do Estúdio
+const campeaoDoProjeto = () => proj?.briefing?.campeao || proj?.briefing?.matchup?.campeao || "";
+function bibliotecaDe(nome) {
+  if (!biblioteca?.campeoes || !nome) return null;
+  const n = norm(nome);
+  const e = Object.entries(biblioteca.campeoes).find(([id, c]) => norm(id) === n || norm(c.nome || "") === n);
+  return e ? e[1] : null;
+}
+function midiaDoProjeto() {
+  const c = bibliotecaDe(campeaoDoProjeto());
+  if (!c) return null;
+  return {
+    campeao: c.nome, splash: blobUrl(c.splash),
+    videos: (c.videos || []).map((v) => ({ url: blobUrl(v.asset), dur: v.dur || 4, foco: v.foco, w: v.w, h: v.h, letra: v.letra, nome: v.nome })),
   };
 }
 
@@ -547,6 +593,7 @@ function abrir(id, novaAba) {
     if (!aba) aba = { briefing: "briefing", otimizando: "otimizacao", aguardando_claude: "otimizacao", otimizado: "otimizacao", aguardando_producao: "exportar", produzindo: "exportar", pronto: "exportar" }[d.etapa] || "roteiro";
     await recalcularHash();
     redesenharSePreciso();
+    if (viralAberto) desenharViral();
     desenharSeletor();
   }, (e) => toast(msgErro(e))));
   desinscrever.push(db.collection(`projetos/${id}/eventos`).orderBy("t", "desc").limit(60).onSnapshot((s) => {
@@ -589,6 +636,7 @@ function desenharTudo() {
   desenharAba();
   desenharStatus();
   atualizarPlayer();
+  if (viralAberto) desenharViral();
 }
 
 function desenharEtapas() {
@@ -1284,6 +1332,13 @@ function assinarConfig() {
   }, () => {});
   db.doc("config/canal").onSnapshot((s) => { canal = s.exists ? s.data() : { nome: "" }; if (aba === "exportar") desenharAba(); }, () => {});
   db.doc("config/claude").onSnapshot((s) => { claudeCfg = s.exists ? s.data() : null; desenharAuto(); }, () => {});
+  db.doc("config/biblioteca").onSnapshot((s) => { biblioteca = s.exists ? s.data() : null; if (proj && cfg) atualizarPlayer(); desenharViral(); }, () => {});
+  db.doc("virais/atual").onSnapshot((s) => {
+    const novo = s.exists ? s.data() : null;
+    if (viralPedido && novo?.coletadoEm && novo.coletadoEm !== virais?.coletadoEm) viralPedido = "";
+    virais = novo;
+    desenharViral();
+  }, () => {});
   db.doc("tendencias/atual").onSnapshot((s) => {
     const novo = s.exists ? s.data() : null;
     if (altaPedido && novo?.coletadoEm && novo.coletadoEm !== tendencias?.coletadoEm) altaPedido = "";
@@ -1318,6 +1373,14 @@ function abaVisual(el) {
   const cor = (c, rot) => `<label>${rot}<input type="color" data-cfg="${c}" value="${pegar(cfg, c)}"></label>`;
   el.innerHTML = `
   ${avisoNarracao()}
+  <div class="cartao">
+    <h3>Estilo do vídeo</h3>
+    <div class="estilos">
+      <label><input type="radio" name="layout" value="quadro" ${cfg.layout !== "viral" ? "checked" : ""}><span><b>Quadro de investigação</b><br><span class="nota-rodape">Provas, fotos e fio vermelho num mural. Bom para explicar com calma.</span></span></label>
+      <label><input type="radio" name="layout" value="viral" ${cfg.layout === "viral" ? "checked" : ""}><span><b>⚡ Viral (tela cheia)</b><br><span class="nota-rodape">Vídeos das habilidades e splash do campeão, corte a cada 2,4 s, números como figurinhas.</span></span></label>
+    </div>
+    ${cfg.layout === "viral" ? `<p class="nota-rodape">${notaMidiaViral()}</p>` : ""}
+  </div>
   <div class="cartao destaque">
     <h2>Voz</h2>
     <div class="linha2">
@@ -1385,6 +1448,11 @@ function abaVisual(el) {
       salvarConfig();
     });
   });
+  el.querySelectorAll("input[name=layout]").forEach((r) => r.addEventListener("change", () => {
+    if (r.value === "viral") aplicarViral(false);
+    else voltarQuadro(false);
+    abaVisual(el);
+  }));
   el.querySelectorAll("input[name=fundo]").forEach((r) => r.addEventListener("change", () => {
     cfg.fundo.tipo = r.value;
     if (r.value === "video" && !cfg.fundo.asset) toast("Escolha ou envie um vídeo de gameplay");
@@ -1791,6 +1859,124 @@ async function pedirTemas() {
   }
 }
 
+// ============================================================ estilo viral
+function notaMidiaViral() {
+  const nome = campeaoDoProjeto();
+  const c = bibliotecaDe(nome);
+  if (c) return `Mídia de ${esc(c.nome)}: splash e ${c.videos.length} vídeos de habilidade. A habilidade citada na fala aparece na hora.`;
+  if (nome) return `${esc(nome)} ainda não está na biblioteca do Estúdio. Ao produzir, o Claude Code baixa os vídeos das habilidades e a splash.`;
+  return "Sem campeão no briefing: o fundo usa as fotos das provas e o seu gameplay, se houver.";
+}
+
+function aplicarViral(avisar = true) {
+  if (!cfg) return;
+  if (cfg.layout !== "viral") cfg.antesViral = { estilo: clone(cfg.estilo), efeitos: clone(cfg.efeitos), hookDuracao: cfg.hookDuracao };
+  cfg.layout = "viral";
+  Object.assign(cfg.estilo, VIRAL.estilo);
+  Object.assign(cfg.efeitos, VIRAL.efeitos);
+  cfg.hookDuracao = VIRAL.hookDuracao;
+  atualizarProj({ config: clone(cfg) }); // grava já: um aviso no meio do caminho não pode desfazer a troca
+  recalcularEPlayer();
+  evento("Estilo viral aplicado (tela cheia, cortes a cada 2,4 s, legenda de 2 palavras)", "info");
+  if (avisar) toast("Estilo viral aplicado. Dê play no celular ao lado para conferir.");
+  desenharViral();
+}
+function voltarQuadro(avisar = true) {
+  if (!cfg) return;
+  const a = cfg.antesViral;
+  if (a) { cfg.estilo = { ...cfg.estilo, ...a.estilo }; cfg.efeitos = { ...cfg.efeitos, ...a.efeitos }; cfg.hookDuracao = a.hookDuracao; }
+  cfg.layout = "quadro";
+  delete cfg.antesViral;
+  atualizarProj({ config: clone(cfg) }); // grava já: um aviso no meio do caminho não pode desfazer a troca
+  recalcularEPlayer();
+  if (avisar) toast("Voltou ao quadro de investigação.");
+  desenharViral();
+}
+async function produzirViral(qualidade) {
+  if (!proj?.id || !cfg) { toast("Abra ou crie um vídeo primeiro."); return; }
+  if (cfg.layout !== "viral") aplicarViral(false);
+  guardarQualidade(qualidade);
+  const sel = $("#aQual");
+  if (sel) sel.value = qualidade;
+  viralAberto = false;
+  desenharViral();
+  $("#auto")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  await criarVideo();
+}
+
+function desenharViral() {
+  const el = $("#viral");
+  if (!el) return;
+  $("#btnViral")?.classList.toggle("ouro", viralAberto);
+  if (!viralAberto || !db) { el.hidden = true; return; }
+  el.hidden = false;
+  const v = virais;
+  const aplicado = cfg?.layout === "viral";
+  const temProj = !!(proj?.id && cfg);
+  const fmtN = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(".", ",")} mi` : n >= 1e3 ? `${Math.round(n / 1e3)} mil` : String(n || 0));
+  const quando = v?.coletadoEm ? new Date(v.coletadoEm).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+  el.innerHTML = `
+    <div class="alta-topo">
+      <h2>⚡ Estilo viral</h2>
+      <button class="btn peq" type="button" id="viralAtualizar" ${viralPedido ? "disabled" : ""}>${viralPedido ? "Pedido enviado…" : "Buscar modelos de novo"}</button>
+      <button class="btn peq" type="button" id="viralFechar">Fechar</button>
+    </div>
+    <p class="nota-rodape" style="margin:6px 0 0">${v ? `${esc(v.janela || "")} · coletado em ${esc(quando)}. ${esc(v.comoLer || "")}` : "Ainda não há modelos coletados. Clique em “Buscar modelos de novo”."}</p>
+    ${viralPedido ? `<div class="aviso" style="margin-top:10px"><span>${esc(viralPedido)}</span></div>` : ""}
+    <div class="passos-v">
+      <div class="passo-v ${aplicado ? "feito" : ""}">
+        <b>1. Aplicar no vídeo aberto</b>
+        <span class="nota-rodape">${temProj ? `“${esc(proj.titulo || proj.id)}”. ${notaMidiaViral()}` : "Abra ou crie um vídeo primeiro."}</span>
+        ${aplicado
+          ? `<span class="nota-rodape">✓ Aplicado. Dê play no celular ao lado para conferir.</span><button class="btn peq" type="button" id="viralVoltar">Voltar ao quadro</button>`
+          : `<button class="btn peq ouro" type="button" id="viralAplicar" ${temProj ? "" : "disabled"}>Aplicar estilo viral</button>`}
+      </div>
+      <div class="passo-v">
+        <b>2. Ver como fica</b>
+        <span class="nota-rodape">O Claude Code renderiza uma prévia 540p com narração. Ela aparece em Produzir.</span>
+        <button class="btn peq" type="button" id="viralPrevia" ${temProj && podeAvisar() ? "" : "disabled"}>Gerar prévia</button>
+      </div>
+      <div class="passo-v">
+        <b>3. Aprovar</b>
+        <span class="nota-rodape">Gostou? Produz o vídeo final 1080p no mesmo estilo.</span>
+        <button class="btn peq ouro" type="button" id="viralFinal" ${temProj && podeAvisar() ? "" : "disabled"}>Aprovar e produzir final</button>
+      </div>
+    </div>
+    ${(v?.receita || []).length ? `<h3>O que copiamos dos virais</h3><ul>${v.receita.map((r) => `<li>${esc(r)}</li>`).join("")}</ul>` : ""}
+    ${(v?.modelos || []).length ? `<h3>Modelos que mais cresceram</h3><ul class="modelos">${v.modelos.map((m) => `
+      <li class="modelo">
+        <span class="num">${esc(m.plataforma)} · ${esc(m.canal)} · ${fmtN(m.views)} views · ${fmtN(m.velocidade)}/h${m.duracao ? ` · ${m.duracao} s` : ""}</span>
+        <h4><a href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.titulo)}</a></h4>
+        <span class="nota-rodape">${esc(m.formato)}</span>
+        ${(m.copiamos || []).length ? `<ul>${m.copiamos.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
+      </li>`).join("")}</ul>` : ""}
+    ${(v?.comparacao || []).length ? `<h3>Eles × o Estúdio</h3><div class="rolagem"><table class="tabela"><thead><tr><th></th><th>Os virais</th><th>Antes</th><th>Agora (estilo viral)</th></tr></thead><tbody>
+      ${v.comparacao.map((c) => `<tr><th>${esc(c.item)}</th><td>${esc(c.eles)}</td><td>${esc(c.antes)}</td><td>${esc(c.agora)}</td></tr>`).join("")}</tbody></table></div>` : ""}`;
+  $("#viralFechar").onclick = () => { viralAberto = false; desenharViral(); };
+  $("#viralAtualizar").onclick = pedirVirais;
+  $("#viralAplicar")?.addEventListener("click", () => { aplicarViral(); if (aba === "visual") { assinaturaAba = ""; redesenharSePreciso(); } });
+  $("#viralVoltar")?.addEventListener("click", () => { voltarQuadro(); if (aba === "visual") { assinaturaAba = ""; redesenharSePreciso(); } });
+  $("#viralPrevia")?.addEventListener("click", () => produzirViral("previa"));
+  $("#viralFinal")?.addEventListener("click", () => produzirViral("final"));
+}
+
+async function pedirVirais() {
+  const msg = "[Estúdio Shorts · Estilo viral] busca de novo os Shorts e TikToks de LoL que mais cresceram (rode scripts/virais.py, analise os melhores e grave em virais/atual).";
+  viralPedido = "Pedido enviado ao Claude Code. Os modelos atualizam sozinhos aqui quando ele terminar.";
+  desenharViral();
+  try {
+    let pode = "off";
+    try { pode = comentarios ? await comentarios.canSendToClaude() : "off"; } catch { pode = "off"; }
+    if (pode === "available") { await comentarios.sendToClaude({ anchor: await comentarios.anchorFor($("#viral")), text: msg }); return; }
+    if (mcp && claudeCfg?.sessao) { await mcp.callTool(CONECTOR, "send_message", { session_id: claudeCfg.sessao, message: msg }, { cache: false }); return; }
+    throw new Error("sem canal");
+  } catch {
+    viralPedido = "";
+    desenharViral();
+    toast("Não consegui avisar o Claude Code. Peça no chat: “busca os modelos virais de novo”.");
+  }
+}
+
 // ============================================================ início
 document.querySelectorAll("#etapas button").forEach((b) => b.addEventListener("click", () => {
   aba = b.dataset.aba;
@@ -1799,6 +1985,7 @@ document.querySelectorAll("#etapas button").forEach((b) => b.addEventListener("c
 }));
 $("#seletor").onchange = (e) => { if (e.target.value) abrir(e.target.value); };
 $("#btnAlta").onclick = () => { altaAberta = !altaAberta; desenharAlta(); if (altaAberta) $("#alta").scrollIntoView({ behavior: "smooth", block: "start" }); };
+$("#btnViral").onclick = () => { viralAberto = !viralAberto; desenharViral(); if (viralAberto) $("#viral").scrollIntoView({ behavior: "smooth", block: "start" }); };
 let manterInicial = false;
 $("#btnNovo").onclick = () => {
   if (!manterInicial) briefingInicial = null;

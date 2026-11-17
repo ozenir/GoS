@@ -425,7 +425,7 @@ export const LolShort: React.FC<LolShortProps> = (p) => {
       })}
 
       {/* estilo viral: provas viram figurinhas no topo, na hora da palavra-gatilho */}
-      {viral ? <Figurinhas cenas={cenas} /> : null}
+      {viral ? <Figurinhas cenas={cenas} depoisDe={p.efeitos.hook && p.hook.texto ? hookDur / fps + 0.1 : 0} /> : null}
 
       {/* legendas */}
       {cenas.flatMap((c, ci) =>

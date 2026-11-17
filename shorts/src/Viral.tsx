@@ -75,6 +75,13 @@ export function montarTrilhaViral(cenas: CenaV[], duracao: number, midia: MidiaV
     }
     // sem habilidade citada: gameplay do usuário (se houver), splash e vídeos em rodízio
     const opcoes: Omit<Trecho, "de" | "ate" | "k">[] = [];
+    // sem campeão em destaque (ex.: notícia), as fotos da própria cena viram o fundo; com campeão, o foco é
+    // sempre ele: fotos de outros campeões ficam só na figurinha
+    const fotos = videos.length || midia?.splash ? [] : (cena?.provas || []).filter((pr) => pr.tipo === "foto" && pr.img).map((pr) => pr.img as string);
+    if (fotos.length) {
+      out.push({ ...base, tipo: "splash", url: fotos[k % fotos.length], ini: 0 });
+      continue;
+    }
     if (gameplay) opcoes.push({ tipo: "gameplay", url: gameplay.url, ini: (cena?.clipeInicio ?? (gameplay.inicio || 0) + t) });
     if (midia?.splash) opcoes.push({ tipo: "splash", url: midia.splash, ini: 0 });
     for (const v of videos) opcoes.push({ tipo: "video", url: v.url, dur: v.dur, foco: v.foco, w: v.w, h: v.h, ini: (k * 1.3) % Math.max(0.1, v.dur - SEG_VIRAL) });
@@ -103,7 +110,7 @@ function enquadrarFaixa(t: Trecho, larg: number, zoom: number): React.CSSPropert
 const FundoDesfocado: React.FC<{ url?: string | null }> = ({ url }) =>
   url ? (
     <AbsoluteFill style={{ overflow: "hidden" }}>
-      <Img src={url} style={{ position: "absolute", inset: -80, width: "calc(100% + 160px)", height: "calc(100% + 160px)", objectFit: "cover", filter: "blur(28px) brightness(.55) saturate(1.2)" }} />
+      <Img src={url} style={{ position: "absolute", inset: -80, width: "calc(100% + 160px)", height: "calc(100% + 160px)", objectFit: "cover", filter: "blur(28px) brightness(.7) saturate(1.25)" }} />
     </AbsoluteFill>
   ) : (
     <AbsoluteFill style={{ background: "radial-gradient(circle at 50% 40%, #12304a, #05070c 70%)" }} />
@@ -172,7 +179,7 @@ export const FundoViral: React.FC<{ cenas: CenaV[]; duracao: number; midia: Midi
 
 const CORES: Record<string, string> = { ouro: "#C8AA6E", verde: "#2ECC71", vermelho: "#E53935", azul: "#3FA9F5", amarelo: "#FFD54F" };
 
-function momentos(cenas: CenaV[]) {
+function momentos(cenas: CenaV[], depoisDe: number) {
   const out: { p: ProvaT; t: number; ate: number }[] = [];
   cenas.forEach((c, ci) => {
     let cursor = c.inicio;
@@ -184,7 +191,7 @@ function momentos(cenas: CenaV[]) {
         const w = c.palavras.find((x) => x.inicio >= cursor - 0.05 && norm(x.texto).replace(/[^\w%+/]/g, "").startsWith(g));
         if (w) t = Math.max(c.inicio, w.inicio - 0.1);
       }
-      t = Math.max(t, cursor);
+      t = Math.max(t, cursor, depoisDe); // não briga com o gancho do começo
       cursor = t + 0.25;
       out.push({ p, t, ate: Math.min(t + 2.6, (cenas[ci + 1]?.inicio ?? c.fim + 0.6)) });
     });
@@ -237,9 +244,9 @@ const Figurinha: React.FC<{ p: ProvaT }> = ({ p }) => {
   );
 };
 
-export const Figurinhas: React.FC<{ cenas: CenaV[] }> = ({ cenas }) => {
+export const Figurinhas: React.FC<{ cenas: CenaV[]; depoisDe?: number }> = ({ cenas, depoisDe = 0 }) => {
   const { fps } = useVideoConfig();
-  const lista = useMemo(() => momentos(cenas), [cenas]);
+  const lista = useMemo(() => momentos(cenas, depoisDe), [cenas, depoisDe]);
   return (
     <AbsoluteFill style={{ pointerEvents: "none" }}>
       {lista.map((m, i) => (
