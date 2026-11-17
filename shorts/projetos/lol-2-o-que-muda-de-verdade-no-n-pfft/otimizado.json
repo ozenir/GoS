@@ -1,0 +1,496 @@
+{
+  "cenas": [
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "LoL 2",
+        "exagero"
+      ],
+      "narracao": "LoL 2 é exagero, e eu provo em três argumentos.",
+      "textoTela": "LOL 2?",
+      "visual": "Logo do New Dawn do teaser oficial com zoom rápido, e um 'LoL 2?' riscado na tela",
+      "provas": [
+        {
+          "tipo": "foto",
+          "rotulo": "LoL 2?",
+          "imgArquivo": "biblioteca/eventos/new-dawn/teaser-nova-alvorada.jpg",
+          "imgAsset": "7443fccac557da4c22563619733aa0ce",
+          "gatilho": "LoL",
+          "carimbo": "EXAGERO?"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "New Dawn",
+        "Worlds 2026"
+      ],
+      "narracao": "A Riot acabou de revelar o New Dawn na final do Worlds 2026.",
+      "textoTela": "WORLDS 2026",
+      "visual": "Trecho do teaser oficial exibido na final do Worlds",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "NEW DAWN",
+          "detalhe": "revelado na final\ndo Worlds 2026",
+          "gatilho": "revelar",
+          "cor": "ouro"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "2027",
+        "reformulados"
+      ],
+      "narracao": "É uma atualização para 2027, com cliente novo, mapa e visual reformulados.",
+      "textoTela": "2027",
+      "visual": "Montagem rápida com três ícones: cliente, mapa e visual, aparecendo um por vez",
+      "provas": [
+        {
+          "tipo": "placar",
+          "rotulo": "2027",
+          "detalhe": "cliente novo\nmapa e visual refeitos",
+          "gatilho": "atualização",
+          "cor": "ouro"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "muita coisa"
+      ],
+      "narracao": "Parece muita coisa, né? E é! Mas calma, vem comigo.",
+      "textoTela": "",
+      "visual": "Reação exagerada com corte rápido e zoom no rosto, ou meme de choque",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "CALMA, VEM COMIGO",
+          "gatilho": "calma",
+          "cor": "amarelo"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "um",
+        "jogo novo"
+      ],
+      "narracao": "Argumento um: a Riot não apresentou isso como um jogo novo.",
+      "textoTela": "ARGUMENTO 1",
+      "visual": "Contador 1/3 na tela sobre imagem do anúncio oficial",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "ARGUMENTO 1",
+          "detalhe": "não é um jogo novo",
+          "gatilho": "Argumento",
+          "cor": "verde"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "mesmo LoL"
+      ],
+      "narracao": "É uma atualização do mesmo LoL que você já joga.",
+      "textoTela": "",
+      "visual": "Gameplay atual do Summoner's Rift com o selo 'mesmo jogo'",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "MESMO LOL",
+          "gatilho": "mesmo",
+          "cor": "verde"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "Meddler",
+        "mantidos"
+      ],
+      "narracao": "Argumento dois: o Meddler disse que todos os campeões e skins serão mantidos.",
+      "textoTela": "ARGUMENTO 2",
+      "visual": "Contador 2/3 e montagem de campeões e skins com um selo de 'mantidos'",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "ARGUMENTO 2",
+          "detalhe": "Meddler: campeões e\nskins continuam",
+          "gatilho": "Argumento",
+          "cor": "verde"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "do zero"
+      ],
+      "narracao": "Se fosse outro jogo, você começaria do zero.",
+      "textoTela": "",
+      "visual": "Tela de inventário esvaziando, efeito de reset",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "JOGO NOVO?",
+          "detalhe": "começaria do zero",
+          "gatilho": "zero",
+          "cor": "vermelho",
+          "riscar": true
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "continuam"
+      ],
+      "narracao": "Aqui, seus campeões e suas skins continuam com você.",
+      "textoTela": "",
+      "visual": "Inventário cheio voltando, com brilho de confirmação",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "SUAS SKINS FICAM",
+          "gatilho": "skins",
+          "cor": "verde"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "New Dawn",
+        "Nova Alvorada"
+      ],
+      "narracao": "Argumento três: o nome é New Dawn, Nova Alvorada.",
+      "textoTela": "ARGUMENTO 3",
+      "visual": "Contador 3/3 e o nome New Dawn com a tradução aparecendo embaixo",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "ARGUMENTO 3",
+          "detalhe": "New Dawn =\nNova Alvorada",
+          "gatilho": "Argumento",
+          "cor": "verde"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "renascimento",
+        "sequência"
+      ],
+      "narracao": "Isso soa como renascimento, não como sequência.",
+      "textoTela": "RENASCIMENTO ≠ SEQUÊNCIA",
+      "visual": "Nascer do sol sobre o mapa, com 'sequência' riscado",
+      "provas": [
+        {
+          "tipo": "foto",
+          "rotulo": "Nova Alvorada",
+          "imgArquivo": "biblioteca/eventos/new-dawn/teaser-nova-alvorada.jpg",
+          "imgAsset": "7443fccac557da4c22563619733aa0ce",
+          "gatilho": "renascimento",
+          "carimbo": "RENASCIMENTO"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "dividida"
+      ],
+      "narracao": "Agora o outro lado: a comunidade ficou dividida.",
+      "textoTela": "COMUNIDADE DIVIDIDA",
+      "visual": "Tela dividida ao meio, com 👍 de um lado e 👎 do outro",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "COMUNIDADE DIVIDIDA",
+          "detalhe": "elogios x críticas",
+          "gatilho": "comunidade",
+          "cor": "vermelho"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "elogie",
+        "gráficos"
+      ],
+      "narracao": "Tem quem elogie os gráficos e ame o visual novo.",
+      "textoTela": "👍 GRÁFICOS",
+      "visual": "Imagens do teaser mostrando o visual novo, com reações positivas",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "A FAVOR: OS GRÁFICOS",
+          "gatilho": "elogie",
+          "cor": "verde"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "critique",
+        "estilo"
+      ],
+      "narracao": "Tem quem critique o estilo e ache que perdeu a cara do LoL.",
+      "textoTela": "👎 ESTILO",
+      "visual": "Comparação lado a lado do visual antigo e do novo, com reações negativas",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "CONTRA: O ESTILO",
+          "gatilho": "critique",
+          "cor": "vermelho"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "razão"
+      ],
+      "narracao": "Os dois lados têm um pouco de razão.",
+      "textoTela": "",
+      "visual": "Balança com os dois lados equilibrados",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "EMPATE?",
+          "detalhe": "os dois lados têm\num pouco de razão",
+          "gatilho": "dois",
+          "cor": "amarelo"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "ninguém"
+      ],
+      "narracao": "Só que ninguém viu o jogo completo ainda.",
+      "textoTela": "",
+      "visual": "Tela escura com um ponto de interrogação sobre o teaser",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "NINGUÉM VIU O JOGO COMPLETO",
+          "gatilho": "ninguém",
+          "cor": "amarelo"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "janeiro de 2027"
+      ],
+      "narracao": "Mais detalhes só em janeiro de 2027.",
+      "textoTela": "JAN/2027",
+      "visual": "Calendário marcando janeiro de 2027",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "JANEIRO DE 2027",
+          "detalhe": "mais detalhes",
+          "gatilho": "janeiro",
+          "cor": "azul"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "mudar"
+      ],
+      "narracao": "Então muita coisa ainda pode mudar até lá.",
+      "textoTela": "",
+      "visual": "Montagem do visual do teaser distorcendo e se transformando",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "PODE MUDAR",
+          "gatilho": "mudar",
+          "cor": "amarelo"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "maior reformulação"
+      ],
+      "narracao": "Meu veredito: é a maior reformulação da história do jogo.",
+      "textoTela": "VEREDITO",
+      "visual": "Carimbo 'VEREDITO' sobre imagens do teaser",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "VEREDITO",
+          "detalhe": "a maior reformulação\nda história do jogo",
+          "gatilho": "veredito",
+          "cor": "ouro"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "mesmo LoL",
+        "roupa nova"
+      ],
+      "narracao": "Mas ainda é o mesmo LoL, só com roupa nova.",
+      "textoTela": "MESMO LOL",
+      "visual": "Gameplay atual com filtro que vira o visual novo, mostrando que o jogo é o mesmo",
+      "provas": [
+        {
+          "tipo": "foto",
+          "rotulo": "Roupa nova",
+          "imgArquivo": "biblioteca/eventos/new-dawn/teaser-nova-alvorada.jpg",
+          "imgAsset": "7443fccac557da4c22563619733aa0ce",
+          "gatilho": "roupa",
+          "carimbo": "MESMO LOL"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "discordar",
+        "comentários"
+      ],
+      "narracao": "Você pode discordar, e tudo bem. Vem brigar nos comentários!",
+      "textoTela": "DISCORDA?",
+      "visual": "Zoom no ícone de comentários, com balões subindo",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "DISCORDA? COMENTA",
+          "gatilho": "discordar",
+          "cor": "azul"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "argumento"
+      ],
+      "narracao": "Eu aguento. Mas quero ver seu argumento.",
+      "textoTela": "",
+      "visual": "Cara de desafio olhando para a câmera",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "MANDA SEU ARGUMENTO",
+          "detalhe": "nos comentários",
+          "gatilho": "argumento",
+          "cor": "azul"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "LoL 2",
+        "atualização"
+      ],
+      "narracao": "Time LoL 2 ou time atualização? Comenta aí!",
+      "textoTela": "LOL 2 ✖ ATUALIZAÇÃO",
+      "visual": "Tela dividida com 'TIME LOL 2' e 'TIME ATUALIZAÇÃO' e enquete piscando",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "TIME LOL 2",
+          "detalhe": "x TIME ATUALIZAÇÃO",
+          "gatilho": "Time",
+          "cor": "vermelho"
+        },
+        {
+          "tipo": "etiqueta",
+          "rotulo": "COMENTA AÍ",
+          "gatilho": "Comenta",
+          "cor": "amarelo"
+        }
+      ]
+    }
+  ],
+  "cta": {
+    "texto": "Time LoL 2 ou time atualização? Comenta aí!"
+  },
+  "descricao": "A Riot revelou o New Dawn para 2027, e eu explico por que chamar de LoL 2 pode ser exagero. Você está no time LoL 2 ou no time atualização?",
+  "hashtags": [
+    "#leagueoflegends",
+    "#lol",
+    "#newdawn",
+    "#worlds2026",
+    "#riotgames"
+  ],
+  "hook": {
+    "textoTela": "LOL 2 É EXAGERO?"
+  },
+  "mudancas": [
+    {
+      "antes": "Opinião impopular! Chamar de LoL 2 é exagero! Mas vou te dar os argumentos!",
+      "depois": "LoL 2 é exagero, e eu provo em três argumentos.",
+      "porque": "Gancho mais curto, que já promete a entrega e abre uma lacuna de curiosidade."
+    },
+    {
+      "antes": "Parece muita coisa, né? E é! Mas olha só!",
+      "depois": "Parece muita coisa, né? E é! Mas calma, vem comigo.",
+      "porque": "Mantém o ritmo e conduz o espectador até os argumentos."
+    },
+    {
+      "antes": "Argumento um / dois / três",
+      "depois": "Argumentos com contador na tela (1/3, 2/3, 3/3)",
+      "porque": "O contador aumenta a retenção, porque o espectador quer chegar ao último argumento."
+    },
+    {
+      "antes": "Se fosse outro jogo, você perdia tudo! Aqui, não!",
+      "depois": "Se fosse outro jogo, você começaria do zero. Aqui, seus campeões e suas skins continuam com você.",
+      "porque": "Frases mais claras e faladas, ligadas ao fato confirmado do Meddler."
+    },
+    {
+      "antes": "A comunidade está dividida! Tem quem elogie os gráficos! Tem quem critique o estilo!",
+      "depois": "Cenas separadas para cada lado, com tela dividida e reações.",
+      "porque": "Cada cena traz uma mudança visual, o que mantém a atenção."
+    },
+    {
+      "antes": "Mais detalhes só em janeiro de 2027! Então, tudo isso pode mudar!",
+      "depois": "Mais detalhes só em janeiro de 2027. Então muita coisa ainda pode mudar até lá.",
+      "porque": "Usa só o fato confirmado e evita afirmar mais do que se sabe."
+    },
+    {
+      "antes": "Se você discorda, vem brigar nos comentários! Eu aguento!",
+      "depois": "Você pode discordar, e tudo bem. Vem brigar nos comentários! Eu aguento. Mas quero ver seu argumento.",
+      "porque": "Incentiva comentários com argumento, que pesam mais no algoritmo."
+    },
+    {
+      "antes": "",
+      "depois": "Final: Time LoL 2 ou time atualização? Comenta aí!",
+      "porque": "Pergunta binária e polêmica que facilita comentar e divide o público."
+    }
+  ],
+  "notaOriginal": 6,
+  "notaOtimizada": 8.5,
+  "resumo": "Formato de polêmica: abre com a opinião forte, entrega três argumentos numerados com os fatos confirmados, mostra o outro lado, dá o veredito e fecha com uma pergunta que divide a comunidade.",
+  "titulos": [
+    "LoL 2? New Dawn é exagero, e eu provo",
+    "New Dawn é LoL 2 ou só atualização?",
+    "3 argumentos: New Dawn NÃO é LoL 2"
+  ]
+}

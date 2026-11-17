@@ -1,0 +1,112 @@
+{
+ "versao": "16.22.1",
+ "campeao": "Ezreal",
+ "arquivos": {
+  "icone": "icones/Ezreal.png",
+  "splash": "Ezreal_splash.jpg",
+  "passiva": "passiva.png",
+  "Q": "habilidade_Q.png",
+  "W": "habilidade_W.png",
+  "E": "habilidade_E.png",
+  "R": "habilidade_R.png"
+ },
+ "habilidades": {
+  "Q": {
+   "nome": "Disparo Místico",
+   "recarga": [
+    5.5,
+    5.25,
+    5,
+    4.75,
+    4.5
+   ],
+   "custo": [
+    28,
+    31,
+    34,
+    37,
+    40
+   ],
+   "alcance": [
+    1150,
+    1150,
+    1150,
+    1150,
+    1150
+   ]
+  },
+  "W": {
+   "nome": "Fluxo Essencial",
+   "recarga": [
+    8,
+    8,
+    8,
+    8,
+    8
+   ],
+   "custo": [
+    50,
+    50,
+    50,
+    50,
+    50
+   ],
+   "alcance": [
+    1150,
+    1150,
+    1150,
+    1150,
+    1150
+   ]
+  },
+  "E": {
+   "nome": "Translocação Arcana",
+   "recarga": [
+    26,
+    23,
+    20,
+    17,
+    14
+   ],
+   "custo": [
+    70,
+    70,
+    70,
+    70,
+    70
+   ],
+   "alcance": [
+    475,
+    475,
+    475,
+    475,
+    475
+   ]
+  },
+  "R": {
+   "nome": "Barragem Incendiária",
+   "recarga": [
+    120,
+    105,
+    90
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    25000,
+    25000,
+    25000
+   ]
+  }
+ },
+ "passiva": "Feitiço do Poder Crescente",
+ "outros": [
+  "Camille",
+  "Corki",
+  "Karma",
+  "Naafiri"
+ ]
+}

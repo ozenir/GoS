@@ -1,0 +1,170 @@
+{
+ "id": "Xayah",
+ "nome": "Xayah",
+ "titulo": "a Rebelde",
+ "chave": "0498",
+ "versao": "16.22.1",
+ "alcanceAtaque": 525,
+ "habilidades": {
+  "P": {
+   "nome": "Cortes Certeiros",
+   "descricao": "Depois de usar uma habilidade, os próximos ataques básicos de Xayah acertam todos os alvos pelo caminho e deixam uma <font color='#C200E1'>Pluma</font>."
+  },
+  "Q": {
+   "nome": "Punhais Duplos",
+   "recarga": [
+    10,
+    9.5,
+    9,
+    8.5,
+    8
+   ],
+   "custo": [
+    35,
+    35,
+    35,
+    35,
+    35
+   ],
+   "alcance": [
+    400,
+    400,
+    400,
+    400,
+    400
+   ],
+   "descricao": "Xayah arremessa dois punhais que causam dano e deixam cair Plumas que podem retornar para ela."
+  },
+  "W": {
+   "nome": "Plumagem Mortífera",
+   "recarga": [
+    18,
+    17,
+    16,
+    15,
+    14
+   ],
+   "custo": [
+    60,
+    55,
+    50,
+    45,
+    40
+   ],
+   "alcance": [
+    1000,
+    1000,
+    1000,
+    1000,
+    1000
+   ],
+   "descricao": "Xayah cria uma tempestade de lâminas que aumenta seu dano e sua Velocidade de Ataque, além de conceder Velocidade de Movimento ao atacar um Campeão."
+  },
+  "E": {
+   "nome": "Invocadora das Lâminas",
+   "recarga": [
+    12,
+    11,
+    10,
+    9,
+    8
+   ],
+   "custo": [
+    20,
+    20,
+    20,
+    20,
+    20
+   ],
+   "alcance": [
+    2000,
+    2000,
+    2000,
+    2000,
+    2000
+   ],
+   "descricao": "Xayah recolhe todas as Plumas que caíram, causando dano e enraizando os inimigos."
+  },
+  "R": {
+   "nome": "Tempestade de Plumas",
+   "recarga": [
+    140,
+    120,
+    100
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    450,
+    450,
+    450
+   ],
+   "descricao": "Xayah salta pelo ar, ficando inalvejável e arremessando um leque de punhais, além de deixar cair Plumas que podem voltar para ela."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 5.3,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 4.13,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 8.83,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 4.23,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 4.17,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  }
+ }
+}

@@ -1,0 +1,29 @@
+{
+  "campeao": "Xerath",
+  "duracao": "90s",
+  "fatos": "",
+  "matchup": {
+    "aliados": {
+      "Atirador": "Sivir",
+      "Meio": "Xerath",
+      "Selva": "Xin Zhao",
+      "Suporte": "Karma",
+      "Topo": "K'Sante"
+    },
+    "campeao": "Xerath",
+    "inimigos": {
+      "Atirador": "Jhin",
+      "Meio": "Akali",
+      "Selva": "Jarvan IV",
+      "Suporte": "Rakan",
+      "Topo": "Gnar"
+    },
+    "rota": "Meio"
+  },
+  "orientacoes": "",
+  "publico": "High elo (Diamante+)",
+  "roteiro": "",
+  "tipo": "Matchup: até o 1º item",
+  "titulo": "Como agir na lane de xerath até o primeiro item",
+  "tom": "Sério / Analítico"
+}

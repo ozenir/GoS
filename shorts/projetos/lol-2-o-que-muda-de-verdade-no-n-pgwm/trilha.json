@@ -1,0 +1,715 @@
+{
+ "fonte": "narracao",
+ "hash": "2189a5468113",
+ "duracao": 55.294,
+ "cenas": [
+  {
+   "inicio": 0.15,
+   "fim": 4.398,
+   "palavras": [
+    {
+     "texto": "A",
+     "inicio": 0.245,
+     "fim": 0.359,
+     "destaque": false
+    },
+    {
+     "texto": "Riot",
+     "inicio": 0.37,
+     "fim": 0.757,
+     "destaque": false
+    },
+    {
+     "texto": "acabou",
+     "inicio": 0.768,
+     "fim": 1.143,
+     "destaque": false
+    },
+    {
+     "texto": "de",
+     "inicio": 1.155,
+     "fim": 1.234,
+     "destaque": false
+    },
+    {
+     "texto": "revelar",
+     "inicio": 1.245,
+     "fim": 1.655,
+     "destaque": false
+    },
+    {
+     "texto": "o",
+     "inicio": 1.666,
+     "fim": 1.711,
+     "destaque": false
+    },
+    {
+     "texto": "LoL",
+     "inicio": 1.723,
+     "fim": 1.916,
+     "destaque": true
+    },
+    {
+     "texto": "2",
+     "inicio": 1.927,
+     "fim": 2.325,
+     "destaque": true
+    },
+    {
+     "texto": "Calma",
+     "inicio": 3.105,
+     "fim": 3.593,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 4.498,
+   "fim": 11.17,
+   "palavras": [
+    {
+     "texto": "Final",
+     "inicio": 4.593,
+     "fim": 5.014,
+     "destaque": false
+    },
+    {
+     "texto": "do",
+     "inicio": 5.025,
+     "fim": 5.173,
+     "destaque": false
+    },
+    {
+     "texto": "Worlds",
+     "inicio": 5.184,
+     "fim": 5.73,
+     "destaque": false
+    },
+    {
+     "texto": "Todo",
+     "inicio": 6.509,
+     "fim": 6.759,
+     "destaque": false
+    },
+    {
+     "texto": "mundo",
+     "inicio": 6.771,
+     "fim": 7.078,
+     "destaque": false
+    },
+    {
+     "texto": "de",
+     "inicio": 7.089,
+     "fim": 7.225,
+     "destaque": false
+    },
+    {
+     "texto": "olho",
+     "inicio": 7.237,
+     "fim": 7.453,
+     "destaque": false
+    },
+    {
+     "texto": "na",
+     "inicio": 7.464,
+     "fim": 7.578,
+     "destaque": false
+    },
+    {
+     "texto": "tela",
+     "inicio": 7.589,
+     "fim": 7.918,
+     "destaque": false
+    },
+    {
+     "texto": "De",
+     "inicio": 8.703,
+     "fim": 8.85,
+     "destaque": false
+    },
+    {
+     "texto": "repente",
+     "inicio": 8.862,
+     "fim": 9.373,
+     "destaque": false
+    },
+    {
+     "texto": "sai",
+     "inicio": 9.623,
+     "fim": 9.884,
+     "destaque": false
+    },
+    {
+     "texto": "o",
+     "inicio": 9.896,
+     "fim": 9.964,
+     "destaque": false
+    },
+    {
+     "texto": "teaser",
+     "inicio": 9.975,
+     "fim": 10.362,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "inicio": 11.27,
+   "fim": 16.478,
+   "palavras": [
+    {
+     "texto": "O",
+     "inicio": 11.365,
+     "fim": 11.468,
+     "destaque": false
+    },
+    {
+     "texto": "chat",
+     "inicio": 11.479,
+     "fim": 11.854,
+     "destaque": false
+    },
+    {
+     "texto": "enlouqueceu",
+     "inicio": 11.865,
+     "fim": 12.388,
+     "destaque": false
+    },
+    {
+     "texto": "na",
+     "inicio": 12.4,
+     "fim": 12.513,
+     "destaque": false
+    },
+    {
+     "texto": "hora",
+     "inicio": 12.525,
+     "fim": 12.809,
+     "destaque": false
+    },
+    {
+     "texto": "Um",
+     "inicio": 13.588,
+     "fim": 13.759,
+     "destaque": false
+    },
+    {
+     "texto": "grita",
+     "inicio": 13.77,
+     "fim": 14.134,
+     "destaque": false
+    },
+    {
+     "texto": "os",
+     "inicio": 14.35,
+     "fim": 14.475,
+     "destaque": false
+    },
+    {
+     "texto": "gráficos",
+     "inicio": 14.486,
+     "fim": 14.997,
+     "destaque": false
+    },
+    {
+     "texto": "são",
+     "inicio": 15.009,
+     "fim": 15.168,
+     "destaque": false
+    },
+    {
+     "texto": "lindos",
+     "inicio": 15.179,
+     "fim": 15.69,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "inicio": 16.578,
+   "fim": 21.354,
+   "palavras": [
+    {
+     "texto": "Outro",
+     "inicio": 16.673,
+     "fim": 16.98,
+     "destaque": false
+    },
+    {
+     "texto": "grita",
+     "inicio": 16.992,
+     "fim": 17.367,
+     "destaque": false
+    },
+    {
+     "texto": "que",
+     "inicio": 17.594,
+     "fim": 17.685,
+     "destaque": false
+    },
+    {
+     "texto": "estilo",
+     "inicio": 17.696,
+     "fim": 18.151,
+     "destaque": true
+    },
+    {
+     "texto": "é",
+     "inicio": 18.162,
+     "fim": 18.253,
+     "destaque": false
+    },
+    {
+     "texto": "esse",
+     "inicio": 18.264,
+     "fim": 18.639,
+     "destaque": false
+    },
+    {
+     "texto": "Parece",
+     "inicio": 19.419,
+     "fim": 19.873,
+     "destaque": false
+    },
+    {
+     "texto": "outro",
+     "inicio": 19.885,
+     "fim": 20.158,
+     "destaque": false
+    },
+    {
+     "texto": "jogo",
+     "inicio": 20.169,
+     "fim": 20.555,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 21.454,
+   "fim": 26.446,
+   "palavras": [
+    {
+     "texto": "Um",
+     "inicio": 21.549,
+     "fim": 21.72,
+     "destaque": false
+    },
+    {
+     "texto": "terceiro",
+     "inicio": 21.731,
+     "fim": 22.186,
+     "destaque": false
+    },
+    {
+     "texto": "já",
+     "inicio": 22.197,
+     "fim": 22.345,
+     "destaque": false
+    },
+    {
+     "texto": "escreve",
+     "inicio": 22.356,
+     "fim": 22.822,
+     "destaque": false
+    },
+    {
+     "texto": "LoL",
+     "inicio": 23.072,
+     "fim": 23.299,
+     "destaque": true
+    },
+    {
+     "texto": "2",
+     "inicio": 23.311,
+     "fim": 23.754,
+     "destaque": true
+    },
+    {
+     "texto": "O",
+     "inicio": 24.534,
+     "fim": 24.681,
+     "destaque": false
+    },
+    {
+     "texto": "caos",
+     "inicio": 24.693,
+     "fim": 24.977,
+     "destaque": false
+    },
+    {
+     "texto": "tomou",
+     "inicio": 24.988,
+     "fim": 25.272,
+     "destaque": false
+    },
+    {
+     "texto": "conta",
+     "inicio": 25.284,
+     "fim": 25.659,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 26.546,
+   "fim": 32.738,
+   "palavras": [
+    {
+     "texto": "Respira",
+     "inicio": 26.641,
+     "fim": 27.232,
+     "destaque": false
+    },
+    {
+     "texto": "invocador",
+     "inicio": 27.482,
+     "fim": 28.119,
+     "destaque": false
+    },
+    {
+     "texto": "É",
+     "inicio": 28.898,
+     "fim": 29.035,
+     "destaque": false
+    },
+    {
+     "texto": "o",
+     "inicio": 29.046,
+     "fim": 29.103,
+     "destaque": false
+    },
+    {
+     "texto": "New",
+     "inicio": 29.114,
+     "fim": 29.341,
+     "destaque": true
+    },
+    {
+     "texto": "Dawn",
+     "inicio": 29.353,
+     "fim": 29.58,
+     "destaque": true
+    },
+    {
+     "texto": "uma",
+     "inicio": 29.887,
+     "fim": 30.012,
+     "destaque": false
+    },
+    {
+     "texto": "atualização",
+     "inicio": 30.023,
+     "fim": 30.648,
+     "destaque": false
+    },
+    {
+     "texto": "para",
+     "inicio": 30.66,
+     "fim": 30.819,
+     "destaque": false
+    },
+    {
+     "texto": "2027",
+     "inicio": 30.83,
+     "fim": 31.932,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "inicio": 32.838,
+   "fim": 36.87,
+   "palavras": [
+    {
+     "texto": "Vem",
+     "inicio": 32.933,
+     "fim": 33.161,
+     "destaque": false
+    },
+    {
+     "texto": "cliente",
+     "inicio": 33.172,
+     "fim": 33.581,
+     "destaque": true
+    },
+    {
+     "texto": "novo",
+     "inicio": 33.593,
+     "fim": 33.899,
+     "destaque": true
+    },
+    {
+     "texto": "mapa",
+     "inicio": 34.138,
+     "fim": 34.399,
+     "destaque": true
+    },
+    {
+     "texto": "refeito",
+     "inicio": 34.411,
+     "fim": 34.888,
+     "destaque": false
+    },
+    {
+     "texto": "e",
+     "inicio": 34.899,
+     "fim": 34.956,
+     "destaque": false
+    },
+    {
+     "texto": "visual",
+     "inicio": 34.968,
+     "fim": 35.331,
+     "destaque": false
+    },
+    {
+     "texto": "reformulado",
+     "inicio": 35.343,
+     "fim": 36.081,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 36.97,
+   "fim": 42.394,
+   "palavras": [
+    {
+     "texto": "E",
+     "inicio": 37.065,
+     "fim": 37.168,
+     "destaque": false
+    },
+    {
+     "texto": "não",
+     "inicio": 37.179,
+     "fim": 37.44,
+     "destaque": false
+    },
+    {
+     "texto": "é",
+     "inicio": 37.452,
+     "fim": 37.509,
+     "destaque": false
+    },
+    {
+     "texto": "jogo",
+     "inicio": 37.52,
+     "fim": 37.827,
+     "destaque": false
+    },
+    {
+     "texto": "novo",
+     "inicio": 37.838,
+     "fim": 38.179,
+     "destaque": false
+    },
+    {
+     "texto": "O",
+     "inicio": 38.959,
+     "fim": 39.061,
+     "destaque": false
+    },
+    {
+     "texto": "Meddler",
+     "inicio": 39.072,
+     "fim": 39.425,
+     "destaque": true
+    },
+    {
+     "texto": "garantiu",
+     "inicio": 39.436,
+     "fim": 39.981,
+     "destaque": false
+    },
+    {
+     "texto": "campeões",
+     "inicio": 40.175,
+     "fim": 40.697,
+     "destaque": false
+    },
+    {
+     "texto": "e",
+     "inicio": 40.709,
+     "fim": 40.822,
+     "destaque": false
+    },
+    {
+     "texto": "skins",
+     "inicio": 40.834,
+     "fim": 41.197,
+     "destaque": true
+    },
+    {
+     "texto": "ficam",
+     "inicio": 41.209,
+     "fim": 41.606,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 42.494,
+   "fim": 48.734,
+   "palavras": [
+    {
+     "texto": "Ou",
+     "inicio": 42.589,
+     "fim": 42.76,
+     "destaque": false
+    },
+    {
+     "texto": "seja",
+     "inicio": 42.771,
+     "fim": 43.169,
+     "destaque": false
+    },
+    {
+     "texto": "ninguém",
+     "inicio": 43.374,
+     "fim": 43.76,
+     "destaque": false
+    },
+    {
+     "texto": "perdeu",
+     "inicio": 43.771,
+     "fim": 44.146,
+     "destaque": false
+    },
+    {
+     "texto": "a",
+     "inicio": 44.158,
+     "fim": 44.203,
+     "destaque": false
+    },
+    {
+     "texto": "skin",
+     "inicio": 44.214,
+     "fim": 44.589,
+     "destaque": false
+    },
+    {
+     "texto": "Os",
+     "inicio": 45.369,
+     "fim": 45.505,
+     "destaque": false
+    },
+    {
+     "texto": "detalhes",
+     "inicio": 45.517,
+     "fim": 46.039,
+     "destaque": false
+    },
+    {
+     "texto": "chegam",
+     "inicio": 46.051,
+     "fim": 46.301,
+     "destaque": false
+    },
+    {
+     "texto": "em",
+     "inicio": 46.312,
+     "fim": 46.369,
+     "destaque": false
+    },
+    {
+     "texto": "janeiro",
+     "inicio": 46.38,
+     "fim": 46.755,
+     "destaque": true
+    },
+    {
+     "texto": "de",
+     "inicio": 46.767,
+     "fim": 46.835,
+     "destaque": true
+    },
+    {
+     "texto": "2027",
+     "inicio": 46.846,
+     "fim": 47.937,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "inicio": 48.834,
+   "fim": 55.194,
+   "palavras": [
+    {
+     "texto": "E",
+     "inicio": 48.929,
+     "fim": 49.02,
+     "destaque": false
+    },
+    {
+     "texto": "você",
+     "inicio": 49.032,
+     "fim": 49.429,
+     "destaque": false
+    },
+    {
+     "texto": "de",
+     "inicio": 49.725,
+     "fim": 49.816,
+     "destaque": false
+    },
+    {
+     "texto": "que",
+     "inicio": 49.827,
+     "fim": 49.964,
+     "destaque": false
+    },
+    {
+     "texto": "lado",
+     "inicio": 49.975,
+     "fim": 50.236,
+     "destaque": false
+    },
+    {
+     "texto": "está",
+     "inicio": 50.248,
+     "fim": 50.577,
+     "destaque": false
+    },
+    {
+     "texto": "Gráfico",
+     "inicio": 51.357,
+     "fim": 51.823,
+     "destaque": false
+    },
+    {
+     "texto": "lindo",
+     "inicio": 51.834,
+     "fim": 52.141,
+     "destaque": true
+    },
+    {
+     "texto": "ou",
+     "inicio": 52.152,
+     "fim": 52.266,
+     "destaque": false
+    },
+    {
+     "texto": "estilo",
+     "inicio": 52.277,
+     "fim": 52.55,
+     "destaque": false
+    },
+    {
+     "texto": "estranho",
+     "inicio": 52.561,
+     "fim": 53.027,
+     "destaque": true
+    },
+    {
+     "texto": "Comenta",
+     "inicio": 53.811,
+     "fim": 54.391,
+     "destaque": false
+    }
+   ]
+  }
+ ]
+}

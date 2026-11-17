@@ -1,0 +1,170 @@
+{
+ "id": "Corki",
+ "nome": "Corki",
+ "titulo": "o Bombardeiro Ousado",
+ "chave": "0042",
+ "versao": "16.22.1",
+ "alcanceAtaque": 550,
+ "habilidades": {
+  "P": {
+   "nome": "Munição Hextec",
+   "descricao": "Uma porcentagem do Dano de Ataque Básico de Corki é causada como <trueDamage>Dano Verdadeiro</trueDamage> adicional."
+  },
+  "Q": {
+   "nome": "Bomba de Fósforo",
+   "recarga": [
+    9,
+    8.5,
+    8,
+    7.5,
+    7
+   ],
+   "custo": [
+    60,
+    65,
+    70,
+    75,
+    80
+   ],
+   "alcance": [
+    825,
+    825,
+    825,
+    825,
+    825
+   ],
+   "descricao": "Corki dispara uma bomba luminosa em um local alvo, causando Dano Mágico a inimigos na área. Este ataque também revela unidades na área por uma curta duração."
+  },
+  "W": {
+   "nome": "Valquíria",
+   "recarga": [
+    20,
+    18,
+    16,
+    14,
+    12
+   ],
+   "custo": [
+    80,
+    85,
+    90,
+    95,
+    100
+   ],
+   "alcance": [
+    600,
+    600,
+    600,
+    600,
+    600
+   ],
+   "descricao": "Corki sobrevoa uma curta distância, soltando bombas que criam um rastro de fogo, causando dano a oponentes que nele permanecerem."
+  },
+  "E": {
+   "nome": "Metralhadora",
+   "recarga": [
+    12,
+    12,
+    12,
+    12,
+    12
+   ],
+   "custo": [
+    50,
+    55,
+    60,
+    65,
+    70
+   ],
+   "alcance": [
+    600,
+    600,
+    600,
+    600,
+    600
+   ],
+   "descricao": "A metralhadora de Corki dispara rapidamente em área de cone à sua frente, causando dano, reduzindo a Armadura e a Resistência Mágica do inimigo."
+  },
+  "R": {
+   "nome": "Barragem de Mísseis",
+   "recarga": [
+    2,
+    2,
+    2
+   ],
+   "custo": [
+    35,
+    35,
+    35
+   ],
+   "alcance": [
+    1225,
+    1225,
+    1225
+   ],
+   "descricao": "Corki dispara um míssil em direção ao local alvo, que explode com o impacto, causando dano aos inimigos na área. Corki armazena mísseis ao longo do tempo, com um limite máximo. O 3º míssil armazenado será um Grandão, que causa dano adicional."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 15.83,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 8.5,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 6.23,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 6.17,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 9.23,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  }
+ }
+}

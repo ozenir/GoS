@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Estúdio Shorts</title>
+  <link rel="stylesheet" href="/dist/player-entry.css" />
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+  <header class="topo">
+    <div class="marca"><span class="losango"></span>ESTÚDIO <b>SHORTS</b></div>
+    <select id="seletor" aria-label="Projeto"></select>
+    <button id="btnNovo" class="btn ouro">+ Novo vídeo</button>
+  </header>
+
+  <nav class="etapas" id="etapas">
+    <button data-aba="briefing"><i>1</i>Briefing</button>
+    <button data-aba="otimizacao"><i>2</i>Otimização</button>
+    <button data-aba="roteiro"><i>3</i>Roteiro</button>
+    <button data-aba="visual"><i>4</i>Visual & voz</button>
+    <button data-aba="exportar"><i>5</i>Exportar</button>
+  </nav>
+
+  <main class="grade">
+    <section class="painel" id="conteudo"></section>
+
+    <aside class="lateral">
+      <div class="status" id="status"></div>
+      <div class="celular"><div id="player"></div></div>
+      <div class="dica" id="dicaPlayer"></div>
+      <div class="cartao">
+        <h3>Criação</h3>
+        <ol class="linha" id="linha"></ol>
+      </div>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="/dist/player-entry.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

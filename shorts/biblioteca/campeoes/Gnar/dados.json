@@ -1,0 +1,218 @@
+{
+ "id": "Gnar",
+ "nome": "Gnar",
+ "titulo": "o Yordle Pré-Histórico",
+ "chave": "0150",
+ "versao": "16.22.1",
+ "alcanceAtaque": 175,
+ "habilidades": {
+  "P": {
+   "nome": "Fúria Genética",
+   "descricao": "Enquanto está em combate, Gnar gera Fúria. Quando atinge o máximo de Fúria, sua próxima habilidade o transformará em Mega-Gnar, concedendo mais condições de sobrevivência e acesso a novas habilidades."
+  },
+  "Q": {
+   "nome": "Bumerangue / Pedregulho",
+   "recarga": [
+    16,
+    14.5,
+    13,
+    11.5,
+    10
+   ],
+   "custo": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "alcance": [
+    1100,
+    1100,
+    1100,
+    1100,
+    1100
+   ],
+   "descricao": "Gnar lança um bumerangue que causa dano e Lentidão a inimigos que atinge antes de retornar a ele. Caso apanhe o bumerangue, seu Tempo de Recarga é reduzido.<br><br>Mega Gnar arremessa um pedregulho que para na primeira unidade atingida, causando dano e Lentidão a tudo o que estiver próximo. Em seguida, ele pode ser apanhado para reduzir o Tempo de Recarga."
+  },
+  "W": {
+   "nome": "Hiperativo / Safanão",
+   "recarga": [
+    7,
+    7,
+    7,
+    7,
+    7
+   ],
+   "custo": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "alcance": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "descricao": "Os ataques e habilidades de Gnar o animam, causando dano adicional e concedendo Velocidade de Movimento.<br><br>Mega Gnar fica enfurecido demais para ficar hiperativo. Em vez disso, ele pode subir em duas patas e atingir a área à sua frente, atordoando inimigos em área."
+  },
+  "E": {
+   "nome": "Pirueta / Encontrão",
+   "recarga": [
+    22,
+    19.5,
+    17,
+    14.5,
+    12
+   ],
+   "custo": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "alcance": [
+    475,
+    475,
+    475,
+    475,
+    475
+   ],
+   "descricao": "Gnar salta em um local e atinge a cabeça de qualquer unidade em que aterrissar, deslocando-se ainda mais.<br><br>Mega Gnar é grande demais para saltar e, em vez disso, aterrissa com força para quebrar o chão, causando dano em área ao seu redor."
+  },
+  "R": {
+   "nome": "GNAR!",
+   "recarga": [
+    90,
+    60,
+    30
+   ],
+   "custo": [
+    0,
+    0,
+    0
+   ],
+   "alcance": [
+    590,
+    590,
+    590
+   ],
+   "descricao": "Mega Gnar joga tudo o que estiver próximo de si em uma direção escolhida, causando dano e Lentidão. Qualquer inimigo que atingir uma parede fica atordoado e recebe dano adicional."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 9.97,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 6.67,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "Q2": {
+   "arquivo": "videos/Q2.mp4",
+   "quadro": "quadros/Q2.jpg",
+   "duracao": 7.03,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 7.17,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "W2": {
+   "arquivo": "videos/W2.mp4",
+   "quadro": "quadros/W2.jpg",
+   "duracao": 4.07,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 5.1,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "E2": {
+   "arquivo": "videos/E2.mp4",
+   "quadro": "quadros/E2.jpg",
+   "duracao": 5.3,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 5.53,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "R2": {
+   "arquivo": "videos/R2.mp4",
+   "quadro": "quadros/R2.jpg",
+   "duracao": 5.53,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  }
+ }
+}

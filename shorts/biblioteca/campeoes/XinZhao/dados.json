@@ -1,0 +1,170 @@
+{
+ "id": "XinZhao",
+ "nome": "Xin Zhao",
+ "titulo": "o Senescal de Demacia",
+ "chave": "0005",
+ "versao": "16.22.1",
+ "alcanceAtaque": 175,
+ "habilidades": {
+  "P": {
+   "nome": "Determinação",
+   "descricao": "Cada terceiro ataque básico causa dano adicional e cura Xin Zhao."
+  },
+  "Q": {
+   "nome": "Golpe de Três Garras",
+   "recarga": [
+    7,
+    6.5,
+    6,
+    5.5,
+    5
+   ],
+   "custo": [
+    30,
+    30,
+    30,
+    30,
+    30
+   ],
+   "alcance": [
+    375,
+    375,
+    375,
+    375,
+    375
+   ],
+   "descricao": "O próximos 3 ataques normais de Xin Zhao causam mais dano. O último arremessa o oponente ao ar."
+  },
+  "W": {
+   "nome": "Vento Vira Relâmpago",
+   "recarga": [
+    12,
+    11,
+    10,
+    9,
+    8
+   ],
+   "custo": [
+    60,
+    60,
+    60,
+    60,
+    60
+   ],
+   "alcance": [
+    1000,
+    1000,
+    1000,
+    1000,
+    1000
+   ],
+   "descricao": "Xin Zhao golpeia à frente com a lança, causando Lentidão e marcando os inimigos atingidos como Desafiados."
+  },
+  "E": {
+   "nome": "Investida Audaciosa",
+   "recarga": [
+    11,
+    11,
+    11,
+    11,
+    11
+   ],
+   "custo": [
+    60,
+    60,
+    60,
+    60,
+    60
+   ],
+   "alcance": [
+    650,
+    650,
+    650,
+    650,
+    650
+   ],
+   "descricao": "Xin Zhao avança na direção de um inimigo, ganhando Velocidade de Ataque e causando dano e Lentidão a todos os inimigos na área temporariamente. Esta Habilidade recebe alcance aumentado contra alvos Desafiados."
+  },
+  "R": {
+   "nome": "Guarda Crescente",
+   "recarga": [
+    120,
+    110,
+    100
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    500,
+    500,
+    500
+   ],
+   "descricao": "Xin Zhao desafia passivamente um inimigo a quem tenha causado dano recentemente. Ao ativar, ele causa dano a inimigos próximos com base na Vida atual deles e Arremessa alvos não Desafiados para trás, tornando-se imune a qualquer dano causado por Campeões fora do círculo criado."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 13.43,
+   "w": 1056,
+   "h": 594,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 8.62,
+   "w": 1056,
+   "h": 594,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 4.68,
+   "w": 1056,
+   "h": 594,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 8.45,
+   "w": 1056,
+   "h": 594,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 10.92,
+   "w": 1056,
+   "h": 594,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  }
+ }
+}

@@ -1,0 +1,339 @@
+{
+  "cenas": [
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "geladeira"
+      ],
+      "narracao": "Existe uma geladeira no mid do LoL.",
+      "textoTela": "A GELADEIRA DO LOL",
+      "visual": "Xerath parado no mid, com um zoom lento e uma sobreposição de geladeira piscando rapidamente sobre ele.",
+      "provas": [
+        {
+          "tipo": "foto",
+          "rotulo": "A geladeira?",
+          "imgArquivo": "dados/xerath-mid/arte/Xerath.jpg",
+          "imgAsset": "1fcb7444364f290888557592cb46bb0f",
+          "gatilho": "geladeira",
+          "carimbo": "SUSPEITO"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "não se mexe",
+        "te mata"
+      ],
+      "narracao": "Ela não se mexe, e mesmo assim te mata.",
+      "textoTela": "",
+      "visual": "Xerath imóvel na lane enquanto o inimigo se aproxima, com a tela escurecendo levemente.",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "NÃO SE MEXE",
+          "detalhe": "e mesmo assim\nte mata",
+          "gatilho": "mexe",
+          "cor": "vermelho"
+        }
+      ],
+      "videoFundo": {
+        "asset": "6cf29bf9aa113ea0d96155f11518126b",
+        "arquivo": "biblioteca/campeoes/Xerath/videos/W.mp4",
+        "dur": 7.33,
+        "foco": [
+          0.62,
+          0.55
+        ],
+        "w": 1056,
+        "h": 720,
+        "campeao": "Xerath"
+      }
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "Zap"
+      ],
+      "narracao": "Você tenta chegar perto do Xerath. Zap!",
+      "textoTela": "ZAP!",
+      "visual": "Seu campeão avança e leva um Q do Xerath, com efeito de choque e flash na tela.",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "ZAP!",
+          "gatilho": "Zap",
+          "cor": "amarelo"
+        }
+      ],
+      "videoFundo": {
+        "asset": "81d49d34efdd9a98d2cc583361e8222e",
+        "arquivo": "biblioteca/campeoes/Xerath/videos/E.mp4",
+        "dur": 4.33,
+        "foco": [
+          0.59,
+          0.63
+        ],
+        "w": 1056,
+        "h": 720,
+        "campeao": "Xerath"
+      }
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "Q",
+        "750"
+      ],
+      "narracao": "O Q alcança 750, mesmo sem carregar.",
+      "textoTela": "Q: 750",
+      "visual": "Indicador de alcance do Q em círculo ao redor do Xerath, com o número 750 em destaque.",
+      "provas": [
+        {
+          "tipo": "icone",
+          "rotulo": "Q · Pulso Arcano",
+          "imgArquivo": "dados/xerath-mid/habilidade_Q.png",
+          "imgAsset": "d53b1c7070b7211bdf24edd104176dfd",
+          "detalhe": "alcance 750\nsem carregar",
+          "gatilho": "Q"
+        }
+      ],
+      "videoFundo": {
+        "asset": "9b44dd6023cd11ae884cb7eebdb420c9",
+        "arquivo": "biblioteca/campeoes/Xerath/videos/Q.mp4",
+        "dur": 7.53,
+        "foco": [
+          0.58,
+          0.63
+        ],
+        "w": 1056,
+        "h": 720,
+        "campeao": "Xerath"
+      }
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "E",
+        "1050"
+      ],
+      "narracao": "O E vai a 1050. Você nunca chega.",
+      "textoTela": "E: 1050",
+      "visual": "E do Xerath atingindo o alvo de longe, com o círculo de alcance maior aparecendo.",
+      "provas": [
+        {
+          "tipo": "alcance",
+          "rotulo": "Alcance",
+          "imgArquivo": "biblioteca/campeoes/Xerath/icone.png",
+          "imgAsset": "ebbb167d486fec38f54cfac095615d53",
+          "fundoArquivo": "biblioteca/campeoes/Xerath/quadros/E.jpg",
+          "fundoAsset": "c5bd43ae68007806aea9f6076083c401",
+          "alcances": [
+            {
+              "valor": 1050,
+              "rotulo": "E · Orbe Eletrizante",
+              "cor": "azul"
+            },
+            {
+              "valor": 750,
+              "rotulo": "Q · Pulso Arcano (sem carregar)",
+              "cor": "amarelo"
+            }
+          ],
+          "gatilho": "E"
+        },
+        {
+          "tipo": "etiqueta",
+          "rotulo": "VOCÊ NUNCA CHEGA",
+          "gatilho": "nunca",
+          "cor": "vermelho"
+        }
+      ],
+      "videoFundo": {
+        "asset": "81d49d34efdd9a98d2cc583361e8222e",
+        "arquivo": "biblioteca/campeoes/Xerath/videos/E.mp4",
+        "dur": 4.33,
+        "foco": [
+          0.59,
+          0.63
+        ],
+        "w": 1056,
+        "h": 720,
+        "campeao": "Xerath"
+      }
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "dano"
+      ],
+      "narracao": "Cada passo seu vira dano.",
+      "textoTela": "",
+      "visual": "Corte rápido: barra de vida caindo a cada passo do seu campeão em direção ao Xerath.",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "CADA PASSO = DANO",
+          "detalhe": "quanto mais você anda,\nmais apanha",
+          "gatilho": "passo",
+          "cor": "vermelho"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "ult",
+        "Acabou"
+      ],
+      "narracao": "Aí ele solta o ult. Acabou.",
+      "textoTela": "ULT",
+      "visual": "Xerath usa o R e a tela mostra o abate, com um slow-mo no último tiro.",
+      "provas": [
+        {
+          "tipo": "icone",
+          "rotulo": "R · Ritual Arcano",
+          "imgArquivo": "biblioteca/campeoes/Xerath/habilidades/R.png",
+          "imgAsset": "3f173092710db327578c7d80594f026a",
+          "detalhe": "a ult",
+          "gatilho": "ult"
+        },
+        {
+          "tipo": "etiqueta",
+          "rotulo": "ACABOU",
+          "gatilho": "Acabou",
+          "cor": "vermelho"
+        }
+      ],
+      "videoFundo": {
+        "asset": "4f01c7860034cb9213e559ac17a3cf2a",
+        "arquivo": "biblioteca/campeoes/Xerath/videos/R.mp4",
+        "dur": 13.87,
+        "foco": [
+          0.57,
+          0.64
+        ],
+        "w": 1056,
+        "h": 720,
+        "campeao": "Xerath"
+      }
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "derrete"
+      ],
+      "narracao": "Parada, fria e te derrete de longe.",
+      "textoTela": "",
+      "visual": "Replay do abate com efeito de gelo e derretimento sobre a tela.",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "PARADA · FRIA",
+          "detalhe": "e te derrete\nde longe",
+          "gatilho": "Parada",
+          "cor": "azul"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "geladeira"
+      ],
+      "narracao": "Essa é a geladeira do LoL.",
+      "textoTela": "",
+      "visual": "Montagem do Xerath ao lado da geladeira, com um zoom dramático.",
+      "provas": [
+        {
+          "tipo": "foto",
+          "rotulo": "A geladeira do LoL",
+          "imgArquivo": "dados/xerath-mid/arte/Xerath.jpg",
+          "imgAsset": "1fcb7444364f290888557592cb46bb0f",
+          "gatilho": "geladeira",
+          "carimbo": "CASO RESOLVIDO"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "Respeita"
+      ],
+      "narracao": "Respeita o Xerath.",
+      "textoTela": "RESPEITA",
+      "visual": "Splash art do Xerath com um brilho misterioso.",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "RESPEITA O XERATH",
+          "gatilho": "Respeita",
+          "cor": "ouro"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "geladeira",
+        "campeão"
+      ],
+      "narracao": "Qual é a sua geladeira favorita? Comenta o campeão!",
+      "textoTela": "QUAL É A SUA?",
+      "visual": "Tela final com a pergunta em destaque e a geladeira piscando, para encaixar com o início do vídeo.",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "QUAL É A SUA?",
+          "detalhe": "comenta o campeão",
+          "gatilho": "Qual",
+          "cor": "azul"
+        }
+      ]
+    }
+  ],
+  "cta": {
+    "texto": "Qual é a sua geladeira favorita? Comenta o campeão!"
+  },
+  "descricao": "Xerath parado, frio e te derrete de longe: a geladeira do mid. Qual campeão é a sua geladeira favorita?",
+  "hashtags": [
+    "#leagueoflegends",
+    "#lol",
+    "#xerath",
+    "#mid",
+    "#shorts"
+  ],
+  "hook": {
+    "textoTela": "A GELADEIRA DO LOL"
+  },
+  "mudancas": [
+    {
+      "antes": "Você está no mid contra o Xerath! Ele não se mexe! Parece uma geladeira!",
+      "depois": "Existe uma geladeira no mid do LoL. Ela não se mexe, e mesmo assim te mata.",
+      "porque": "O gancho abre direto com a metáfora e a curiosidade, sem contexto antes."
+    },
+    {
+      "antes": "O Q alcança 750! O E, 1050!",
+      "depois": "O Q alcança 750, mesmo sem carregar. O E vai a 1050.",
+      "porque": "Os números do criador foram mantidos, com a ressalva do Q sem carregar para não induzir ao erro, já que o Q carregado vai mais longe."
+    },
+    {
+      "antes": "Pronto, acabou!",
+      "depois": "Aí ele solta o ult. Acabou.",
+      "porque": "Frases curtas no ritmo de fala, com o ult como clímax."
+    },
+    {
+      "antes": "Quem é a sua geladeira favorita? Comenta o campeão!",
+      "depois": "Qual é a sua geladeira favorita? Comenta o campeão!",
+      "porque": "A pergunta fica mais natural e o final reforça o gancho, o que ajuda no replay."
+    }
+  ],
+  "notaOriginal": 6,
+  "notaOtimizada": 8.5,
+  "resumo": "Gancho misterioso com a metáfora da geladeira logo no primeiro segundo, uma ideia só (o alcance do Xerath), frases curtas e fechamento com pergunta que gera comentário e conecta com o começo.",
+  "titulos": [
+    "O Xerath é a geladeira do LoL",
+    "Por que ninguém chega no Xerath?",
+    "A geladeira do mid que te derrete"
+  ]
+}

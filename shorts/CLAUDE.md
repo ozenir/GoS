@@ -1,0 +1,350 @@
+# Shorts — edição automatizada de vídeos verticais
+
+Projeto para editar vídeos curtos verticais (YouTube Shorts, TikTok, Reels) em
+**1080x1920, 30fps**, com FFmpeg + faster-whisper + Remotion. Fale com o usuário
+em **português do Brasil**.
+
+## Pastas
+
+| Pasta          | Conteúdo                                                        |
+|----------------|-----------------------------------------------------------------|
+| `referencias/` | vídeos de exemplo do estilo de edição desejado (analisar, não publicar) |
+| `brutos/`      | vídeos originais do usuário, sem edição                         |
+| `musicas/`     | trilhas sonoras (use só músicas livres de direitos)             |
+| `saida/`       | vídeos finalizados                                              |
+| `src/`         | composições Remotion (`Teste`, `Short`, `LolShort`)             |
+| `artifact/`    | Estúdio Shorts publicado no claude.ai (página + player)         |
+| `painel/`      | servidor local, render, ponte com o Artifact, CLI               |
+| `projetos/`    | um diretório por vídeo do painel (briefing, roteiro, config)    |
+| `docs/`        | `viral-lol.md`: guia de otimização de roteiros de LoL           |
+| `dados/`       | dados oficiais do Data Dragon (`scripts/ddragon.py`), por vídeo e `ddragon/resumo.json`; `tendencias/` (temas em alta) |
+| `biblioteca/`  | mídia reaproveitável por campeão: vídeos das habilidades, quadros, ícones, arte (`scripts/biblioteca.py`) |
+| `roteiros/`    | roteiros em Markdown: fala + `[o que aparece na tela]`         |
+| `publicacao/`  | título, descrição (com patch e aviso da Riot) e hashtags       |
+| `clipes/`      | gameplay gravado pelo usuário (Ferramenta de Treino)           |
+| `scripts/`     | automações (instalar, cortar silêncios, legendas, montar)       |
+| `public/atual/`| área temporária que o `montar.sh` preenche para o Remotion       |
+
+Mídia (`referencias/`, `brutos/`, `musicas/`, `saida/`) está no `.gitignore`:
+vídeos não vão para o git.
+
+## Estúdio Shorts no claude.ai (Artifact) — fluxo principal
+
+O usuário usa o estúdio dentro do Claude: **https://claude.ai/artifact/DVKauETTpSPB5qkWRwYavF**
+(fonte: `artifact/estudio.html` + `artifact/player.js`, gerado por `node painel/build.mjs`;
+republicar com a ferramenta Artifact no mesmo `file_path`, `files: {"player.js": "artifact/player.js"}`).
+Capacidades: `db` (dados), `assets` (vídeos), `sample` (otimização feita pela própria página
+com a conta do usuário), `downloads`, `mcp` (`Claude Code Remote` → `send_message`, para o botão Criar vídeo).
+
+Banco da página (ferramenta `ArtifactData`, `url` acima):
+- `projetos/<id>`: `{titulo, briefing, otimizado, config, etapa, pedido, criadoEm, atualizado}`.
+  `config.fundo.asset` / `config.musica.asset` = `{id, nome}` de assets enviados.
+- `projetos/<id>/eventos/<auto>`: `{t, msg, tipo: info|ok|claude|erro}` — linha do tempo.
+- `projetos/<id>/producao/estado`: escrito pelo Claude Code —
+  `{etapa, progresso, texto, hash, trilha, audio: {id}, renders: [{id, nome, qualidade, bytes, data}], pedidoEm, passos}`.
+- `config/claude`: `{sessao}` — sessão do Claude Code que o botão Criar vídeo avisa.
+- `midias/<auto>`: `{id, nome, tipo: gameplay|musica, bytes, criadoEm}`.
+
+Etapas (`projetos/<id>.etapa`): briefing → otimizando → otimizado (ou aguardando_claude
+quando o usuário pede a otimização no chat) → aguardando_producao → produzindo → pronto | erro.
+
+**"otimiza o roteiro" (no chat):** leia o projeto (`ArtifactData get`), otimize seguindo
+`docs/viral-lol.md` e grave `otimizado` + `etapa: "otimizado"` (update com `if_version`) e um evento.
+
+**"produz o vídeo …" (no chat):**
+1. `npm run painel` em segundo plano, se o servidor local (porta 3333) não estiver no ar.
+2. `ArtifactData get` do projeto com `out_dir` → `node painel/ponte.mjs importar <arquivo.json> <id>`.
+   Se avisar que falta mídia, baixe o asset com `Artifact read` (`path` = id do asset,
+   `out_dir` = `brutos/` ou `musicas/`), garanta o nome `<assetId>.mp4` e importe de novo.
+3. Marque `etapa: "produzindo"` no projeto e `producao/estado` com `etapa/texto/progresso`.
+4. `node painel/ponte.mjs produzir <id> <final|previa>` (narração edge-tts + render Remotion).
+5. Envie `projetos/<id>/narracao.mp4` e o MP4 de `saida/<id>/` com `Artifact publish asset:true`
+   (só tipos de vídeo/imagem; áudio vai como MP4; limite 15 MB por arquivo).
+6. `node painel/ponte.mjs estado <id> --audio <assetId> --render "<assetId>|<nome>|<qualidade>|<bytes>"`
+   → grave `projetos/<id>/producao.json` em `producao/estado` (`file_path`), `etapa: "pronto"` no
+   projeto e um evento. A página mostra o vídeo e passa a usar a narração real no player.
+7. Música em MP3 mandada no chat: converta com `ffmpeg -i x.mp3 -c:a aac -vn x.mp4`, envie como
+   asset e adicione um documento em `midias` (`tipo: "musica"`).
+
+### Botão "Criar vídeo" (criação automática)
+
+No topo do Estúdio, o painel **Criar vídeo** roda tudo com um clique, usando o que já está salvo:
+briefing → roteiro (a página otimiza com `sample` se ainda não houver roteiro) → grava
+`pedido: {qualidade, em, auto: true, otimizar, avisado, canal}` com `config` e `otimizado` → avisa o Claude Code:
+1º por um comentário **"Send to Claude"** no próprio Estúdio (capacidade `comments`; chega como turno
+`[Artifact comment sent to Claude]` às sessões que acompanham o artifact — responda no fio com `ArtifactComments`),
+2º pelo conector **Claude Code Remote** (`send_message` para `config/claude.sessao`; na prática falhou por tempo
+esgotado). Sem nenhum dos dois, a página mostra a frase para copiar no chat. Os passos 5–8 vêm de `producao/estado`, só quando `pedidoEm === pedido.em`:
+`passos: {roteiro, provas, narracao, render, envio}` = `rodando | ok | pulado | erro`, mais `texto` e `progresso`
+(a página mostra o texto e a % no passo que está rodando).
+
+- **Início de cada sessão:** grave o id da sessão atual (`get_session`) em `config/claude` →
+  `{sessao: "session_…", atualizado}`. Sem isso o botão cai na frase para copiar.
+- **Mensagem ou comentário `[Estúdio Shorts · botão Criar vídeo] …`:** é o próprio usuário clicando no botão. A fonte da
+  verdade é o banco: leia `projetos/<id>`, confira que `etapa` é `aguardando_producao` e que `pedido.em` bate
+  com o da mensagem; se não bater, não faça nada. Então siga "produz o vídeo" (e, se `pedido.otimizar`,
+  otimize antes, com `passos.roteiro` = rodando → ok), gravando `producao/estado` com `update` a cada passo:
+  `{etapa: "produzindo", pedidoEm, passos, texto, progresso}`. Provas: monte as que faltam (Data Dragon) ou
+  marque `pulado`. Narração e render: rode `ponte.mjs produzir` em segundo plano e use as linhas
+  "Gerando narração…" / "Renderizando…" / "Desenhando quadros N/M" para mudar de passo e de %.
+  No fim: `ponte.mjs estado <id> --audio … --render … --pedido <em> [--passo narracao=pulado]`.
+- Se algo falhar: `passos.<k> = "erro"`, `etapa: "erro"` no projeto e um evento `tipo: "erro"` com o motivo.
+
+### Roteiro automático (aba Briefing)
+
+Bloco "✦ Roteiro automático" logo abaixo do campo de roteiro: com **título e campeão** preenchidos (no matchup,
+seu campeão e o oponente; o título sai sozinho), a página pede ao Claude (`sample`) **3 roteiros com ângulos
+diferentes** (erro comum, segredo, desafio, número + resultado, mini-história). Título, tipo, campeão, duração
+(faixa de palavras), tom (`DESC_TOM`) e público (`DESC_PUBLICO`) vão como **REQUISITOS OBRIGATÓRIOS** no topo do
+pedido, acima das regras gerais, junto com orientações, fatos e os dados do Data Dragon (no matchup, os 10
+campeões, itens e runas). O bloco mostra "Baseado em: …" e marca a opção que não cita o campeão ou foge da duração. Se a permissão do `sample` já foi dada, as opções aparecem sozinhas ~2 s depois
+de o usuário parar de digitar (só com o campo de roteiro vazio e sem roteiro otimizado); senão, pelo botão
+"Gerar 3 opções". "Usar este" coloca o texto no campo de roteiro (e o título, se estiver vazio); o usuário
+edita e segue como antes. Escrever à mão continua igual.
+
+### Temas em alta (botão "🔥 Em alta")
+
+Painel no topo do Estúdio com os **10 temas mais em alta do LoL**, lidos do doc `tendencias/atual`:
+`{coletadoEm, semana, fontesUsadas, comoLer, temas: [{pos, tema, calor 0–100, porque, numeros[], fontes[{nome,url}],
+fatos (só o que foi conferido nas fontes), ideia: {titulo, tipo, campeao, tom, publico}}]}`. "Criar vídeo com este
+tema" abre um vídeo novo com o briefing preenchido (os `fatos` vão para "Fatos confirmados"). "Atualizar temas"
+manda um comentário "Send to Claude" `[Estúdio Shorts · Temas em alta] atualiza…`. Para atualizar (pelo botão ou
+quando o usuário pedir no chat):
+1. `.venv/bin/python scripts/tendencias.py` → `dados/tendencias/AAAA-MM-DD.json` com os sinais brutos:
+   YouTube (vídeos da semana por views, buscas pt-BR/inglês e canais BR grandes: Ilha das Lendas, Cortes da Ilha,
+   BaianoTV, CBLOL…), Google Notícias (pt-BR, 7 dias), Google Trends Brasil e o site oficial.
+2. Complete com buscas na web (WebSearch) sobre o que se comenta no X: a busca do X exige login e o Reddit bloqueia.
+3. Agrupe por tema, dê o "calor" pelo alcance (views) e pela repercussão (quantas fontes), escreva o porquê, os
+   números, as fontes e só fatos conferidos; ideia de Short com tipo, tom e público da lista do Estúdio.
+4. Grave em `dados/tendencias/top10-AAAA-MM-DD.json` e no doc `tendencias/atual` (`ArtifactData set`), responda no fio.
+
+**Duração:** a do briefing (`briefing.duracao`) manda sobre as regras gerais de Shorts. Narração real ≈ 2,5
+palavras/s (90 s ≈ 205–245 palavras). A página pede essa faixa ao Claude, confere a contagem e pede um ajuste
+se ficar fora; o botão Criar vídeo também ajusta um roteiro antigo antes de produzir. Ao produzir pelo chat,
+confira a contagem antes de narrar e, depois do render, compare a duração com o alvo.
+
+O `hash` liga narração e roteiro: `sha1(JSON.stringify([narrações das cenas com texto, voz, velocidade]))`
+(12 primeiros hex) — igual em `painel/projetos.mjs` e na página.
+
+## Minha voz (voz do usuário)
+
+Voz `"minha-voz"` no `config.voz` (lista de vozes do painel e do Estúdio). Como funciona, escolhido pelo
+usuário entre os testes (o "H"): cada cena é falada pelo Antonio (edge-tts, `pitch -2Hz`, sotaque brasileiro
+neutro, tempos das palavras exatos) e o áudio é convertido para o timbre do usuário com o **ChatterboxVC**
+(`scripts/voz_clonada.py`, modo `conversao`); os tempos das palavras acompanham a duração convertida.
+A clonagem direta do texto (modo `clonagem`) deu sotaque estranho em português e ficou só para testes.
+
+- **Amostra:** `voz/ref/referencia.wav` (10 s da gravação 3, trecho 36,9–47,4 s, "Ó, presta atenção nisso…").
+  As gravações ficam em `voz/brutos/`. **A pasta `voz/` nunca vai para o git: o repositório é público.**
+- **Ambiente:** `.venv-voz/` (Python 3.12, fora do git):
+  `uv venv -p 3.12 .venv-voz && uv pip install -p .venv-voz/bin/python --index-url https://download.pytorch.org/whl/cpu
+  --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match torch==2.6.0 torchaudio==2.6.0
+  chatterbox-tts==0.1.7 faster-whisper edge-tts "setuptools<81"`. Com placa NVIDIA, troque o índice `cpu` pelo
+  `cu124`. O 1º uso baixa os modelos do Hugging Face.
+- **Velocidade:** na nuvem (CPU), ~4 s de processamento por segundo de fala; com placa de vídeo, bem menos.
+- **Estado:** pronta, mas **não ativada**. O padrão continua sendo o Antonio e o Estúdio publicado ainda não
+  mostra a opção (`VOZ_PROPRIA_ATIVA = false` em `artifact/estudio.html`). Só ative (publicar o Estúdio com a opção e, se o usuário quiser, deixá-la como padrão,
+  e guardar uma cópia privada da amostra no Estúdio) quando o usuário disser que está ok.
+
+## Dados do jogo (Data Dragon) — nunca use números de memória
+
+```bash
+.venv/bin/python scripts/ddragon.py campeao Taliyah --outros Jhin,Rakan --pasta dados/<video>
+.venv/bin/python scripts/ddragon.py resumo --pasta dados/ddragon   # todos os campeões, itens e runas
+```
+
+O resumo vai para o Artifact como asset JSON, apontado por `config/ddragon` (`{versao, patch, assetId}`):
+ao sair patch novo, rode `resumo`, envie o arquivo (`Artifact publish asset:true`) e atualize esse doc.
+Nomes em pt_BR são os do Data Dragon (ex.: BF Sword = "Espada G. p. C.").
+
+## Guia de matchup (tipo "Matchup: até o 1º item")
+
+No briefing o usuário escolhe rota, seu campeão e os dois times por posição. A página manda ao
+Claude (`sample`, nível "complex") os dados dos 10 campeões, a tabela de itens com custo e as runas,
+e grava `projetos/<id>.matchup` (`resumo, dificuldade, runas, inicio, fases, contraCada, recall,
+primeiroItem, erros`) + o roteiro do Short em `otimizado`. Itens fora do Data Dragon são marcados
+"confira". Se o usuário pedir no chat, faça a mesma análise e grave no mesmo formato.
+
+## Vídeos em duas fases (roteiro primeiro, narração gravada depois)
+
+Fase 1: `roteiros/<slug>.md`, lista de clipes para a Ferramenta de Treino, `publicacao/<slug>.txt`,
+dados em `dados/<slug>/`; espelhe o projeto no Artifact (`projetos/<slug>`, etapa "otimizado") e PARE.
+Fase 2 (quando a narração estiver em `brutos/`): transcrição (faster-whisper), corte de silêncios e
+repetições, legendas palavra a palavra, animações, mostrar cortes e cenas ANTES de renderizar,
+exportar `saida/<slug>_v1.mp4`.
+
+## Quadro de investigação (provas animadas)
+
+`src/Quadro.tsx`, ligado por `config.efeitos.quadro`. Cada cena tem `provas`:
+`{tipo: foto|icone|nota|etiqueta|placar|alcance, rotulo, detalhe, imgAsset (Artifact) / imgArquivo (local),
+gatilho (palavra da fala que faz aparecer), carimbo, cor (ouro|verde|vermelho|azul|amarelo), riscar,
+liga (índice da prova ligada pelo fio, dentro da cena; null = sem fio), pos [dx, dy]}`.
+As provas caem presas por alfinete/fita, o fio vermelho liga uma à outra, a câmera chega perto da
+prova nova e depois recua para o grupo; carimbos dão tranco na câmera; fotos "revelam" como polaroid.
+
+Imagens: o Claude baixa sozinho as oficiais do jogo do Data Dragon (arte de carregamento
+`cdn/img/champion/loading/<Id>_0.jpg` para fotos, ícones de habilidade e de item), envia ao Artifact
+(`Artifact publish asset:true`, até 25 por chamada) e registra `caminho local -> assetId` em
+`dados/assets.json` (o importador usa esse mapa). O que não é do Data Dragon (gameplay, prints,
+logos) o usuário envia pela prova (🖼) na aba Roteiro, que lista as imagens que faltam.
+Não usar fotos de pessoas reais (jogadores) sem direito de uso: prefira arte do campeão ou nota.
+
+## Biblioteca por campeão, círculos de alcance e vídeo da habilidade
+
+`biblioteca/campeoes/<Id>/` guarda, para cada campeão, os vídeos oficiais das habilidades e da passiva,
+um quadro parado de cada vídeo, ícones, arte e dados (veja `biblioteca/README.md`). Antes de baixar
+qualquer coisa de um campeão, rode `.venv/bin/python scripts/biblioteca.py campeao <Nome>`: ele só baixa
+o que falta. Prefira os arquivos da biblioteca aos de `dados/<video>/`.
+
+- **Quando a fala citar um alcance**, use uma prova `alcance` (cartão grande; as outras provas da cena
+  ficam nas laterais): `{tipo: "alcance", rotulo: "Alcance", imgAsset/imgArquivo: <Id>/icone.png,
+  fundoAsset/fundoArquivo: <Id>/quadros/<X>.jpg, alcances: [{valor: 1050, rotulo: "Seu E · Orbe", cor: "azul"},
+  {valor: 825, rotulo: "Investida da Akali", cor: "vermelho"}], gatilho}`. Os círculos ficam em escala entre si
+  (ilustrativo). Valores só do Data Dragon.
+- **Quando a cena falar de uma habilidade do campeão em destaque**, coloque o vídeo dela atrás do quadro:
+  `cena.videoFundo = {asset, arquivo: "biblioteca/campeoes/<Id>/videos/<X>.mp4", dur, foco, w, h, campeao}`
+  (tudo vem do `dados.json`). O vídeo roda em loop, o mural fica translúcido e o campeão é enquadrado no
+  centro da largura e na faixa de baixo da tela (82% da altura), abaixo das provas e da legenda, com luz nele.
+- **O foco é sempre o campeão em destaque do vídeo** (o do briefing/matchup). Vídeo de fundo só dele;
+  habilidades de inimigos e aliados entram como ícone, foto ou alcance, nunca como vídeo de fundo.
+- **Foco de cada vídeo:** `videos[X].foco = [x, y]` em frações do quadro, onde o campeão em destaque está.
+  Vídeos com `focoMedido: false` usam o padrão `[0.55, 0.65]`. Antes de usar um vídeo pela 1ª vez, meça:
+  extraia 2 quadros (30% e 50% da duração) com grade de 10% (`drawgrid=w=iw/10:h=ih/10`), ache o campeão
+  em destaque, grave `foco` e `focoMedido: true` no `dados.json` (o script mantém essas medidas) e confira
+  numa prévia que ele aparece embaixo, nítido e sem nada por cima.
+
+## Estúdio Shorts local (painel em http://localhost:3333) — alternativa
+
+```bash
+npm run painel        # empacota o player e sobe http://localhost:3333
+```
+
+Na nuvem, depois de subir, avise o app com `report_preview_port` (porta 3333)
+para o usuário abrir o painel. Etapas do painel:
+
+1. **Briefing** — usuário manda título, tipo de vídeo, campeão, duração, tom,
+   público, roteiro e orientações → `projetos/<id>/briefing.json`.
+2. **Otimização** — botão "enviar para o Claude" grava `etapa: aguardando_claude`
+   e uma linha em `painel/pedidos.log`. **Quando isso acontecer (ou o usuário
+   pedir no chat), otimize o roteiro seguindo `docs/viral-lol.md`**:
+   leia com `node painel/cli.mjs ver <id>`, escreva o JSON no formato do guia e
+   grave com `node painel/cli.mjs otimizado <id> arquivo.json`. O painel
+   atualiza sozinho e mostra notas, mudanças e o porquê de cada uma.
+   Para ver pedidos pendentes: `node painel/cli.mjs listar` (etapa
+   "aguardando_claude") ou `tail painel/pedidos.log`.
+3. **Roteiro** — usuário ajusta cenas (narração, texto na tela, destaques,
+   segundo do gameplay), gancho e CTA.
+4. **Visual & voz** — voz edge-tts (Antonio/Francisca/Thalita) e velocidade,
+   fundo (animado ou gameplay de `brutos/`, upload pelo painel), música,
+   fonte/tamanho/cores/posição da legenda, temas prontos e efeitos.
+   "Gerar narração" roda `scripts/narrar.py` → `narracao.m4a` + `trilha.json`
+   (tempo de cada palavra vem do TTS; a legenda sai sincronizada).
+5. **Exportar** — prévia 540x960 ou final 1080x1920 → `saida/<id>/<id>-vN.mp4`,
+   mais kit de publicação (títulos, descrição, hashtags).
+
+Peças: `src/LolShort.tsx` (composição, mesma no player e no render),
+`painel/server.mjs` (API + render), `painel/projetos.mjs` (dados),
+`painel/app.js` (interface), `painel/player-entry.tsx` (player ao vivo).
+O edge-tts precisa do proxy da nuvem (`HTTPS_PROXY`), já tratado no script.
+
+## Preparar a máquina
+
+```bash
+scripts/instalar.sh
+```
+
+Cria `.venv/` (yt-dlp, faster-whisper, edge-tts) e instala o Remotion (`node_modules/`).
+Requer Node.js LTS, Python 3 e FFmpeg já no sistema. Ferramentas Python sempre
+via `.venv/bin/...`.
+
+## Fluxo manual (vídeo com a voz do próprio usuário)
+
+### 1. Remover silêncios (FFmpeg)
+
+```bash
+.venv/bin/python scripts/cortar_silencios.py brutos/video.mp4
+# -> brutos/video_semsilencio.mp4
+```
+
+Usa `ffmpeg -af silencedetect` para achar os silêncios e corta com
+`trim/atrim + concat`. Ajustes:
+- `--limiar -35` (dB): suba para -30 se houver ruído de fundo; desça para -40 se cortar fala baixa.
+- `--min 0.5` (s): silêncio mínimo para cortar. Ritmo mais "picotado": 0.3.
+- `--margem 0.12` (s): respiro mantido em volta da fala; menos que 0.08 soa cortado.
+
+Se o bruto for horizontal, recorte para vertical antes (ou depois) com:
+`ffmpeg -i in.mp4 -vf "crop=ih*9/16:ih,scale=1080:1920" -c:a copy out.mp4`
+
+### 2. Gerar legendas (faster-whisper)
+
+```bash
+.venv/bin/python scripts/legendas.py brutos/video_semsilencio.mp4 --modelo small
+# -> brutos/video_semsilencio.srt  (legenda para subir na plataforma)
+# -> brutos/video_semsilencio.json (palavras com tempo, para o Remotion)
+```
+
+Sempre gerar a legenda **depois** de cortar os silêncios (os tempos precisam
+bater com o vídeo final). Revise o `.json` para corrigir nomes próprios e gírias
+antes de montar. Modelos: `small` (padrão), `medium`/`large-v3` (melhor, mais lento).
+
+### 3. Montar no Remotion
+
+```bash
+scripts/montar.sh brutos/video_semsilencio.mp4 saida/nome-do-video.mp4 [musicas/trilha.mp3]
+```
+
+Copia vídeo/música para `public/atual/`, gera `public/atual/props.json` e
+renderiza a composição `Short` (`src/Short.tsx`):
+- vídeo em tela cheia (`objectFit: cover`);
+- legenda em blocos de 3 palavras, caixa alta, contorno preto, palavra falada em amarelo,
+  posicionada a 420px do rodapé (fora dos botões do YouTube/TikTok);
+- música em loop com volume 0.12 (abaixo da voz).
+
+Para mudar o estilo da edição, edite `src/Short.tsx` (ou crie novas composições
+em `src/` e registre em `src/Root.tsx`). Para pré-visualizar: `npm run studio`.
+
+### 4. Exportar
+
+O resultado vai para `saida/`, em H.264 + AAC, `yuv420p`, 1080x1920@30 —
+pronto para YouTube Shorts e TikTok. Conferir com:
+`ffprobe -v error -show_entries stream=width,height,r_frame_rate -show_entries format=duration saida/nome.mp4`
+
+Teste rápido do ambiente: `npm run teste` → `saida/teste.mp4`.
+
+## Referências de estilo
+
+Para analisar um vídeo de `referencias/`: extrair quadros
+(`ffmpeg -i ref.mp4 -vf fps=1,scale=360:-1 /tmp/ref_%03d.png`), olhar fonte,
+cor e posição das legendas, ritmo dos cortes, zooms, efeitos sonoros, e replicar
+em `src/Short.tsx`. `yt-dlp` (`.venv/bin/yt-dlp URL -o referencias/%(title)s.%(ext)s`)
+baixa referências — só para estudo, não republicar conteúdo de terceiros.
+
+## Particularidades da nuvem (Claude Code na web)
+
+- O contêiner é temporário: ao abrir uma sessão nova, rode `scripts/instalar.sh`.
+  Vídeos em `saida/` precisam ser baixados pelo usuário antes de a sessão acabar.
+- O Remotion não consegue baixar o próprio Chrome lá; `remotion.config.ts` usa o
+  Chrome Headless Shell em `/opt/pw-browsers/...` quando ele existe
+  (ou o caminho em `REMOTION_CHROME`). Em outra máquina, o Remotion baixa o dele.
+- O modelo do Whisper é baixado de `huggingface.co`, e o `yt-dlp` precisa do
+  YouTube: ambos dependem da política de rede do ambiente permitir esses domínios.
+
+## Licença do Remotion
+
+Gratuito para pessoa física e empresas com até 3 funcionários. Acima disso exige
+licença paga (remotion.dev/license).
+
+## Estilo viral (painel ⚡ Estilo viral)
+
+Análise completa em `docs/virais.md`. Resumo: `config.layout` = `"quadro"` (padrão) ou `"viral"`. No viral, o fundo
+é imagem real em tela cheia (vídeos das habilidades e splash do campeão em destaque, da biblioteca), corte a cada
+2,4 s, provas viram figurinhas no topo e a legenda fica com 2 palavras. Os botões “Gerar prévia” e “Aprovar e produzir
+final” usam o mesmo pedido do Criar vídeo (comentário “[Estúdio Shorts · botão Criar vídeo] …”), com o config já em
+`layout: "viral"`.
+
+- Pedido de produção viral de um campeão que não está em `config/biblioteca`: rode `scripts/biblioteca.py campeao X`
+  (o render já funciona), e para o player da página envie splash e vídeos como assets e atualize `config/biblioteca`
+  com `scripts/biblioteca_estudio.py` (passo a passo em `docs/virais.md`).
+- Comentário “[Estúdio Shorts · Estilo viral] busca de novo…”: rode `scripts/virais.py`, veja os mais rápidos
+  (baixe só TikTok; não contorne o bloqueio de download do YouTube), atualize `dados/virais/atual.json`
+  (modelos, receita, comparação) e grave em `virais/atual`. Responda e resolva o comentário.

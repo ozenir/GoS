@@ -1,0 +1,158 @@
+{
+ "id": "Ezreal",
+ "nome": "Ezreal",
+ "titulo": "o Explorador Pródigo",
+ "chave": "0081",
+ "versao": "16.22.1",
+ "alcanceAtaque": 550,
+ "habilidades": {
+  "P": {
+   "nome": "Feitiço do Poder Crescente",
+   "descricao": "Ezreal recebe Velocidade de Ataque crescente a cada vez que acerta uma habilidade, acumulando-se até 5 vezes."
+  },
+  "Q": {
+   "nome": "Disparo Místico",
+   "recarga": [
+    5.5,
+    5.25,
+    5,
+    4.75,
+    4.5
+   ],
+   "custo": [
+    28,
+    31,
+    34,
+    37,
+    40
+   ],
+   "alcance": [
+    1150,
+    1150,
+    1150,
+    1150,
+    1150
+   ],
+   "descricao": "Ezreal faz um disparo de energia que reduz um pouco o Tempo de Recarga de todas as suas habilidades caso atinja uma unidade inimiga."
+  },
+  "W": {
+   "nome": "Fluxo Essencial",
+   "recarga": [
+    8,
+    8,
+    8,
+    8,
+    8
+   ],
+   "custo": [
+    50,
+    50,
+    50,
+    50,
+    50
+   ],
+   "alcance": [
+    1150,
+    1150,
+    1150,
+    1150,
+    1150
+   ],
+   "descricao": "Ezreal dispara um orbe que prende-se ao primeiro Campeão ou objetivo atingido. Caso atinja um inimigo preso com o orbe, ele detonará e causará dano."
+  },
+  "E": {
+   "nome": "Translocação Arcana",
+   "recarga": [
+    26,
+    23,
+    20,
+    17,
+    14
+   ],
+   "custo": [
+    70,
+    70,
+    70,
+    70,
+    70
+   ],
+   "alcance": [
+    475,
+    475,
+    475,
+    475,
+    475
+   ],
+   "descricao": "Ezreal teleporta-se para um local-alvo próximo e faz um disparo teleguiado na unidade inimiga mais próxima. Prioriza inimigos atingidos com Fluxo Essencial."
+  },
+  "R": {
+   "nome": "Barragem Incendiária",
+   "recarga": [
+    120,
+    105,
+    90
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    25000,
+    25000,
+    25000
+   ],
+   "descricao": "Ezreal carrega antes de disparar uma poderosa barragem de energia que causa dano massivo em cada unidade que atravessar (o dano é reduzido contra tropas e monstros não épicos)."
+  }
+ },
+ "videos": {
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 6.67,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 3.8,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 2.03,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 3.6,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  }
+ }
+}

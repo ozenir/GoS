@@ -1,0 +1,395 @@
+{
+  "cenas": [
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "E"
+      ],
+      "narracao": "Xerath contra Akali: o erro que todo Diamante comete é gastar o E cedo.",
+      "provas": [
+        {
+          "gatilho": "Xerath",
+          "imgArquivo": "dados/xerath-mid/arte/Xerath.jpg",
+          "imgAsset": "1fcb7444364f290888557592cb46bb0f",
+          "rotulo": "Xerath (você)",
+          "tipo": "foto"
+        },
+        {
+          "carimbo": "MEIO",
+          "gatilho": "Akali",
+          "imgArquivo": "dados/xerath-mid/arte/Akali.jpg",
+          "imgAsset": "edb7eb01b72c539f5b93f500c8e9f96e",
+          "rotulo": "Akali",
+          "tipo": "foto"
+        },
+        {
+          "cor": "vermelho",
+          "detalhe": "gastar o E cedo",
+          "gatilho": "erro",
+          "rotulo": "O ERRO DO DIAMANTE",
+          "tipo": "nota"
+        },
+        {
+          "gatilho": "cedo",
+          "imgArquivo": "dados/xerath-mid/habilidade_E.png",
+          "imgAsset": "1dcb3bd52d2b3c4f3d32dc2115592d8c",
+          "liga": 2,
+          "rotulo": "E · Orbe Eletrizante",
+          "tipo": "icone"
+        }
+      ],
+      "textoTela": "NÃO USE O E",
+      "videoFundo": {
+        "asset": "81d49d34efdd9a98d2cc583361e8222e",
+        "arquivo": "biblioteca/campeoes/Xerath/videos/E.mp4",
+        "dur": 4.33,
+        "foco": [
+          0.59,
+          0.63
+        ],
+        "w": 1056,
+        "h": 720,
+        "campeao": "Xerath"
+      },
+      "visual": "Xerath erra o Orbe e a Akali avança em cima dele"
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "13",
+        "16"
+      ],
+      "narracao": "O Orbe Eletrizante tem 13 segundos de recarga no nível 1. A Investida Shuriken da Akali tem 16. Se você erra o seu E, ela ganha 13 segundos para entrar sem medo.",
+      "provas": [
+        {
+          "detalhe": "recarga 13 s (nv. 1)\nalcance 1050",
+          "gatilho": "Orbe",
+          "imgArquivo": "dados/xerath-mid/habilidade_E.png",
+          "imgAsset": "1dcb3bd52d2b3c4f3d32dc2115592d8c",
+          "rotulo": "Orbe Eletrizante",
+          "tipo": "icone"
+        },
+        {
+          "cor": "vermelho",
+          "detalhe": "recarga 16 s (nv. 1)\nalcance 825",
+          "gatilho": "Investida",
+          "imgArquivo": "dados/xerath-mid/akali_E.png",
+          "imgAsset": "5e33ec74aefb08450c127a70b7eebf2e",
+          "rotulo": "Investida Shuriken",
+          "tipo": "icone"
+        },
+        {
+          "alcances": [
+            {
+              "cor": "azul",
+              "rotulo": "Seu E · Orbe Eletrizante",
+              "valor": 1050
+            },
+            {
+              "cor": "vermelho",
+              "rotulo": "Investida Shuriken da Akali",
+              "valor": 825
+            }
+          ],
+          "fundoArquivo": "biblioteca/campeoes/Xerath/quadros/E.jpg",
+          "fundoAsset": "c5bd43ae68007806aea9f6076083c401",
+          "gatilho": "Shuriken",
+          "imgArquivo": "biblioteca/campeoes/Xerath/icone.png",
+          "imgAsset": "ebbb167d486fec38f54cfac095615d53",
+          "liga": 0,
+          "rotulo": "Alcance",
+          "tipo": "alcance"
+        },
+        {
+          "cor": "vermelho",
+          "detalhe": "13 s para ela\nentrar sem medo",
+          "gatilho": "erra",
+          "rotulo": "ERROU O E?",
+          "tipo": "nota"
+        }
+      ],
+      "textoTela": "E: 13 s vs 16 s",
+      "videoFundo": {
+        "asset": "81d49d34efdd9a98d2cc583361e8222e",
+        "arquivo": "biblioteca/campeoes/Xerath/videos/E.mp4",
+        "dur": 4.33,
+        "foco": [
+          0.59,
+          0.63
+        ],
+        "w": 1056,
+        "h": 720,
+        "campeao": "Xerath"
+      },
+      "visual": "Comparação das duas recargas na tela"
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "9 s"
+      ],
+      "narracao": "Então o plano é outro. Cutuque com o Pulso Arcano, que tem 9 segundos de recarga, sempre que ela andar até a tropa para dar o último golpe. Guarde o E para quando ela usar a Investida.",
+      "provas": [
+        {
+          "detalhe": "recarga 9 s (nv. 1)\nalcance 750",
+          "gatilho": "Pulso",
+          "imgArquivo": "dados/xerath-mid/habilidade_Q.png",
+          "imgAsset": "d53b1c7070b7211bdf24edd104176dfd",
+          "rotulo": "Q · Pulso Arcano",
+          "tipo": "icone"
+        },
+        {
+          "cor": "amarelo",
+          "detalhe": "ela vem até a tropa:\ncutuque",
+          "gatilho": "último",
+          "rotulo": "ÚLTIMO GOLPE",
+          "tipo": "nota"
+        },
+        {
+          "cor": "verde",
+          "gatilho": "Guarde",
+          "rotulo": "E SÓ DEPOIS DA INVESTIDA",
+          "tipo": "etiqueta"
+        }
+      ],
+      "textoTela": "Q no último golpe",
+      "videoFundo": {
+        "asset": "9b44dd6023cd11ae884cb7eebdb420c9",
+        "arquivo": "biblioteca/campeoes/Xerath/videos/Q.mp4",
+        "dur": 7.53,
+        "foco": [
+          0.58,
+          0.63
+        ],
+        "w": 1056,
+        "h": 720,
+        "campeao": "Xerath"
+      },
+      "visual": "Xerath acerta o Q enquanto a Akali dá o último golpe"
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "20 s"
+      ],
+      "narracao": "E a névoa? A Proteção do Crepúsculo tem 20 segundos de recarga. Quando ela entrar, recue. Quando sair, você tem quase 20 segundos sem névoa para punir. Essa é a sua janela de troca completa: E, W e Q.",
+      "provas": [
+        {
+          "cor": "vermelho",
+          "detalhe": "a névoa\nrecarga 20 s (nv. 1)",
+          "gatilho": "Proteção",
+          "imgArquivo": "dados/xerath-mid/akali_W.png",
+          "imgAsset": "d17d3375ae8940221b9035d75c9c1f02",
+          "rotulo": "Proteção do Crepúsculo",
+          "tipo": "icone"
+        },
+        {
+          "cor": "amarelo",
+          "gatilho": "recue",
+          "rotulo": "NÉVOA = RECUE",
+          "tipo": "etiqueta"
+        },
+        {
+          "cor": "verde",
+          "detalhe": "sem névoa:\npuna com E, W e Q",
+          "gatilho": "janela",
+          "rotulo": "JANELA DE ~20 s",
+          "tipo": "nota"
+        },
+        {
+          "detalhe": "recarga 14 s\nalcance 1000",
+          "gatilho": "W",
+          "imgArquivo": "dados/xerath-mid/habilidade_W.png",
+          "imgAsset": "bc42071166699285a582a28fed469da1",
+          "rotulo": "W · Olho da Destruição",
+          "tipo": "icone"
+        }
+      ],
+      "textoTela": "Névoa = 20 s",
+      "videoFundo": {
+        "asset": "6cf29bf9aa113ea0d96155f11518126b",
+        "arquivo": "biblioteca/campeoes/Xerath/videos/W.mp4",
+        "dur": 7.33,
+        "foco": [
+          0.62,
+          0.55
+        ],
+        "w": 1056,
+        "h": 720,
+        "campeao": "Xerath"
+      },
+      "visual": "Akali sai da névoa e leva o combo completo"
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "860"
+      ],
+      "narracao": "Mas o perigo real é o Jarvan. No nível 3, o combo do Estandarte com o Ataque do Dragão alcança 860 de distância. Coloque sentinela no rio antes do terceiro minuto e jogue com a onda perto da sua torre.",
+      "provas": [
+        {
+          "carimbo": "PERIGO",
+          "gatilho": "Jarvan",
+          "imgArquivo": "dados/xerath-mid/arte/JarvanIV.jpg",
+          "imgAsset": "999b55d0a0fd34627006553156dd2ad8",
+          "rotulo": "Jarvan IV",
+          "tipo": "foto"
+        },
+        {
+          "cor": "vermelho",
+          "detalhe": "Estandarte:\nalcance 860",
+          "gatilho": "Estandarte",
+          "imgArquivo": "dados/xerath-mid/jarvan_E.png",
+          "imgAsset": "ff9c2edf6afde862c778b76bf28fa3b0",
+          "rotulo": "Estandarte + Ataque do Dragão",
+          "tipo": "icone"
+        },
+        {
+          "alcances": [
+            {
+              "cor": "vermelho",
+              "rotulo": "Estandarte do Jarvan (E)",
+              "valor": 860
+            },
+            {
+              "cor": "azul",
+              "rotulo": "Seu E · Orbe Eletrizante",
+              "valor": 1050
+            }
+          ],
+          "fundoArquivo": "biblioteca/campeoes/JarvanIV/quadros/E.jpg",
+          "fundoAsset": "d1a764e927c2c5d598d2195ec339eee5",
+          "gatilho": "alcança",
+          "imgArquivo": "biblioteca/campeoes/JarvanIV/icone.png",
+          "imgAsset": "fd86231b8c11925e381b7ec1cdec6792",
+          "liga": 1,
+          "rotulo": "Alcance",
+          "tipo": "alcance"
+        },
+        {
+          "detalhe": "antes do 3º minuto",
+          "gatilho": "sentinela",
+          "imgArquivo": "dados/xerath-mid/itens/2055.png",
+          "imgAsset": "341e9240597076106dcb84e814a06610",
+          "rotulo": "Sentinela no rio",
+          "tipo": "icone"
+        },
+        {
+          "cor": "verde",
+          "gatilho": "onda",
+          "rotulo": "ONDA PERTO DA SUA TORRE",
+          "tipo": "etiqueta"
+        }
+      ],
+      "textoTela": "Jarvan nível 3",
+      "visual": "Minimapa com a sentinela no rio e o caminho do Jarvan"
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "1325",
+        "1200",
+        "75"
+      ],
+      "narracao": "Na primeira volta, junte 1325 de ouro. Compre Capítulo Perdido por 1200, Sentinela de Controle por 75 e uma Poção de Vida. Depois feche o Eco de Luden para limpar a onda de longe e não dar brecha para roam.",
+      "provas": [
+        {
+          "cor": "ouro",
+          "detalhe": "1325 de ouro",
+          "gatilho": "volta",
+          "rotulo": "1ª VOLTA",
+          "tipo": "nota"
+        },
+        {
+          "detalhe": "1200 de ouro",
+          "gatilho": "Capítulo",
+          "imgArquivo": "dados/xerath-mid/itens/3802.png",
+          "imgAsset": "e0e82a89ad7a8ce61b7b0e9824352bf2",
+          "rotulo": "Capítulo Perdido",
+          "tipo": "icone"
+        },
+        {
+          "detalhe": "75 de ouro",
+          "gatilho": "Sentinela",
+          "imgArquivo": "dados/xerath-mid/itens/2055.png",
+          "imgAsset": "341e9240597076106dcb84e814a06610",
+          "rotulo": "Sentinela de Controle",
+          "tipo": "icone"
+        },
+        {
+          "carimbo": "1º ITEM",
+          "detalhe": "limpa a onda de longe",
+          "gatilho": "Eco",
+          "imgArquivo": "dados/xerath-mid/itens/6655.png",
+          "imgAsset": "c08e2a2553863dd8461d10346f92b708",
+          "rotulo": "Eco de Luden",
+          "tipo": "icone"
+        }
+      ],
+      "textoTela": "1ª volta: 1325",
+      "visual": "Tela da loja com as compras"
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "Cometa Arcano",
+        "Eletrocutar"
+      ],
+      "narracao": "Resumo: Pulso Arcano no último golpe, E só depois da Investida, névoa é sinal para recuar. E você, contra Akali, abre Cometa Arcano ou Eletrocutar? Comenta aí.",
+      "provas": [
+        {
+          "cor": "ouro",
+          "detalhe": "Q no último golpe\nE depois da Investida\nnévoa = recuar",
+          "gatilho": "Resumo",
+          "rotulo": "RESUMO",
+          "tipo": "nota"
+        },
+        {
+          "gatilho": "você",
+          "imgArquivo": "dados/xerath-mid/arte/Xerath.jpg",
+          "imgAsset": "1fcb7444364f290888557592cb46bb0f",
+          "rotulo": "E você?",
+          "tipo": "foto"
+        },
+        {
+          "cor": "azul",
+          "detalhe": "comenta aí",
+          "gatilho": "Cometa",
+          "liga": 1,
+          "rotulo": "COMETA OU ELETROCUTAR?",
+          "tipo": "nota"
+        }
+      ],
+      "textoTela": "Cometa ou Eletrocutar?",
+      "visual": "Lista do resumo e a pergunta em destaque"
+    }
+  ],
+  "cta": {
+    "texto": "Comente: Cometa Arcano ou Eletrocutar contra Akali?"
+  },
+  "descricao": "Xerath vs Akali no meio, do nível 1 à primeira volta: recargas reais, janelas de troca, perigo do Jarvan IV e compras exatas. Patch 16.22.",
+  "hashtags": [
+    "#leagueoflegends",
+    "#lol",
+    "#xerath",
+    "#akali",
+    "#midlane"
+  ],
+  "hook": {
+    "textoTela": "NÃO USE O E"
+  },
+  "mudancas": [
+    "Gancho direto no erro comum em 1,5 s",
+    "Uma ideia central: quando gastar o E",
+    "Números de recarga e ouro tirados dos dados",
+    "Final com pergunta para gerar comentários"
+  ],
+  "notaOriginal": null,
+  "notaOtimizada": 8.6,
+  "resumo": "Como jogar de Xerath contra Akali até a 1ª volta, usando as recargas reais: E só depois da Investida e punir quando a névoa acaba.",
+  "titulos": [
+    "Xerath vs Akali: o erro que todo Diamante comete",
+    "Nunca use o E primeiro contra Akali",
+    "A janela de 20 segundos para punir Akali"
+  ]
+}

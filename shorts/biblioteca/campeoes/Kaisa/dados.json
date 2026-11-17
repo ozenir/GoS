@@ -1,0 +1,170 @@
+{
+ "id": "Kaisa",
+ "nome": "Kai'Sa",
+ "titulo": "a Filha do Vazio",
+ "chave": "0145",
+ "versao": "16.22.1",
+ "alcanceAtaque": 525,
+ "habilidades": {
+  "P": {
+   "nome": "Segunda Pele",
+   "descricao": "Os ataques básicos de Kai'Sa acumulam Plasma, causando Dano Mágico adicional crescente. Efeitos imobilizadores de aliados ajudam a acumular Plasma. Além disso, as aquisições de itens de Kai'Sa aprimoram suas habilidades básicas, deixando-as mais poderosas."
+  },
+  "Q": {
+   "nome": "Chuva Icathiana",
+   "recarga": [
+    10,
+    9,
+    8,
+    7,
+    6
+   ],
+   "custo": [
+    55,
+    55,
+    55,
+    55,
+    55
+   ],
+   "alcance": [
+    600,
+    600,
+    600,
+    600,
+    600
+   ],
+   "descricao": "Kai'Sa dispara uma chuva de projéteis que correm atrás de alvos próximos.<br><br>Arma Viva: Chuva Icathiana é aprimorada e lança mais mísseis."
+  },
+  "W": {
+   "nome": "Exploradora do Vazio",
+   "recarga": [
+    20,
+    18.5,
+    17,
+    15.5,
+    14
+   ],
+   "custo": [
+    55,
+    60,
+    65,
+    70,
+    75
+   ],
+   "alcance": [
+    3000,
+    3000,
+    3000,
+    3000,
+    3000
+   ],
+   "descricao": "Kai'Sa lança um projétil de longo alcance, marcando inimigos com sua passiva.<br><br>Arma Viva: Exploradora do Vazio é aprimorada e aplica mais marcas passivas e tem o Tempo de Recarga reduzido ao acertar um Campeão."
+  },
+  "E": {
+   "nome": "Sobrecarga",
+   "recarga": [
+    16,
+    14.5,
+    13,
+    11.5,
+    10
+   ],
+   "custo": [
+    30,
+    30,
+    30,
+    30,
+    30
+   ],
+   "alcance": [
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "descricao": "Kai'Sa aumenta brevemente sua Velocidade de Movimento, depois aumenta sua Velocidade de Ataque.<br><br>Arma Viva: Sobrecarga é aprimorada e concede Invisibilidade por um breve momento."
+  },
+  "R": {
+   "nome": "Instinto Assassino",
+   "recarga": [
+    130,
+    100,
+    70
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    2000,
+    2500,
+    3000
+   ],
+   "descricao": "Kai'Sa avança para perto de um Campeão inimigo."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 11.93,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 5.87,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 9.3,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 17.43,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 4.83,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  }
+ }
+}

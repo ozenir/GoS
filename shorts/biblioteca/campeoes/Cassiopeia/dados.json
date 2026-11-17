@@ -1,0 +1,170 @@
+{
+ "id": "Cassiopeia",
+ "nome": "Cassiopeia",
+ "titulo": "o Abraço da Serpente",
+ "chave": "0069",
+ "versao": "16.22.1",
+ "alcanceAtaque": 550,
+ "habilidades": {
+  "P": {
+   "nome": "Graça Serpentina",
+   "descricao": "Todos os efeitos de Velocidade de Movimento são mais eficazes em Cassiopeia."
+  },
+  "Q": {
+   "nome": "Explosão Venenosa",
+   "recarga": [
+    3.5,
+    3.5,
+    3.5,
+    3.5,
+    3.5
+   ],
+   "custo": [
+    50,
+    55,
+    60,
+    65,
+    70
+   ],
+   "alcance": [
+    850,
+    850,
+    850,
+    850,
+    850
+   ],
+   "descricao": "Cassiopeia atinge uma área com veneno após um breve intervalo, recebendo Velocidade de Movimento caso atinja um Campeão inimigo."
+  },
+  "W": {
+   "nome": "Miasma",
+   "recarga": [
+    24,
+    22,
+    20,
+    18,
+    16
+   ],
+   "custo": [
+    70,
+    75,
+    80,
+    85,
+    90
+   ],
+   "alcance": [
+    700,
+    700,
+    700,
+    700,
+    700
+   ],
+   "descricao": "Cassiopeia lança diversas nuvens de veneno que reduzem a velocidade, prendem ao chão e causam dano leve aos inimigos que as atravessarem. Inimigos presos ao chão não podem usar habilidades de movimentação."
+  },
+  "E": {
+   "nome": "Presas Duplas",
+   "recarga": [
+    0.75,
+    0.75,
+    0.75,
+    0.75,
+    0.75
+   ],
+   "custo": [
+    45,
+    45,
+    45,
+    45,
+    45
+   ],
+   "alcance": [
+    700,
+    700,
+    700,
+    700,
+    700
+   ],
+   "descricao": "Cassiopeia desfere um ataque que causa dano adicional a alvos envenenados, curando a si mesma com um percentual do dano causado. Se o alvo morrer com este ataque, Cassiopeia recupera Mana."
+  },
+  "R": {
+   "nome": "Olhar Petrificador",
+   "recarga": [
+    120,
+    100,
+    80
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    825,
+    825,
+    825
+   ],
+   "descricao": "Cassiopeia lança uma espiral de energia mágica de seus olhos, atordoando quaisquer inimigos à sua frente que estiverem de frente para ela e reduzindo a velocidade de quaisquer outros que estiverem de costas."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 6.87,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 5.77,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 7.43,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 8.37,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 5.73,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  }
+ }
+}

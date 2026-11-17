@@ -1,0 +1,314 @@
+{
+  "cenas": [
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "LoL 2"
+      ],
+      "narracao": "A Riot acabou de revelar o LoL 2? Calma!",
+      "textoTela": "LOL 2?",
+      "visual": "Corte do teaser oficial do New Dawn no palco da final do Worlds, com zoom rápido e tremida de impacto",
+      "provas": [
+        {
+          "tipo": "foto",
+          "rotulo": "LoL 2?",
+          "imgArquivo": "biblioteca/eventos/new-dawn/teaser-nova-alvorada.jpg",
+          "imgAsset": "7443fccac557da4c22563619733aa0ce",
+          "gatilho": "LoL",
+          "carimbo": "SERÁ?"
+        },
+        {
+          "tipo": "etiqueta",
+          "rotulo": "CALMA",
+          "gatilho": "Calma",
+          "cor": "amarelo"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "teaser"
+      ],
+      "narracao": "Final do Worlds. Todo mundo de olho na tela. De repente, sai o teaser!",
+      "textoTela": "WORLDS 2026",
+      "visual": "Plateia e telão da final do Worlds, depois corte seco para o teaser",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "FINAL DO WORLDS",
+          "detalhe": "2026",
+          "gatilho": "Final",
+          "cor": "ouro"
+        },
+        {
+          "tipo": "foto",
+          "rotulo": "O teaser",
+          "imgArquivo": "biblioteca/eventos/new-dawn/teaser-nova-alvorada.jpg",
+          "imgAsset": "7443fccac557da4c22563619733aa0ce",
+          "gatilho": "teaser"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "lindos"
+      ],
+      "narracao": "O chat enlouqueceu na hora. Um grita: os gráficos são lindos!",
+      "textoTela": "GRÁFICO LINDO",
+      "visual": "Chat acelerado na tela com mensagem destacada, imagens do visual novo ao lado",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "O CHAT",
+          "detalhe": "enlouqueceu",
+          "gatilho": "chat",
+          "cor": "amarelo"
+        },
+        {
+          "tipo": "etiqueta",
+          "rotulo": "GRÁFICOS LINDOS",
+          "gatilho": "gráficos",
+          "cor": "verde"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "estilo"
+      ],
+      "narracao": "Outro grita: que estilo é esse? Parece outro jogo!",
+      "textoTela": "QUE ESTILO É ESSE?",
+      "visual": "Comparação lado a lado do visual atual e do novo, com emoji de dúvida",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "QUE ESTILO É ESSE?",
+          "gatilho": "estilo",
+          "cor": "vermelho"
+        },
+        {
+          "tipo": "nota",
+          "rotulo": "PARECE OUTRO JOGO",
+          "detalhe": "dizem no chat",
+          "gatilho": "Parece",
+          "cor": "vermelho"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "LoL 2"
+      ],
+      "narracao": "Um terceiro já escreve: LoL 2! O caos tomou conta.",
+      "textoTela": "LOL 2!!!",
+      "visual": "Chat explodindo com a mensagem LoL 2 repetida, meme de pânico",
+      "provas": [
+        {
+          "tipo": "placar",
+          "rotulo": "LOL 2!",
+          "detalhe": "o caos no chat",
+          "gatilho": "LoL",
+          "cor": "vermelho"
+        },
+        {
+          "tipo": "etiqueta",
+          "rotulo": "CAOS",
+          "gatilho": "caos",
+          "cor": "vermelho"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "New Dawn",
+        "2027"
+      ],
+      "narracao": "Respira, invocador! É o New Dawn, uma atualização para 2027.",
+      "textoTela": "NEW DAWN = 2027",
+      "visual": "Logo de League of Legends: New Dawn com data 2027 aparecendo na tela",
+      "provas": [
+        {
+          "tipo": "foto",
+          "rotulo": "New Dawn",
+          "imgArquivo": "biblioteca/eventos/new-dawn/teaser-nova-alvorada.jpg",
+          "imgAsset": "7443fccac557da4c22563619733aa0ce",
+          "gatilho": "New",
+          "carimbo": "ATUALIZAÇÃO"
+        },
+        {
+          "tipo": "placar",
+          "rotulo": "2027",
+          "detalhe": "atualização,\nnão jogo novo",
+          "gatilho": "2027",
+          "cor": "ouro"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "cliente novo",
+        "mapa"
+      ],
+      "narracao": "Vem cliente novo, mapa refeito e visual reformulado.",
+      "textoTela": "CLIENTE + MAPA + VISUAL",
+      "visual": "Três cortes rápidos: cliente, mapa e visual, cada um com um ícone na tela",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "CLIENTE NOVO",
+          "gatilho": "cliente",
+          "cor": "azul"
+        },
+        {
+          "tipo": "etiqueta",
+          "rotulo": "MAPA REFEITO",
+          "gatilho": "mapa",
+          "cor": "azul"
+        },
+        {
+          "tipo": "etiqueta",
+          "rotulo": "VISUAL REFORMULADO",
+          "gatilho": "visual",
+          "cor": "azul"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "Meddler",
+        "skins"
+      ],
+      "narracao": "E não é jogo novo. O Meddler garantiu: campeões e skins ficam!",
+      "textoTela": "SKINS FICAM",
+      "visual": "Imagem do Meddler com o texto 'campeões e skins mantidos', depois galeria de skins",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "JOGO NOVO?",
+          "detalhe": "não é",
+          "gatilho": "jogo",
+          "cor": "vermelho",
+          "riscar": true
+        },
+        {
+          "tipo": "nota",
+          "rotulo": "MEDDLER",
+          "detalhe": "campeões e skins\ncontinuam",
+          "gatilho": "Meddler",
+          "cor": "verde"
+        },
+        {
+          "tipo": "etiqueta",
+          "rotulo": "SKINS FICAM",
+          "gatilho": "skins",
+          "cor": "verde"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "janeiro de 2027"
+      ],
+      "narracao": "Ou seja, ninguém perdeu a skin. Os detalhes chegam em janeiro de 2027.",
+      "textoTela": "DETALHES: JAN 2027",
+      "visual": "Calendário marcando janeiro de 2027 sobre o logo do New Dawn",
+      "provas": [
+        {
+          "tipo": "etiqueta",
+          "rotulo": "NINGUÉM PERDEU A SKIN",
+          "gatilho": "ninguém",
+          "cor": "verde"
+        },
+        {
+          "tipo": "nota",
+          "rotulo": "JANEIRO DE 2027",
+          "detalhe": "mais detalhes",
+          "gatilho": "janeiro",
+          "cor": "azul"
+        }
+      ]
+    },
+    {
+      "clipeInicio": null,
+      "destaque": [
+        "lindo",
+        "estranho"
+      ],
+      "narracao": "E você, de que lado está? Gráfico lindo ou estilo estranho? Comenta!",
+      "textoTela": "LINDO OU ESTRANHO?",
+      "visual": "Tela dividida: lado esquerdo 'GRÁFICO LINDO', lado direito 'ESTILO ESTRANHO', com o visual novo ao fundo",
+      "provas": [
+        {
+          "tipo": "nota",
+          "rotulo": "GRÁFICO LINDO",
+          "detalhe": "x ESTILO ESTRANHO",
+          "gatilho": "Gráfico",
+          "cor": "vermelho"
+        },
+        {
+          "tipo": "etiqueta",
+          "rotulo": "COMENTA AÍ",
+          "gatilho": "Comenta",
+          "cor": "amarelo"
+        }
+      ]
+    }
+  ],
+  "cta": {
+    "texto": "Gráfico lindo ou estilo estranho? Comenta seu lado!"
+  },
+  "descricao": "A Riot revelou o New Dawn, a maior reformulação do LoL para 2027, e os campeões e skins ficam. Você ficou do lado do gráfico lindo ou do estilo estranho?",
+  "hashtags": [
+    "#leagueoflegends",
+    "#lol",
+    "#newdawn",
+    "#worlds",
+    "#riotgames"
+  ],
+  "hook": {
+    "textoTela": "LOL 2 CHEGOU?"
+  },
+  "mudancas": [
+    {
+      "antes": "Final do Worlds. Todo mundo de olho na tela.",
+      "depois": "A Riot acabou de revelar o LoL 2? Calma!",
+      "porque": "Abre com a pergunta que o público já está fazendo, criando lacuna de curiosidade nos primeiros 1,5s."
+    },
+    {
+      "antes": "Outro grita: que estilo é esse?",
+      "depois": "Outro grita: que estilo é esse? Parece outro jogo!",
+      "porque": "Reforça a divisão da comunidade e prepara a virada de que não é jogo novo."
+    },
+    {
+      "antes": "Calma, gente! É o New Dawn, uma atualização para 2027!",
+      "depois": "Respira, invocador! É o New Dawn, uma atualização para 2027.",
+      "porque": "Usa linguagem da comunidade e marca a virada do humor com o fato confirmado."
+    },
+    {
+      "antes": "E sabe o melhor? Todos os campeões e skins ficam! Foi o Meddler que garantiu!",
+      "depois": "E não é jogo novo. O Meddler garantiu: campeões e skins ficam!",
+      "porque": "Corta a enrolação e esclarece com fato confirmado que a Riot não apresentou como jogo novo."
+    },
+    {
+      "antes": "Você ficou de que lado: gráfico lindo ou estilo estranho? Comenta!",
+      "depois": "E você, de que lado está? Gráfico lindo ou estilo estranho? Comenta!",
+      "porque": "Mantém o final polêmico que gera comentários, com a escolha binária visível na tela."
+    }
+  ],
+  "notaOriginal": 5,
+  "notaOtimizada": 9,
+  "resumo": "Gancho de reação com a pergunta 'LoL 2?', três reações do chat em ritmo de humor, virada com os fatos confirmados (campeões e skins ficam) e final polêmico que pede lado nos comentários.",
+  "titulos": [
+    "LoL 2? A Riot soltou o New Dawn e o chat pirou",
+    "New Dawn: suas skins somem? A resposta",
+    "Gráfico lindo ou estilo estranho? New Dawn divide o LoL"
+  ]
+}

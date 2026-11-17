@@ -1,0 +1,24 @@
+node_modules/
+.venv/
+out/
+*.log
+# Mídia pesada não vai pro git (baixe/guarde por fora)
+referencias/*
+brutos/*
+musicas/*
+saida/*
+!*/.gitkeep
+public/atual/
+painel/dist/
+painel/pedidos.log
+projetos/*/narracao/
+projetos/*/narracao.m4a
+projetos/*/props-render.json
+projetos/*/narracao.mp4
+projetos/*/artifact-doc.json
+clipes/*
+!clipes/.gitkeep
+projetos/*/status.json
+# amostras da voz do usuário: nunca vão para o git (repositório público)
+voz/
+.venv-voz/

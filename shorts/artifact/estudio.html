@@ -1,0 +1,2012 @@
+<title>Estúdio Shorts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Luckiest+Guy&family=Montserrat:wght@900&family=Permanent+Marker&family=Special+Elite&display=swap">
+<style>
+/* Layout: cabeçalho fixo, etapas em pílulas, coluna de trabalho + coluna do "celular" com o player.
+   Visual de um só tema, escuro, inspirado no cliente do jogo (azul-marinho, dourado hextech, turquesa). */
+:root {
+  color-scheme: dark;
+  --fundo: #010a13;
+  --fundo2: #091428;
+  --painel: #0b1a2e;
+  --campo: #050f1c;
+  --borda: #1e2d42;
+  --ouro: #c8aa6e;
+  --ouro-claro: #f0e6d2;
+  --ouro-esc: #785a28;
+  --teal: #0ac8b9;
+  --texto: #e8e2d4;
+  --suave: #8f9bab;
+  --erro: #ff6b6b;
+  --ok: #3ddc97;
+  --sobre-ouro: #1a1408;
+  --sobre-teal: #021614;
+  --raio: 10px;
+  --f-titulo: "Bebas Neue", "Arial Narrow", Impact, sans-serif;
+  --f-texto: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--fundo); }
+body {
+  margin: 0;
+  color: var(--texto);
+  font: 15px/1.5 var(--f-texto);
+  min-height: 100%;
+  background: radial-gradient(1100px 520px at 75% -10%, #0a323c66, transparent), var(--fundo);
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--fundo); }
+h2, h3 { font-family: var(--f-titulo); letter-spacing: .04em; font-weight: 400; margin: 0 0 .5rem; text-wrap: balance; }
+h2 { font-size: 1.9rem; color: var(--ouro-claro); }
+h3 { font-size: 1.25rem; color: var(--ouro); }
+a { color: var(--teal); }
+button, input, select, textarea { font: inherit; }
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+.envolve { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.topo {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: #010a13ee; border-bottom: 1px solid var(--borda); backdrop-filter: blur(8px);
+}
+.topo .envolve { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding-block: 10px; }
+.marca { font-family: var(--f-titulo); font-size: 1.6rem; letter-spacing: .08em; color: var(--ouro-claro); display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.marca b { color: var(--ouro); font-weight: 400; }
+.losango { width: 13px; height: 13px; background: var(--teal); transform: rotate(45deg); box-shadow: 0 0 12px var(--teal); }
+#seletor { flex: 1 1 220px; max-width: 420px; margin-left: auto; }
+
+.etapas { display: flex; gap: 6px; padding-block: 12px; overflow-x: auto; }
+.etapas button {
+  background: var(--fundo2); border: 1px solid var(--borda); color: var(--suave);
+  padding: 7px 14px 7px 7px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  display: flex; align-items: center; gap: 8px;
+}
+.etapas button i { font-style: normal; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--borda); color: var(--texto); font-size: .8rem; font-weight: 700; }
+.etapas button.feito i { background: var(--ouro-esc); color: var(--ouro-claro); }
+.etapas button.ativo { border-color: var(--ouro); color: var(--ouro-claro); background: var(--painel); }
+.etapas button.ativo i { background: var(--ouro); color: var(--fundo); }
+.etapas button:disabled { opacity: .45; cursor: not-allowed; }
+
+.grade { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; padding-block: 0 48px; align-items: start; }
+.trabalho { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.lateral { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 70px); display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+@media (max-width: 900px) {
+  .grade { grid-template-columns: minmax(0, 1fr); }
+  .lateral { position: static; order: -1; }
+  .celular { max-width: 280px; margin: 0 auto; }
+}
+
+.cartao { background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio); padding: 16px; min-width: 0; }
+.cartao.destaque { border-color: var(--ouro-esc); }
+.celular { aspect-ratio: 9 / 16; width: 100%; max-width: 100%; border-radius: 24px; overflow: hidden; border: 3px solid #23272e; box-shadow: 0 0 0 1px var(--ouro-esc), 0 20px 50px #000a; background: #000; }
+#player { width: 100%; height: 100%; }
+.dica { font-size: .82rem; color: var(--suave); text-align: center; }
+
+label { display: block; font-size: .82rem; color: var(--suave); margin: 10px 0 4px; }
+input[type=text], input[type=number], textarea, select {
+  width: 100%; background: var(--campo); color: var(--texto); border: 1px solid var(--borda);
+  border-radius: 8px; padding: 9px 11px;
+}
+textarea { min-height: 90px; resize: vertical; }
+textarea.grande { min-height: 200px; }
+input:focus, textarea:focus, select:focus { outline: 2px solid var(--ouro-esc); border-color: var(--ouro); }
+input[type=range] { width: 100%; accent-color: var(--ouro); }
+input[type=color] { width: 44px; height: 34px; border: 1px solid var(--borda); background: none; border-radius: 6px; padding: 2px; }
+input[type=file] { max-width: 100%; color: var(--suave); }
+.linha2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0 14px; }
+.check { display: flex; align-items: center; gap: 8px; color: var(--texto); font-size: .92rem; margin: 8px 0; cursor: pointer; }
+.cores { display: flex; flex-wrap: wrap; gap: 14px; }
+.cores label { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin: 6px 0; }
+.valor { color: var(--ouro-claro); font-variant-numeric: tabular-nums; }
+.nota-rodape { color: var(--suave); font-size: .82rem; }
+
+.btn { background: var(--fundo2); color: var(--ouro-claro); border: 1px solid var(--ouro-esc); padding: 9px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: .92rem; }
+.btn:hover { border-color: var(--ouro); }
+.btn.ouro { background: linear-gradient(180deg, var(--ouro), #a4814a); color: var(--sobre-ouro); border-color: var(--ouro-claro); }
+.btn.teal { background: linear-gradient(180deg, var(--teal), #087f77); color: var(--sobre-teal); border-color: #8ff3ea; }
+.btn.peq { padding: 5px 10px; font-size: .8rem; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+
+.status .etq { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.status b { min-width: 0; overflow-wrap: anywhere; }
+.selo { font-size: .75rem; padding: 2px 10px; border-radius: 999px; background: var(--borda); color: var(--texto); white-space: nowrap; }
+.selo.ok { background: #3ddc9722; color: var(--ok); }
+.selo.claude { background: #0ac8b922; color: var(--teal); }
+.selo.erro { background: #ff6b6b22; color: var(--erro); }
+.selo.rodando { background: #c8aa6e22; color: var(--ouro); }
+.barra { height: 8px; background: var(--campo); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.barra > div { height: 100%; background: linear-gradient(90deg, var(--ouro-esc), var(--ouro)); transition: width .4s; }
+
+.linha { list-style: none; margin: 0; padding: 0; max-height: 280px; overflow: auto; font-size: .84rem; }
+.linha li { padding: 6px 0 6px 16px; border-left: 2px solid var(--borda); position: relative; overflow-wrap: anywhere; }
+.linha li::before { content: ""; position: absolute; left: -5px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--suave); }
+.linha li.ok::before { background: var(--ok); }
+.linha li.claude::before { background: var(--teal); }
+.linha li.erro::before { background: var(--erro); }
+.linha small { color: var(--suave); display: block; }
+
+.notas { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.nota { text-align: center; padding: 10px 18px; border-radius: 10px; background: var(--campo); border: 1px solid var(--borda); }
+.nota b { display: block; font: 400 2.4rem/1 var(--f-titulo); font-variant-numeric: tabular-nums; }
+.nota.antes b { color: var(--suave); }
+.nota.depois b { color: var(--ok); }
+.seta { font-size: 1.6rem; color: var(--ouro); }
+.mudanca { border-left: 3px solid var(--ouro-esc); padding: 6px 12px; margin: 10px 0; background: var(--campo); border-radius: 0 8px 8px 0; }
+.mudanca .antes { color: var(--suave); text-decoration: line-through; }
+.mudanca .depois { color: var(--ouro-claro); }
+.mudanca .pq { color: var(--teal); font-size: .86rem; }
+.copiavel { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--borda); }
+.copiavel span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.esperando { display: flex; gap: 14px; align-items: flex-start; }
+.pulso { width: 18px; height: 18px; border-radius: 50%; background: var(--teal); animation: pulso 1.2s infinite; flex: none; margin-top: 3px; }
+@keyframes pulso { 0% { box-shadow: 0 0 0 0 #0ac8b9aa; } 100% { box-shadow: 0 0 0 16px #0ac8b900; } }
+.escrevendo { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--suave); background: var(--campo); border-radius: 8px; padding: 10px; max-height: 160px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 10px; }
+
+.cena { border: 1px solid var(--borda); border-radius: var(--raio); padding: 12px; background: #071222; }
+.cenas { display: flex; flex-direction: column; gap: 10px; }
+.cena header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cena header b { font-family: var(--f-titulo); font-size: 1.2rem; color: var(--ouro); letter-spacing: .05em; }
+.cena header .tempo { color: var(--suave); font-size: .8rem; background: none; border: 0; cursor: pointer; padding: 0; font-variant-numeric: tabular-nums; }
+.cena header .esp { flex: 1; }
+.cena .visual { font-size: .82rem; color: var(--teal); margin-top: 6px; }
+.aviso { background: #c8aa6e18; border: 1px solid var(--ouro-esc); color: var(--ouro-claro); border-radius: 8px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.aviso span { flex: 1; min-width: 200px; }
+.provas { margin-top: 12px; border-top: 1px dashed var(--borda); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.provas-tit { font-size: .82rem; color: var(--suave); }
+.prova { display: grid; grid-template-columns: 44px minmax(0, 1fr) minmax(0, 110px) 96px auto auto; gap: 6px; align-items: center; }
+.prova img, .prova .sem { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; object-position: 50% 18%; background: var(--campo); border: 1px solid var(--borda); }
+.prova .sem { display: grid; place-items: center; font-size: .62rem; color: var(--erro); text-align: center; line-height: 1.1; }
+.prova .sem.ok { color: var(--suave); }
+.prova input[type=text], .prova select { padding: 6px 8px; font-size: .85rem; }
+.prova label.btn { margin: 0; display: inline-flex; align-items: center; }
+@media (max-width: 560px) { .prova { grid-template-columns: 44px minmax(0, 1fr) auto auto; } .prova [data-p=gatilho], .prova select { grid-column: 2 / -1; } }
+.aviso.erro { border-color: var(--erro); color: var(--erro); background: #ff6b6b14; }
+
+.render { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--borda); }
+.render video { width: 110px; max-width: 100%; aspect-ratio: 9/16; border-radius: 8px; background: #000; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.presets button { display: flex; align-items: center; gap: 6px; }
+.presets i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+.vazio { text-align: center; padding: 28px 10px; color: var(--suave); }
+code { background: var(--campo); padding: 1px 6px; border-radius: 5px; color: var(--ouro-claro); }
+
+/* temas em alta */
+.alta { margin-bottom: 14px; }
+.viral .passos-v { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 12px 0; }
+.viral .passo-v { border: 1px solid var(--borda, #2a3a44); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.viral .passo-v b { font-size: .95rem; }
+.viral .passo-v.feito { border-color: #2ecc71; }
+.viral .modelos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin: 10px 0; padding: 0; list-style: none; }
+.viral .modelo { border: 1px solid var(--borda, #2a3a44); border-radius: 12px; padding: 10px 12px; }
+.viral .modelo h4 { margin: 4px 0; font-size: .95rem; line-height: 1.25; overflow-wrap: anywhere; }
+.viral .modelo .num { color: var(--ouro, #C8AA6E); font-weight: 700; font-size: .85rem; }
+.viral .modelo ul { margin: 6px 0 0; padding-left: 1.1rem; font-size: .85rem; }
+.viral .tabela { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.viral .tabela th, .viral .tabela td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--borda, #2a3a44); vertical-align: top; }
+.viral .rolagem { overflow-x: auto; }
+.estilos { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.estilos label { border: 1px solid var(--borda, #2a3a44); border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; }
+.estilos label:has(input:checked) { border-color: var(--ouro, #C8AA6E); }
+.alta-topo { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.alta-topo h2 { margin: 0; flex: 1 1 220px; }
+.temas { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 900px) { .temas { grid-template-columns: minmax(0, 1fr); } }
+.tema { border: 1px solid var(--borda); border-radius: 8px; background: var(--campo); padding: 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tema header { display: flex; gap: 10px; align-items: baseline; }
+.tema .pos { font: 400 1.9rem/1 var(--f-titulo); color: var(--ouro); min-width: 1.6em; }
+.tema h3 { margin: 0; font-size: 1.15rem; color: var(--ouro-claro); overflow-wrap: anywhere; }
+.tema .calor { height: 6px; background: var(--borda); border-radius: 99px; overflow: hidden; }
+.tema .calor > div { height: 100%; background: linear-gradient(90deg, #ffb347, #ff5e3a); }
+.tema p { margin: 0; font-size: .88rem; }
+.tema ul { margin: 0; padding-left: 1.1rem; font-size: .8rem; color: var(--suave); }
+.tema .fontes { font-size: .78rem; color: var(--suave); overflow-wrap: anywhere; }
+.tema .btn { align-self: flex-start; margin-top: auto; }
+
+/* roteiro automático (aba Briefing): 3 opções do Claude, a escolhida vai para o campo de roteiro */
+.auto-roteiro { margin-top: 12px; border: 1px dashed var(--ouro-esc); border-radius: var(--raio); padding: 12px; background: #c8aa6e0a; }
+.auto-roteiro .topo-auto { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.auto-roteiro .topo-auto b { flex: 1 1 200px; color: var(--ouro-claro); }
+.opcoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+@media (max-width: 900px) { .opcoes { grid-template-columns: minmax(0, 1fr); } }
+.opcao { border: 1px solid var(--borda); border-radius: 8px; background: var(--campo); padding: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.opcao.escolhida { border-color: var(--ok); box-shadow: 0 0 0 1px var(--ok); }
+.opcao .gancho { font: 400 1.35rem/1.1 var(--f-titulo); color: var(--ouro); letter-spacing: .03em; }
+.opcao .texto { font-size: .86rem; max-height: 210px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--texto); }
+.opcao .meta { font-size: .76rem; color: var(--suave); }
+.opcao .btn { align-self: flex-start; margin-top: auto; }
+
+/* criação automática: um botão + passos com estado (feito / rodando / esperando / erro / pendente) */
+.auto { margin-bottom: 14px; }
+.auto-topo { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.auto-topo h2 { margin: 0; flex: 1 1 220px; }
+.auto-topo select { width: auto; flex: 0 1 200px; }
+.auto-resumo { color: var(--suave); font-size: .86rem; margin: 6px 0 0; }
+.passos { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 760px) { .passos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.passo { display: flex; gap: 9px; align-items: flex-start; padding: 9px 10px; border: 1px solid var(--borda); border-radius: 8px; background: var(--campo); font-size: .86rem; min-width: 0; }
+.passo > div { min-width: 0; overflow-wrap: anywhere; }
+.passo b { display: block; font-weight: 600; color: var(--texto); }
+.passo small { display: block; color: var(--suave); font-size: .76rem; }
+.passo i { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: .72rem; font-weight: 700; background: var(--borda); color: var(--suave); margin-top: 1px; }
+.passo.feito { border-color: #3ddc9755; }
+.passo.feito i { background: var(--ok); color: #03140c; }
+.passo.rodando { border-color: var(--ouro); background: #c8aa6e12; }
+.passo.rodando i { background: none; border: 3px solid var(--ouro-esc); border-top-color: var(--ouro); color: transparent; animation: gira .8s linear infinite; }
+.passo.espera { border-color: var(--teal); background: #0ac8b912; }
+.passo.espera i { background: var(--teal); color: var(--sobre-teal); animation: pulso 1.2s infinite; }
+.passo.erro { border-color: var(--erro); background: #ff6b6b12; }
+.passo.erro i { background: var(--erro); color: #1a0505; }
+.passo.pendente { opacity: .7; }
+@keyframes gira { to { transform: rotate(360deg); } }
+.auto .aviso { margin-top: 12px; }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(120px); background: var(--ouro); color: var(--sobre-ouro); padding: 10px 18px; border-radius: 8px; font-weight: 600; transition: transform .25s; z-index: 20; max-width: calc(100% - 32px); }
+.toast.on { transform: translateX(-50%) translateY(0); }
+@media (prefers-reduced-motion: reduce) { .pulso, .passo.espera i { animation: none; } .passo.rodando i { animation-duration: 3s; } .toast, .barra > div { transition: none; } }
+</style>
+
+<header class="topo">
+  <div class="envolve">
+    <div class="marca"><span class="losango"></span>ESTÚDIO <b>SHORTS</b></div>
+    <select id="seletor" aria-label="Escolher vídeo"></select>
+    <button id="btnAlta" class="btn" type="button">🔥 Em alta</button>
+    <button id="btnViral" class="btn" type="button">⚡ Estilo viral</button>
+    <button id="btnNovo" class="btn ouro" type="button">+ Novo vídeo</button>
+  </div>
+</header>
+
+<div class="envolve">
+  <nav class="etapas" id="etapas" aria-label="Etapas do vídeo">
+    <button type="button" data-aba="briefing"><i>1</i>Briefing</button>
+    <button type="button" data-aba="otimizacao"><i>2</i>Otimização</button>
+    <button type="button" data-aba="roteiro"><i>3</i>Roteiro</button>
+    <button type="button" data-aba="visual"><i>4</i>Visual &amp; voz</button>
+    <button type="button" data-aba="exportar"><i>5</i>Produzir</button>
+  </nav>
+
+  <section class="cartao destaque alta" id="alta" hidden></section>
+  <section class="cartao destaque alta viral" id="viral" hidden></section>
+  <section class="cartao destaque auto" id="auto" aria-live="polite" hidden></section>
+
+  <main class="grade">
+    <section class="trabalho" id="conteudo"></section>
+    <aside class="lateral">
+      <div class="cartao status" id="status"></div>
+      <div class="celular"><div id="player"></div></div>
+      <div class="dica" id="dicaPlayer"></div>
+      <div class="cartao">
+        <h3>Criação</h3>
+        <ol class="linha" id="linha"></ol>
+      </div>
+    </aside>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="player.js"></script>
+<script>
+"use strict";
+// ============================================================ guia de otimização (vai no pedido ao Claude)
+const GUIA = `Você é roteirista de YouTube Shorts/TikTok de League of Legends em português do Brasil.
+Otimize o roteiro para viralizar, respeitando as orientações do criador acima destas regras.
+O algoritmo mede retenção nos primeiros 3s, % assistido (replay) e interação (comentários pesam mais).
+REGRAS:
+1. Gancho em até 1,5s. Nada de "fala galera", apresentação de canal ou contexto. Formas que funcionam: segredo ("a Riot vai nerfar isso"), erro do espectador ("você está buildando X errado"), número + resultado ("de Prata a Platina em 30 jogos"), desafio ("um Teemo consegue 1v5?"), reação ("o outplay mais injusto que já vi"), comparação, pergunta direta, notícia de patch.
+2. Uma ideia por vídeo. Várias dicas viram "3 dicas" com contador na tela.
+3. Lacuna de curiosidade: prometa no início, entregue no fim.
+4. Frases curtas e faladas, 6 a 12 palavras. Corte "tipo", "basicamente", "na verdade". Ritmo de ~3 palavras/segundo.
+5. Cada cena = uma mudança visual (a cada 2-3s).
+6. Números concretos. Não invente estatísticas do jogo: só use números que estejam no roteiro ou nas orientações; se faltar, use resultado visual ("derrete o tanque").
+7. Termos que a comunidade usa (outplay, flash, ult, combo, gank, elo, meta, patch, build, runa, mid/top/jg/adc/sup). Nomes de campeões e itens escritos certo.
+8. Final que gera comentário (pergunta polêmica, desafio) ou que encaixa no começo (loop).
+9. Duração: a duração alvo do criador manda (veja a regra DURAÇÃO no fim do pedido).
+ESTRUTURAS: Outplay = reação como gancho, contexto em 1 frase, a jogada, o truque, pergunta. Dica = erro comum, porquê, passos numerados, prova, CTA. Build = promessa de resultado, um item por cena com motivo, power spike, "salva pra não esquecer". Curiosidade/Lore = fato chocante, detalhes, virada no fim. Patch = o que mudou, quem ganha/perde, opinião forte, "concorda?". Tier list = começar do último, guardar o 1º para o fim. Humor = antecipar a desgraça, setup, fail, comentário curto. Polêmica = opinião forte, 2-3 argumentos, "comenta se discorda".
+TEXTO NA TELA: gancho de 2 a 5 palavras em maiúsculas; por cena é opcional e curtinho (número, palavra-chave). Destaques: 1-2 palavras por cena (campeão, número, verbo de impacto).
+TÍTULO até ~60 caracteres; descrição de 1 frase + pergunta; 3-5 hashtags incluindo #leagueoflegends #lol.
+Não prometa bugs/exploits nem incentive scripts.`;
+
+const GUIA_MATCHUP = `Você é um coach de League of Legends (nível Desafiante) e roteirista de Shorts em português do Brasil.
+Faça uma análise DETALHADA de matchup do início da partida até o jogador completar o PRIMEIRO ITEM, incluindo a primeira volta à base.
+REGRAS:
+- Use SOMENTE itens, runas e números (recarga, custo, alcance) que estão nos DADOS abaixo (Data Dragon). Escreva os nomes exatamente como nos dados.
+- Se precisar de um número que não está nos dados, não invente: descreva sem número.
+- Leve em conta: a rota do jogador, o oponente direto (no bot, a dupla), o caçador inimigo (por onde e quando ele ganka), o caçador aliado, os roams do meio e a composição dos dois times.
+- Dê janelas de troca usando as recargas reais das habilidades inimigas (ex.: "depois que ele usar o E, que tem 14 s de recarga, troque").
+- Ordem de habilidades até o nível 3 e qual maximizar primeiro.
+- Gerenciamento de onda (empurrar, congelar), visão (onde e quando colocar sentinela), quando voltar à base.
+- Plano da 1ª volta: ouro alvo e compras exatas (componentes do 1º item, com custo dos dados).
+- O 1º item depende do campeão e das composições, não de regra fixa (ex.: campeões que escalam com mana, como Cassiopeia e Ryze, costumam começar pela Lágrima da Deusa; atiradores de dano físico, como Caitlyn e Jhin, costumam fechar Espada G. p. C. na 1ª volta). Explique o porquê.
+- Diga como jogar contra CADA campeão inimigo nesse período (os 5).
+- Respeite os fatos confirmados e as orientações do criador, se houver.
+- Frases curtas e diretas. Também escreva um roteiro de Short com a duração escolhida pelo criador (regra DURAÇÃO no fim do pedido), seguindo as regras de viralização: gancho em 1,5 s, uma ideia, final com pergunta.`;
+
+const FORMATO_MATCHUP = `Responda SOMENTE com um objeto JSON neste formato:
+{"resumo": "2 frases: como é o matchup e o plano", "dificuldade": "fácil|média|difícil",
+ "runas": {"principal": "árvore", "chave": "runa-chave", "secundaria": "árvore", "porque": "1 frase"},
+ "inicio": {"itens": [{"nome": "", "custo": 0}], "nivel1": "o que fazer no nível 1", "ordemHabilidades": "ex.: Q > E > W, maximizar Q"},
+ "fases": [{"titulo": "Níveis 1 a 3", "plano": "o que fazer"}, {"titulo": "Níveis 3 a 6", "plano": ""}, {"titulo": "Até a 1ª volta", "plano": ""}],
+ "contraCada": [{"campeao": "nome", "rota": "Topo|Selva|Meio|Atirador|Suporte", "ameaca": "alta|média|baixa", "janela": "quando punir (com recargas)", "comoJogar": "1-2 frases"}],
+ "recall": {"quando": "momento ideal", "ouroAlvo": 0, "compra": [{"nome": "", "custo": 0}], "porque": "1 frase"},
+ "primeiroItem": {"nome": "", "custo": 0, "porque": "", "alternativa": "outro item e quando usar"},
+ "erros": ["erro comum 1", "erro comum 2", "erro comum 3"],
+ "short": {"notaOriginal": null, "notaOtimizada": 0, "resumo": "", "titulos": ["3 opções"], "hook": {"textoTela": "2-5 PALAVRAS"},
+   "cenas": [{"narracao": "", "textoTela": "", "destaque": [], "visual": "", "clipeInicio": null}],
+   "cta": {"texto": ""}, "descricao": "", "hashtags": ["#leagueoflegends", "#lol"], "mudancas": []}}`;
+
+const FORMATO = `Responda SOMENTE com um objeto JSON neste formato:
+{"notaOriginal": número 0-10, "notaOtimizada": número 0-10, "resumo": "1 frase sobre a estratégia",
+ "titulos": ["3 opções"], "hook": {"textoTela": "2-5 PALAVRAS"},
+ "cenas": [{"narracao": "frase falada", "textoTela": "opcional ou vazio", "destaque": ["palavras"], "visual": "o que mostrar do gameplay", "clipeInicio": null}],
+ "cta": {"texto": "chamada curta para comentar"}, "descricao": "pronta para colar", "hashtags": ["#leagueoflegends", "#lol"],
+ "mudancas": [{"antes": "trecho original (vazio se for novo)", "depois": "trecho novo", "porque": "motivo em 1 frase"}]}`;
+
+// ============================================================ constantes
+const MATCHUP = "Matchup: até o 1º item";
+const ROTAS = ["Topo", "Selva", "Meio", "Atirador", "Suporte"];
+const TIPOS = [MATCHUP, "Outplay / Jogada", "Dica / Tutorial", "Build / Guia de campeão", "Curiosidade / Lore", "Notícia de patch", "Tier list / Ranking", "Humor / Fail", "Polêmica / Opinião"];
+const TONS = ["Energético", "Engraçado", "Sério / Analítico", "Misterioso", "Polêmico"];
+const PUBLICOS = ["Todos", "Iniciantes (Ferro–Prata)", "Intermediário (Ouro–Esmeralda)", "High elo (Diamante+)"];
+const VOZ_PROPRIA_ATIVA = false; // "Minha voz": só liga quando o usuário aprovar
+const VOZES = [
+  ...(VOZ_PROPRIA_ATIVA ? [{ id: "minha-voz", nome: "Minha voz (clonada)" }] : []),
+  { id: "pt-BR-AntonioNeural", nome: "Antonio (masculina)" },
+  { id: "pt-BR-FranciscaNeural", nome: "Francisca (feminina)" },
+  { id: "pt-BR-ThalitaMultilingualNeural", nome: "Thalita (feminina)" },
+];
+const PRESETS = {
+  Hextech: { tema: { cor1: "#010A13", cor2: "#0A323C", corDestaque: "#C8AA6E" }, cores: { corFalada: "#FFE600", corEnfase: "#0AC8B9" } },
+  Noxus: { tema: { cor1: "#120404", cor2: "#4A0C0C", corDestaque: "#E8403A" }, cores: { corFalada: "#FFD400", corEnfase: "#FF4D4D" } },
+  Ionia: { tema: { cor1: "#12061A", cor2: "#4A1A4F", corDestaque: "#FF8FD8" }, cores: { corFalada: "#FFE600", corEnfase: "#FF8FD8" } },
+  Shurima: { tema: { cor1: "#140D02", cor2: "#5A3B0C", corDestaque: "#FFC845" }, cores: { corFalada: "#FFC845", corEnfase: "#4FD1FF" } },
+  Piltover: { tema: { cor1: "#0B0F14", cor2: "#1D3B4F", corDestaque: "#F2A93B" }, cores: { corFalada: "#F2A93B", corEnfase: "#3FD0FF" } },
+  Clean: { tema: { cor1: "#0A0A0A", cor2: "#2A2A2A", corDestaque: "#FFFFFF" }, cores: { corFalada: "#22FF88", corEnfase: "#22D3FF" } },
+};
+const ETAPAS = {
+  briefing: ["Briefing", ""], otimizando: ["Claude otimizando", "claude"], aguardando_claude: ["Aguardando o Claude", "claude"],
+  otimizado: ["Roteiro otimizado", "ok"], aguardando_producao: ["Pedido de produção", "claude"], produzindo: ["Produzindo", "rodando"],
+  pronto: ["Vídeo pronto", "ok"], erro: ["Erro", "erro"],
+};
+const configPadrao = () => ({
+  voz: "pt-BR-AntonioNeural", velocidade: 10,
+  fundo: { tipo: "gradiente", asset: null, inicio: 0, cortesPorCena: true, volume: 0 },
+  musica: { asset: null, volume: 0.12 },
+  estilo: { fonte: "Montserrat", tamanho: 92, corTexto: "#FFFFFF", corFalada: "#FFE600", corEnfase: "#0AC8B9", corContorno: "#000000", posicaoY: 0.66, palavrasPorBloco: 3, caixaAlta: true },
+  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true, patch: true, quadro: true },
+  tema: { cor1: "#010A13", cor2: "#0A323C", corDestaque: "#C8AA6E" },
+  hookDuracao: 2.4, ctaAtivo: true,
+  layout: "quadro", // "quadro" = quadro de investigação; "viral" = imagem real em tela cheia, cortes a cada 2,4 s
+});
+// predefinição do estilo viral (o que os Shorts de LoL que mais crescem fazem; ver painel ⚡ Estilo viral)
+const VIRAL = {
+  estilo: { tamanho: 108, palavrasPorBloco: 2, posicaoY: 0.62, corTexto: "#FFFFFF", corFalada: "#FFE600", corContorno: "#000000", caixaAlta: true },
+  efeitos: { hook: true, barraProgresso: true, flash: true, zoomPunch: true },
+  hookDuracao: 2,
+};
+
+// ============================================================ utilidades
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const fmtT = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+const fmtMB = (b) => `${(b / 1048576).toFixed(1)} MB`;
+const clone = (o) => JSON.parse(JSON.stringify(o ?? null));
+const blobUrl = (id) => (id ? "/_blob/" + id : null);
+const mesclar = (base, o) => {
+  const r = clone(base);
+  for (const k of Object.keys(o || {})) r[k] = o[k] && typeof o[k] === "object" && !Array.isArray(o[k]) && r[k] && typeof r[k] === "object" ? mesclar(r[k], o[k]) : o[k];
+  return r;
+};
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => t.classList.remove("on"), 2800);
+}
+const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^\w%+]/g, "");
+const slug = (s) => (s || "video").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 32) || "video";
+async function sha1(texto) {
+  const buf = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(texto));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 12);
+}
+function msgErro(e) {
+  const c = e?.code;
+  if (c === "quota_exceeded") return "O espaço de dados desta página está cheio.";
+  if (c === "invalid_argument") return "Você não tem permissão para editar esta página.";
+  if (c === "too_large" || c === "payload_too_large") return "Arquivo grande demais (máx. 20 MB).";
+  return e?.message || "Não deu certo. Tente de novo.";
+}
+
+// ============================================================ estado
+let db = null, assets = null, sample = null, downloads = null, mcp = null, comentarios = null;
+let claudeCfg = null;     // config/claude: {sessao} — sessão do Claude Code que recebe os pedidos
+let auto = null;          // criação automática em andamento nesta aba: {rodando, fase, erro, avisando, falhaAviso}
+let permissoes = null;
+let biblioteca = null;    // config/biblioteca: splash e vídeos das habilidades por campeão (assets), para o estilo viral
+let virais = null;        // virais/atual: modelos de Shorts de LoL que mais cresceram e a receita aplicada
+let viralAberto = false, viralPedido = "";
+let tendencias = null;    // tendencias/atual: os 10 temas mais em alta do LoL (escrito pelo Claude Code)
+let briefingInicial = null; // pré-preenchimento do briefing de um vídeo novo (ex.: tema em alta)
+let altaAberta = false, altaPedido = "";    // capacidade embutida "permissions" (saber se o Claude já pode ser chamado sem clique)
+let roteiroAuto = { assinatura: "", carregando: false, texto: "", opcoes: [], erro: "", escolhida: -1, ctl: null };
+let projetos = [];
+let proj = null;          // {id, ...documento}
+let eventos = [];
+let producao = null;      // documento escrito pelo Claude Code
+let cfg = null, ot = null;
+let hashAtual = "";
+let aba = "briefing";
+let sujo = 0;             // edições locais ainda não gravadas
+let assinaturaAba = "";
+let desinscrever = [];
+let carregando = true, otimizando = null;
+let playerMontado = false;
+let midias = [];          // assets enviados (vídeos e músicas)
+let ddragon = null;       // resumo do Data Dragon {versao, campeoes, itens, runas}
+let canal = { nome: "" };  // config/canal
+
+// fila: uma escrita por vez em cada documento
+const filas = new Map();
+function gravar(ref, fn) {
+  const p = (filas.get(ref.path) || Promise.resolve()).then(fn).catch((e) => toast(msgErro(e)));
+  filas.set(ref.path, p);
+  return p;
+}
+const refProj = () => db.doc("projetos/" + proj.id);
+function evento(msg, tipo = "info") {
+  if (!db || !proj) return;
+  db.collection(`projetos/${proj.id}/eventos`).add({ t: Date.now(), msg, tipo }).catch(() => {});
+}
+function atualizarProj(dados) {
+  if (!db || !proj) return Promise.resolve();
+  sujo++;
+  return gravar(refProj(), () => refProj().update({ ...dados, atualizado: Date.now() })).finally(() => sujo--);
+}
+
+// ============================================================ cenas, trilha e props do player
+function cenasDoRoteiro(roteiro) {
+  return (roteiro || "").replace(/\s+/g, " ").split(/(?<=[.!?…])\s+/).map((s) => s.trim()).filter(Boolean).map((narracao) => ({ narracao, destaque: [] }));
+}
+const cenasComFala = () => (ot?.cenas || []).filter((c) => (c.narracao || "").trim());
+
+function trilhaEstimada(cenas) {
+  const fator = 1 + (cfg.velocidade || 0) / 100;
+  let t = 0.15;
+  const out = cenas.map((c) => {
+    const alvo = new Set((c.destaque || []).flatMap((d) => d.split(/\s+/)).map(norm));
+    const ini = t;
+    const palavras = c.narracao.trim().split(/\s+/).map((w) => {
+      const dur = Math.max(0.16, (w.length * 0.062 + 0.07) / fator);
+      const p = { texto: w.replace(/[.,!?;:…]+$/, ""), inicio: +t.toFixed(3), fim: +(t + dur).toFixed(3), destaque: alvo.has(norm(w)) };
+      t += dur;
+      return p;
+    });
+    t += 0.25;
+    return { inicio: +ini.toFixed(3), fim: +(t - 0.25).toFixed(3), palavras };
+  });
+  return { duracao: +t.toFixed(3), cenas: out };
+}
+
+async function recalcularHash() {
+  if (!cfg || !ot) return;
+  hashAtual = await sha1(JSON.stringify([cenasComFala().map((c) => c.narracao.trim()), cfg.voz, cfg.velocidade]));
+}
+const narracaoEmDia = () => !!(producao?.audio?.id && producao.trilha && producao.hash === hashAtual);
+
+function trilhaAtual() {
+  const cenas = cenasComFala();
+  const tr = narracaoEmDia() ? clone(producao.trilha) : trilhaEstimada(cenas);
+  tr.cenas = tr.cenas.map((c, i) => ({
+    ...c, textoTela: cenas[i]?.textoTela || "", clipeInicio: cenas[i]?.clipeInicio ?? null,
+    provas: (cenas[i]?.provas || []).map((pr) => ({ ...pr, img: pr.imgAsset ? blobUrl(pr.imgAsset) : null, fundo: pr.fundoAsset ? blobUrl(pr.fundoAsset) : null })),
+    videoFundo: cenas[i]?.videoFundo?.asset ? { ...cenas[i].videoFundo, url: blobUrl(cenas[i].videoFundo.asset), dur: cenas[i].videoFundo.dur || 4 } : null,
+  }));
+  return tr;
+}
+
+function propsDoVideo() {
+  if (!proj || !cfg) return window.EstudioPlayer.exemplo;
+  return {
+    trilha: trilhaAtual(),
+    audio: narracaoEmDia() ? blobUrl(producao.audio.id) : null,
+    fundo: { ...cfg.fundo, url: cfg.fundo.tipo === "video" && cfg.fundo.asset ? blobUrl(cfg.fundo.asset.id) : null },
+    musica: { url: cfg.musica.asset ? blobUrl(cfg.musica.asset.id) : null, volume: cfg.musica.volume },
+    estilo: cfg.estilo, efeitos: cfg.efeitos, tema: cfg.tema,
+    hook: { texto: ot?.hook?.textoTela || proj.titulo || "", duracao: cfg.hookDuracao },
+    cta: { texto: ot?.cta?.texto || "", ativo: cfg.ctaAtivo },
+    patch: ddragon ? `Patch ${ddragon.patch}` : "",
+    layout: cfg.layout || "quadro",
+    midia: midiaDoProjeto(),
+  };
+}
+
+// campeão em destaque do vídeo (briefing ou matchup) e a mídia dele na biblioteca do Estúdio
+const campeaoDoProjeto = () => proj?.briefing?.campeao || proj?.briefing?.matchup?.campeao || "";
+function bibliotecaDe(nome) {
+  if (!biblioteca?.campeoes || !nome) return null;
+  const n = norm(nome);
+  const e = Object.entries(biblioteca.campeoes).find(([id, c]) => norm(id) === n || norm(c.nome || "") === n);
+  return e ? e[1] : null;
+}
+function midiaDoProjeto() {
+  const c = bibliotecaDe(campeaoDoProjeto());
+  if (!c) return null;
+  return {
+    campeao: c.nome, splash: blobUrl(c.splash),
+    videos: (c.videos || []).map((v) => ({ url: blobUrl(v.asset), dur: v.dur || 4, foco: v.foco, w: v.w, h: v.h, letra: v.letra, nome: v.nome })),
+  };
+}
+
+function atualizarPlayer() {
+  if (!window.EstudioPlayer) return;
+  const props = propsDoVideo();
+  if (!playerMontado) { window.EstudioPlayer.montar($("#player"), props); playerMontado = true; }
+  else window.EstudioPlayer.atualizar(props);
+  $("#dicaPlayer").textContent = proj
+    ? `${fmtT(props.trilha.duracao)} · ${narracaoEmDia() ? "com narração" : "tempo estimado, ainda sem narração"} · ${props.trilha.cenas.length} cenas`
+    : "Exemplo. Crie um vídeo para ver o seu aqui.";
+}
+const recalcularEPlayer = async () => { await recalcularHash(); atualizarPlayer(); atualizarTempos(); };
+
+// ============================================================ assinaturas do banco
+function assinarLista() {
+  const tempo = setTimeout(() => { if (carregando) { carregando = false; desenharStatus("Não consegui carregar seus vídeos ainda. Verifique a conexão."); } }, 10000);
+  db.collection("projetos").orderBy("atualizado", "desc").limit(100).onSnapshot((s) => {
+    clearTimeout(tempo);
+    carregando = false;
+    projetos = s.docs.map((d) => ({ id: d.id, ...d.data() }));
+    desenharSeletor();
+    if (!proj && !abrir.feito) {
+      abrir.feito = true;
+      const id = location.hash.slice(1);
+      const alvo = projetos.find((p) => p.id === id) || projetos[0];
+      if (alvo) abrir(alvo.id);
+      else desenharTudo();
+    }
+  }, (e) => { clearTimeout(tempo); toast(msgErro(e)); });
+}
+
+function abrir(id, novaAba) {
+  desinscrever.forEach((u) => u());
+  desinscrever = [];
+  proj = { id, carregando: true };
+  if (roteiroAuto.ctl) roteiroAuto.ctl.abort();
+  roteiroAuto = { assinatura: "", carregando: false, texto: "", opcoes: [], erro: "", escolhida: -1, ctl: null };
+  eventos = [];
+  producao = null;
+  cfg = null; ot = null;
+  assinaturaAba = "";
+  aba = novaAba || null;
+  try { history.replaceState(null, "", "#" + id); } catch {}
+  desenharSeletor();
+  desinscrever.push(db.doc("projetos/" + id).onSnapshot(async (s) => {
+    if (!s.exists) return;
+    const d = s.data();
+    proj = { id, ...d };
+    if (!sujo && !s.metadata.hasPendingWrites) {
+      cfg = mesclar(configPadrao(), d.config);
+      ot = clone(d.otimizado) || { cenas: cenasDoRoteiro(d.briefing?.roteiro) };
+      if (!ot.cenas?.length) ot.cenas = cenasDoRoteiro(d.briefing?.roteiro);
+    }
+    if (!aba) aba = { briefing: "briefing", otimizando: "otimizacao", aguardando_claude: "otimizacao", otimizado: "otimizacao", aguardando_producao: "exportar", produzindo: "exportar", pronto: "exportar" }[d.etapa] || "roteiro";
+    await recalcularHash();
+    redesenharSePreciso();
+    if (viralAberto) desenharViral();
+    desenharSeletor();
+  }, (e) => toast(msgErro(e))));
+  desinscrever.push(db.collection(`projetos/${id}/eventos`).orderBy("t", "desc").limit(60).onSnapshot((s) => {
+    eventos = s.docs.map((d) => d.data());
+    desenharStatus();
+  }, () => {}));
+  desinscrever.push(db.doc(`projetos/${id}/producao/estado`).onSnapshot((s) => {
+    producao = s.exists ? s.data() : null;
+    redesenharSePreciso(true);
+  }, () => {}));
+}
+
+function redesenharSePreciso(producaoMudou) {
+  const ass = [aba, proj?.etapa, JSON.stringify(proj?.otimizado?.mudancas || null).length, producao?.renders?.length || 0, producao?.etapa, narracaoEmDia(), !!proj?.carregando].join("|");
+  desenharEtapas();
+  desenharStatus();
+  desenharAuto();
+  atualizarPlayer();
+  const digitando = document.activeElement?.matches?.("#conteudo input, #conteudo textarea, #conteudo select");
+  if (ass !== assinaturaAba && !digitando) {
+    assinaturaAba = ass;
+    desenharAba();
+  } else if (producaoMudou && aba === "exportar" && !digitando) {
+    desenharAba();
+  } else atualizarTempos();
+}
+
+// ============================================================ desenho geral
+function desenharSeletor() {
+  const sel = $("#seletor");
+  sel.innerHTML = `<option value="">${projetos.length ? "Escolha um vídeo" : "Nenhum vídeo ainda"}</option>` +
+    projetos.map((p) => `<option value="${esc(p.id)}">${esc(p.titulo || p.id)} · ${esc(ETAPAS[p.etapa]?.[0] || "")}</option>`).join("");
+  sel.value = proj?.id || "";
+}
+
+function desenharTudo() {
+  desenharSeletor();
+  desenharAuto();
+  desenharEtapas();
+  desenharAba();
+  desenharStatus();
+  atualizarPlayer();
+  if (viralAberto) desenharViral();
+}
+
+function desenharEtapas() {
+  const feitas = { briefing: !!proj, otimizacao: !!proj?.otimizado?.mudancas, roteiro: narracaoEmDia(), visual: narracaoEmDia(), exportar: (producao?.renders || []).length > 0 };
+  document.querySelectorAll("#etapas button").forEach((b) => {
+    const a = b.dataset.aba;
+    b.classList.toggle("ativo", a === (aba || "briefing"));
+    b.classList.toggle("feito", !!feitas[a] && a !== aba);
+    b.disabled = (!proj || proj.carregando) && a !== "briefing";
+  });
+}
+
+function desenharStatus(aviso) {
+  if (!proj || proj.carregando) {
+    $("#status").innerHTML = `<div class="etq"><b>${aviso ? esc(aviso) : carregando && db ? "Carregando seus vídeos…" : "Nenhum vídeo aberto"}</b></div>`;
+    $("#linha").innerHTML = `<li>Mande um roteiro na etapa Briefing para começar.</li>`;
+    return;
+  }
+  const [nome, classe] = ETAPAS[proj.etapa] || [proj.etapa, ""];
+  const p = producao;
+  const prog = p && p.progresso != null && proj.etapa === "produzindo"
+    ? `<div class="barra"><div style="width:${Math.round(p.progresso * 100)}%"></div></div><small class="nota-rodape">${esc(p.texto || "")}</small>` : "";
+  $("#status").innerHTML = `<div class="etq"><b>${esc(proj.titulo || proj.id)}</b><span class="selo ${classe}">${esc(nome)}</span></div>${prog}`;
+  $("#linha").innerHTML = eventos.length
+    ? eventos.map((l) => `<li class="${esc(l.tipo)}">${esc(l.msg)}<small>${new Date(l.t).toLocaleString("pt-BR")}</small></li>`).join("")
+    : `<li>Nada por aqui ainda.</li>`;
+}
+
+function desenharAba() {
+  const el = $("#conteudo");
+  if (!db) {
+    el.innerHTML = `<div class="cartao destaque"><h2>Estúdio Shorts</h2><p>Para criar e salvar vídeos, abra esta página no claude.ai com a sua conta. Ao lado você vê um exemplo do vídeo que o estúdio monta.</p></div>`;
+    return;
+  }
+  if (proj?.carregando) { el.innerHTML = `<div class="cartao"><p class="vazio">Abrindo o vídeo…</p></div>`; return; }
+  ({ briefing: abaBriefing, otimizacao: abaOtimizacao, roteiro: abaRoteiro, visual: abaVisual, exportar: abaExportar }[aba || "briefing"])(el);
+}
+
+// ============================================================ 1. briefing
+function abaBriefing(el) {
+  const b = proj?.briefing || (!proj && briefingInicial) || {};
+  const opt = (lista, v) => lista.map((x) => `<option ${x === v ? "selected" : ""}>${esc(x)}</option>`).join("");
+  el.innerHTML = `
+  <div class="cartao destaque">
+    <h2>${proj ? "Briefing do vídeo" : "Novo vídeo"}</h2>
+    <p class="nota-rodape" style="margin-top:0">Cole o roteiro e diga o que você quer. Depois o Claude revisa e otimiza com base no que viraliza em Shorts de League of Legends.</p>
+    <label for="bTitulo">Título ou ideia do vídeo</label>
+    <input type="text" id="bTitulo" value="${esc(b.titulo ?? proj?.titulo)}" placeholder="Ex.: Build de Jinx que ninguém usa">
+    <div class="linha2">
+      <div><label for="bTipo">Tipo de vídeo</label><select id="bTipo">${opt(TIPOS, b.tipo)}</select></div>
+      <div><label for="bCampeao">Campeão(ões)</label><input type="text" id="bCampeao" value="${esc(b.campeao)}" placeholder="Ex.: Jinx, Thresh"></div>
+      <div><label for="bDuracao">Duração alvo</label><select id="bDuracao">${opt(["15s", "30s", "45s", "60s", "75s", "90s"], b.duracao || "30s")}</select></div>
+      <div><label for="bTom">Tom</label><select id="bTom">${opt(TONS, b.tom)}</select></div>
+      <div><label for="bPublico">Público</label><select id="bPublico">${opt(PUBLICOS, b.publico)}</select></div>
+    </div>
+    <div id="bMatchup" ${b.tipo === MATCHUP || (!proj && !b.tipo) ? "" : "hidden"}>
+      <div class="linha2">
+        <div><label for="mRota">Sua rota</label><select id="mRota">${opt(ROTAS, b.matchup?.rota || "Meio")}</select></div>
+        <div><label for="mCamp">Seu campeão</label><input type="text" id="mCamp" list="listaCampeoes" value="${esc(b.matchup?.campeao)}" placeholder="Ex.: Cassiopeia"></div>
+      </div>
+      <div class="linha2">
+        <div><h3 style="margin-top:12px">Seu time</h3>${ROTAS.map((r) => `<label for="mA${r}">${r}</label><input type="text" id="mA${r}" data-time="aliados" data-rota="${r}" list="listaCampeoes" value="${esc(b.matchup?.aliados?.[r])}">`).join("")}</div>
+        <div><h3 style="margin-top:12px">Time inimigo</h3>${ROTAS.map((r) => `<label for="mI${r}">${r}</label><input type="text" id="mI${r}" data-time="inimigos" data-rota="${r}" list="listaCampeoes" value="${esc(b.matchup?.inimigos?.[r])}">`).join("")}</div>
+      </div>
+      <p class="nota-rodape">${ddragon ? `Nomes e números do Data Dragon ${esc(ddragon.versao)}.` : "Carregando a lista de campeões…"} Seu campeão entra sozinho na sua rota.</p>
+    </div>
+    <datalist id="listaCampeoes">${ddragon ? Object.values(ddragon.campeoes).map((c) => `<option value="${esc(c.nome)}">`).join("") : ""}</datalist>
+    <label for="bRoteiro" id="bRoteiroRot">${b.tipo === MATCHUP ? "Roteiro (opcional: o Claude escreve a partir da análise)" : "Roteiro (o texto que vai ser narrado)"}</label>
+    <textarea class="grande" id="bRoteiro" placeholder="Escreva ou cole o roteiro aqui, ou escolha uma das opções automáticas abaixo…">${esc(b.roteiro)}</textarea>
+    <div class="auto-roteiro" id="rAuto"></div>
+    <label for="bFatos">Fatos confirmados (o Claude usa exatamente estes e não inventa outros)</label>
+    <textarea id="bFatos" placeholder="Ex.: placar, draft, datas, estatísticas que você conferiu…">${esc(b.fatos)}</textarea>
+    <label for="bOrient">Orientações para o Claude (opcional)</label>
+    <textarea id="bOrient" placeholder="Ex.: tom de zoeira, citar o patch atual, terminar perguntando o main da galera…">${esc(b.orientacoes)}</textarea>
+    <div class="acoes">
+      <button class="btn ouro" id="bEnviar" type="button">✦ Salvar e ${b.tipo === MATCHUP ? "analisar" : "otimizar"} com o Claude</button>
+      <button class="btn" id="bSalvar" type="button">Só salvar</button>
+    </div>
+  </div>`;
+  const sincronizarTipo = () => {
+    const mu = $("#bTipo").value === MATCHUP;
+    $("#bMatchup").hidden = !mu;
+    $("#bRoteiroRot").textContent = mu ? "Roteiro (opcional: o Claude escreve a partir da análise)" : "Roteiro (o texto que vai ser narrado)";
+  };
+  $("#bTipo").addEventListener("change", sincronizarTipo);
+  sincronizarTipo();
+  const time = (qual) => Object.fromEntries(ROTAS.map((r) => [r, el.querySelector(`[data-time="${qual}"][data-rota="${r}"]`).value.trim()]));
+  const ler = () => {
+    const d = { titulo: $("#bTitulo").value.trim(), tipo: $("#bTipo").value, campeao: $("#bCampeao").value.trim(), duracao: $("#bDuracao").value, tom: $("#bTom").value, publico: $("#bPublico").value, roteiro: $("#bRoteiro").value, orientacoes: $("#bOrient").value, fatos: $("#bFatos").value };
+    if (d.tipo === MATCHUP) {
+      const aliados = time("aliados");
+      const meu = $("#mCamp").value.trim();
+      aliados[$("#mRota").value] = meu;
+      d.matchup = { rota: $("#mRota").value, campeao: meu, aliados, inimigos: time("inimigos") };
+      if (!d.campeao) d.campeao = meu;
+      if (!d.titulo && meu) d.titulo = `${meu} ${$("#mRota").value.toLowerCase()}: até o 1º item`;
+    }
+    return d;
+  };
+  const salvar = async () => {
+    const dados = ler();
+    if (dados.tipo === MATCHUP) {
+      const m = dados.matchup;
+      if (!m.campeao) throw new Error("Diga qual campeão você vai jogar.");
+      if (!Object.values(m.inimigos).some(Boolean)) throw new Error("Preencha pelo menos o seu oponente no time inimigo.");
+      const desconhecidos = [m.campeao, ...Object.values(m.aliados), ...Object.values(m.inimigos)].filter((n) => n && ddragon && !campeaoPorNome(n));
+      if (desconhecidos.length) throw new Error(`Não achei no Data Dragon: ${desconhecidos.join(", ")}. Confira o nome.`);
+    } else if (!dados.roteiro.trim()) throw new Error("Escreva o roteiro primeiro.");
+    if (proj) {
+      const mudouRoteiro = dados.roteiro !== proj.briefing?.roteiro;
+      await atualizarProj({ briefing: dados, titulo: dados.titulo || proj.titulo });
+      if (mudouRoteiro && !proj.otimizado) { ot = { cenas: cenasDoRoteiro(dados.roteiro) }; recalcularEPlayer(); }
+      evento("Briefing editado");
+      return proj.id;
+    }
+    const id = `${slug(dados.titulo)}-${Math.random().toString(36).slice(2, 6)}`;
+    const agora = Date.now();
+    await db.doc("projetos/" + id).set({ titulo: dados.titulo || "Vídeo sem título", briefing: dados, config: configPadrao(), etapa: "briefing", criadoEm: agora, atualizado: agora });
+    if (dados.tipo === MATCHUP) evento(`Matchup: ${dados.matchup.campeao} (${dados.matchup.rota}) contra ${Object.values(dados.matchup.inimigos).filter(Boolean).join(", ")}`, "info");
+    briefingInicial = null;
+    abrir(id, "briefing");
+    proj = { id };
+    evento("Briefing recebido", "ok");
+    return id;
+  };
+  $("#bSalvar").onclick = () => salvar().then(() => toast("Briefing salvo")).catch((e) => toast(msgErro(e)));
+  $("#bEnviar").onclick = async () => {
+    try { await salvar(); aba = "otimizacao"; otimizar(); } catch (e) { toast(msgErro(e)); }
+  };
+  // roteiro automático: redesenha o bloco a cada mudança e, com a permissão já dada, gera sozinho
+  lerBriefing = ler;
+  const aoMudar = debounce(() => { desenharRoteiroAuto(); talvezGerarSozinho(); }, 2200);
+  el.querySelectorAll("input, select, textarea").forEach((c) => c.addEventListener(c.tagName === "SELECT" ? "change" : "input", () => {
+    if (c.id !== "bRoteiro") aoMudar();
+    else desenharRoteiroAuto();
+  }));
+  desenharRoteiroAuto();
+  talvezGerarSozinho();
+}
+
+// ============================================================ roteiro automático (3 opções a partir do briefing)
+let lerBriefing = null;
+const TIPOS_DE_CAMPEAO = ["Dica / Tutorial", "Build / Guia de campeão"];
+const prontoParaAuto = (d) =>
+  d.tipo === MATCHUP ? !!(d.matchup?.campeao && Object.values(d.matchup.inimigos || {}).some(Boolean))
+    : !!(d.titulo?.trim() && (d.campeao?.trim() || !TIPOS_DE_CAMPEAO.includes(d.tipo)));
+const resumoBriefing = (d) => [d.titulo && `“${d.titulo}”`, d.tipo, d.tipo === MATCHUP ? d.matchup?.campeao : d.campeao, d.duracao, d.tom, d.publico].filter(Boolean);
+const assinaturaAuto = (d) => JSON.stringify([d.titulo, d.tipo, d.campeao, d.duracao, d.tom, d.publico, d.orientacoes, d.fatos, d.matchup || null]);
+// o que cada tom e cada público pedem do texto (vão como requisito no pedido ao Claude)
+const DESC_TOM = {
+  "Energético": "ritmo rápido, frases curtas e de impacto, exclamações, empolgação do começo ao fim",
+  "Engraçado": "zoeira e ironia com situações do jogo, comparações engraçadas, sem perder a informação",
+  "Sério / Analítico": "explicação calma e precisa, causa e consequência, números, sem gírias exageradas",
+  "Misterioso": "suspense, perguntas que prendem, revela a resposta aos poucos e só no fim",
+  "Polêmico": "opinião forte e direta, provoca o espectador a discordar nos comentários",
+};
+const DESC_PUBLICO = {
+  "Todos": "linguagem simples; termos do jogo explicados de passagem quando forem essenciais",
+  "Iniciantes (Ferro–Prata)": "explica o básico sem pressa, evita siglas sem explicação, um conceito por vez",
+  "Intermediário (Ouro–Esmeralda)": "pode usar termos comuns (wave, gank, trade, recall) sem explicar; foca em decisões e timing",
+  "High elo (Diamante+)": "vai direto ao detalhe técnico: janelas de recarga, controle de wave, matchups; nada de básico",
+};
+const ANGULOS = "erro comum que o público comete; segredo ou detalhe pouco conhecido; desafio ou opinião polêmica; número + resultado concreto; mini-história de partida";
+
+function dadosDosCampeoes(nomes) {
+  if (!ddragon) return "";
+  const linhas = [];
+  for (const n of new Set(nomes.filter(Boolean))) {
+    const c = campeaoPorNome(n);
+    if (c) linhas.push(`${c.nome} (${c.funcoes.join("/")}, alcance de ataque ${c.alcance}, passiva ${c.passiva}): ` + c.hab.map((h) => `${h.t} ${h.n}: recarga ${h.cd.join("/")} s, custo ${h.custo.join("/")}, alcance ${h.alc.join("/")}`).join(" · "));
+  }
+  return linhas.length ? `DADOS DO JOGO (Data Dragon ${ddragon.versao}, patch ${ddragon.patch}); use só estes números:\n${linhas.join("\n")}` : "";
+}
+
+function promptRoteiros(d) {
+  const fatos = d.fatos?.trim() ? `\nFATOS CONFIRMADOS (use exatamente estes, não invente outros):\n${d.fatos}` : "";
+  const briefing = { titulo: d.titulo, tipo: d.tipo, campeao: d.campeao, duracao: d.duracao, tom: d.tom, publico: d.publico, orientacoes: d.orientacoes };
+  let contexto = "";
+  if (d.tipo === MATCHUP && d.matchup) {
+    const m = d.matchup;
+    contexto = `MATCHUP: o espectador joga de ${m.campeao} na rota ${m.rota}.\nSEU TIME: ${JSON.stringify(m.aliados)}\nTIME INIMIGO: ${JSON.stringify(m.inimigos)}\nO assunto é como jogar do início até o 1º item.\n${ddragon ? dadosParaMatchup(m) : ""}`;
+  } else {
+    contexto = dadosDosCampeoes(String(d.campeao || "").split(/\s*[,;/]\s*|\s+e\s+/));
+  }
+  const a = alvoDuracao(d);
+  const camp = d.tipo === MATCHUP ? d.matchup?.campeao : d.campeao;
+  const req = [
+    `TÍTULO: "${d.titulo}". O roteiro é sobre exatamente isso e entrega o que o título promete.`,
+    `TIPO DE VÍDEO: "${d.tipo}". Use a estrutura desse tipo (veja ESTRUTURAS acima).`,
+    camp ? `CAMPEÃO: ${camp}. É o centro do roteiro e aparece pelo nome.` : `CAMPEÃO: nenhum específico; o assunto é o do título. Cite campeões só se fizer sentido e sem inventar fatos.`,
+    `DURAÇÃO: ${a.seg} s, ou seja, entre ${a.min} e ${a.max} palavras de narração (~${PALAVRAS_POR_S} palavras por segundo).`,
+    `TOM: "${d.tom}": ${DESC_TOM[d.tom] || d.tom}.`,
+    `PÚBLICO: "${d.publico}": ${DESC_PUBLICO[d.publico] || d.publico}.`,
+    d.orientacoes?.trim() ? `ORIENTAÇÕES DO CRIADOR: ${d.orientacoes.trim()}` : "",
+  ].filter(Boolean).map((r, i) => `${i + 1}. ${r}`).join("\n");
+  return `${GUIA}
+
+REQUISITOS OBRIGATÓRIOS DO CRIADOR (valem para os 3 roteiros e mandam sobre qualquer regra geral acima):
+${req}
+
+TAREFA: escreva 3 roteiros DIFERENTES que cumpram TODOS os requisitos, prontos para narrar em voz alta. Mude só o ângulo de cada um (escolha 3 entre: ${ANGULOS}). Use só fatos e números do briefing ou dos dados abaixo; se faltar um número, descreva sem número.
+
+BRIEFING COMPLETO (JSON):
+${JSON.stringify(briefing, null, 1)}${fatos}
+
+${contexto}
+
+Responda SOMENTE com JSON:
+{"opcoes": [{"angulo": "2 a 4 palavras", "titulo": "até 60 caracteres", "gancho": "2 a 5 PALAVRAS para a tela", "roteiro": "texto narrado completo, frases curtas, sem marcações de cena nem de tempo"}]}`;
+}
+
+async function talvezGerarSozinho() {
+  if (!sample || !lerBriefing || roteiroAuto.carregando || aba !== "briefing") return;
+  const d = lerBriefing();
+  if (!prontoParaAuto(d) || d.roteiro.trim() || proj?.otimizado) return;
+  if (assinaturaAuto(d) === roteiroAuto.assinatura) return;
+  // sem a permissão já dada, o 1º pedido precisa vir de um clique (o botão no bloco)
+  const est = permissoes ? await permissoes.state("sample").catch(() => "unavailable") : "unavailable";
+  if (est !== "granted") return;
+  gerarRoteiros();
+}
+
+async function gerarRoteiros() {
+  if (!sample || !lerBriefing || roteiroAuto.carregando) return;
+  const d = lerBriefing();
+  if (!prontoParaAuto(d)) return;
+  roteiroAuto = { assinatura: assinaturaAuto(d), base: resumoBriefing(d), carregando: true, texto: "", opcoes: [], erro: "", escolhida: -1, ctl: new AbortController() };
+  desenharRoteiroAuto();
+  try {
+    const r = await sample.json(promptRoteiros(d), {
+      cache: false, signal: roteiroAuto.ctl.signal, modelTier: d.tipo === MATCHUP ? "complex" : undefined,
+      onText: ({ text }) => {
+        roteiroAuto.texto = text;
+        const e = document.getElementById("rAutoProg");
+        if (e) e.textContent = `${Math.round(text.length / 100) / 10} mil caracteres escritos…`;
+      },
+    });
+    const opcoes = (Array.isArray(r?.opcoes) ? r.opcoes : [])
+      .filter((o) => o && String(o.roteiro || "").trim())
+      .slice(0, 3)
+      .map((o) => ({ angulo: String(o.angulo || ""), titulo: String(o.titulo || ""), gancho: String(o.gancho || ""), roteiro: String(o.roteiro).trim() }));
+    if (!opcoes.length) throw { code: "invalid_json" };
+    roteiroAuto = { ...roteiroAuto, carregando: false, opcoes, ctl: null };
+  } catch (e) {
+    if (["not_granted", "sampling_disabled", "capability_disabled", "capability_removed"].includes(e?.code)) sample = null;
+    roteiroAuto = {
+      ...roteiroAuto, carregando: false, ctl: null,
+      erro: e?.code === "cancelled" ? "" : e?.code === "invalid_json" ? "O Claude respondeu fora do formato. Tente de novo." : e?.code === "rate_limited" ? "Limite de uso do Claude atingido. Tente daqui a pouco." : "Não consegui gerar as opções agora. Tente de novo.",
+    };
+  }
+  desenharRoteiroAuto();
+}
+
+function desenharRoteiroAuto() {
+  const el = document.getElementById("rAuto");
+  if (!el || !lerBriefing) return;
+  if (!sample) {
+    el.innerHTML = `<p class="nota-rodape" style="margin:0">Roteiro automático: precisa do Claude nesta página (abra o Estúdio no claude.ai com a sua conta). Você pode escrever o roteiro à mão acima.</p>`;
+    return;
+  }
+  const d = lerBriefing();
+  const pronto = prontoParaAuto(d);
+  const a = alvoDuracao(d);
+  const mudou = roteiroAuto.opcoes.length && roteiroAuto.assinatura !== assinaturaAuto(d);
+  const falta = d.tipo === MATCHUP ? "seu campeão e pelo menos o oponente" : [!d.titulo?.trim() && "o título", !d.campeao?.trim() && TIPOS_DE_CAMPEAO.includes(d.tipo) && "o campeão"].filter(Boolean).join(" e ");
+  const base = roteiroAuto.opcoes.length || roteiroAuto.carregando ? roteiroAuto.base || [] : resumoBriefing(d);
+  let corpo = "";
+  if (roteiroAuto.carregando) {
+    corpo = `<div class="esperando" style="margin-top:10px"><div class="pulso"></div><div><b>O Claude está escrevendo 3 opções…</b><br><span class="nota-rodape" id="rAutoProg">Pensando…</span></div></div>`;
+  } else if (roteiroAuto.erro) {
+    corpo = `<div class="aviso erro" style="margin-top:10px"><span>${esc(roteiroAuto.erro)}</span></div>`;
+  } else if (roteiroAuto.opcoes.length) {
+    corpo = `${mudou ? `<div class="aviso" style="margin-top:10px"><span>Você mudou o briefing depois destas opções.</span><button class="btn peq" type="button" data-rgerar>Gerar de novo</button></div>` : ""}
+      <div class="opcoes">${roteiroAuto.opcoes.map((o, i) => {
+        const n = o.roteiro.split(/\s+/).filter(Boolean).length;
+        const camp = (d.tipo === MATCHUP ? d.matchup?.campeao : d.campeao) || "";
+        const citaCamp = !camp || camp.split(/\s*[,;/]\s*/).some((c) => c && norm(o.roteiro).includes(norm(c)));
+        const durOk = n >= a.min * 0.9 && n <= a.max * 1.1;
+        const alertas = [!citaCamp && `não cita ${camp}`, !durOk && `duração fora do alvo`].filter(Boolean);
+        return `<div class="opcao ${roteiroAuto.escolhida === i ? "escolhida" : ""}">
+          <span class="selo claude" style="align-self:flex-start">${esc(o.angulo || `Opção ${i + 1}`)}</span>
+          ${o.gancho ? `<div class="gancho">${esc(o.gancho)}</div>` : ""}
+          ${o.titulo ? `<div class="meta"><b>Título:</b> ${esc(o.titulo)}</div>` : ""}
+          <div class="texto">${esc(o.roteiro)}</div>
+          <div class="meta">~${segundosDe(n)} s · ${n} palavras (alvo ${a.seg} s)</div>
+          ${alertas.length ? `<div class="meta" style="color:var(--erro)">⚠ ${esc(alertas.join(" · "))}</div>` : ""}
+          <button class="btn peq ${roteiroAuto.escolhida === i ? "" : "ouro"}" type="button" data-rusar="${i}">${roteiroAuto.escolhida === i ? "✓ No campo de roteiro" : "Usar este"}</button>
+        </div>`;
+      }).join("")}</div>`;
+  } else if (!pronto) {
+    corpo = `<p class="nota-rodape" style="margin:8px 0 0">Falta ${esc(falta)}. Com título, tipo, campeão, duração, tom e público preenchidos, o Claude sugere 3 roteiros que seguem exatamente essas escolhas.</p>`;
+  } else {
+    corpo = `<p class="nota-rodape" style="margin:8px 0 0">Com o que já está preenchido, o Claude escreve 3 opções com ângulos diferentes. Você escolhe uma, edita à vontade, ou escreve a sua.</p>`;
+  }
+  const chips = base.length ? `<p class="nota-rodape" style="margin:6px 0 0">${roteiroAuto.opcoes.length || roteiroAuto.carregando ? "Baseado em" : "Vai usar"}: ${base.map((x) => `<span class="selo">${esc(x)}</span>`).join(" ")}</p>` : "";
+  el.innerHTML = `<div class="topo-auto"><b>✦ Roteiro automático</b>
+      ${roteiroAuto.carregando ? `<button class="btn peq" type="button" data-rparar>Parar</button>`
+        : `<button class="btn peq ${roteiroAuto.opcoes.length ? "" : "ouro"}" type="button" data-rgerar ${pronto ? "" : "disabled"}>${roteiroAuto.opcoes.length ? "Gerar outras 3" : "Gerar 3 opções"}</button>`}
+    </div>${pronto || roteiroAuto.opcoes.length ? chips : ""}${corpo}`;
+  el.querySelectorAll("[data-rgerar]").forEach((b) => b.addEventListener("click", gerarRoteiros));
+  el.querySelector("[data-rparar]")?.addEventListener("click", () => roteiroAuto.ctl?.abort());
+  el.querySelectorAll("[data-rusar]").forEach((b) => b.addEventListener("click", () => {
+    const o = roteiroAuto.opcoes[+b.dataset.rusar];
+    const campo = document.getElementById("bRoteiro");
+    campo.value = o.roteiro;
+    const tit = document.getElementById("bTitulo");
+    if (tit && !tit.value.trim() && o.titulo) tit.value = o.titulo;
+    roteiroAuto.escolhida = +b.dataset.rusar;
+    roteiroAuto.assinatura = assinaturaAuto(lerBriefing()); // o título preenchido aqui não conta como mudança
+    desenharRoteiroAuto();
+    campo.scrollIntoView({ behavior: "smooth", block: "center" });
+    toast("Roteiro no campo. Ajuste à vontade e salve.");
+  }));
+}
+
+// ============================================================ 2. otimização
+// Duração: a escolhida no briefing manda. ~2,5 palavras por segundo na narração real (edge-tts, +10%).
+const PALAVRAS_POR_S = 2.5;
+function alvoDuracao(b) {
+  const seg = parseInt(b?.duracao, 10) || 45;
+  return { seg, min: Math.round(seg * 2.3), max: Math.round(seg * 2.7) };
+}
+const contarPalavras = (cenas) => (cenas || []).reduce((n, c) => n + String(c?.narracao || "").trim().split(/\s+/).filter(Boolean).length, 0);
+const segundosDe = (n) => Math.round(n / PALAVRAS_POR_S);
+function regraDuracao(b) {
+  const a = alvoDuracao(b);
+  return `DURAÇÃO (obrigatório): o criador escolheu ${a.seg} s. A narração somada de todas as cenas deve ter entre ${a.min} e ${a.max} palavras (~${PALAVRAS_POR_S} palavras por segundo). Essa escolha vale mais que qualquer regra geral de duração de Shorts: não encurte nem alongue por conta própria. Com mais tempo, entregue mais conteúdo útil (passos, exemplos, números dos dados), sem enrolar.`;
+}
+const normCenas = (cenas) => cenas.map((c) => ({ narracao: String(c?.narracao || ""), textoTela: String(c?.textoTela || ""), destaque: Array.isArray(c?.destaque) ? c.destaque.map(String) : [], visual: String(c?.visual || ""), clipeInicio: null }));
+// se a narração ficou longe da duração escolhida, pede uma vez ao Claude para ajustar só as cenas
+async function ajustarDuracao(b, o, opts) {
+  const a = alvoDuracao(b);
+  const n = contarPalavras(o.cenas);
+  if (n >= a.min * 0.9 && n <= a.max * 1.1) return;
+  evento(`Roteiro saiu com ${n} palavras (~${segundosDe(n)} s), mas o alvo é ${a.seg} s. Pedindo ao Claude para ajustar.`, "claude");
+  try {
+    const r = await sample.json(`Este roteiro de Short de League of Legends tem ${n} palavras de narração (~${segundosDe(n)} s), mas o criador escolheu ${a.seg} s.
+Reescreva as cenas para que a narração somada tenha entre ${a.min} e ${a.max} palavras. Mantenha o gancho, a ideia central, todos os fatos e números (não invente números novos), o tom e a pergunta final. ${n < a.min ? "Acrescente conteúdo útil (mais passos, exemplos, janelas de troca, contexto), sem enrolar." : "Corte o que é menos importante."} Cada cena tem 1 ou 2 frases e uma mudança visual.
+CENAS ATUAIS:
+${JSON.stringify(o.cenas)}
+Responda SOMENTE com JSON: {"cenas": [{"narracao": "", "textoTela": "", "destaque": [], "visual": "", "clipeInicio": null}]}`, { cache: false, ...opts });
+    if (!Array.isArray(r?.cenas) || !r.cenas.some((c) => String(c?.narracao || "").trim())) return;
+    o.cenas = normCenas(r.cenas);
+    o.mudancas = [...(o.mudancas || []), { antes: `${n} palavras (~${segundosDe(n)} s)`, depois: `${contarPalavras(o.cenas)} palavras (~${segundosDe(contarPalavras(o.cenas))} s)`, porque: `Duração escolhida no briefing: ${a.seg} s` }];
+  } catch (e) {
+    if (e?.code === "cancelled") throw e;
+  }
+}
+const avisoDuracao = (b, o) => {
+  const a = alvoDuracao(b), n = contarPalavras(o.cenas);
+  return n < a.min * 0.9 || n > a.max * 1.1 ? ` Atenção: ~${segundosDe(n)} s, alvo ${a.seg} s.` : "";
+};
+
+async function otimizar() {
+  if (!proj?.id) return;
+  if (!sample) { pedirNoChat(); return; }
+  otimizando = { texto: "", ctl: new AbortController() };
+  assinaturaAba = "";
+  redesenharSePreciso();
+  const b = (await refProj().get()).data()?.briefing || proj.briefing || {};
+  if (b.tipo === MATCHUP) return analisarMatchup(b);
+  const fatos = b.fatos?.trim() ? `\n\nFATOS CONFIRMADOS (use exatamente estes, não invente outros fatos, números ou estatísticas):\n${b.fatos}` : "";
+  const prompt = `${GUIA}\n\nBRIEFING DO CRIADOR (JSON):\n${JSON.stringify({ ...b, fatos: undefined }, null, 1)}${fatos}\n\n${regraDuracao(b)}\n\n${FORMATO}`;
+  atualizarProj({ etapa: "otimizando" });
+  evento("Claude começou a otimizar o roteiro", "claude");
+  try {
+    const o = await sample.json(prompt, {
+      cache: false, signal: otimizando.ctl.signal,
+      onText: ({ text }) => { otimizando.texto = text; const e = $("#escrevendo"); if (e) { e.textContent = text; e.scrollTop = e.scrollHeight; } pingAuto(); },
+    });
+    if (!o || !Array.isArray(o.cenas) || !o.cenas.some((c) => c && String(c.narracao || "").trim())) throw { code: "invalid_json" };
+    o.cenas = normCenas(o.cenas);
+    o.mudancas = Array.isArray(o.mudancas) ? o.mudancas : [];
+    await ajustarDuracao(b, o, { signal: otimizando.ctl.signal });
+    ot = clone(o);
+    otimizando = null;
+    await atualizarProj({ otimizado: o, etapa: "otimizado" });
+    evento(`Roteiro otimizado pelo Claude (nota ${o.notaOriginal ?? "?"} → ${o.notaOtimizada ?? "?"}, ~${segundosDe(contarPalavras(o.cenas))} s).${avisoDuracao(b, o)}`, "claude");
+    toast("Roteiro otimizado!");
+  } catch (e) {
+    const cancelado = e?.code === "cancelled";
+    otimizando = null;
+    if (e?.code === "not_granted" || e?.code === "sampling_disabled" || e?.code === "capability_disabled" || e?.code === "capability_removed") sample = null;
+    await atualizarProj({ etapa: proj.otimizado ? "otimizado" : "briefing" });
+    const msg = cancelado ? "Otimização cancelada" : e?.code === "invalid_json" ? "O Claude respondeu fora do formato. Tente de novo." : e?.code === "rate_limited" ? "Limite de uso do Claude atingido. Tente daqui a pouco." : "Não consegui otimizar agora. Tente de novo ou peça no chat.";
+    evento(msg, cancelado ? "info" : "erro");
+    toast(msg);
+  }
+  assinaturaAba = "";
+  redesenharSePreciso();
+}
+
+function dadosParaMatchup(m) {
+  const nomes = [m.campeao, ...Object.values(m.aliados), ...Object.values(m.inimigos)].filter(Boolean);
+  const camps = {};
+  for (const n of new Set(nomes)) {
+    const c = campeaoPorNome(n);
+    if (c) camps[c.nome] = { funcoes: c.funcoes, recurso: c.recurso, alcanceAtaque: c.alcance, passiva: c.passiva, habilidades: c.hab.map((h) => `${h.t} ${h.n}: recarga ${h.cd.join("/")} s, custo ${h.custo.join("/")}, alcance ${h.alc.join("/")}`) };
+  }
+  const itens = Object.values(ddragon.itens).map((i) => `${i.nome} | ${i.custo} | ${i.tags.slice(0, 4).join(",")}${i.de?.length ? " | de: " + i.de.map((x) => ddragon.itens[x]?.nome).filter(Boolean).join(" + ") : ""}`);
+  const runas = ddragon.runas.map((r) => `${r.arvore}: chaves ${r.chaves.join(", ")}`);
+  return `DADOS (Data Dragon ${ddragon.versao}, patch ${ddragon.patch}):\nCAMPEÕES:\n${JSON.stringify(camps)}\nITENS (nome | custo total | tags | componentes):\n${itens.join("\n")}\nRUNAS:\n${runas.join("\n")}`;
+}
+
+async function analisarMatchup(b) {
+  if (!ddragon) {
+    otimizando = null;
+    toast("Os dados do jogo ainda não carregaram. Tente de novo em alguns segundos.");
+    assinaturaAba = ""; redesenharSePreciso();
+    return;
+  }
+  const m = b.matchup;
+  const fatos = b.fatos?.trim() ? `\nFATOS CONFIRMADOS (não invente outros):\n${b.fatos}` : "";
+  const pedido = `JOGADOR: ${m.campeao} na rota ${m.rota}.\nSEU TIME: ${JSON.stringify(m.aliados)}\nTIME INIMIGO: ${JSON.stringify(m.inimigos)}\nPúblico: ${b.publico || "Todos"} · Tom do Short: ${b.tom || "Energético"} · Duração do Short: ${alvoDuracao(b).seg} s\nOrientações do criador: ${b.orientacoes || "nenhuma"}${fatos}${b.roteiro?.trim() ? `\nRascunho do criador:\n${b.roteiro}` : ""}`;
+  const prompt = `${GUIA_MATCHUP}\n\n${pedido}\n\n${dadosParaMatchup(m)}\n\n${regraDuracao(b)}\n\n${FORMATO_MATCHUP}`;
+  atualizarProj({ etapa: "otimizando" });
+  evento(`Claude começou a análise de matchup (${m.campeao} ${m.rota})`, "claude");
+  try {
+    const r = await sample.json(prompt, {
+      cache: false, signal: otimizando.ctl.signal, modelTier: "complex",
+      onText: ({ text }) => { otimizando.texto = text; const e = $("#escrevendo"); if (e) { e.textContent = text; e.scrollTop = e.scrollHeight; } pingAuto(); },
+    });
+    if (!r || !r.short || !Array.isArray(r.short.cenas)) throw { code: "invalid_json" };
+    const nomesItens = new Set(Object.values(ddragon.itens).map((i) => norm(i.nome)));
+    const conferir = (lista) => (lista || []).map((i) => ({ ...i, valido: nomesItens.has(norm(String(i.nome || ""))) }));
+    r.inicio = { ...(r.inicio || {}), itens: conferir(r.inicio?.itens) };
+    r.recall = { ...(r.recall || {}), compra: conferir(r.recall?.compra) };
+    if (r.primeiroItem) r.primeiroItem.valido = nomesItens.has(norm(String(r.primeiroItem.nome || "")));
+    r.versao = ddragon.versao;
+    const o = r.short;
+    o.mudancas = Array.isArray(o.mudancas) ? o.mudancas : [];
+    o.cenas = normCenas(o.cenas);
+    await ajustarDuracao(b, o, { signal: otimizando.ctl.signal, modelTier: "complex" });
+    delete r.short;
+    ot = clone(o);
+    otimizando = null;
+    await atualizarProj({ matchup: r, otimizado: o, etapa: "otimizado" });
+    evento(`Análise de matchup pronta: 1º item ${r.primeiroItem?.nome || "?"}, Short de ~${segundosDe(contarPalavras(o.cenas))} s.${avisoDuracao(b, o)}`, "claude");
+    toast("Análise pronta!");
+  } catch (e) {
+    const cancelado = e?.code === "cancelled";
+    otimizando = null;
+    if (["not_granted", "sampling_disabled", "capability_disabled", "capability_removed"].includes(e?.code)) sample = null;
+    await atualizarProj({ etapa: proj.otimizado ? "otimizado" : "briefing" });
+    const msg = cancelado ? "Análise cancelada" : e?.code === "invalid_json" ? "O Claude respondeu fora do formato. Tente de novo." : e?.code === "rate_limited" ? "Limite de uso do Claude atingido. Tente daqui a pouco." : "Não consegui analisar agora. Tente de novo ou peça no chat.";
+    evento(msg, cancelado ? "info" : "erro");
+    toast(msg);
+  }
+  assinaturaAba = "";
+  redesenharSePreciso();
+}
+
+function cartoesMatchup(g) {
+  const item = (i) => `${esc(i.nome)}${i.custo ? ` <span class="nota-rodape">(${esc(i.custo)} de ouro)</span>` : ""}${i.valido === false ? ` <span class="selo erro" title="Nome não encontrado no Data Dragon">confira</span>` : ""}`;
+  const amea = { alta: "erro", média: "rodando", baixa: "ok" };
+  return `
+  <div class="cartao destaque">
+    <h2>Guia até o 1º item</h2>
+    <p style="margin-top:0">${esc(g.resumo)}</p>
+    <div class="notas"><span class="selo ${amea[g.dificuldade === "difícil" ? "alta" : g.dificuldade === "fácil" ? "baixa" : "média"]}">Dificuldade: ${esc(g.dificuldade || "?")}</span><span class="nota-rodape">Dados do Data Dragon ${esc(g.versao || "")}</span></div>
+  </div>
+  <div class="linha2" style="gap:14px">
+    <div class="cartao"><h3>Começo</h3>
+      <p style="margin:0 0 6px"><b>Itens iniciais:</b> ${(g.inicio?.itens || []).map(item).join(" + ") || "–"}</p>
+      <p style="margin:0 0 6px"><b>Runas:</b> ${esc(g.runas?.chave)} (${esc(g.runas?.principal)}) + ${esc(g.runas?.secundaria)}. <span class="nota-rodape">${esc(g.runas?.porque)}</span></p>
+      <p style="margin:0 0 6px"><b>Nível 1:</b> ${esc(g.inicio?.nivel1)}</p>
+      <p style="margin:0"><b>Habilidades:</b> ${esc(g.inicio?.ordemHabilidades)}</p></div>
+    <div class="cartao"><h3>1º item</h3>
+      <p style="font:400 1.7rem var(--f-titulo);color:var(--ouro);margin:0">${item(g.primeiroItem || {})}</p>
+      <p style="margin:6px 0">${esc(g.primeiroItem?.porque)}</p>
+      <p class="nota-rodape" style="margin:0">Alternativa: ${esc(g.primeiroItem?.alternativa)}</p></div>
+  </div>
+  <div class="cartao"><h3>Fase por fase</h3>
+    ${(g.fases || []).map((f) => `<div class="mudanca"><div class="depois"><b>${esc(f.titulo)}</b></div><div>${esc(f.plano)}</div></div>`).join("")}</div>
+  <div class="cartao"><h3>Contra cada um</h3>
+    ${(g.contraCada || []).map((c) => `<div class="mudanca"><div class="depois"><b>${esc(c.campeao)}</b> <span class="nota-rodape">${esc(c.rota)}</span> <span class="selo ${amea[c.ameaca] || ""}">ameaça ${esc(c.ameaca)}</span></div><div>${esc(c.comoJogar)}</div>${c.janela ? `<div class="pq">Janela: ${esc(c.janela)}</div>` : ""}</div>`).join("")}</div>
+  <div class="cartao"><h3>1ª volta à base</h3>
+    <p style="margin:0 0 6px"><b>Quando:</b> ${esc(g.recall?.quando)}${g.recall?.ouroAlvo ? ` · <b>ouro alvo:</b> ${esc(g.recall.ouroAlvo)}` : ""}</p>
+    <p style="margin:0 0 6px"><b>Compra:</b> ${(g.recall?.compra || []).map(item).join(" + ") || "–"}</p>
+    <p class="nota-rodape" style="margin:0">${esc(g.recall?.porque)}</p></div>
+  ${(g.erros || []).length ? `<div class="cartao"><h3>Erros comuns</h3><ul style="margin:0;padding-left:1.2rem">${g.erros.map((e) => `<li>${esc(e)}</li>`).join("")}</ul></div>` : ""}`;
+}
+
+function pedirNoChat() {
+  atualizarProj({ etapa: "aguardando_claude" });
+  evento("Pedido de otimização enviado ao Claude Code (chat)", "claude");
+  toast("Agora peça no chat: “otimiza o roteiro”.");
+}
+
+function abaOtimizacao(el) {
+  const o = proj.otimizado;
+  if (otimizando) {
+    el.innerHTML = `<div class="cartao destaque">
+      <h2>${proj.briefing?.tipo === MATCHUP ? "Analisando o matchup" : "Otimizando o roteiro"}</h2>
+      <div class="esperando"><div class="pulso"></div><div><b>O Claude está revisando o seu roteiro…</b><br><span class="nota-rodape">Ele analisa gancho, ritmo, retenção e final com base nos Shorts de LoL que viralizam. Leva de 20 segundos a 1 minuto.</span></div></div>
+      <div class="escrevendo" id="escrevendo">${esc(otimizando.texto || "Pensando…")}</div>
+      <div class="acoes"><button class="btn" id="oParar" type="button">Parar</button></div></div>`;
+    $("#oParar").onclick = () => otimizando?.ctl.abort();
+    return;
+  }
+  if (proj.etapa === "aguardando_claude" || !o?.cenas || !o.mudancas) {
+    const esperando = proj.etapa === "aguardando_claude";
+    el.innerHTML = `
+    <div class="cartao destaque">
+      <h2>${proj.briefing?.tipo === MATCHUP ? "Análise de matchup" : "Otimização do roteiro"}</h2>
+      ${esperando
+        ? `<div class="esperando"><div class="pulso"></div><div><b>Aguardando o Claude Code</b><br><span class="nota-rodape">Escreva <code>otimiza o roteiro</code> no chat. A página atualiza sozinha quando ele terminar.</span></div></div>`
+        : `<p>Este vídeo ainda não foi otimizado.</p>`}
+      <div class="acoes">
+        ${sample ? `<button class="btn ouro" id="oOtimizar" type="button">✦ ${proj.briefing?.tipo === MATCHUP ? "Analisar" : "Otimizar"} agora com o Claude</button>` : ""}
+        ${esperando ? "" : `<button class="btn" id="oChat" type="button">Pedir no chat do Claude Code</button>`}
+      </div>
+      ${sample ? `<p class="nota-rodape">“Otimizar agora” usa a sua conta do Claude direto nesta página (pede sua permissão na primeira vez).</p>` : ""}
+    </div>
+    ${proj.briefing?.roteiro?.trim() ? `<div class="cartao"><h3>Roteiro original</h3><p style="white-space:pre-wrap;margin:0">${esc(proj.briefing?.roteiro)}</p></div>` : ""}`;
+    $("#oOtimizar")?.addEventListener("click", otimizar);
+    $("#oChat")?.addEventListener("click", pedirNoChat);
+    return;
+  }
+  el.innerHTML = `${proj.matchup ? cartoesMatchup(proj.matchup) : ""}
+  <div class="cartao destaque">
+    <h2>${proj.matchup ? "Roteiro do Short" : "Roteiro otimizado"}</h2>
+    ${o.notaOriginal != null ? `<div class="notas">
+      <div class="nota antes"><small>Original</small><b>${esc(o.notaOriginal ?? "–")}</b></div>
+      <div class="seta" aria-hidden="true">➜</div>
+      <div class="nota depois"><small>Otimizado</small><b>${esc(o.notaOtimizada ?? "–")}</b></div>
+      <p style="flex:1;min-width:200px;margin:0">${esc(o.resumo)}</p>
+    </div>` : `<p style="margin:0">${esc(o.resumo)}</p>`}
+  </div>
+  <div class="cartao"><h3>Gancho na tela</h3><p style="font:400 1.9rem var(--f-titulo);color:var(--ouro);margin:0">${esc(o.hook?.textoTela)}</p></div>
+  ${(o.mudancas || []).length ? `<div class="cartao"><h3>O que mudou e por quê</h3>
+    ${o.mudancas.map((m) => `<div class="mudanca">${m.antes ? `<div class="antes">${esc(m.antes)}</div>` : ""}<div class="depois">${esc(m.depois)}</div><div class="pq">→ ${esc(m.porque)}</div></div>`).join("")}
+  </div>` : ""}
+  <div class="cartao"><h3>Roteiro final</h3>
+    <ol style="margin:0;padding-left:1.2rem">${(o.cenas || []).map((c) => `<li style="margin-bottom:6px">${esc(c.narracao)}${c.textoTela ? ` <span class="selo claude">${esc(c.textoTela)}</span>` : ""}</li>`).join("")}</ol>
+  </div>
+  <div class="acoes">
+    <button class="btn ouro" id="oIr" type="button">Aprovar e ajustar o roteiro ➜</button>
+    ${sample ? `<button class="btn" id="oRefazer" type="button">Otimizar de novo</button>` : `<button class="btn" id="oChat" type="button">Pedir nova versão no chat</button>`}
+  </div>`;
+  $("#oIr").onclick = () => { aba = "roteiro"; assinaturaAba = ""; redesenharSePreciso(); };
+  $("#oRefazer")?.addEventListener("click", otimizar);
+  $("#oChat")?.addEventListener("click", pedirNoChat);
+}
+
+// ============================================================ 3. roteiro
+const salvarRoteiro = debounce(() => atualizarProj({ otimizado: clone(ot) }), 700);
+
+function atualizarTempos() {
+  if (!cfg || !ot) return;
+  const cs = trilhaAtual().cenas;
+  document.querySelectorAll(".cena").forEach((el, i) => {
+    const t = el.querySelector(".tempo");
+    if (t && cs[i]) t.textContent = `▶ ${cs[i].inicio.toFixed(1)}s – ${cs[i].fim.toFixed(1)}s`;
+  });
+  const av = $("#avisoNarracao");
+  if (av) av.hidden = narracaoEmDia();
+}
+
+function avisoNarracao() {
+  return `<div class="aviso" id="avisoNarracao" ${narracaoEmDia() ? "hidden" : ""}>
+    <span>${producao?.trilha ? "O roteiro ou a voz mudou desde a última narração. O player está usando tempos estimados." : "Ainda sem narração: o player usa tempos estimados. A voz é gerada na etapa Produzir."}</span>
+    <button class="btn peq" type="button" data-ir="exportar">Ir para Produzir</button></div>`;
+}
+const ligarIr = (el) => el.querySelectorAll("[data-ir]").forEach((b) => b.addEventListener("click", () => { aba = b.dataset.ir; assinaturaAba = ""; redesenharSePreciso(); }));
+
+function abaRoteiro(el) {
+  ot.hook = ot.hook || { textoTela: "" };
+  ot.cta = ot.cta || { texto: "" };
+  el.innerHTML = `
+  ${avisoNarracao()}
+  <div class="cartao destaque">
+    <h2>Roteiro</h2>
+    <label for="rHook">Gancho: texto grande na tela nos primeiros segundos</label>
+    <input type="text" id="rHook" data-r="hook.textoTela" value="${esc(ot.hook.textoTela)}" placeholder="Ex.: BUILD PROIBIDA">
+    <label for="rCta">Chamada final (CTA)</label>
+    <input type="text" id="rCta" data-r="cta.texto" value="${esc(ot.cta.texto)}" placeholder="Ex.: Comenta seu main">
+  </div>
+  ${(() => {
+    const faltam = ot.cenas.flatMap((c, i) => (c.provas || []).filter((pr) => (pr.tipo === "foto" || pr.tipo === "icone") && !pr.imgAsset).map((pr) => `${esc(pr.rotulo || "sem texto")} (cena ${i + 1})`));
+    return faltam.length ? `<div class="aviso"><span><b>Imagens que faltam:</b> ${faltam.join(" · ")}. Envie em cada prova (🖼) ou peça no chat: o Claude baixa sozinho as imagens oficiais do jogo.</span></div>` : "";
+  })()}
+  <div class="cenas" id="cenas">${ot.cenas.map((c, i) => `
+    <div class="cena" data-i="${i}">
+      <header><b>Cena ${i + 1}</b><button class="tempo" type="button" title="Ver esta cena no player"></button><span class="esp"></span>
+        <button class="btn peq" type="button" data-mover="-1" ${i === 0 ? "disabled" : ""} aria-label="Subir cena">↑</button>
+        <button class="btn peq" type="button" data-mover="1" ${i === ot.cenas.length - 1 ? "disabled" : ""} aria-label="Descer cena">↓</button>
+        <button class="btn peq" type="button" data-remover aria-label="Remover cena">✕</button></header>
+      <label for="c${i}n">Narração</label>
+      <textarea id="c${i}n" data-c="narracao" rows="2" style="min-height:60px">${esc(c.narracao)}</textarea>
+      <div class="linha2">
+        <div><label for="c${i}t">Texto na tela (opcional)</label><input type="text" id="c${i}t" data-c="textoTela" value="${esc(c.textoTela)}"></div>
+        <div><label for="c${i}d">Palavras de destaque (vírgula)</label><input type="text" id="c${i}d" data-c="destaque" value="${esc((c.destaque || []).join(", "))}"></div>
+        <div><label for="c${i}g">Trecho do gameplay (segundo)</label><input type="number" id="c${i}g" min="0" step="0.5" data-c="clipeInicio" value="${c.clipeInicio ?? ""}" placeholder="automático"></div>
+      </div>
+      ${c.visual ? `<div class="visual">🎬 Sugestão de imagem: ${esc(c.visual)}</div>` : ""}
+      <div class="provas">
+        <div class="provas-tit">Provas no quadro de investigação (${(c.provas || []).length}) · aparecem na palavra indicada</div>
+        ${(c.provas || []).map((pr, j) => `<div class="prova" data-j="${j}">
+          ${pr.imgAsset ? `<img src="${blobUrl(pr.imgAsset)}" alt="">` : `<span class="sem ${pr.tipo === "foto" || pr.tipo === "icone" ? "" : "ok"}">${pr.tipo === "foto" || pr.tipo === "icone" ? "falta imagem" : esc(pr.tipo)}</span>`}
+          <input type="text" data-p="rotulo" value="${esc(pr.rotulo)}" aria-label="Texto da prova" placeholder="texto da prova">
+          <input type="text" data-p="gatilho" value="${esc(pr.gatilho)}" aria-label="Palavra que faz aparecer" placeholder="palavra">
+          <select data-p="tipo" aria-label="Tipo da prova">${["foto", "icone", "nota", "etiqueta", "placar", "alcance"].map((t) => `<option ${t === pr.tipo ? "selected" : ""}>${t}</option>`).join("")}</select>
+          <label class="btn peq" title="Enviar imagem">🖼<input type="file" accept="image/png,image/jpeg,image/webp" data-pimg hidden ${assets ? "" : "disabled"}></label>
+          <button class="btn peq" type="button" data-premover aria-label="Remover prova">✕</button>
+        </div>`).join("")}
+        <div><button class="btn peq" type="button" data-padd>+ Prova</button></div>
+      </div>
+      <div class="acoes" hidden data-confirmar><span class="nota-rodape">Remover esta cena?</span><button class="btn peq" type="button" data-sim>Remover</button><button class="btn peq" type="button" data-nao>Manter</button></div>
+    </div>`).join("")}
+  </div>
+  <div class="acoes"><button class="btn" id="rAdd" type="button">+ Adicionar cena</button></div>`;
+
+  el.querySelectorAll("[data-r]").forEach((inp) => inp.addEventListener("input", () => {
+    const [a, b] = inp.dataset.r.split(".");
+    ot[a][b] = inp.value;
+    atualizarPlayer();
+    salvarRoteiro();
+  }));
+  el.querySelectorAll(".cena").forEach((box) => {
+    const i = +box.dataset.i;
+    box.querySelectorAll("[data-c]").forEach((inp) => inp.addEventListener("input", () => {
+      const k = inp.dataset.c;
+      if (k === "destaque") ot.cenas[i].destaque = inp.value.split(",").map((s) => s.trim()).filter(Boolean);
+      else if (k === "clipeInicio") ot.cenas[i].clipeInicio = inp.value === "" ? null : +inp.value;
+      else ot.cenas[i][k] = inp.value;
+      recalcularEPlayer();
+      salvarRoteiro();
+    }));
+    box.querySelectorAll(".prova").forEach((linha) => {
+      const j = +linha.dataset.j;
+      const pr = () => ot.cenas[i].provas[j];
+      linha.querySelectorAll("[data-p]").forEach((inp) => inp.addEventListener(inp.tagName === "SELECT" ? "change" : "input", () => {
+        pr()[inp.dataset.p] = inp.value;
+        atualizarPlayer();
+        salvarRoteiro();
+      }));
+      linha.querySelector("[data-premover]").onclick = () => { ot.cenas[i].provas.splice(j, 1); abaRoteiro(el); atualizarPlayer(); salvarRoteiro(); };
+      linha.querySelector("[data-pimg]").addEventListener("change", async (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        if (f.size > 20 * 1048576) { toast("Imagem maior que 20 MB."); return; }
+        toast(`Enviando ${f.name}…`);
+        try {
+          const r = await assets.upload(f, { type: f.type || "image/jpeg" });
+          pr().imgAsset = r.id;
+          if (pr().tipo !== "foto" && pr().tipo !== "icone") pr().tipo = "foto";
+          abaRoteiro(el); atualizarPlayer(); salvarRoteiro();
+          evento(`Imagem enviada para a prova "${pr().rotulo}"`, "ok");
+        } catch (err) { toast(msgErro(err)); }
+      });
+    });
+    box.querySelector("[data-padd]").onclick = () => {
+      ot.cenas[i].provas = [...(ot.cenas[i].provas || []), { tipo: "nota", rotulo: "", gatilho: "" }];
+      abaRoteiro(el);
+    };
+    box.querySelector(".tempo").onclick = () => window.EstudioPlayer.irPara(trilhaAtual().cenas[i]?.inicio || 0);
+    box.querySelectorAll("[data-mover]").forEach((b) => b.addEventListener("click", () => {
+      const j = i + +b.dataset.mover;
+      [ot.cenas[i], ot.cenas[j]] = [ot.cenas[j], ot.cenas[i]];
+      abaRoteiro(el); recalcularEPlayer(); salvarRoteiro();
+    }));
+    const conf = box.querySelector("[data-confirmar]");
+    box.querySelector("[data-remover]").onclick = () => { conf.hidden = false; };
+    box.querySelector("[data-nao]").onclick = () => { conf.hidden = true; };
+    box.querySelector("[data-sim]").onclick = () => { ot.cenas.splice(i, 1); abaRoteiro(el); recalcularEPlayer(); salvarRoteiro(); };
+  });
+  $("#rAdd").onclick = () => { ot.cenas.push({ narracao: "", destaque: [], textoTela: "" }); abaRoteiro(el); };
+  ligarIr(el);
+  atualizarTempos();
+}
+
+// ============================================================ 4. visual & voz
+const salvarConfig = debounce(() => atualizarProj({ config: clone(cfg) }), 600);
+const pegar = (o, c) => c.split(".").reduce((a, k) => a?.[k], o);
+const por = (o, c, v) => { const ks = c.split("."); const u = ks.pop(); ks.reduce((a, k) => a[k], o)[u] = v; };
+const formatar = (c, v) =>
+  c === "velocidade" ? `${v > 0 ? "+" : ""}${v}%` :
+  c.endsWith("volume") || c === "estilo.posicaoY" ? `${Math.round(v * 100)}%` :
+  c === "estilo.tamanho" ? `${v}px` : c === "hookDuracao" ? `${(+v).toFixed(1)}s` : String(v);
+
+function assinarConfig() {
+  db.doc("config/ddragon").onSnapshot(async (s) => {
+    const d = s.exists ? s.data() : null;
+    if (!d?.assetId || ddragon?.versao === d.versao) return;
+    try {
+      ddragon = await (await fetch(blobUrl(d.assetId))).json();
+      ddragon.patch = d.patch || ddragon.versao.split(".").slice(0, 2).join(".");
+      const dl = document.getElementById("listaCampeoes");
+      if (dl) dl.innerHTML = Object.values(ddragon.campeoes).map((c) => `<option value="${esc(c.nome)}">`).join("");
+      atualizarPlayer();
+    } catch { ddragon = null; }
+  }, () => {});
+  db.doc("config/canal").onSnapshot((s) => { canal = s.exists ? s.data() : { nome: "" }; if (aba === "exportar") desenharAba(); }, () => {});
+  db.doc("config/claude").onSnapshot((s) => { claudeCfg = s.exists ? s.data() : null; desenharAuto(); }, () => {});
+  db.doc("config/biblioteca").onSnapshot((s) => { biblioteca = s.exists ? s.data() : null; if (proj && cfg) atualizarPlayer(); desenharViral(); }, () => {});
+  db.doc("virais/atual").onSnapshot((s) => {
+    const novo = s.exists ? s.data() : null;
+    if (viralPedido && novo?.coletadoEm && novo.coletadoEm !== virais?.coletadoEm) viralPedido = "";
+    virais = novo;
+    desenharViral();
+  }, () => {});
+  db.doc("tendencias/atual").onSnapshot((s) => {
+    const novo = s.exists ? s.data() : null;
+    if (altaPedido && novo?.coletadoEm && novo.coletadoEm !== tendencias?.coletadoEm) altaPedido = "";
+    tendencias = novo;
+    desenharAlta();
+  }, () => {});
+}
+const campeaoPorNome = (nome) => {
+  if (!ddragon || !nome) return null;
+  const n = norm(nome);
+  const e = Object.entries(ddragon.campeoes).find(([id, c]) => norm(c.nome) === n || norm(id) === n);
+  return e ? { id: e[0], ...e[1] } : null;
+};
+
+function assinarMidias() {
+  db.collection("midias").orderBy("criadoEm", "desc").limit(200).onSnapshot((s) => {
+    midias = s.docs.map((d) => d.data());
+    if (aba === "visual" && !document.activeElement?.matches?.("#conteudo input, #conteudo select")) desenharAba();
+  }, () => {});
+}
+
+function abaVisual(el) {
+  const opcoes = (lista, atual, vazio) => (vazio ? `<option value="">${vazio}</option>` : "") +
+    lista.map((x) => `<option value="${esc(x.id)}" ${x.id === atual ? "selected" : ""}>${esc(x.nome)}</option>`).join("");
+  const lista = (tipo) => midias.filter((m) => m.tipo === tipo).map((m) => ({ id: m.id, nome: `${m.nome}${m.bytes ? ` (${fmtMB(m.bytes)})` : ""}` }));
+  const videos = lista("gameplay");
+  const sons = lista("musica");
+  if (cfg.fundo.asset && !videos.some((v) => v.id === cfg.fundo.asset.id)) videos.unshift({ id: cfg.fundo.asset.id, nome: cfg.fundo.asset.nome || "vídeo enviado" });
+  if (cfg.musica.asset && !sons.some((v) => v.id === cfg.musica.asset.id)) sons.unshift({ id: cfg.musica.asset.id, nome: cfg.musica.asset.nome || "música enviada" });
+  const faixa = (c, rot, min, max, passo) => `<label for="f-${c}">${rot}: <span class="valor" data-v="${c}">${formatar(c, pegar(cfg, c))}</span></label><input type="range" id="f-${c}" data-cfg="${c}" data-num min="${min}" max="${max}" step="${passo}" value="${pegar(cfg, c)}">`;
+  const chk = (c, rot) => `<label class="check"><input type="checkbox" data-cfg="${c}" ${pegar(cfg, c) ? "checked" : ""}> ${rot}</label>`;
+  const cor = (c, rot) => `<label>${rot}<input type="color" data-cfg="${c}" value="${pegar(cfg, c)}"></label>`;
+  el.innerHTML = `
+  ${avisoNarracao()}
+  <div class="cartao">
+    <h3>Estilo do vídeo</h3>
+    <div class="estilos">
+      <label><input type="radio" name="layout" value="quadro" ${cfg.layout !== "viral" ? "checked" : ""}><span><b>Quadro de investigação</b><br><span class="nota-rodape">Provas, fotos e fio vermelho num mural. Bom para explicar com calma.</span></span></label>
+      <label><input type="radio" name="layout" value="viral" ${cfg.layout === "viral" ? "checked" : ""}><span><b>⚡ Viral (tela cheia)</b><br><span class="nota-rodape">Vídeos das habilidades e splash do campeão, corte a cada 2,4 s, números como figurinhas.</span></span></label>
+    </div>
+    ${cfg.layout === "viral" ? `<p class="nota-rodape">${notaMidiaViral()}</p>` : ""}
+  </div>
+  <div class="cartao destaque">
+    <h2>Voz</h2>
+    <div class="linha2">
+      <div><label for="vVoz">Narrador</label><select id="vVoz" data-cfg="voz">${opcoes(VOZES, cfg.voz)}</select></div>
+      <div>${faixa("velocidade", "Velocidade", -20, 40, 5)}</div>
+    </div>
+    <p class="nota-rodape">"Minha voz" é a sua voz clonada a partir da sua gravação. As outras são vozes gratuitas da Microsoft. A narração é gerada na etapa Produzir.</p>
+  </div>
+  <div class="cartao">
+    <h3>Fundo</h3>
+    <label class="check"><input type="radio" name="fundo" value="gradiente" ${cfg.fundo.tipo === "gradiente" ? "checked" : ""}> Animado (hexágonos e partículas)</label>
+    <label class="check"><input type="radio" name="fundo" value="video" ${cfg.fundo.tipo === "video" ? "checked" : ""}> Meu gameplay</label>
+    <div class="linha2">
+      <div><label for="vFundo">Vídeo enviado</label><select id="vFundo" data-midia="fundo">${opcoes(videos, cfg.fundo.asset?.id, "Nenhum")}</select></div>
+      <div><label for="vUpV">Enviar gameplay (até 20 MB)</label><input type="file" id="vUpV" accept="video/mp4,video/webm,video/quicktime" data-upload="fundo" ${assets ? "" : "disabled"}></div>
+      <div><label for="vIni">Começar no segundo</label><input type="number" id="vIni" min="0" step="0.5" data-cfg="fundo.inicio" data-num value="${cfg.fundo.inicio}"></div>
+    </div>
+    ${chk("fundo.cortesPorCena", "Corte e zoom a cada cena (usa o “trecho do gameplay” de cada cena)")}
+    ${faixa("fundo.volume", "Som do jogo", 0, 1, 0.05)}
+  </div>
+  <div class="cartao">
+    <h3>Música</h3>
+    <div class="linha2">
+      <div><label for="vMus">Trilha enviada</label><select id="vMus" data-midia="musica">${opcoes(sons, cfg.musica.asset?.id, "Sem música")}</select></div>
+      <div><label for="vUpM">Enviar música</label><input type="file" id="vUpM" accept=".m4a,.mp4,audio/mp4,video/mp4" data-upload="musica" ${assets ? "" : "disabled"}></div>
+    </div>
+    <p class="nota-rodape">Aqui a música precisa estar em .m4a ou .mp4. Tem MP3? Mande no chat do Claude Code que ele converte e coloca na lista.</p>
+    ${faixa("musica.volume", "Volume da música", 0, 0.6, 0.02)}
+    <p class="nota-rodape">Use só músicas livres de direitos (Biblioteca de Áudio do YouTube, Pixabay).</p>
+  </div>
+  <div class="cartao">
+    <h3>Legenda</h3>
+    <div class="linha2">
+      <div><label for="vFonte">Fonte</label><select id="vFonte" data-cfg="estilo.fonte">${opcoes(window.EstudioPlayer.fontes.map((f) => ({ id: f.id, nome: f.nome })), cfg.estilo.fonte)}</select></div>
+      <div>${faixa("estilo.tamanho", "Tamanho", 56, 140, 2)}</div>
+      <div>${faixa("estilo.palavrasPorBloco", "Palavras por vez", 1, 6, 1)}</div>
+      <div>${faixa("estilo.posicaoY", "Altura na tela", 0.3, 0.8, 0.01)}</div>
+    </div>
+    ${chk("estilo.caixaAlta", "CAIXA ALTA")}
+    <div class="cores">${cor("estilo.corTexto", "Texto")}${cor("estilo.corFalada", "Palavra falada")}${cor("estilo.corEnfase", "Destaque")}${cor("estilo.corContorno", "Contorno")}</div>
+  </div>
+  <div class="cartao">
+    <h3>Tema e efeitos</h3>
+    <div class="presets">${Object.entries(PRESETS).map(([n, p]) => `<button class="btn peq" type="button" data-preset="${n}"><i style="background:${p.tema.corDestaque}"></i>${n}</button>`).join("")}</div>
+    <div class="cores">${cor("tema.cor1", "Fundo escuro")}${cor("tema.cor2", "Fundo claro")}${cor("tema.corDestaque", "Cor de destaque")}</div>
+    ${chk("efeitos.hook", "Gancho grande no início")}
+    ${faixa("hookDuracao", "Duração do gancho", 1, 4, 0.2)}
+    ${chk("efeitos.barraProgresso", "Barra de progresso (ajuda a segurar até o fim)")}
+    ${chk("efeitos.quadro", "Quadro de investigação (provas, fotos e fio vermelho)")}
+    ${chk("efeitos.patch", "Selo do patch no canto")}
+    ${chk("efeitos.flash", "Flash na troca de cena")}
+    ${chk("efeitos.zoomPunch", "Zoom na troca de cena")}
+    ${chk("ctaAtivo", "Chamada final (CTA)")}
+  </div>`;
+
+  el.querySelectorAll("[data-cfg]").forEach((inp) => {
+    const ev = inp.type === "checkbox" || inp.tagName === "SELECT" ? "change" : "input";
+    inp.addEventListener(ev, () => {
+      let v = inp.type === "checkbox" ? inp.checked : inp.value;
+      if (inp.dataset.num !== undefined) v = +v;
+      por(cfg, inp.dataset.cfg, v);
+      const lbl = el.querySelector(`[data-v="${inp.dataset.cfg}"]`);
+      if (lbl) lbl.textContent = formatar(inp.dataset.cfg, v);
+      recalcularEPlayer();
+      salvarConfig();
+    });
+  });
+  el.querySelectorAll("input[name=layout]").forEach((r) => r.addEventListener("change", () => {
+    if (r.value === "viral") aplicarViral(false);
+    else voltarQuadro(false);
+    abaVisual(el);
+  }));
+  el.querySelectorAll("input[name=fundo]").forEach((r) => r.addEventListener("change", () => {
+    cfg.fundo.tipo = r.value;
+    if (r.value === "video" && !cfg.fundo.asset) toast("Escolha ou envie um vídeo de gameplay");
+    atualizarPlayer(); salvarConfig();
+  }));
+  el.querySelectorAll("[data-midia]").forEach((s) => s.addEventListener("change", () => {
+    const alvo = s.dataset.midia;
+    const m = midias.find((x) => x.id === s.value);
+    const valor = s.value ? { id: s.value, nome: m?.nome || (alvo === "fundo" ? cfg.fundo.asset?.nome : cfg.musica.asset?.nome) || "" } : null;
+    if (alvo === "fundo") { cfg.fundo.asset = valor; if (valor) { cfg.fundo.tipo = "video"; el.querySelector("input[name=fundo][value=video]").checked = true; } }
+    else cfg.musica.asset = valor;
+    atualizarPlayer(); salvarConfig();
+  }));
+  el.querySelectorAll("[data-preset]").forEach((b) => b.addEventListener("click", () => {
+    const p = PRESETS[b.dataset.preset];
+    cfg.tema = { ...p.tema };
+    Object.assign(cfg.estilo, p.cores);
+    abaVisual(el); atualizarPlayer(); salvarConfig();
+  }));
+  el.querySelectorAll("[data-upload]").forEach((inp) => inp.addEventListener("change", async () => {
+    const f = inp.files[0];
+    if (!f) return;
+    const musica = inp.dataset.upload === "musica";
+    if (f.size > 20 * 1048576) { toast("Arquivo maior que 20 MB. Corte um trecho menor."); inp.value = ""; return; }
+    if (musica && !/\.(m4a|mp4)$/i.test(f.name)) { toast("Esse formato não entra aqui. Mande a música no chat que eu converto."); inp.value = ""; return; }
+    toast(`Enviando ${f.name}…`);
+    inp.disabled = true;
+    try {
+      const tipoArq = musica ? "video/mp4" : ({ webm: "video/webm", mov: "video/quicktime" }[f.name.split(".").pop().toLowerCase()] || "video/mp4");
+      const r = await assets.upload(f, { type: tipoArq });
+      const valor = { id: r.id, nome: f.name };
+      await db.collection("midias").add({ id: r.id, nome: f.name, tipo: musica ? "musica" : "gameplay", bytes: f.size, criadoEm: Date.now() });
+      if (!musica) cfg.fundo = { ...cfg.fundo, tipo: "video", asset: valor };
+      else cfg.musica.asset = valor;
+      abaVisual(el); atualizarPlayer(); salvarConfig();
+      evento(`Arquivo enviado: ${f.name}`, "ok");
+      toast("Arquivo enviado");
+    } catch (e) { toast(msgErro(e)); inp.disabled = false; }
+  }));
+  ligarIr(el);
+}
+
+// ============================================================ 5. produzir
+const AVISO_RIOT = (nome) => `${nome || "[Nome do canal]"} foi criado sob a política "Legal Jibber Jabber" da Riot Games, usando recursos da Riot Games. A Riot Games não endossa nem patrocina este projeto.`;
+function descricaoCompleta(o) {
+  const patch = ddragon ? `\n\nPatch atual: ${ddragon.patch}.` : "";
+  return `${o.descricao}${patch}\n\n${AVISO_RIOT(canal.nome)}`;
+}
+async function baixar(r) {
+  try {
+    const blob = await (await fetch(blobUrl(r.id))).blob();
+    await downloads.save({ filename: r.nome, data: blob });
+  } catch (e) { if (e?.code !== "cancelled" && e?.code !== "declined") toast("Não consegui baixar. Segure o vídeo e use “Salvar vídeo”."); }
+}
+
+function abaExportar(el) {
+  const o = proj.otimizado || {};
+  const pedido = proj.etapa === "aguardando_producao";
+  const rodando = proj.etapa === "produzindo";
+  const copiar = (txt) => `<button class="btn peq" type="button" data-copiar="${esc(txt)}">Copiar</button>`;
+  const renders = [...(producao?.renders || [])].reverse();
+  const frase = `produz o vídeo ${proj.titulo || proj.id}`;
+  el.innerHTML = `
+  ${avisoNarracao().replace('<button class="btn peq" type="button" data-ir="exportar">Ir para Produzir</button>', "")}
+  <div class="cartao destaque">
+    <h2>Produzir</h2>
+    <p class="nota-rodape" style="margin-top:0">A narração e o vídeo em MP4 são feitos pelo Claude Code, que tem o editor de vídeo. Você pede aqui, ele produz e o vídeo aparece nesta página.</p>
+    ${rodando ? `<div class="esperando"><div class="pulso"></div><div><b>Produzindo…</b><br><span class="nota-rodape">${esc(producao?.texto || "")}</span></div></div>`
+      : pedido && proj.pedido?.avisado ? `<div class="esperando"><div class="pulso"></div><div><b>Claude Code avisado.</b><br><span class="nota-rodape">A produção começa em instantes. Acompanhe as etapas no painel Criar vídeo.</span></div></div>`
+      : pedido ? `<div class="esperando"><div class="pulso"></div><div><b>Pedido enviado.</b> Avise o Claude Code no painel Criar vídeo, ou escreva no chat dele:<div class="copiavel"><span><code>${esc(frase)}</code></span>${copiar(frase)}</div></div></div>`
+      : `<div class="linha2"><div><label for="pQual">Qualidade</label><select id="pQual"><option value="final">Final 1080x1920</option><option value="previa">Prévia rápida 540x960</option></select></div></div>
+         <div class="acoes"><button class="btn ouro" id="pPedir" type="button">🎬 Pedir narração e vídeo</button></div>`}
+    ${pedido || rodando ? `<div class="acoes"><button class="btn peq" id="pCancelar" type="button">Cancelar pedido</button></div>` : ""}
+  </div>
+  <div class="cartao">
+    <h3>Vídeos prontos</h3>
+    ${renders.length ? renders.map((r, i) => `<div class="render"><video src="${blobUrl(r.id)}" controls preload="metadata" playsinline></video>
+        <div><b>${esc(r.nome)}</b><br><small class="nota-rodape">${esc(r.qualidade === "previa" ? "Prévia" : "Final")} · ${r.bytes ? fmtMB(r.bytes) : ""} · ${r.data ? new Date(r.data).toLocaleString("pt-BR") : ""}</small>
+        ${downloads ? `<div class="acoes" style="margin-top:8px"><button class="btn peq" type="button" data-baixar="${i}">⬇ Baixar MP4</button></div>` : ""}</div></div>`).join("")
+      : `<p class="vazio">Nenhum vídeo produzido ainda.</p>`}
+  </div>
+  <div class="cartao">
+    <h3>Kit de publicação</h3>
+    <div class="linha2"><div><label for="kCanal">Nome do canal (vai no aviso da Riot)</label><input type="text" id="kCanal" value="${esc(canal.nome)}" placeholder="Ex.: Pick Estranho LoL"></div>
+      <div><label>Patch atual</label><p style="margin:6px 0 0">${ddragon ? `Patch ${esc(ddragon.patch)} (Data Dragon ${esc(ddragon.versao)})` : "Carregando…"}</p></div></div>
+    ${(o.titulos || []).length ? `<label>Títulos sugeridos</label>${o.titulos.map((t) => `<div class="copiavel"><span>${esc(t)}</span>${copiar(t)}</div>`).join("")}` : `<p class="nota-rodape">Títulos, descrição e hashtags aparecem aqui depois da otimização.</p>`}
+    ${o.descricao ? (() => { const d = descricaoCompleta(o); return `<label>Descrição (com patch e aviso da Riot)</label><div class="copiavel"><span style="white-space:pre-wrap">${esc(d)}</span>${copiar(d)}</div>`; })() : ""}
+    ${(o.hashtags || []).length ? `<label>Hashtags</label><div class="copiavel"><span>${esc(o.hashtags.join(" "))}</span>${copiar(o.hashtags.join(" "))}</div>` : ""}
+  </div>`;
+  $("#kCanal")?.addEventListener("change", (e) => {
+    const nome = e.target.value.trim();
+    gravar(db.doc("config/canal"), () => db.doc("config/canal").set({ nome })).then(() => toast("Nome do canal salvo"));
+  });
+  $("#pPedir")?.addEventListener("click", async () => {
+    const qualidade = $("#pQual").value;
+    await atualizarProj({ etapa: "aguardando_producao", pedido: { qualidade, em: Date.now() }, otimizado: clone(ot), config: clone(cfg) });
+    evento(`Pedido de produção (${qualidade === "previa" ? "prévia" : "final"}) enviado ao Claude Code`, "claude");
+  });
+  $("#pCancelar")?.addEventListener("click", async () => {
+    await atualizarProj({ etapa: proj.otimizado ? "otimizado" : "briefing", pedido: null });
+    evento("Pedido de produção cancelado");
+  });
+  renders.forEach((r, i) => el.querySelector(`[data-baixar="${i}"]`)?.addEventListener("click", () => baixar(r)));
+  el.querySelectorAll("[data-copiar]").forEach((b) => b.addEventListener("click", () => {
+    try {
+      navigator.clipboard.writeText(b.dataset.copiar).then(() => toast("Copiado"), () => toast("Selecione o texto e copie"));
+    } catch { toast("Selecione o texto e copie"); }
+  }));
+}
+
+// ============================================================ criação automática (um botão, todas as etapas)
+// A página faz o que pode sozinha (roteiro com o Claude via sample, pedido com as predefinições salvas)
+// e avisa o Claude Code pelo conector "Claude Code Remote" (send_message para a sessão em config/claude).
+// O Claude Code grava o andamento em producao/estado: {pedidoEm, passos: {roteiro, provas, narracao, render, envio}}
+// com valores "rodando" | "ok" | "pulado" | "erro".
+const CONECTOR = "Claude Code Remote";
+const QUAL_AUTO = "estudio.qualidadeAuto";
+const roteiroPronto = (d) => !!(d?.otimizado?.cenas?.some((c) => String(c?.narracao || "").trim()) && (d.otimizado.mudancas || d.matchup));
+const fraseChat = () => `produz o vídeo ${proj?.titulo || proj?.id || ""}`;
+const nomeVoz = (v) => (v === "minha-voz" ? "minha voz" : (String(v || "").match(/-([A-Za-z]+)Neural$/) || [])[1] || v || "?");
+
+function lerQualidade() { try { return localStorage.getItem(QUAL_AUTO) || "final"; } catch { return "final"; } }
+function guardarQualidade(q) { try { localStorage.setItem(QUAL_AUTO, q); } catch {} }
+
+function calcularPassos() {
+  const pd = proj.pedido || null;
+  const etapa = proj.etapa;
+  const pronto = etapa === "pronto";
+  const run = producao && pd && producao.pedidoEm === pd.em ? producao.passos || {} : {};
+  const deClaude = (k) => {
+    const v = run[k];
+    if (v === "ok" || v === "pulado") return "feito";
+    if (v === "erro" || (v === "rodando" && etapa === "erro")) return "erro";
+    if (v === "rodando") return "rodando";
+    if (pronto) return "feito";
+    return "pendente";
+  };
+  const b = proj.briefing || {};
+  const temBriefing = !!(b.titulo || b.roteiro || b.matchup);
+  const cenas = proj.otimizado?.cenas?.length || 0;
+
+  let roteiro = roteiroPronto(proj) ? "feito" : "pendente";
+  if (otimizando || auto?.ajustando || etapa === "otimizando" || run.roteiro === "rodando") roteiro = "rodando";
+  else if (etapa === "aguardando_claude") roteiro = "espera";
+  else if (run.roteiro === "erro") roteiro = "erro";
+  if (roteiro === "pendente" && auto?.erro && auto.fase === "roteiro") roteiro = "erro";
+
+  const pedidoFeito = !!pd && ["aguardando_producao", "produzindo", "pronto", "erro"].includes(etapa);
+  let aviso = "pendente", avisoTxt = "Avisa o Claude Code para produzir";
+  if (pronto || etapa === "produzindo" || Object.keys(run).length) { aviso = "feito"; avisoTxt = pd?.avisado ? `Avisado às ${new Date(pd.avisado).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : "O Claude Code recebeu o pedido"; }
+  else if (auto?.avisando) { aviso = "rodando"; avisoTxt = "Enviando o pedido para a sessão do Claude Code…"; }
+  else if (pd?.avisado && etapa === "aguardando_producao") { aviso = "feito"; avisoTxt = "Avisado. Esperando o Claude Code começar"; }
+  else if (pedidoFeito && etapa === "aguardando_producao") { aviso = "espera"; avisoTxt = "Falta avisar: use o botão abaixo ou a frase no chat"; }
+
+  const prog = producao?.progresso != null && etapa === "produzindo" ? ` · ${Math.round(producao.progresso * 100)}%` : "";
+  const txtRodando = (k, padrao) => (run[k] === "rodando" && producao?.texto ? producao.texto + prog : padrao);
+  return [
+    { k: "briefing", nome: "Briefing", estado: temBriefing ? "feito" : "pendente", txt: temBriefing ? [b.tipo, b.duracao].filter(Boolean).join(" · ") || "Salvo" : "Preencha na etapa 1" },
+    { k: "roteiro", nome: "Roteiro otimizado", estado: roteiro,
+      txt: roteiro === "rodando" && auto?.ajustando ? `Ajustando a narração para ${auto.ajustando} s` : roteiro === "rodando" ? (otimizando ? `Claude escrevendo… ${otimizando.texto ? Math.round(otimizando.texto.length / 100) / 10 + " mil caracteres" : ""}` : "O Claude está otimizando") :
+        roteiro === "espera" ? "Esperando o Claude Code" : roteiro === "feito" ? `${cenas} cenas · ~${segundosDe(contarPalavras(proj.otimizado.cenas))} s de ${alvoDuracao(b).seg} s${proj.otimizado?.notaOtimizada ? ` · nota ${proj.otimizado.notaOtimizada}` : ""}` :
+        roteiro === "erro" ? "Não terminou. Veja a linha do tempo" : sample ? "O Claude escreve aqui mesmo" : "O Claude Code escreve" },
+    { k: "visual", nome: "Visual e voz", estado: pedidoFeito || pronto ? "feito" : auto?.rodando && auto.fase === "pedido" ? "rodando" : "pendente",
+      txt: cfg ? `Voz ${nomeVoz(cfg.voz)} · ${cfg.estilo?.fonte || ""} · fundo ${cfg.fundo?.tipo === "video" ? "gameplay" : "animado"}` : "Predefinições salvas" },
+    { k: "aviso", nome: "Pedido ao Claude Code", estado: aviso, txt: avisoTxt },
+    { k: "provas", nome: "Provas e imagens", estado: deClaude("provas"), txt: run.provas === "pulado" ? "Não precisou" : txtRodando("provas", cfg?.efeitos?.quadro ? "Arte e ícones oficiais no quadro" : "Quadro desligado") },
+    { k: "narracao", nome: "Narração", estado: deClaude("narracao"), txt: run.narracao === "pulado" ? "Já estava em dia" : txtRodando("narracao", `Voz ${nomeVoz(cfg?.voz)} com legenda sincronizada`) },
+    { k: "render", nome: "Vídeo (render)", estado: deClaude("render"), txt: txtRodando("render", (pd?.qualidade || lerQualidade()) === "previa" ? "Prévia 540x960" : "Final 1080x1920") },
+    { k: "envio", nome: "Vídeo no Estúdio", estado: deClaude("envio"), txt: pronto ? "Pronto para ver e baixar" : txtRodando("envio", "Aparece na etapa Produzir") },
+  ];
+}
+
+let pingT = 0;
+function pingAuto() { const n = Date.now(); if (n - pingT > 800) { pingT = n; desenharAuto(); } }
+const ICONE = { feito: "✓", erro: "!", espera: "…", rodando: "", pendente: "" };
+function desenharAuto() {
+  const el = $("#auto");
+  if (!el) return;
+  if (!db || !proj || proj.carregando) { el.hidden = true; return; }
+  el.hidden = false;
+  const passos = calcularPassos();
+  const feitos = passos.filter((p) => p.estado === "feito").length;
+  const etapa = proj.etapa;
+  const emAndamento = !!(auto?.rodando || otimizando || ["otimizando", "aguardando_claude", "aguardando_producao", "produzindo"].includes(etapa));
+  const pronto = etapa === "pronto";
+  const atual = passos.find((p) => p.estado === "rodando" || p.estado === "espera" || p.estado === "erro");
+  const resumo = pronto ? `Vídeo pronto. ${feitos} de ${passos.length} etapas concluídas.`
+    : etapa === "erro" ? "A produção parou com erro. Veja a linha do tempo e tente de novo."
+    : emAndamento ? `${feitos} de ${passos.length} etapas concluídas${atual ? `. Agora: ${atual.nome.toLowerCase()}.` : "."}`
+    : `Usa o briefing, o roteiro e o visual e voz que já estão salvos. ${feitos} de ${passos.length} etapas já concluídas.`;
+  const pd = proj.pedido;
+  const precisaAviso = etapa === "aguardando_producao" && pd && !pd.avisado && !auto?.avisando;
+  const qual = pd && emAndamento ? pd.qualidade : lerQualidade();
+  el.innerHTML = `
+    <div class="auto-topo">
+      <h2>Criar vídeo</h2>
+      <select id="aQual" aria-label="Qualidade do vídeo" ${emAndamento ? "disabled" : ""}>
+        <option value="final" ${qual === "final" ? "selected" : ""}>Final 1080x1920</option>
+        <option value="previa" ${qual === "previa" ? "selected" : ""}>Prévia rápida 540x960</option>
+      </select>
+      ${emAndamento && (pd || etapa === "aguardando_producao")
+        ? `<button class="btn" id="aCancelar" type="button" ${etapa === "produzindo" ? "disabled title=\"O Claude Code já está produzindo\"" : ""}>Cancelar</button>`
+        : `<button class="btn ouro" id="aCriar" type="button" ${emAndamento ? "disabled" : ""}>${pronto ? "🚀 Criar de novo" : "🚀 Criar vídeo com as predefinições"}</button>`}
+    </div>
+    <p class="auto-resumo">${esc(resumo)}</p>
+    <ol class="passos">${passos.map((p, i) => `<li class="passo ${p.estado}" aria-label="${esc(`${i + 1}. ${p.nome}: ${{ feito: "concluída", rodando: "em andamento", espera: "esperando", erro: "com erro", pendente: "a fazer" }[p.estado]}`)}">
+      <i aria-hidden="true">${ICONE[p.estado] || i + 1}</i><div><b>${i + 1}. ${esc(p.nome)}</b><small>${esc(p.txt)}</small></div></li>`).join("")}</ol>
+    ${auto?.erro ? `<div class="aviso erro"><span>${esc(auto.erro)}</span></div>` : ""}
+    ${precisaAviso ? `<div class="aviso"><span>${auto?.falhaAviso ? esc(auto.falhaAviso) + " " : ""}${podeAvisar() ? "Avise o Claude Code com um clique, ou escreva no chat dele:" : "Escreva no chat do Claude Code:"} <code>${esc(fraseChat())}</code></span>
+        ${podeAvisar() ? `<button class="btn peq teal" id="aAvisar" type="button">Avisar o Claude Code</button>` : ""}
+        <button class="btn peq" id="aCopiar" type="button">Copiar frase</button></div>` : ""}
+    ${pronto ? `<div class="acoes" style="margin-top:10px"><button class="btn peq" type="button" data-ir="exportar">Ver o vídeo ➜</button></div>` : ""}`;
+  $("#aQual")?.addEventListener("change", (e) => { guardarQualidade(e.target.value); desenharAuto(); });
+  $("#aCriar")?.addEventListener("click", criarVideo);
+  $("#aCancelar")?.addEventListener("click", async () => {
+    if (otimizando?.ctl) otimizando.ctl.abort();
+    auto = null;
+    await atualizarProj({ etapa: proj.otimizado ? "otimizado" : "briefing", pedido: null });
+    evento("Criação automática cancelada");
+  });
+  $("#aAvisar")?.addEventListener("click", () => avisarClaude(proj.pedido));
+  $("#aCopiar")?.addEventListener("click", () => {
+    try { navigator.clipboard.writeText(fraseChat()).then(() => toast("Copiado"), () => toast("Selecione o texto e copie")); } catch { toast("Selecione o texto e copie"); }
+  });
+  ligarIr(el);
+}
+
+async function criarVideo() {
+  if (!proj?.id || auto?.rodando) return;
+  const b = proj.briefing || {};
+  if (!(b.titulo || b.roteiro || b.matchup)) {
+    toast("Preencha e salve o briefing primeiro.");
+    aba = "briefing"; assinaturaAba = ""; redesenharSePreciso();
+    return;
+  }
+  const qualidade = $("#aQual")?.value || lerQualidade();
+  guardarQualidade(qualidade);
+  auto = { rodando: true, fase: "roteiro" };
+  desenharAuto();
+  evento(`Criação automática iniciada (${qualidade === "previa" ? "prévia" : "final"})`, "info");
+  try {
+    let pronto = roteiroPronto(proj);
+    if (!pronto && sample) {
+      await otimizar();
+      pronto = roteiroPronto((await refProj().get()).data());
+      if (!pronto) throw new Error("O roteiro não foi otimizado, então parei aqui. Veja a linha do tempo e clique de novo.");
+    } else if (pronto && sample) {
+      // roteiro já existe: confere se bate com a duração escolhida no briefing
+      const d = (await refProj().get()).data();
+      const o = clone(d.otimizado);
+      const n0 = contarPalavras(o.cenas);
+      auto.ajustando = alvoDuracao(d.briefing).seg;
+      desenharAuto();
+      await ajustarDuracao(d.briefing || {}, o, { modelTier: d.briefing?.tipo === MATCHUP ? "complex" : undefined });
+      auto.ajustando = null;
+      if (contarPalavras(o.cenas) !== n0) {
+        ot = clone(o);
+        await atualizarProj({ otimizado: o });
+        evento(`Roteiro ajustado para ~${segundosDe(contarPalavras(o.cenas))} s (alvo ${alvoDuracao(d.briefing).seg} s)`, "claude");
+        recalcularEPlayer();
+      }
+    }
+    auto.fase = "pedido";
+    desenharAuto();
+    const pedido = { qualidade, em: Date.now(), auto: true, otimizar: !pronto, avisado: null };
+    await atualizarProj({ etapa: "aguardando_producao", pedido, config: clone(cfg), ...(pronto ? { otimizado: clone(ot) } : {}) });
+    evento(`Pedido de produção pronto com as predefinições (voz ${nomeVoz(cfg.voz)}, ${qualidade === "previa" ? "prévia" : "final"})`, "claude");
+    auto.fase = "aviso";
+    auto.rodando = false;
+    await avisarClaude(pedido);
+  } catch (e) {
+    auto.erro = e?.message || msgErro(e);
+    evento(auto.erro, "erro");
+  }
+  if (auto) auto.rodando = false;
+  desenharAuto();
+}
+
+function falhaMcp(e) {
+  switch (e?.code) {
+    case "not_in_manifest": case "approval_required": case "consent_required":
+      return "Você não permitiu que esta página use o conector Claude Code Remote.";
+    case "server_not_connected": case "server_not_found": case "selection_required":
+      return "O conector Claude Code Remote não está ligado na sua conta (claude.ai → Configurações → Conectores).";
+    case "needs_reauth": return "Reconecte o Claude Code Remote em claude.ai → Configurações → Conectores.";
+    case "blocked_by_policy": return "Sua organização não permite enviar mensagens ao Claude Code por aqui.";
+    case "tool_error": return "A sessão do Claude Code não aceitou a mensagem (ela pode ter sido encerrada).";
+    case "server_unavailable": case "upstream_error": case "cancelled":
+      return "O Claude Code não respondeu. A mensagem pode ter chegado: espere um minuto antes de avisar de novo.";
+    default: return "Não consegui avisar o Claude Code sozinho.";
+  }
+}
+
+const podeAvisar = () => !!(comentarios || (mcp && claudeCfg?.sessao));
+const FALHA_COMENTARIO = {
+  writers_only: "Só quem edita o Estúdio pode chamar o Claude por aqui.",
+  no_session: "Nenhuma sessão do Claude Code está acompanhando o Estúdio agora. Abra o Claude Code e escreva a frase no chat.",
+  off: "Chamar o Claude por comentário não está disponível nesta tela.",
+  consent_required: "Você não permitiu que o Estúdio comente por você. Clique de novo e permita.",
+  forbidden: "Comentar pelo Estúdio está desligado para você.",
+  claude_unavailable: "O claude.ai não deixou mandar agora (o clique pode ter ficado antigo). Clique em “Avisar o Claude Code”.",
+  rate_limited: "Muitos avisos seguidos. Espere um pouco.",
+};
+
+// Avisa o Claude Code. 1º: comentário "Send to Claude" no próprio Estúdio (chega às sessões que acompanham
+// esta página). 2º: conector Claude Code Remote (send_message para config/claude.sessao).
+async function avisarClaude(pd) {
+  if (!pd || !proj) return;
+  if (!podeAvisar()) { desenharAuto(); return; }
+  auto = { ...(auto || {}), avisando: true, falhaAviso: null };
+  desenharAuto();
+  const msg = `[Estúdio Shorts · botão Criar vídeo] ${pd.otimizar ? "otimiza o roteiro e " : ""}produz o vídeo "${proj.titulo || proj.id}" — projeto ${proj.id}, qualidade ${pd.qualidade}, pedido ${pd.em}. Leia o pedido no banco do Estúdio e grave o andamento em producao/estado.passos.`;
+  const ok = async (canal) => {
+    auto.avisando = false;
+    await atualizarProj({ pedido: { ...pd, avisado: Date.now(), canal } });
+    evento("Claude Code avisado. A produção começa em instantes.", "claude");
+    desenharAuto();
+  };
+  let falha = null;
+  if (comentarios) {
+    let pode = "off";
+    try { pode = await comentarios.canSendToClaude(); } catch { pode = "off"; }
+    if (pode === "available") {
+      try {
+        const anchor = await comentarios.anchorFor($("#auto"));
+        await comentarios.sendToClaude({ anchor, text: msg });
+        return ok("comentario");
+      } catch (e) { falha = FALHA_COMENTARIO[e?.code] || "O comentário para o Claude não foi enviado."; }
+    } else falha = FALHA_COMENTARIO[pode] || null;
+  }
+  if (mcp && claudeCfg?.sessao) {
+    try {
+      await mcp.callTool(CONECTOR, "send_message", { session_id: claudeCfg.sessao, message: msg }, { cache: false });
+      return ok("conector");
+    } catch (e) { falha = falha || falhaMcp(e); }
+  }
+  auto.avisando = false;
+  auto.falhaAviso = falha || "Não consegui avisar o Claude Code sozinho.";
+  evento(`Aviso automático ao Claude Code falhou: ${auto.falhaAviso}`, "erro");
+  desenharAuto();
+}
+
+// ============================================================ temas em alta
+function desenharAlta() {
+  const el = $("#alta");
+  if (!el) return;
+  $("#btnAlta")?.classList.toggle("ouro", altaAberta);
+  if (!altaAberta || !db) { el.hidden = true; return; }
+  el.hidden = false;
+  const t = tendencias;
+  const quando = t?.coletadoEm ? new Date(t.coletadoEm).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+  el.innerHTML = `
+    <div class="alta-topo">
+      <h2>🔥 Temas em alta no LoL</h2>
+      <button class="btn peq" type="button" id="altaAtualizar" ${altaPedido ? "disabled" : ""}>${altaPedido ? "Pedido enviado…" : "Atualizar temas"}</button>
+      <button class="btn peq" type="button" id="altaFechar">Fechar</button>
+    </div>
+    <p class="nota-rodape" style="margin:6px 0 0">${t ? `Semana de ${esc(t.semana || "")} · coletado em ${esc(quando)} · fontes: ${esc((t.fontesUsadas || []).map((f) => f.split(" (")[0]).join(", "))}. ${esc(t.comoLer || "")}` : "Ainda não há temas coletados. Clique em “Atualizar temas”."}</p>
+    ${altaPedido ? `<div class="aviso" style="margin-top:10px"><span>${esc(altaPedido)}</span></div>` : ""}
+    ${t?.temas?.length ? `<ol class="temas">${t.temas.map((x, i) => `
+      <li class="tema">
+        <header><span class="pos">${x.pos || i + 1}</span><h3>${esc(x.tema)}</h3></header>
+        <div class="calor" title="calor ${esc(x.calor)} de 100"><div style="width:${Math.max(4, Math.min(100, +x.calor || 0))}%"></div></div>
+        <p>${esc(x.porque)}</p>
+        ${(x.numeros || []).length ? `<ul>${x.numeros.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
+        ${(x.fontes || []).length ? `<div class="fontes">Fontes: ${x.fontes.map((f) => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.nome)}</a>`).join(" · ")}</div>` : ""}
+        ${x.ideia ? `<p class="nota-rodape"><b>Ideia de Short:</b> “${esc(x.ideia.titulo)}” · ${esc(x.ideia.tipo)}${x.ideia.campeao ? ` · ${esc(x.ideia.campeao)}` : ""}</p>` : ""}
+        <button class="btn peq ouro" type="button" data-tema="${i}">Criar vídeo com este tema</button>
+      </li>`).join("")}</ol>` : ""}`;
+  $("#altaFechar").onclick = () => { altaAberta = false; desenharAlta(); };
+  $("#altaAtualizar").onclick = pedirTemas;
+  el.querySelectorAll("[data-tema]").forEach((b) => b.addEventListener("click", () => criarComTema(t.temas[+b.dataset.tema])));
+}
+
+function criarComTema(x) {
+  const ideia = x.ideia || {};
+  briefingInicial = {
+    titulo: ideia.titulo || x.tema, tipo: TIPOS.includes(ideia.tipo) ? ideia.tipo : "Curiosidade / Lore", campeao: ideia.campeao || "",
+    duracao: "45s", tom: TONS.includes(ideia.tom) ? ideia.tom : "Energético", publico: PUBLICOS.includes(ideia.publico) ? ideia.publico : "Todos",
+    roteiro: "", fatos: x.fatos || "",
+    orientacoes: `Tema em alta: ${x.tema}. ${x.porque} Fontes: ${(x.fontes || []).map((f) => f.nome).join(", ")}.`,
+  };
+  altaAberta = false;
+  desenharAlta();
+  manterInicial = true;
+  $("#btnNovo").click();
+  toast("Briefing preenchido com o tema. Confira e ajuste.");
+}
+
+async function pedirTemas() {
+  const msg = "[Estúdio Shorts · Temas em alta] atualiza a lista dos 10 temas mais em alta do League of Legends (rode scripts/tendencias.py, complete com buscas na web e grave em tendencias/atual).";
+  altaPedido = "Pedido enviado ao Claude Code. A lista atualiza sozinha aqui quando ele terminar.";
+  desenharAlta();
+  try {
+    let pode = "off";
+    try { pode = comentarios ? await comentarios.canSendToClaude() : "off"; } catch { pode = "off"; }
+    if (pode === "available") { await comentarios.sendToClaude({ anchor: await comentarios.anchorFor($("#alta")), text: msg }); return; }
+    if (mcp && claudeCfg?.sessao) { await mcp.callTool(CONECTOR, "send_message", { session_id: claudeCfg.sessao, message: msg }, { cache: false }); return; }
+    throw new Error("sem canal");
+  } catch {
+    altaPedido = "";
+    desenharAlta();
+    toast("Não consegui avisar o Claude Code. Peça no chat: “atualiza os temas em alta”.");
+  }
+}
+
+// ============================================================ estilo viral
+function notaMidiaViral() {
+  const nome = campeaoDoProjeto();
+  const c = bibliotecaDe(nome);
+  if (c) return `Mídia de ${esc(c.nome)}: splash e ${c.videos.length} vídeos de habilidade. A habilidade citada na fala aparece na hora.`;
+  if (nome) return `${esc(nome)} ainda não está na biblioteca do Estúdio. Ao produzir, o Claude Code baixa os vídeos das habilidades e a splash.`;
+  return "Sem campeão no briefing: o fundo usa as fotos das provas e o seu gameplay, se houver.";
+}
+
+function aplicarViral(avisar = true) {
+  if (!cfg) return;
+  if (cfg.layout !== "viral") cfg.antesViral = { estilo: clone(cfg.estilo), efeitos: clone(cfg.efeitos), hookDuracao: cfg.hookDuracao };
+  cfg.layout = "viral";
+  Object.assign(cfg.estilo, VIRAL.estilo);
+  Object.assign(cfg.efeitos, VIRAL.efeitos);
+  cfg.hookDuracao = VIRAL.hookDuracao;
+  atualizarProj({ config: clone(cfg) }); // grava já: um aviso no meio do caminho não pode desfazer a troca
+  recalcularEPlayer();
+  evento("Estilo viral aplicado (tela cheia, cortes a cada 2,4 s, legenda de 2 palavras)", "info");
+  if (avisar) toast("Estilo viral aplicado. Dê play no celular ao lado para conferir.");
+  desenharViral();
+}
+function voltarQuadro(avisar = true) {
+  if (!cfg) return;
+  const a = cfg.antesViral;
+  if (a) { cfg.estilo = { ...cfg.estilo, ...a.estilo }; cfg.efeitos = { ...cfg.efeitos, ...a.efeitos }; cfg.hookDuracao = a.hookDuracao; }
+  cfg.layout = "quadro";
+  delete cfg.antesViral;
+  atualizarProj({ config: clone(cfg) }); // grava já: um aviso no meio do caminho não pode desfazer a troca
+  recalcularEPlayer();
+  if (avisar) toast("Voltou ao quadro de investigação.");
+  desenharViral();
+}
+async function produzirViral(qualidade) {
+  if (!proj?.id || !cfg) { toast("Abra ou crie um vídeo primeiro."); return; }
+  if (cfg.layout !== "viral") aplicarViral(false);
+  guardarQualidade(qualidade);
+  const sel = $("#aQual");
+  if (sel) sel.value = qualidade;
+  viralAberto = false;
+  desenharViral();
+  $("#auto")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  await criarVideo();
+}
+
+function desenharViral() {
+  const el = $("#viral");
+  if (!el) return;
+  $("#btnViral")?.classList.toggle("ouro", viralAberto);
+  if (!viralAberto || !db) { el.hidden = true; return; }
+  el.hidden = false;
+  const v = virais;
+  const aplicado = cfg?.layout === "viral";
+  const temProj = !!(proj?.id && cfg);
+  const fmtN = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(".", ",")} mi` : n >= 1e3 ? `${Math.round(n / 1e3)} mil` : String(n || 0));
+  const quando = v?.coletadoEm ? new Date(v.coletadoEm).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+  el.innerHTML = `
+    <div class="alta-topo">
+      <h2>⚡ Estilo viral</h2>
+      <button class="btn peq" type="button" id="viralAtualizar" ${viralPedido ? "disabled" : ""}>${viralPedido ? "Pedido enviado…" : "Buscar modelos de novo"}</button>
+      <button class="btn peq" type="button" id="viralFechar">Fechar</button>
+    </div>
+    <p class="nota-rodape" style="margin:6px 0 0">${v ? `${esc(v.janela || "")} · coletado em ${esc(quando)}. ${esc(v.comoLer || "")}` : "Ainda não há modelos coletados. Clique em “Buscar modelos de novo”."}</p>
+    ${viralPedido ? `<div class="aviso" style="margin-top:10px"><span>${esc(viralPedido)}</span></div>` : ""}
+    <div class="passos-v">
+      <div class="passo-v ${aplicado ? "feito" : ""}">
+        <b>1. Aplicar no vídeo aberto</b>
+        <span class="nota-rodape">${temProj ? `“${esc(proj.titulo || proj.id)}”. ${notaMidiaViral()}` : "Abra ou crie um vídeo primeiro."}</span>
+        ${aplicado
+          ? `<span class="nota-rodape">✓ Aplicado. Dê play no celular ao lado para conferir.</span><button class="btn peq" type="button" id="viralVoltar">Voltar ao quadro</button>`
+          : `<button class="btn peq ouro" type="button" id="viralAplicar" ${temProj ? "" : "disabled"}>Aplicar estilo viral</button>`}
+      </div>
+      <div class="passo-v">
+        <b>2. Ver como fica</b>
+        <span class="nota-rodape">O Claude Code renderiza uma prévia 540p com narração. Ela aparece em Produzir.</span>
+        <button class="btn peq" type="button" id="viralPrevia" ${temProj && podeAvisar() ? "" : "disabled"}>Gerar prévia</button>
+      </div>
+      <div class="passo-v">
+        <b>3. Aprovar</b>
+        <span class="nota-rodape">Gostou? Produz o vídeo final 1080p no mesmo estilo.</span>
+        <button class="btn peq ouro" type="button" id="viralFinal" ${temProj && podeAvisar() ? "" : "disabled"}>Aprovar e produzir final</button>
+      </div>
+    </div>
+    ${(v?.receita || []).length ? `<h3>O que copiamos dos virais</h3><ul>${v.receita.map((r) => `<li>${esc(r)}</li>`).join("")}</ul>` : ""}
+    ${(v?.modelos || []).length ? `<h3>Modelos que mais cresceram</h3><ul class="modelos">${v.modelos.map((m) => `
+      <li class="modelo">
+        <span class="num">${esc(m.plataforma)} · ${esc(m.canal)} · ${fmtN(m.views)} views · ${fmtN(m.velocidade)}/h${m.duracao ? ` · ${m.duracao} s` : ""}</span>
+        <h4><a href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.titulo)}</a></h4>
+        <span class="nota-rodape">${esc(m.formato)}</span>
+        ${(m.copiamos || []).length ? `<ul>${m.copiamos.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
+      </li>`).join("")}</ul>` : ""}
+    ${(v?.comparacao || []).length ? `<h3>Eles × o Estúdio</h3><div class="rolagem"><table class="tabela"><thead><tr><th></th><th>Os virais</th><th>Antes</th><th>Agora (estilo viral)</th></tr></thead><tbody>
+      ${v.comparacao.map((c) => `<tr><th>${esc(c.item)}</th><td>${esc(c.eles)}</td><td>${esc(c.antes)}</td><td>${esc(c.agora)}</td></tr>`).join("")}</tbody></table></div>` : ""}`;
+  $("#viralFechar").onclick = () => { viralAberto = false; desenharViral(); };
+  $("#viralAtualizar").onclick = pedirVirais;
+  $("#viralAplicar")?.addEventListener("click", () => { aplicarViral(); if (aba === "visual") { assinaturaAba = ""; redesenharSePreciso(); } });
+  $("#viralVoltar")?.addEventListener("click", () => { voltarQuadro(); if (aba === "visual") { assinaturaAba = ""; redesenharSePreciso(); } });
+  $("#viralPrevia")?.addEventListener("click", () => produzirViral("previa"));
+  $("#viralFinal")?.addEventListener("click", () => produzirViral("final"));
+}
+
+async function pedirVirais() {
+  const msg = "[Estúdio Shorts · Estilo viral] busca de novo os Shorts e TikToks de LoL que mais cresceram (rode scripts/virais.py, analise os melhores e grave em virais/atual).";
+  viralPedido = "Pedido enviado ao Claude Code. Os modelos atualizam sozinhos aqui quando ele terminar.";
+  desenharViral();
+  try {
+    let pode = "off";
+    try { pode = comentarios ? await comentarios.canSendToClaude() : "off"; } catch { pode = "off"; }
+    if (pode === "available") { await comentarios.sendToClaude({ anchor: await comentarios.anchorFor($("#viral")), text: msg }); return; }
+    if (mcp && claudeCfg?.sessao) { await mcp.callTool(CONECTOR, "send_message", { session_id: claudeCfg.sessao, message: msg }, { cache: false }); return; }
+    throw new Error("sem canal");
+  } catch {
+    viralPedido = "";
+    desenharViral();
+    toast("Não consegui avisar o Claude Code. Peça no chat: “busca os modelos virais de novo”.");
+  }
+}
+
+// ============================================================ início
+document.querySelectorAll("#etapas button").forEach((b) => b.addEventListener("click", () => {
+  aba = b.dataset.aba;
+  assinaturaAba = "";
+  redesenharSePreciso();
+}));
+$("#seletor").onchange = (e) => { if (e.target.value) abrir(e.target.value); };
+$("#btnAlta").onclick = () => { altaAberta = !altaAberta; desenharAlta(); if (altaAberta) $("#alta").scrollIntoView({ behavior: "smooth", block: "start" }); };
+$("#btnViral").onclick = () => { viralAberto = !viralAberto; desenharViral(); if (viralAberto) $("#viral").scrollIntoView({ behavior: "smooth", block: "start" }); };
+let manterInicial = false;
+$("#btnNovo").onclick = () => {
+  if (!manterInicial) briefingInicial = null;
+  manterInicial = false;
+  desinscrever.forEach((u) => u());
+  desinscrever = [];
+  proj = null; cfg = null; ot = null; producao = null; eventos = [];
+  roteiroAuto = { assinatura: "", carregando: false, texto: "", opcoes: [], erro: "", escolhida: -1, ctl: null };
+  aba = "briefing"; assinaturaAba = "";
+  try { history.replaceState(null, "", "#"); } catch {}
+  desenharTudo();
+};
+
+desenharTudo();
+(async () => {
+  const usar = (n) => (window.claude?.use ? window.claude.use(n).catch(() => null) : Promise.resolve(null));
+  [db, assets, sample, downloads, mcp, comentarios, permissoes] = await Promise.all([usar("db"), usar("assets"), usar("sample"), usar("downloads"), usar("mcp"), usar("comments"), usar("permissions")]);
+  if (!db) { carregando = false; desenharTudo(); return; }
+  desenharTudo();
+  assinarLista();
+  assinarMidias();
+  assinarConfig();
+})();
+</script>

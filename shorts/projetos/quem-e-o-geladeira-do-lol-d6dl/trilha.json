@@ -1,0 +1,517 @@
+{
+ "fonte": "narracao",
+ "hash": "3c2d5bba92f2",
+ "duracao": 35.786,
+ "cenas": [
+  {
+   "inicio": 0.15,
+   "fim": 2.91,
+   "palavras": [
+    {
+     "texto": "Existe",
+     "inicio": 0.245,
+     "fim": 0.723,
+     "destaque": false
+    },
+    {
+     "texto": "uma",
+     "inicio": 0.734,
+     "fim": 0.848,
+     "destaque": false
+    },
+    {
+     "texto": "geladeira",
+     "inicio": 0.859,
+     "fim": 1.336,
+     "destaque": true
+    },
+    {
+     "texto": "no",
+     "inicio": 1.348,
+     "fim": 1.45,
+     "destaque": false
+    },
+    {
+     "texto": "mid",
+     "inicio": 1.461,
+     "fim": 1.745,
+     "destaque": false
+    },
+    {
+     "texto": "do",
+     "inicio": 1.757,
+     "fim": 1.836,
+     "destaque": false
+    },
+    {
+     "texto": "LoL",
+     "inicio": 1.848,
+     "fim": 2.12,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 3.01,
+   "fim": 6.226,
+   "palavras": [
+    {
+     "texto": "Ela",
+     "inicio": 3.105,
+     "fim": 3.333,
+     "destaque": false
+    },
+    {
+     "texto": "não",
+     "inicio": 3.344,
+     "fim": 3.469,
+     "destaque": true
+    },
+    {
+     "texto": "se",
+     "inicio": 3.48,
+     "fim": 3.617,
+     "destaque": true
+    },
+    {
+     "texto": "mexe",
+     "inicio": 3.628,
+     "fim": 4.071,
+     "destaque": true
+    },
+    {
+     "texto": "e",
+     "inicio": 4.265,
+     "fim": 4.355,
+     "destaque": false
+    },
+    {
+     "texto": "mesmo",
+     "inicio": 4.367,
+     "fim": 4.685,
+     "destaque": false
+    },
+    {
+     "texto": "assim",
+     "inicio": 4.696,
+     "fim": 4.958,
+     "destaque": false
+    },
+    {
+     "texto": "te",
+     "inicio": 4.969,
+     "fim": 5.071,
+     "destaque": true
+    },
+    {
+     "texto": "mata",
+     "inicio": 5.083,
+     "fim": 5.435,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "inicio": 6.326,
+   "fim": 10.358,
+   "palavras": [
+    {
+     "texto": "Você",
+     "inicio": 6.421,
+     "fim": 6.706,
+     "destaque": false
+    },
+    {
+     "texto": "tenta",
+     "inicio": 6.717,
+     "fim": 7.035,
+     "destaque": false
+    },
+    {
+     "texto": "chegar",
+     "inicio": 7.046,
+     "fim": 7.399,
+     "destaque": false
+    },
+    {
+     "texto": "perto",
+     "inicio": 7.41,
+     "fim": 7.751,
+     "destaque": false
+    },
+    {
+     "texto": "do",
+     "inicio": 7.762,
+     "fim": 7.842,
+     "destaque": false
+    },
+    {
+     "texto": "Xerath",
+     "inicio": 7.853,
+     "fim": 8.296,
+     "destaque": false
+    },
+    {
+     "texto": "Zap",
+     "inicio": 9.076,
+     "fim": 9.565,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "inicio": 10.458,
+   "fim": 14.49,
+   "palavras": [
+    {
+     "texto": "O",
+     "inicio": 10.553,
+     "fim": 10.667,
+     "destaque": false
+    },
+    {
+     "texto": "Q",
+     "inicio": 10.678,
+     "fim": 10.792,
+     "destaque": true
+    },
+    {
+     "texto": "alcança",
+     "inicio": 10.803,
+     "fim": 11.247,
+     "destaque": false
+    },
+    {
+     "texto": "750",
+     "inicio": 11.258,
+     "fim": 12.463,
+     "destaque": true
+    },
+    {
+     "texto": "mesmo",
+     "inicio": 12.678,
+     "fim": 13.019,
+     "destaque": false
+    },
+    {
+     "texto": "sem",
+     "inicio": 13.031,
+     "fim": 13.224,
+     "destaque": false
+    },
+    {
+     "texto": "carregar",
+     "inicio": 13.235,
+     "fim": 13.69,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 14.59,
+   "fim": 18.646,
+   "palavras": [
+    {
+     "texto": "O",
+     "inicio": 14.685,
+     "fim": 14.799,
+     "destaque": false
+    },
+    {
+     "texto": "E",
+     "inicio": 14.81,
+     "fim": 14.856,
+     "destaque": true
+    },
+    {
+     "texto": "vai",
+     "inicio": 14.867,
+     "fim": 15.06,
+     "destaque": false
+    },
+    {
+     "texto": "a",
+     "inicio": 15.072,
+     "fim": 15.117,
+     "destaque": false
+    },
+    {
+     "texto": "1050",
+     "inicio": 15.129,
+     "fim": 15.97,
+     "destaque": true
+    },
+    {
+     "texto": "Você",
+     "inicio": 16.749,
+     "fim": 17.056,
+     "destaque": false
+    },
+    {
+     "texto": "nunca",
+     "inicio": 17.067,
+     "fim": 17.42,
+     "destaque": false
+    },
+    {
+     "texto": "chega",
+     "inicio": 17.431,
+     "fim": 17.851,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 18.746,
+   "fim": 21.05,
+   "palavras": [
+    {
+     "texto": "Cada",
+     "inicio": 18.841,
+     "fim": 19.103,
+     "destaque": false
+    },
+    {
+     "texto": "passo",
+     "inicio": 19.114,
+     "fim": 19.478,
+     "destaque": false
+    },
+    {
+     "texto": "seu",
+     "inicio": 19.489,
+     "fim": 19.66,
+     "destaque": false
+    },
+    {
+     "texto": "vira",
+     "inicio": 19.671,
+     "fim": 19.921,
+     "destaque": false
+    },
+    {
+     "texto": "dano",
+     "inicio": 19.932,
+     "fim": 20.262,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "inicio": 21.15,
+   "fim": 23.598,
+   "palavras": [
+    {
+     "texto": "Aí",
+     "inicio": 21.245,
+     "fim": 21.552,
+     "destaque": false
+    },
+    {
+     "texto": "ele",
+     "inicio": 21.564,
+     "fim": 21.734,
+     "destaque": false
+    },
+    {
+     "texto": "solta",
+     "inicio": 21.745,
+     "fim": 22.109,
+     "destaque": false
+    },
+    {
+     "texto": "o",
+     "inicio": 22.12,
+     "fim": 22.2,
+     "destaque": false
+    },
+    {
+     "texto": "ult.",
+     "inicio": 22.211,
+     "fim": 22.416,
+     "destaque": true
+    },
+    {
+     "texto": "Acabou",
+     "inicio": 22.427,
+     "fim": 22.814,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "inicio": 23.698,
+   "fim": 26.626,
+   "palavras": [
+    {
+     "texto": "Parada",
+     "inicio": 23.793,
+     "fim": 24.259,
+     "destaque": false
+    },
+    {
+     "texto": "fria",
+     "inicio": 24.453,
+     "fim": 24.725,
+     "destaque": false
+    },
+    {
+     "texto": "e",
+     "inicio": 24.737,
+     "fim": 24.793,
+     "destaque": false
+    },
+    {
+     "texto": "te",
+     "inicio": 24.805,
+     "fim": 24.896,
+     "destaque": false
+    },
+    {
+     "texto": "derrete",
+     "inicio": 24.907,
+     "fim": 25.316,
+     "destaque": true
+    },
+    {
+     "texto": "de",
+     "inicio": 25.328,
+     "fim": 25.407,
+     "destaque": false
+    },
+    {
+     "texto": "longe",
+     "inicio": 25.418,
+     "fim": 25.839,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 26.726,
+   "fim": 28.958,
+   "palavras": [
+    {
+     "texto": "Essa",
+     "inicio": 26.821,
+     "fim": 27.151,
+     "destaque": false
+    },
+    {
+     "texto": "é",
+     "inicio": 27.162,
+     "fim": 27.219,
+     "destaque": false
+    },
+    {
+     "texto": "a",
+     "inicio": 27.231,
+     "fim": 27.276,
+     "destaque": false
+    },
+    {
+     "texto": "geladeira",
+     "inicio": 27.287,
+     "fim": 27.799,
+     "destaque": true
+    },
+    {
+     "texto": "do",
+     "inicio": 27.81,
+     "fim": 27.89,
+     "destaque": false
+    },
+    {
+     "texto": "LoL",
+     "inicio": 27.901,
+     "fim": 28.174,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 29.058,
+   "fim": 31.026,
+   "palavras": [
+    {
+     "texto": "Respeita",
+     "inicio": 29.153,
+     "fim": 29.744,
+     "destaque": true
+    },
+    {
+     "texto": "o",
+     "inicio": 29.756,
+     "fim": 29.778,
+     "destaque": false
+    },
+    {
+     "texto": "Xerath",
+     "inicio": 29.79,
+     "fim": 30.222,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 31.126,
+   "fim": 35.686,
+   "palavras": [
+    {
+     "texto": "Qual",
+     "inicio": 31.221,
+     "fim": 31.483,
+     "destaque": false
+    },
+    {
+     "texto": "é",
+     "inicio": 31.494,
+     "fim": 31.608,
+     "destaque": false
+    },
+    {
+     "texto": "a",
+     "inicio": 31.619,
+     "fim": 31.653,
+     "destaque": false
+    },
+    {
+     "texto": "sua",
+     "inicio": 31.665,
+     "fim": 31.926,
+     "destaque": false
+    },
+    {
+     "texto": "geladeira",
+     "inicio": 31.937,
+     "fim": 32.471,
+     "destaque": true
+    },
+    {
+     "texto": "favorita",
+     "inicio": 32.483,
+     "fim": 33.028,
+     "destaque": false
+    },
+    {
+     "texto": "Comenta",
+     "inicio": 33.808,
+     "fim": 34.262,
+     "destaque": false
+    },
+    {
+     "texto": "o",
+     "inicio": 34.274,
+     "fim": 34.296,
+     "destaque": false
+    },
+    {
+     "texto": "campeão",
+     "inicio": 34.308,
+     "fim": 34.887,
+     "destaque": true
+    }
+   ]
+  }
+ ]
+}

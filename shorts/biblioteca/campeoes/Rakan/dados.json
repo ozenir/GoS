@@ -1,0 +1,170 @@
+{
+ "id": "Rakan",
+ "nome": "Rakan",
+ "titulo": "O Charmoso",
+ "chave": "0497",
+ "versao": "16.22.1",
+ "alcanceAtaque": 300,
+ "habilidades": {
+  "P": {
+   "nome": "Plumas Mágicas",
+   "descricao": "Rakan recebe um escudo periodicamente."
+  },
+  "Q": {
+   "nome": "Pena Reluzente",
+   "recarga": [
+    11,
+    10,
+    9,
+    8,
+    7
+   ],
+   "custo": [
+    45,
+    45,
+    45,
+    45,
+    45
+   ],
+   "alcance": [
+    850,
+    850,
+    850,
+    850,
+    850
+   ],
+   "descricao": "Lança uma pluma mágica que causa Dano Mágico. Ao atingir um Campeão ou um monstro épico, Rakan pode curar seus aliados."
+  },
+  "W": {
+   "nome": "Entrada Triunfal",
+   "recarga": [
+    14,
+    13,
+    12,
+    11,
+    10
+   ],
+   "custo": [
+    50,
+    60,
+    70,
+    80,
+    90
+   ],
+   "alcance": [
+    600,
+    600,
+    600,
+    600,
+    600
+   ],
+   "descricao": "Avança para um local e, ao chegar, arremessa os inimigos próximos ao ar."
+  },
+  "E": {
+   "nome": "Dança da Batalha",
+   "recarga": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "custo": [
+    40,
+    45,
+    50,
+    55,
+    60
+   ],
+   "alcance": [
+    650,
+    650,
+    650,
+    650,
+    650
+   ],
+   "descricao": "Voa até um aliado e concede um escudo a ele. Pode ser conjurada novamente sem custo por um breve período."
+  },
+  "R": {
+   "nome": "Rapidez",
+   "recarga": [
+    130,
+    110,
+    90
+   ],
+   "custo": [
+    100,
+    100,
+    100
+   ],
+   "alcance": [
+    150,
+    150,
+    150
+   ],
+   "descricao": "Recebe Velocidade de Movimento, encantando e causando Dano Mágico ao tocar nos inimigos."
+  }
+ },
+ "videos": {
+  "P": {
+   "arquivo": "videos/P.mp4",
+   "quadro": "quadros/P.jpg",
+   "duracao": 6.6,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "Q": {
+   "arquivo": "videos/Q.mp4",
+   "quadro": "quadros/Q.jpg",
+   "duracao": 6.17,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "W": {
+   "arquivo": "videos/W.mp4",
+   "quadro": "quadros/W.jpg",
+   "duracao": 4.47,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "E": {
+   "arquivo": "videos/E.mp4",
+   "quadro": "quadros/E.jpg",
+   "duracao": 6.27,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  },
+  "R": {
+   "arquivo": "videos/R.mp4",
+   "quadro": "quadros/R.jpg",
+   "duracao": 6.33,
+   "w": 1056,
+   "h": 720,
+   "foco": [
+    0.55,
+    0.65
+   ],
+   "focoMedido": false
+  }
+ }
+}

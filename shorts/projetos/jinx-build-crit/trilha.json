@@ -1,0 +1,343 @@
+{
+ "fonte": "narracao",
+ "hash": "d7262885796f",
+ "duracao": 24.554,
+ "cenas": [
+  {
+   "inicio": 0.15,
+   "fim": 3.582,
+   "palavras": [
+    {
+     "texto": "Essa",
+     "inicio": 0.245,
+     "fim": 0.575,
+     "destaque": false
+    },
+    {
+     "texto": "build",
+     "inicio": 0.586,
+     "fim": 0.859,
+     "destaque": false
+    },
+    {
+     "texto": "deixa",
+     "inicio": 0.87,
+     "fim": 1.155,
+     "destaque": false
+    },
+    {
+     "texto": "a",
+     "inicio": 1.166,
+     "fim": 1.2,
+     "destaque": false
+    },
+    {
+     "texto": "Jinx",
+     "inicio": 1.211,
+     "fim": 1.473,
+     "destaque": true
+    },
+    {
+     "texto": "injusta",
+     "inicio": 1.484,
+     "fim": 1.973,
+     "destaque": true
+    },
+    {
+     "texto": "no",
+     "inicio": 1.984,
+     "fim": 2.064,
+     "destaque": false
+    },
+    {
+     "texto": "meio",
+     "inicio": 2.075,
+     "fim": 2.325,
+     "destaque": false
+    },
+    {
+     "texto": "do",
+     "inicio": 2.336,
+     "fim": 2.416,
+     "destaque": false
+    },
+    {
+     "texto": "jogo",
+     "inicio": 2.427,
+     "fim": 2.791,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 3.682,
+   "fim": 8.794,
+   "palavras": [
+    {
+     "texto": "Primeiro",
+     "inicio": 3.777,
+     "fim": 4.243,
+     "destaque": false
+    },
+    {
+     "texto": "item",
+     "inicio": 4.255,
+     "fim": 4.573,
+     "destaque": false
+    },
+    {
+     "texto": "Kraken",
+     "inicio": 4.789,
+     "fim": 5.289,
+     "destaque": true
+    },
+    {
+     "texto": "Todo",
+     "inicio": 6.068,
+     "fim": 6.387,
+     "destaque": false
+    },
+    {
+     "texto": "terceiro",
+     "inicio": 6.398,
+     "fim": 6.796,
+     "destaque": false
+    },
+    {
+     "texto": "ataque",
+     "inicio": 6.807,
+     "fim": 7.148,
+     "destaque": false
+    },
+    {
+     "texto": "dá",
+     "inicio": 7.159,
+     "fim": 7.262,
+     "destaque": false
+    },
+    {
+     "texto": "dano",
+     "inicio": 7.273,
+     "fim": 7.602,
+     "destaque": false
+    },
+    {
+     "texto": "extra",
+     "inicio": 7.614,
+     "fim": 7.989,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 8.894,
+   "fim": 14.75,
+   "palavras": [
+    {
+     "texto": "Depois",
+     "inicio": 8.989,
+     "fim": 9.569,
+     "destaque": false
+    },
+    {
+     "texto": "Guinsoo",
+     "inicio": 9.751,
+     "fim": 10.342,
+     "destaque": true
+    },
+    {
+     "texto": "Agora",
+     "inicio": 11.121,
+     "fim": 11.485,
+     "destaque": false
+    },
+    {
+     "texto": "seus",
+     "inicio": 11.496,
+     "fim": 11.644,
+     "destaque": false
+    },
+    {
+     "texto": "ataques",
+     "inicio": 11.655,
+     "fim": 12.076,
+     "destaque": false
+    },
+    {
+     "texto": "ativam",
+     "inicio": 12.087,
+     "fim": 12.564,
+     "destaque": false
+    },
+    {
+     "texto": "o",
+     "inicio": 12.576,
+     "fim": 12.61,
+     "destaque": false
+    },
+    {
+     "texto": "Kraken",
+     "inicio": 12.621,
+     "fim": 13.019,
+     "destaque": false
+    },
+    {
+     "texto": "muito",
+     "inicio": 13.03,
+     "fim": 13.349,
+     "destaque": false
+    },
+    {
+     "texto": "mais",
+     "inicio": 13.36,
+     "fim": 13.553,
+     "destaque": false
+    },
+    {
+     "texto": "rápido",
+     "inicio": 13.564,
+     "fim": 13.962,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 14.85,
+   "fim": 19.266,
+   "palavras": [
+    {
+     "texto": "Resultado",
+     "inicio": 14.945,
+     "fim": 15.627,
+     "destaque": false
+    },
+    {
+     "texto": "com",
+     "inicio": 15.843,
+     "fim": 15.991,
+     "destaque": false
+    },
+    {
+     "texto": "dois",
+     "inicio": 16.002,
+     "fim": 16.207,
+     "destaque": false
+    },
+    {
+     "texto": "itens",
+     "inicio": 16.218,
+     "fim": 16.695,
+     "destaque": false
+    },
+    {
+     "texto": "você",
+     "inicio": 16.877,
+     "fim": 17.15,
+     "destaque": false
+    },
+    {
+     "texto": "já",
+     "inicio": 17.161,
+     "fim": 17.275,
+     "destaque": false
+    },
+    {
+     "texto": "derrete",
+     "inicio": 17.286,
+     "fim": 17.684,
+     "destaque": true
+    },
+    {
+     "texto": "o",
+     "inicio": 17.695,
+     "fim": 17.752,
+     "destaque": false
+    },
+    {
+     "texto": "tanque",
+     "inicio": 17.764,
+     "fim": 18.025,
+     "destaque": true
+    },
+    {
+     "texto": "deles",
+     "inicio": 18.036,
+     "fim": 18.468,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "inicio": 19.366,
+   "fim": 24.454,
+   "palavras": [
+    {
+     "texto": "Testa",
+     "inicio": 19.461,
+     "fim": 19.768,
+     "destaque": false
+    },
+    {
+     "texto": "na",
+     "inicio": 19.78,
+     "fim": 19.893,
+     "destaque": false
+    },
+    {
+     "texto": "próxima",
+     "inicio": 19.905,
+     "fim": 20.291,
+     "destaque": false
+    },
+    {
+     "texto": "partida",
+     "inicio": 20.302,
+     "fim": 20.802,
+     "destaque": false
+    },
+    {
+     "texto": "E",
+     "inicio": 21.582,
+     "fim": 21.673,
+     "destaque": false
+    },
+    {
+     "texto": "você",
+     "inicio": 21.684,
+     "fim": 22.116,
+     "destaque": false
+    },
+    {
+     "texto": "qual",
+     "inicio": 22.389,
+     "fim": 22.593,
+     "destaque": false
+    },
+    {
+     "texto": "build",
+     "inicio": 22.605,
+     "fim": 22.866,
+     "destaque": false
+    },
+    {
+     "texto": "usa",
+     "inicio": 22.877,
+     "fim": 23.082,
+     "destaque": false
+    },
+    {
+     "texto": "de",
+     "inicio": 23.093,
+     "fim": 23.184,
+     "destaque": false
+    },
+    {
+     "texto": "Jinx",
+     "inicio": 23.196,
+     "fim": 23.661,
+     "destaque": true
+    }
+   ]
+  }
+ ]
+}
