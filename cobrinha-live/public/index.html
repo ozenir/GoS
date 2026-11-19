@@ -132,6 +132,7 @@ body.live .frame{border-radius:0;box-shadow:none}
 let STEP = 0.155;            // segundos por casa (menor = mais rápido). O config.json pode mudar isso.
 const GREED = 0.07;          // chance de a cobra arriscar um caminho perigoso quando já está grande (0 = nunca)
 const GREED_MIN_LEN = 14;    // só arrisca a partir desse tamanho
+let SAFE_SCORE = 200;        // a partir desses pontos (🍎) ela nunca arrisca: sobreviver vem antes de comer
 const OVER_SECONDS = 7;      // tempo da tela de fim de jogo
 const MAX_ON_BOARD = 45;     // frutas no chão ao mesmo tempo; o resto espera na fila
 const MAX_QUEUE = 400;       // limite da fila de frutas
@@ -311,6 +312,11 @@ function bfs(start, occ, stopFn) {
   }
   return { found, dist, par, count: q.length };
 }
+function pathFromPar(par, start, k) {
+  const s = key(start.x, start.y), out = [];
+  while (k !== s && k >= 0) { out.push({ x: k % COLS, y: (k / COLS) | 0 }); k = par[k]; }
+  return out.reverse();
+}
 function pathTo(res, start) {
   const s = key(start.x, start.y), out = []; let k = res.found;
   while (k !== s && k >= 0) { out.push({ x: k % COLS, y: (k / COLS) | 0 }); k = res.par[k]; }
@@ -320,20 +326,35 @@ function tailReachable(body, grow) {
   const occ = occMap(body, grow), t = body[body.length - 1], tk = key(t.x, t.y);
   return bfs(body[0], occ, k => k === tk).found >= 0;
 }
-function afterPath(path, eats) {
-  const n = G.body.length, k = path.length, used = Math.min(k, G.grow);
-  const vb = [...path.slice().reverse(), ...G.body].slice(0, n + used);
-  return { vb, r: G.grow - used + (eats ? 1 : 0) };
+// Simula a cobra andando pelo caminho. Conta TODA fruta que estiver no trajeto
+// (não só a escolhida), porque cada uma faz o corpo crescer.
+function afterPath(path) {
+  const fruitAt = new Set(G.fruits.filter(f => !f.dead).map(f => key(f.cx, f.cy)));
+  const vb = G.body.slice(); let grow = G.grow;
+  for (const c of path) {
+    vb.unshift(c);
+    if (grow > 0) grow--; else vb.pop();
+    if (fruitAt.has(key(c.x, c.y))) grow++;
+  }
+  return { vb, r: grow };
 }
 function chooseMove() {
   const head = G.body[0], occ = occMap(G.body, G.grow);
   const targets = new Set(G.fruits.filter(f => !f.dead && f.z < 170).map(f => key(f.cx, f.cy)));
-  const greedy = G.body.length >= GREED_MIN_LEN && Math.random() < GREED;
+  // Modo seguro: com muitos pontos ela nunca arrisca e testa mais frutas antes de desistir.
+  const safeMode = G.eaten >= SAFE_SCORE;
+  const greedy = !safeMode && G.body.length >= GREED_MIN_LEN && Math.random() < GREED;
+  // Margem: no modo seguro ela calcula como se fosse crescer 3 casas a mais,
+  // porque frutas novas podem cair na frente dela depois da conta feita.
+  const slack = safeMode ? 3 : 0;
   if (targets.size) {
-    const res = bfs(head, occ, k => targets.has(k));
-    if (res.found >= 0) {
-      const path = pathTo(res, head), { vb, r } = afterPath(path, true);
-      if (greedy || tailReachable(vb, r)) return path[0];
+    // Frutas alcançáveis, da mais perto para a mais longe. Ela vai na primeira em que,
+    // depois de comer, ainda consegue chegar no próprio rabo (ou seja, não fica presa).
+    const res = bfs(head, occ, null);
+    const cand = [...targets].filter(k => res.dist[k] > 0).sort((a, b) => res.dist[a] - res.dist[b]).slice(0, safeMode ? 12 : 4);
+    for (const k of cand) {
+      const path = pathFromPar(res.par, head, k), { vb, r } = afterPath(path);
+      if (greedy || tailReachable(vb, r + slack)) return path[0];
     }
   } else {
     if (!G.wander || G.wanderSteps-- <= 0 || (G.wander.x === head.x && G.wander.y === head.y)) {
@@ -341,23 +362,27 @@ function chooseMove() {
     }
     const wk = key(G.wander.x, G.wander.y), res = bfs(head, occ, k => k === wk);
     if (res.found >= 0) {
-      const path = pathTo(res, head), { vb, r } = afterPath(path, false);
-      if (tailReachable(vb, r)) return path[0];
+      const path = pathTo(res, head), { vb, r } = afterPath(path);
+      if (tailReachable(vb, r + slack)) return path[0];
     }
   }
-  // sem caminho seguro: enrola, ficando longe do rabo e com mais espaço livre
-  const n = G.body.length; let best = null, bestScore = -1e9, fallback = null, fbArea = -1;
-  for (const [dx, dy] of DIRS) {
-    const nx = head.x + dx, ny = head.y + dy; if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) continue;
-    const o = occ[key(nx, ny)]; if (o && o > 1) continue;
-    const vb = [{ x: nx, y: ny }, ...G.body].slice(0, n + (G.grow > 0 ? 1 : 0)), r = Math.max(0, G.grow - 1);
-    const vocc = occMap(vb, r), t = vb[vb.length - 1], tk = key(t.x, t.y);
-    const res = bfs(vb[0], vocc, null);
-    if (res.count > fbArea) { fbArea = res.count; fallback = { x: nx, y: ny }; }
-    const safe = bfs(vb[0], vocc, k => k === tk).found >= 0;
-    if (safe) { const sc = (res.dist[tk] >= 0 ? res.dist[tk] : 0) + res.count * 0.05 + Math.random() * 0.6; if (sc > bestScore) { bestScore = sc; best = { x: nx, y: ny }; } }
+  // Sem fruta segura: enrola, ficando longe do rabo e com mais espaço livre.
+  // Tenta primeiro com a margem; se nenhum movimento passar, tenta sem margem; por último, o de mais espaço.
+  let fallback = null, fbArea = -1;
+  for (const extra of slack ? [slack, 0] : [0]) {
+    let best = null, bestScore = -1e9;
+    for (const [dx, dy] of DIRS) {
+      const nx = head.x + dx, ny = head.y + dy; if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) continue;
+      const o = occ[key(nx, ny)]; if (o && o > 1) continue;
+      const { vb, r } = afterPath([{ x: nx, y: ny }]);
+      const vocc = occMap(vb, r + extra), t = vb[vb.length - 1], tk = key(t.x, t.y);
+      const res = bfs(vb[0], vocc, null);
+      if (res.count > fbArea) { fbArea = res.count; fallback = { x: nx, y: ny }; }
+      const safe = bfs(vb[0], vocc, k => k === tk).found >= 0;
+      if (safe) { const sc = (res.dist[tk] >= 0 ? res.dist[tk] : 0) + res.count * 0.05 + Math.random() * 0.6; if (sc > bestScore) { bestScore = sc; best = { x: nx, y: ny }; } }
+    }
+    if (best) return best;
   }
-  if (best) return best;
   if (fallback) return fallback;
   const nb = G.body[1]; return { x: head.x + (head.x - nb.x), y: head.y + (head.y - nb.y) };
 }
@@ -494,7 +519,7 @@ function connectWs() {
   try { ws = new WebSocket(`ws://${location.host}/ws`); } catch (e) { setConn('off', 'Sem conexão com o programa'); return; }
   ws.onmessage = e => {
     let m; try { m = JSON.parse(e.data); } catch (_) { return; }
-    if (m.type === 'estado') { if (Number(m.velocidade) > 0) STEP = clamp(Number(m.velocidade), 0.06, 0.5); renderRank(m.rank || []); showStatus(m); }
+    if (m.type === 'estado') { if (Number(m.velocidade) > 0) STEP = clamp(Number(m.velocidade), 0.06, 0.5); if (Number(m.modoSeguro) >= 0 && m.modoSeguro !== null && m.modoSeguro !== undefined) SAFE_SCORE = Number(m.modoSeguro); renderRank(m.rank || []); showStatus(m); }
     else if (m.type === 'status') showStatus(m);
     else if (m.type === 'presente') handleGift(m);
   };

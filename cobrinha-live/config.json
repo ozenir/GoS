@@ -4,7 +4,8 @@
   "chave_euler": "",
   "curtidas_por_fruta": 0,
   "jogo": {
-    "segundos_por_casa": 0.155
+    "segundos_por_casa": 0.155,
+    "modo_seguro_a_partir_de": 200
   },
   "presentes": {
     "maximo_frutas_por_envio": 80,
