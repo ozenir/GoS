@@ -109,6 +109,7 @@ Para transmitir pelo OBS, o TikTok precisa liberar a **chave de transmissão** p
 | `usuario` | seu @ do TikTok, sem o @ |
 | `segundos_por_casa` | velocidade da cobra. Menor é mais rápida (0.12 = rápida, 0.2 = calma) |
 | `modo_seguro_a_partir_de` | pontos (🍎) a partir dos quais a cobra para de arriscar e prioriza não morrer. Padrão: 200 |
+| `otimizar_preenchimento_a_partir_de` | pontos a partir dos quais ela também ocupa o jardim de forma compacta, sem deixar buracos (e já não arrisca). Padrão: 160 |
 | `por_nome` | regra para um presente específico, usando o nome em inglês que aparece na janela preta. Ex.: `"Rose": { "frutas": 1 }` |
 | `por_moedas` | regra para todos os outros presentes, pelo valor em moedas. `"chuva": true` mistura maçãs douradas |
 | `maximo_frutas_por_envio` | limite de frutas de um único envio |

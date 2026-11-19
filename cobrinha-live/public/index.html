@@ -133,6 +133,7 @@ let STEP = 0.155;            // segundos por casa (menor = mais rápido). O conf
 const GREED = 0.07;          // chance de a cobra arriscar um caminho perigoso quando já está grande (0 = nunca)
 const GREED_MIN_LEN = 14;    // só arrisca a partir desse tamanho
 let SAFE_SCORE = 200;        // a partir desses pontos (🍎) ela nunca arrisca: sobreviver vem antes de comer
+let FILL_SCORE = 160;        // a partir desses pontos ela também ocupa o jardim de forma compacta (e já não arrisca)
 const OVER_SECONDS = 7;      // tempo da tela de fim de jogo
 const MAX_ON_BOARD = 45;     // frutas no chão ao mesmo tempo; o resto espera na fila
 const MAX_QUEUE = 400;       // limite da fila de frutas
@@ -338,11 +339,42 @@ function afterPath(path) {
   }
   return { vb, r: grow };
 }
+/* Modo preenchimento: quanto um passo deixa o jardim "arrumado".
+   Vale mais o passo que não isola espaço (mais casas continuam alcançáveis)
+   e que anda encostado na cerca ou no próprio corpo (enche sem deixar buracos). */
+function compactness(m, vb, area) {
+  const body = new Set(vb.slice(1).map(c => key(c.x, c.y)));
+  let hug = 0;
+  for (const [ex, ey] of DIRS) {
+    const ax = m.x + ex, ay = m.y + ey;
+    if (ax < 0 || ay < 0 || ax >= COLS || ay >= ROWS || body.has(key(ax, ay))) hug++;
+  }
+  return 2 * area + 1.5 * hug;
+}
+/* Entre os passos que também levam à fruta pelo caminho mais curto e seguro, escolhe o mais compacto. */
+function compactStep(head, k, dist, slack, fallbackStep) {
+  let best = fallbackStep, bestSc = -1e9;
+  for (const [dx, dy] of DIRS) {
+    const m = { x: head.x + dx, y: head.y + dy };
+    if (m.x < 0 || m.y < 0 || m.x >= COLS || m.y >= ROWS) continue;
+    if (G.body.some((c, i) => c.x === m.x && c.y === m.y && !(i === G.body.length - 1 && G.grow === 0))) continue;
+    const o1 = afterPath([m]), occ1 = occMap(o1.vb, o1.r), res1 = bfs(m, occ1, null);
+    if (key(m.x, m.y) !== k && res1.dist[k] !== dist - 1) continue;   // não é caminho mais curto
+    const path = key(m.x, m.y) === k ? [m] : [m, ...pathFromPar(res1.par, m, k)];
+    const { vb, r } = afterPath(path);
+    if (!tailReachable(vb, r + slack)) continue;
+    const sc = compactness(m, o1.vb, res1.count) + Math.random() * 0.1;
+    if (sc > bestSc) { bestSc = sc; best = m; }
+  }
+  return best;
+}
 function chooseMove() {
   const head = G.body[0], occ = occMap(G.body, G.grow);
   const targets = new Set(G.fruits.filter(f => !f.dead && f.z < 170).map(f => key(f.cx, f.cy)));
   // Modo seguro: com muitos pontos ela nunca arrisca e testa mais frutas antes de desistir.
-  const safeMode = G.eaten >= SAFE_SCORE;
+  // O modo preenchimento também liga o modo seguro.
+  const fillMode = G.eaten >= FILL_SCORE;
+  const safeMode = fillMode || G.eaten >= SAFE_SCORE;
   const greedy = !safeMode && G.body.length >= GREED_MIN_LEN && Math.random() < GREED;
   // Margem: no modo seguro ela calcula como se fosse crescer 3 casas a mais,
   // porque frutas novas podem cair na frente dela depois da conta feita.
@@ -354,7 +386,7 @@ function chooseMove() {
     const cand = [...targets].filter(k => res.dist[k] > 0).sort((a, b) => res.dist[a] - res.dist[b]).slice(0, safeMode ? 12 : 4);
     for (const k of cand) {
       const path = pathFromPar(res.par, head, k), { vb, r } = afterPath(path);
-      if (greedy || tailReachable(vb, r + slack)) return path[0];
+      if (greedy || tailReachable(vb, r + slack)) return fillMode ? compactStep(head, k, res.dist[k], slack, path[0]) : path[0];
     }
   } else {
     if (!G.wander || G.wanderSteps-- <= 0 || (G.wander.x === head.x && G.wander.y === head.y)) {
@@ -379,7 +411,10 @@ function chooseMove() {
       const res = bfs(vb[0], vocc, null);
       if (res.count > fbArea) { fbArea = res.count; fallback = { x: nx, y: ny }; }
       const safe = bfs(vb[0], vocc, k => k === tk).found >= 0;
-      if (safe) { const sc = (res.dist[tk] >= 0 ? res.dist[tk] : 0) + res.count * 0.05 + Math.random() * 0.6; if (sc > bestScore) { bestScore = sc; best = { x: nx, y: ny }; } }
+      if (safe) {
+        const sc = (res.dist[tk] >= 0 ? res.dist[tk] : 0) + (fillMode ? compactness({ x: nx, y: ny }, vb, res.count) : res.count * 0.05) + Math.random() * 0.6;
+        if (sc > bestScore) { bestScore = sc; best = { x: nx, y: ny }; }
+      }
     }
     if (best) return best;
   }
@@ -519,7 +554,7 @@ function connectWs() {
   try { ws = new WebSocket(`ws://${location.host}/ws`); } catch (e) { setConn('off', 'Sem conexão com o programa'); return; }
   ws.onmessage = e => {
     let m; try { m = JSON.parse(e.data); } catch (_) { return; }
-    if (m.type === 'estado') { if (Number(m.velocidade) > 0) STEP = clamp(Number(m.velocidade), 0.06, 0.5); if (Number(m.modoSeguro) >= 0 && m.modoSeguro !== null && m.modoSeguro !== undefined) SAFE_SCORE = Number(m.modoSeguro); renderRank(m.rank || []); showStatus(m); }
+    if (m.type === 'estado') { if (Number(m.velocidade) > 0) STEP = clamp(Number(m.velocidade), 0.06, 0.5); if (Number(m.modoSeguro) >= 0 && m.modoSeguro !== null && m.modoSeguro !== undefined) SAFE_SCORE = Number(m.modoSeguro); if (Number(m.preenchimento) >= 0 && m.preenchimento !== null && m.preenchimento !== undefined) FILL_SCORE = Number(m.preenchimento); renderRank(m.rank || []); showStatus(m); }
     else if (m.type === 'status') showStatus(m);
     else if (m.type === 'presente') handleGift(m);
   };

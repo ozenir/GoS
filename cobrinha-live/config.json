@@ -5,7 +5,8 @@
   "curtidas_por_fruta": 0,
   "jogo": {
     "segundos_por_casa": 0.155,
-    "modo_seguro_a_partir_de": 200
+    "modo_seguro_a_partir_de": 200,
+    "otimizar_preenchimento_a_partir_de": 160
   },
   "presentes": {
     "maximo_frutas_por_envio": 80,
