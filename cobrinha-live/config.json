@@ -1,0 +1,25 @@
+{
+  "usuario": "seu_usuario_aqui",
+  "porta": 8080,
+  "chave_euler": "",
+  "curtidas_por_fruta": 0,
+  "jogo": {
+    "segundos_por_casa": 0.155
+  },
+  "presentes": {
+    "maximo_frutas_por_envio": 80,
+    "por_nome": {
+      "Rose": { "frutas": 1 },
+      "Donut": { "frutas": 5 },
+      "Lion": { "frutas": 22, "chuva": true }
+    },
+    "por_moedas": [
+      { "a_partir_de": 1, "frutas": 1 },
+      { "a_partir_de": 5, "frutas": 2 },
+      { "a_partir_de": 10, "frutas": 3 },
+      { "a_partir_de": 30, "frutas": 5 },
+      { "a_partir_de": 100, "frutas": 10 },
+      { "a_partir_de": 500, "frutas": 22, "chuva": true }
+    ]
+  }
+}

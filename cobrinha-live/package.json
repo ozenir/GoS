@@ -1,0 +1,19 @@
+{
+  "name": "cobrinha-do-jardim",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Jogo da cobrinha para live do TikTok: os presentes do público viram frutas.",
+  "type": "module",
+  "main": "servidor.js",
+  "scripts": {
+    "start": "node servidor.js",
+    "demo": "node servidor.js --demo"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "tiktok-live-connector": "2.5.0",
+    "ws": "8.18.3"
+  }
+}
