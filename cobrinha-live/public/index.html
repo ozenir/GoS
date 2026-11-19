@@ -133,7 +133,6 @@ let STEP = 0.155;            // segundos por casa (menor = mais rápido). O conf
 const GREED = 0.07;          // chance de a cobra arriscar um caminho perigoso quando já está grande (0 = nunca)
 const GREED_MIN_LEN = 14;    // só arrisca a partir desse tamanho
 let SAFE_SCORE = 200;        // a partir desses pontos (🍎) ela nunca arrisca: sobreviver vem antes de comer
-let PATIENCE = 12;           // segundos enrolando sem fruta segura; depois disso ela come mesmo arriscando (a partida sempre termina)
 const OVER_SECONDS = 7;      // tempo da tela de fim de jogo
 const MAX_ON_BOARD = 45;     // frutas no chão ao mesmo tempo; o resto espera na fila
 const MAX_QUEUE = 400;       // limite da fila de frutas
@@ -247,7 +246,7 @@ function burst(x, y, cols, n, sp = 150) {
 function floatText(x, y, s) { parts.push({ x, y, vx: 0, vy: -46, life: 0.95, age: 0, txt: s, c: '#ffffff', g: 0 }); }
 
 /* ---------- Estado ---------- */
-const G = { t: 0, body: [], prevTail: null, grow: 0, stepT: 0, phase: 'play', fruits: [], eaten: 0, best: 4, dieT: 0, overT: 0, cause: '', roundRank: {}, queue: [], dropT: 0, stall: 0, popped: 0, wander: null, wanderSteps: 0, bumpTo: null };
+const G = { t: 0, body: [], prevTail: null, grow: 0, stepT: 0, phase: 'play', fruits: [], eaten: 0, best: 4, dieT: 0, overT: 0, cause: '', roundRank: {}, queue: [], dropT: 0, popped: 0, wander: null, wanderSteps: 0, bumpTo: null };
 const liveRank = {};
 try { G.best = Math.max(4, parseInt(localStorage.getItem('cobrinha.recorde') || '4', 10) || 4); } catch (e) {}
 
@@ -255,7 +254,7 @@ function reset() {
   const mx = Math.floor(COLS / 2);
   G.body = [{ x: mx, y: 12 }, { x: mx, y: 13 }, { x: mx, y: 14 }, { x: mx, y: 15 }];
   G.prevTail = { x: mx, y: 16 }; G.grow = 0; G.stepT = 0; G.phase = 'play'; G.fruits = []; G.eaten = 0;
-  G.roundRank = {}; G.popped = 0; G.wander = null; G.bumpTo = null; G.stall = 0;
+  G.roundRank = {}; G.popped = 0; G.wander = null; G.bumpTo = null;
   $('over').hidden = true;
   ['apple', 'orange', 'green'].forEach(k => placeFruit(k, true));
   updateHud();
@@ -344,10 +343,7 @@ function chooseMove() {
   const targets = new Set(G.fruits.filter(f => !f.dead && f.z < 170).map(f => key(f.cx, f.cy)));
   // Modo seguro: com muitos pontos ela nunca arrisca e testa mais frutas antes de desistir.
   const safeMode = G.eaten >= SAFE_SCORE;
-  // Cansou de esperar: se passou muito tempo enrolando sem nenhuma fruta segura
-  // (já está do tamanho máximo), ela vai comer mesmo que isso a faça bater no rabo.
-  const tired = targets.size > 0 && G.stall * STEP >= PATIENCE;
-  const greedy = tired || (!safeMode && G.body.length >= GREED_MIN_LEN && Math.random() < GREED);
+  const greedy = !safeMode && G.body.length >= GREED_MIN_LEN && Math.random() < GREED;
   // Margem: no modo seguro ela calcula como se fosse crescer 3 casas a mais,
   // porque frutas novas podem cair na frente dela depois da conta feita.
   const slack = safeMode ? 3 : 0;
@@ -358,11 +354,9 @@ function chooseMove() {
     const cand = [...targets].filter(k => res.dist[k] > 0).sort((a, b) => res.dist[a] - res.dist[b]).slice(0, safeMode ? 12 : 4);
     for (const k of cand) {
       const path = pathFromPar(res.par, head, k), { vb, r } = afterPath(path);
-      if (greedy || tailReachable(vb, r + slack)) { G.stall = 0; return path[0]; }
+      if (greedy || tailReachable(vb, r + slack)) return path[0];
     }
-    G.stall++;
   } else {
-    G.stall = 0;
     if (!G.wander || G.wanderSteps-- <= 0 || (G.wander.x === head.x && G.wander.y === head.y)) {
       G.wander = { x: Math.floor(rnd(1, COLS - 1)), y: Math.floor(rnd(1, ROWS - 1)) }; G.wanderSteps = 30;
     }
@@ -525,7 +519,7 @@ function connectWs() {
   try { ws = new WebSocket(`ws://${location.host}/ws`); } catch (e) { setConn('off', 'Sem conexão com o programa'); return; }
   ws.onmessage = e => {
     let m; try { m = JSON.parse(e.data); } catch (_) { return; }
-    if (m.type === 'estado') { if (Number(m.velocidade) > 0) STEP = clamp(Number(m.velocidade), 0.06, 0.5); if (Number(m.modoSeguro) >= 0 && m.modoSeguro !== null && m.modoSeguro !== undefined) SAFE_SCORE = Number(m.modoSeguro); if (Number(m.paciencia) > 0) PATIENCE = Number(m.paciencia); renderRank(m.rank || []); showStatus(m); }
+    if (m.type === 'estado') { if (Number(m.velocidade) > 0) STEP = clamp(Number(m.velocidade), 0.06, 0.5); if (Number(m.modoSeguro) >= 0 && m.modoSeguro !== null && m.modoSeguro !== undefined) SAFE_SCORE = Number(m.modoSeguro); renderRank(m.rank || []); showStatus(m); }
     else if (m.type === 'status') showStatus(m);
     else if (m.type === 'presente') handleGift(m);
   };
