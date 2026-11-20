@@ -185,7 +185,7 @@ body.live .frame{border-radius:0;box-shadow:none}
               </div>
             </div>
           </div>
-          <div class="over-next">Próximo cenário em <b id="o-count">10</b></div>
+          <div class="over-next">Próximo cenário em <b id="o-count">25</b></div>
         </div>
       </div>
     </div>
@@ -233,8 +233,8 @@ let SHROOM_MIN_LEN = 200;    // 🍄 o cogumelo só aparece quando a cobra tem p
 let SHRINK_SECONDS = 10;     // cogumelo: durante esse tempo cada maçã diminui 1 de tamanho (os pontos contam normal)
 const MIN_LEN = 4;          // tamanho mínimo da cobra
 let ITEM_LIFE = 18;          // segundos que um item fica no chão antes de sumir
-const OVER_SECONDS = 10;     // tempo da tela de fim de jogo (números e depois destaques)
-const OVER_STATS_SECONDS = 4; // quanto tempo os números ficam antes de mostrar os destaques
+let OVER_STATS_SECONDS = 10;  // relatório: tempo mostrando os números
+let OVER_HEROES_SECONDS = 15; // relatório: tempo mostrando os destaques (quem mais doou e quem matou a cobra)
 const MAX_ON_BOARD = 40;     // frutas no chão ao mesmo tempo; o resto espera na fila
 const MAX_QUEUE = 400;       // limite da fila de frutas
 const GIFTS = {
@@ -1433,7 +1433,7 @@ function countUp(el, to, fmt = v => String(Math.round(v)), dur = 1000) {
 const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 function showOver() {
   Sound.gameOver(G.won);
-  G.phase = 'over'; G.overT = OVER_SECONDS;
+  G.phase = 'over';
   const card = $('over-card'); card.classList.remove('show-heroes');
   // 1º momento: os números
   $('o-title').textContent = G.won ? 'Campo completo!' : 'Fim de jogo!';
@@ -1462,8 +1462,10 @@ function showOver() {
     $('o-last-title').textContent = G.won ? 'Fechou o campo' : 'Matou a cobra';
   }
   clearTimeout(G.heroTimer);
+  // sem ninguém para destacar, fica só nos números
+  G.overT = OVER_STATS_SECONDS + (hero || lastId ? OVER_HEROES_SECONDS : 0);
   if (hero || lastId) G.heroTimer = setTimeout(() => { if (G.phase === 'over') { card.classList.add('show-heroes'); Sound.gift(true); } }, OVER_STATS_SECONDS * 1000);
-  $('o-count').textContent = OVER_SECONDS;
+  $('o-count').textContent = Math.ceil(G.overT);
   $('over').hidden = false;
 }
 
@@ -1648,6 +1650,8 @@ function applyConfig(m) {
   if (has(m.organizar) && Number(m.organizar) >= 0) ORGANIZE_LEN = Number(m.organizar);
   if (Number(m.organizarFrutas) > 0) ORGANIZE_MAX_FRUITS = Number(m.organizarFrutas);
   if (has(m.fome) && Number(m.fome) >= 0) HUNGER = Number(m.fome);
+  if (Number(m.relatorioNumeros) > 0) OVER_STATS_SECONDS = Number(m.relatorioNumeros);
+  if (Number(m.relatorioDestaques) > 0) OVER_HEROES_SECONDS = Number(m.relatorioDestaques);
   if (m.estrategia === 'perfeita' || m.estrategia === 'classica') STRATEGY = m.estrategia;
   if (Number(m.cortarAte) > 0) CUT_FRAC = clamp(Number(m.cortarAte), 0, 1);
   if (has(m.folga) && Number(m.folga) >= 0) CUT_MARGIN = Number(m.folga);

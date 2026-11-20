@@ -8,6 +8,8 @@
     "estrategia": "perfeita",
     "cortar_caminho_ate": 0.6,
     "folga_ao_cortar": 6,
+    "relatorio_numeros_segundos": 10,
+    "relatorio_destaques_segundos": 15,
     "maca_automatica_a_cada_segundos": 5,
     "modo_seguro_a_partir_de": 200,
     "otimizar_preenchimento_a_partir_de": 160,

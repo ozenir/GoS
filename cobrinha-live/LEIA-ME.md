@@ -188,6 +188,8 @@ A melodia é composta na hora, dentro da harmonia de cada cenário, e muda a cad
 | `frutas_no_chao_organizando` | enquanto ela se organiza, no máximo essas frutas ficam no chão ao mesmo tempo; as outras esperam na fila e caem conforme ela come (nada se perde). Padrão: 6 |
 | `fome_segundos` | se a cobra passar esse tempo sem comer fruta, ela vai atrás de uma (por um caminho seguro se existir; se não, arriscando). Garante que ela sempre volta a crescer e que a partida termina. `0` desliga. Padrão: 15 |
 | `espaco_maximo_a_partir_de` | pontos a partir dos quais ela ocupa o máximo do campo, mantendo a cabeça o mais longe possível do rabo. Padrão: 190 |
+| `relatorio_numeros_segundos` | no fim da rodada, quanto tempo o relatório mostra os números. Padrão: 10 |
+| `relatorio_destaques_segundos` | depois, quanto tempo mostra os destaques (👑 quem mais doou e 💀 quem matou a cobra). Se ninguém mandou presente, essa parte é pulada. Padrão: 15 |
 | `maca_automatica_a_cada_segundos` | cai uma maçã sozinha a cada X segundos, para a cobra crescer mesmo sem presentes. `0` desliga. Padrão: 5 |
 | `item_no_chao_segundos` | quanto tempo um item especial fica no chão antes de sumir. Padrão: 18 |
 | `pimenta_segundos` | quanto tempo a cobra fica rápida com a 🌶️ pimenta. Padrão: 8 |
