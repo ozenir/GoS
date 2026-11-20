@@ -121,7 +121,7 @@ O jogo gera a própria música e os efeitos na hora (nada de arquivos de áudio 
 | 🌋 Vulcão | tema épico com tambores graves |
 | ❄️ Gelo | tema cristalino com sinos e vento |
 | ⛰️ Montanhas | tema "folk" com flauta e vento |
-| 🍎 Maçã | mordida crocante, com uma notinha que sobe a cada maçã seguida |
+| 🍎 Maçã | mordida de verdade (gravação de uma maçã sendo mordida), com uma notinha que sobe a cada maçã seguida |
 | 🌶️ Pimenta | arrancada; enquanto durar, a música acelera |
 | ❄️ Floco | sinos de "congelar"; enquanto durar, a música fica lenta e abafada |
 | 🐍 Tamanho 200+ | a música vira uma versão **tensa** do cenário: tom menor, baixo pulsando, coração batendo e subidas de suspense. Volta ao normal se a cobra ficar menor |
@@ -218,6 +218,11 @@ Na janela de teste (http://localhost:8080), clique em **↻ Próximo cenário**.
 ## No Mac
 
 Use o arquivo `iniciar-mac.command`. Para o modo teste, abra o Terminal na pasta e rode `./iniciar-mac.command --demo`. Depois abra `http://localhost:8080/#live` no navegador ou coloque no OBS como fonte Navegador. O TikTok LIVE Studio não tem versão para Mac, então use o OBS.
+
+## Créditos
+
+- **Som da mordida da maçã:** "Apple Crunched 2", de **Joseph SARDIN**, [BigSoundBank.com](https://bigsoundbank.com/apple-crunched-2-s1114.html). Licença **CC0 (domínio público)**: pode usar até comercialmente, sem pedir permissão. O crédito não é obrigatório, mas fica aqui por respeito ao autor. O trecho usado foi recortado e suavizado e está em `public/sons/mordida-maca.mp3`.
+- **Música e demais efeitos:** gerados pelo próprio jogo.
 
 ## Aviso
 

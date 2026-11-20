@@ -621,6 +621,16 @@ function floatText(x, y, s) { parts.push({ x, y, vx: 0, vy: -46, life: 1.05, age
 const Sound = (() => {
   let ac = null, out = null, enabled = true, musicVol = 0.45, sfxVol = 0.8;
   const MASTER = 1.8;
+  // Mordida real (CC0, domínio público): "Apple Crunched 2", de Joseph SARDIN, BigSoundBank.com. Recortada e suavizada.
+  // Uma cópia do arquivo fica em public/sons/mordida-maca.mp3.
+  const BITE_MP3 = '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SwzLlxqONgwJzxg4OCDUpquqRJ37S4q6qRmachL0d/fI2yg+lCWo5Y612uRg/pUnbpbqTLJWTj4x0yBgsHTA1iIs8kIyb0igcAHttDViYsSTEbI6euVBSGdDQAAACy+k+MFTNZLSsUyWNJQHkfJPEmq2I/lxBYo1Mu6ssU5XGI4qttdeY1VFYcV1cpf1zbkakSCnRJURGFyRm8SdOhtlnXsOOW04isqjoFmYQwMSRwULYLeMR9pbQp98zjKX74ZnBo3y0Vl3y8a0hofPR9/fb9hStkAAOFCXs1iTH46MlUHWqzkewEgeFwGBVsVKUaKmRGJxtlkCjHIyxLZWKMsinC/BMvVTOv/7csRYAI9VKzvHmHbJ16Hl7PSZuCGHOC6FNg25VBHCTJlLYudz2jPdmZJ8ck74laNO3xJ9KHSAREEdjUpbat6ym2l3MuikAojRtTNnLFVWtXVutYJFB3wAAG47kPIFAiH+TXMI7T8OaCZK8pVCL0sRUbSpV4kl4lCOORXUgobwtMI09Wz/4qnUZ8tNYj6E/dW1VJ8supFH+2jpCU3H1FThI9h6dsyTHNbTVISkQQd2u4Ivi6eMs7hpmIs4HouBTYSCzzV4EeIrDz1a2bmf+f2Ak6BIwtQmpiGU21VMRiu8LEJKDohEywBhephWApFQhFIlpkAyEhIjYeJoyE00KuYqhYBJEmiswcYWRNQRFB1eUWZn6JZB/Jc5kvGtlUl+lWb/P3trwUOBSICBkiAToNFjYldLPbDskDU2//twxHIAz00DJQexD8HUnKPg9Jl4t3W48WkqrapWeES1AOx2i4tE9N1hUXGT63FycAVVXTk9TFp0cnI1vNPVOj60LqYEgqfdmnZL8iqq1wColcnZpFF5yc74SLUS1sftW//vMlEnlpnP3n4JCcNz958y1V/NUkJXHlyIaWWPEQksNEqxijwlDsFSx5gKuJeenhK4SuwZ5ZWW/waQUFgCgsDowRkhth8o1OG5KMauG5vyLSFEIRoPjA2dUXYezKNVcNjKNXcJ5JVZNJK6mB+ZGVMIRBIyGAf/MjIyP//5GX+Zl8yIyMjIyI///lQyZZQoIGjoZf5k1lyNWUEDBSrT//RWmi6xWmqr//+00kxBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv/7csSMAw9JAwYnsMnBwrQSCJCPoaqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
+  let biteBuf = null;
+  function decodeBite(ctx) {
+    try {
+      const bin = atob(BITE_MP3), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      return ctx.decodeAudioData(u8.buffer).then(b => { biteBuf = b; }).catch(() => {});
+    } catch (e) { return Promise.resolve(); }
+  }
   const themeGain = () => (theme && theme.gain) || 1;
   let theme = null, cur = null, tense = false, phrase = null, nextTime = 0, step = 0;   // theme = tema do cenário; cur = o que está tocando (normal ou tenso)
   let combo = 0, lastBite = 0, lastGift = 0;
@@ -779,13 +789,19 @@ const Sound = (() => {
   /* ---- efeitos sonoros (t = momento; usados ao vivo e na amostra) ---- */
   function _bite(t, kind, shrinking, comboN) {
     const D = out.sfx, p = 1 + (Math.random() - 0.5) * 0.12;
-    noise(t, 0.07, 0.36, D, 'bandpass', 2400 * p, 1.1);                // crocância
-    noise(t + 0.03, 0.05, 0.2, D, 'bandpass', 3400 * p, 1.4);
-    noise(t, 0.05, 0.22, D, 'lowpass', 700, 0.7);                       // corpo da mordida
-    osc('sine', 190 * p, t, 0.09, 0.26, D, { to: 80, glide: 0.08 });    // "toc"
+    if (biteBuf) {   // gravação real da mordida; cada vez um pouco mais grave ou mais aguda, como mordidas de verdade
+      const src = ac.createBufferSource(), g = ac.createGain(); src.buffer = biteBuf;
+      src.playbackRate.value = (shrinking ? 0.82 : 1) * (0.94 + Math.random() * 0.14);
+      g.gain.value = 0.6; src.connect(g); g.connect(D); src.start(t);
+    } else {         // reserva: mordida sintetizada (se o navegador não decodificar o MP3)
+      noise(t, 0.07, 0.36, D, 'bandpass', 2400 * p, 1.1);
+      noise(t + 0.03, 0.05, 0.2, D, 'bandpass', 3400 * p, 1.4);
+      noise(t, 0.05, 0.22, D, 'lowpass', 700, 0.7);
+      osc('sine', 190 * p, t, 0.09, 0.26, D, { to: 80, glide: 0.08 });
+    }
     if (shrinking) { osc('triangle', 700, t + 0.03, 0.18, 0.09, D, { to: 260, glide: 0.16 }); return; }
     const sc = theme ? theme.scale : [72, 74, 76, 79, 81, 84], m = sc[comboN % sc.length] + 12;
-    I.marimba(t + 0.02, m, 0.4, 0.07, D);                               // notinha que sobe a cada maçã seguida
+    I.marimba(t + 0.04, m, 0.4, 0.05, D);                               // notinha que sobe a cada maçã seguida
     if (kind === 'gold') [0, 4, 7, 12].forEach((k, i) => I.bell(t + 0.05 + i * 0.05, m + k, 0.5, 0.05, D));
   }
   function _item(t, kind) {
@@ -810,7 +826,7 @@ const Sound = (() => {
   function ensure() {
     if (ac) return true;
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
-    try { ac = new AC(); out = build(ac); nextTime = ac.currentTime + 0.1; } catch (e) { ac = null; return false; }
+    try { ac = new AC(); out = build(ac); nextTime = ac.currentTime + 0.1; decodeBite(ac); } catch (e) { ac = null; return false; }
     return true;
   }
   function fxState() { const f = G.fx; return { fast: !!(f.speed && f.speed.kind === 'fast'), slow: !!(f.speed && f.speed.kind === 'slow'), shrink: !!f.shrink, rainbow: f.rainbow > 0 }; }
@@ -833,6 +849,7 @@ const Sound = (() => {
   return {
     unlock() { if (!enabled || !ensure()) return; if (ac.state !== 'running') ac.resume().catch(() => {}); },
     running: () => !!ac && ac.state === 'running',
+    hasBiteSample: () => !!biteBuf,
     get on() { return enabled; },
     setOn(v) { enabled = !!v; if (out) out.master.gain.setTargetAtTime(enabled ? MASTER : 0, ac.currentTime, 0.05); if (enabled) this.unlock(); },
     setVolumes(m, s) { if (m >= 0) musicVol = m; if (s >= 0) sfxVol = s; if (out) { out.music.gain.value = musicVol; out.sfx.gain.value = sfxVol; } },
@@ -851,6 +868,7 @@ const Sound = (() => {
     /* Gera uma amostra em áudio (usado para conferir o som fora do jogo). */
     async renderDemo(id, seconds, tenseAt) {
       const sr = 44100, oc = new OfflineAudioContext(2, Math.floor(sr * seconds), sr);
+      if (!biteBuf) await decodeBite(oc);
       const saved = { ac, out, theme, cur, phrase };
       if (id === 'efeitos') {   // amostra só com os efeitos: mordidas seguidas, cada item, presentes, batida e fim
         ac = oc; out = build(oc); theme = THEMES.jardim;
