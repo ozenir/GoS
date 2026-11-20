@@ -155,7 +155,7 @@ body.live .frame{border-radius:0;box-shadow:none}
         </div>
         <div class="hud-bottom">
           <div class="podium" id="h-rank"></div>
-          <div class="legend" id="h-legend">🌹 1 maçã · 🍩 5 frutas · 🦁 chuva de frutas</div>
+          <div class="legend" id="h-legend">🌹 10 maçãs · 🍩 30 frutas · 🦁 chuva gigante · 🍀 sorte x2</div>
         </div>
         <div class="intro" id="intro" hidden><small id="i-round">Partida 1</small><b id="i-name">🌷 Jardim</b><span id="i-hint"></span></div>
       </div>
@@ -192,8 +192,8 @@ body.live .frame{border-radius:0;box-shadow:none}
   </div>
 
   <div class="controls" role="group" aria-label="Presentes de teste">
-    <button class="btn" id="g-rose" data-gift="rose">🌹 Rosa <small>1 maçã</small> <kbd>1</kbd></button>
-    <button class="btn" id="g-donut" data-gift="donut">🍩 Rosquinha <small>5 frutas</small> <kbd>2</kbd></button>
+    <button class="btn" id="g-rose" data-gift="rose">🌹 Rosa <small>10 maçãs</small> <kbd>1</kbd></button>
+    <button class="btn" id="g-donut" data-gift="donut">🍩 Rosquinha <small>30 frutas</small> <kbd>2</kbd></button>
     <button class="btn" id="g-lion" data-gift="lion">🦁 Leão <small>chuva</small> <kbd>3</kbd></button>
     <button class="btn" id="g-item">✨ Item <kbd>4</kbd></button>
     <button class="btn" id="restart">↻ Próximo cenário</button>
@@ -238,9 +238,9 @@ let OVER_HEROES_SECONDS = 15; // relatório: tempo mostrando os destaques (quem 
 const MAX_ON_BOARD = 40;     // frutas no chão ao mesmo tempo; o resto espera na fila
 const MAX_QUEUE = 400;       // limite da fila de frutas
 const GIFTS = {
-  rose:  { emoji: '🌹', label: 'Rosa',      fruits: 1,  coins: 1 },
-  donut: { emoji: '🍩', label: 'Rosquinha', fruits: 5,  coins: 30 },
-  lion:  { emoji: '🦁', label: 'Leão',      fruits: 22, coins: 29999 }
+  rose:  { emoji: '🌹', label: 'Rosa',      fruits: 10,  coins: 1 },
+  donut: { emoji: '🍩', label: 'Rosquinha', fruits: 30,  coins: 30 },
+  lion:  { emoji: '🦁', label: 'Leão',      fruits: 120, coins: 29999, chuva: true }
 };
 /* ==================================================== */
 
@@ -929,11 +929,24 @@ const Sound = (() => {
     else if (kind === 'gem') { [0, 2, 4, 7, 9, 12, 14, 16, 19].forEach((k, i) => I.bell(t + i * 0.045, 76 + k, 0.5, 0.05, D)); }
     else if (kind === 'shroom') { osc('triangle', 620, t, 0.6, 0.14, D, { to: 140, glide: 0.55, vib: 11, vibAmt: 40 }); osc('sine', 300, t + 0.55, 0.12, 0.12, D, { to: 120, glide: 0.1 }); }
   }
-  function _gift(t, big) {
+  function _gift(t, big, lvl) {
     const D = out.sfx;
     if (big) { [60, 64, 67, 72, 76, 79].forEach((m, i) => I.pluck(t + i * 0.06, m, 0.5, 0.09, D)); I.hat(t + 0.36, 0.08, D); I.bell(t + 0.4, 84, 0.8, 0.08, D); }
-    else { I.bell(t, 84, 0.35, 0.035, D); I.bell(t + 0.07, 88, 0.35, 0.03, D); }
+    else {                                     // fanfarrinha que sobe de tom a cada presente seguido (combo)
+      const up = [0, 2, 4, 7, 9, 12, 14, 16][Math.min(7, Math.max(0, (lvl | 0) - 1))];
+      [72, 76, 79, 84].forEach((m, i) => I.pluck(t + i * 0.055, m + up, 0.4, 0.07, D));
+      I.bell(t + 0.24, 88 + up, 0.6, 0.05, D); I.hat(t + 0.22, 0.05, D);
+    }
   }
+  /* Cada fruta de presente que cai toca uma nota um pouco mais aguda: vira uma cascata. */
+  let dropN = 0, lastDrop = 0;
+  const DROP_SCALE = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24];
+  function _drop(t, gold) {
+    const n = DROP_SCALE[Math.min(DROP_SCALE.length - 1, dropN)];
+    I.pluck(t, 76 + n, 0.18, gold ? 0.06 : 0.04, out.sfx);
+    if (gold) I.bell(t + 0.02, 88 + n, 0.4, 0.03, out.sfx);
+  }
+  function _lucky(t) { [72, 76, 79, 84, 88, 91].forEach((m, i) => I.bell(t + 0.3 + i * 0.05, m, 0.7, 0.05, out.sfx)); I.kick(t + 0.3, 0.2, out.sfx); }
   function _bonk(t) { osc('sine', 240, t, 0.22, 0.28, out.sfx, { to: 90, glide: 0.2 }); noise(t, 0.12, 0.15, out.sfx, 'lowpass', 500, 0.8); }
   function _over(t) { [67, 64, 60, 55].forEach((m, i) => I.pluck(t + 0.25 + i * 0.2, m, 0.5, 0.12, out.sfx)); I.kick(t + 1.05, 0.25, out.sfx); }
   function _win(t) { [60, 64, 67, 72, 76, 79, 84].forEach((m, i) => I.pluck(t + i * 0.08, m, 0.6, 0.11, out.sfx)); [72, 76, 79, 84].forEach(m => I.bell(t + 0.65, m, 1.4, 0.05, out.sfx)); I.kick(t + 0.65, 0.3, out.sfx); }
@@ -980,7 +993,13 @@ const Sound = (() => {
       if (ready()) _bite(ac.currentTime + 0.005, kind, shrinking, combo);
     },
     item(kind) { if (ready()) _item(ac.currentTime + 0.01, kind); },
-    gift(big) { const now = performance.now(); if (!big && now - lastGift < 140) return; lastGift = now; if (ready()) _gift(ac.currentTime + 0.01, big); },
+    gift(big, lvl) { const now = performance.now(); if (!big && now - lastGift < 140) return; lastGift = now; if (ready()) _gift(ac.currentTime + 0.01, big, lvl); },
+    drop(gold) {
+      const now = performance.now(); if (now - lastDrop < 45) return;
+      dropN = now - lastDrop < 900 ? dropN + 1 : 0; lastDrop = now;
+      if (ready()) _drop(ac.currentTime + 0.005, gold);
+    },
+    lucky() { if (ready()) _lucky(ac.currentTime + 0.01); },
     bonk() { if (ready()) _bonk(ac.currentTime + 0.005); },
     gameOver(won) { if (ready()) (won ? _win : _over)(ac.currentTime); },
     /* Gera uma amostra em áudio (usado para conferir o som fora do jogo). */
@@ -1097,13 +1116,14 @@ function placeFruit(kind, landed, from) {
 }
 /* Presentes grandes não lotam o campo: as frutas entram numa fila e caem aos poucos.
    Presente que chega na tela de fim de jogo também espera a próxima partida. */
-function queueFruit(kind, from) { if (G.queue.length < MAX_QUEUE) G.queue.push({ kind, from: from || null }); }
+function queueFruit(kind, from, gift) { if (G.queue.length < MAX_QUEUE) G.queue.push({ kind, from: from || null, gift: !!gift }); }
 function dripFruits(dt) {
   if (G.phase !== 'play' || !G.queue.length) return;
   G.dropT -= dt;
   const limit = G.body.length >= ORGANIZE_LEN ? ORGANIZE_MAX_FRUITS : MAX_ON_BOARD;
   while (G.dropT <= 0 && G.queue.length && G.fruits.length < limit) {
     const q = G.queue[0]; if (!placeFruit(q.kind || q, false, q.from)) break;
+    if (q.gift) G.fruits[G.fruits.length - 1].gift = true;
     G.queue.shift(); G.dropT += 0.07;
   }
   if (G.dropT < 0) G.dropT = 0;
@@ -1546,7 +1566,7 @@ function celebrateDonor(id, c) {
   const a = AVA.get(String(id)); if (a) parts.push({ ava: a.img, x: cx(c.x), y: cy(c.y) - 22, vx: 0, vy: -34, life: 1.15, age: 0, g: 0 });
 }
 // A legenda de baixo alterna entre os presentes e os itens.
-const LEGENDS = ['🌹 1 maçã · 🍩 5 frutas · 🦁 chuva de frutas', '🍇 cresce · 🌶️ rápida · ❄️ lenta · 💎 cor · 🍄 encolhe'];
+const LEGENDS = ['🌹 10 maçãs · 🍩 30 frutas · 🦁 chuva gigante · 🍀 sorte x2', '🍇 cresce · 🌶️ rápida · ❄️ lenta · 💎 cor · 🍄 encolhe'];
 let legendIdx = 0;
 setInterval(() => {
   const el = $('h-legend'); el.classList.add('fade');
@@ -1593,6 +1613,48 @@ function toast(ev) {
   lastToast.timer = hideLater(el);
 }
 
+/* Destaque grande no campo a cada presente: "+10 🍎", foto e nome de quem mandou.
+   A mesma pessoa mandando de novo em seguida soma no mesmo destaque e vira COMBO. */
+let banner = null;
+const BANNER_LIFE = 2.4;
+function giftBanner(ev) {
+  const pt = GIFT_PT[ev.giftName], emoji = ev.emoji || (pt ? pt[0] : '🎁');
+  if (banner && banner.id === ev.id && banner.t < BANNER_LIFE - 0.3) {
+    banner.fruits += ev.fruits; banner.combo += ev.count; banner.t = 0.18;
+    banner.sorte = banner.sorte || !!ev.sorte; banner.chuva = banner.chuva || !!ev.chuva; banner.emoji = emoji;
+  } else banner = { id: ev.id, nick: ev.nick, emoji, fruits: ev.fruits, combo: ev.count, sorte: !!ev.sorte, mult: ev.sorteMult || 2, chuva: !!ev.chuva, t: 0 };
+  return banner.combo;
+}
+function drawBanner(c) {
+  const b = banner; if (!b) return;
+  const t = b.t, cxp = W / 2, cyp = AY + 96;
+  const s = reduceMotion ? 1 : t < 0.18 ? 0.4 + (t / 0.18) * 0.8 : t < 0.32 ? 1.2 - ((t - 0.18) / 0.14) * 0.2 : 1;
+  const a = t > BANNER_LIFE - 0.45 ? Math.max(0, (BANNER_LIFE - t) / 0.45) : 1;
+  c.save(); c.globalAlpha = a; c.translate(cxp, cyp); c.scale(s, s);
+  const big = b.chuva ? 'CHUVA DE FRUTAS!' : `+${b.fruits} 🍎`;
+  const extra = b.sorte ? `🍀 SORTE! x${b.mult}` : b.combo > 1 ? `COMBO x${b.combo}!` : '';
+  const h = extra ? 112 : 88, w = 260;
+  c.fillStyle = 'rgba(20, 12, 40, 0.55)';
+  c.beginPath(); if (c.roundRect) c.roundRect(-w / 2, -h / 2, w, h, 22); else c.rect(-w / 2, -h / 2, w, h); c.fill();
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+  const glow = 0.5 + 0.5 * Math.sin(t * 14);
+  c.font = `800 ${b.chuva ? 28 : 40}px Fredoka, system-ui, sans-serif`;
+  c.lineWidth = 7; c.strokeStyle = '#4a1d0f'; c.strokeText(big, 0, -h / 2 + 30);
+  c.fillStyle = b.sorte || b.chuva ? `rgb(255, ${200 + glow * 55 | 0}, ${60 + glow * 60 | 0})` : '#ffffff'; c.fillText(big, 0, -h / 2 + 30);
+  const ava = AVA.get(String(b.id));
+  c.font = '700 17px Fredoka, system-ui, sans-serif';
+  const name = `${b.emoji} ${b.nick}`, nw = c.measureText(name).width, ny = -h / 2 + 66;
+  if (ava) drawAva(c, ava.img, -nw / 2 - 14, ny, 11);
+  c.lineWidth = 4; c.strokeStyle = '#2a1636'; c.strokeText(name, ava ? 12 : 0, ny); c.fillStyle = '#ffe9a8'; c.fillText(name, ava ? 12 : 0, ny);
+  if (extra) {
+    c.font = `800 ${20 + (b.combo > 1 ? Math.min(8, b.combo) : 0)}px Fredoka, system-ui, sans-serif`;
+    c.lineWidth = 5; c.strokeStyle = '#4a1d0f'; c.strokeText(extra, 0, h / 2 - 20);
+    c.fillStyle = b.sorte ? '#7dff8a' : `rgb(255, ${150 + glow * 80 | 0}, 60)`; c.fillText(extra, 0, h / 2 - 20);
+  }
+  c.restore();
+}
+function updateBanner(dt) { if (banner && (banner.t += dt) >= BANNER_LIFE) banner = null; }
+
 /* Um presente chegou (da live de verdade ou dos botões de teste). */
 function handleGift(ev) {
   ev.count = Math.max(1, ev.count | 0); ev.fruits = Math.max(0, ev.fruits | 0);
@@ -1604,18 +1666,23 @@ function handleGift(ev) {
   }
   if (ev.rank) renderRank(ev.rank);
   toast(ev);
-  Sound.gift(!!ev.chuva);
-  const kinds = ev.chuva ? ['apple', 'green', 'orange', 'gold', 'gold'] : (ev.fruits >= 5 ? ['apple', 'green', 'orange'] : ['apple']);
+  const kinds = ev.chuva ? ['apple', 'green', 'orange', 'gold', 'gold']
+    : ev.sorte ? ['gold', 'apple', 'gold', 'orange']
+    : ev.fruits >= 20 ? ['apple', 'apple', 'green', 'orange', 'gold'] : ['apple', 'apple', 'apple', 'green', 'orange'];
   const from = ev.likes ? null : ev.id;
-  for (let i = 0; i < ev.fruits; i++) queueFruit(pick(kinds), from);
+  for (let i = 0; i < ev.fruits; i++) queueFruit(pick(kinds), from, true);
   if (ev.chuva && ITEM_EVERY > 0) { queueFruit(pickItem(), from); queueFruit(pickItem(), from); }
+  const lvl = ev.likes ? 0 : giftBanner(ev);
+  Sound.gift(!!ev.chuva, lvl);
+  if (ev.sorte) Sound.lucky();
+  if (!ev.likes && !reduceMotion) burst(W / 2, AY + 70, ['#ffd84d', '#ff6fae', '#7ad3ff', '#a6d443', '#ffffff', '#ffa236'], Math.min(70, 24 + ev.fruits), 260);
 }
 /* Sem o programa ligado (ex.: abrindo o arquivo direto), os botões de teste funcionam sozinhos. */
 function localGift(kind, name) {
   const g = GIFTS[kind]; if (!g) return;
   name = String(name || 'anônimo').slice(0, 24);
   const r = liveRank[name] || (liveRank[name] = { id: name, nick: name, coins: 0 }); r.coins += g.coins;
-  handleGift({ id: name, nick: name, giftName: g.label, label: g.label, emoji: g.emoji, count: 1, coins: g.coins, fruits: g.fruits, chuva: g.fruits > 10,
+  handleGift({ id: name, nick: name, giftName: g.label, label: g.label, emoji: g.emoji, count: 1, coins: g.coins, fruits: g.fruits, chuva: !!g.chuva,
     rank: Object.values(liveRank).sort((a, b) => b.coins - a.coins).slice(0, 5) });
 }
 let ws = null;
@@ -1897,6 +1964,7 @@ function draw() {
   }
   c.globalAlpha = 1;
   drawAmbient(c);
+  drawBanner(c);
   c.restore();
   const v = c.createRadialGradient(W / 2, H * 0.45, H * 0.3, W / 2, H * 0.5, H * 0.75);
   v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, S.vignette);
@@ -1927,7 +1995,10 @@ function update(dt) {
       f.vz += 900 * dt; f.z -= f.vz * dt;
       if (f.z <= 0) {
         f.z = 0;
-        if (f.vz > 230) { f.vz = -f.vz * 0.32; f.sq = 0.6; burst(cx(f.cx), cy(f.cy), S.dust, 5, 60); }
+        if (f.vz > 230) {
+          f.vz = -f.vz * 0.32; f.sq = 0.6; burst(cx(f.cx), cy(f.cy), S.dust, 5, 60);
+          if (f.gift) { f.gift = false; burst(cx(f.cx), cy(f.cy), [FRUIT[f.kind] ? FRUIT[f.kind][0] : '#ffe27a', '#ffffff', '#ffe27a'], 9, 110); Sound.drop(f.kind === 'gold'); }
+        }
         else {
           f.vz = 0;
           const i = occ.get(key(f.cx, f.cy));
@@ -1943,6 +2014,7 @@ function update(dt) {
   for (const q of parts) { q.age += dt; q.vy += q.g * dt; q.x += q.vx * dt; q.y += q.vy * dt; }
   for (let i = parts.length - 1; i >= 0; i--) if (parts[i].age >= parts[i].life) parts.splice(i, 1);
   updateAmbient(dt);
+  updateBanner(dt);
   renderFx();
 }
 

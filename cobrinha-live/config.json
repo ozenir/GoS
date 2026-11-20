@@ -47,43 +47,51 @@
     "musica_tensa_a_partir_do_tamanho": 200
   },
   "presentes": {
-    "maximo_frutas_por_envio": 80,
+    "maximo_frutas_por_envio": 150,
+    "sorte_chance": 0.2,
+    "sorte_multiplicador": 2,
     "por_nome": {
       "Rose": {
-        "frutas": 1
+        "frutas": 10
       },
       "Donut": {
-        "frutas": 5
+        "frutas": 30
       },
       "Lion": {
-        "frutas": 22,
+        "frutas": 120,
         "chuva": true
       }
     },
     "por_moedas": [
       {
         "a_partir_de": 1,
-        "frutas": 1
-      },
-      {
-        "a_partir_de": 5,
-        "frutas": 2
-      },
-      {
-        "a_partir_de": 10,
-        "frutas": 3
-      },
-      {
-        "a_partir_de": 30,
-        "frutas": 5
-      },
-      {
-        "a_partir_de": 100,
         "frutas": 10
       },
       {
+        "a_partir_de": 5,
+        "frutas": 15
+      },
+      {
+        "a_partir_de": 10,
+        "frutas": 20
+      },
+      {
+        "a_partir_de": 30,
+        "frutas": 30
+      },
+      {
+        "a_partir_de": 100,
+        "frutas": 50,
+        "chuva": true
+      },
+      {
         "a_partir_de": 500,
-        "frutas": 22,
+        "frutas": 80,
+        "chuva": true
+      },
+      {
+        "a_partir_de": 5000,
+        "frutas": 120,
         "chuva": true
       }
     ]

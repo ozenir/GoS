@@ -176,12 +176,23 @@ A melodia é composta na hora, dentro da harmonia de cada cenário, e muda a cad
 
 ## Como os presentes viram frutas
 
+Os presentes pequenos são bem generosos de propósito: numa live com pouca gente, cada Rosa precisa parecer uma festa.
+
 | Presente | O que acontece |
 |---|---|
-| 🌹 Rosa (1 moeda) | 1 maçã |
-| 🍩 Rosquinha (30 moedas) | 5 frutas |
-| 🦁 Leão (29.999 moedas) | chuva de 22 frutas, com maçãs douradas |
-| Outros presentes | pelo valor em moedas: 1 moeda = 1 fruta, 5 = 2, 10 = 3, 30 = 5, 100 = 10, 500 ou mais = chuva |
+| 🌹 Rosa (1 moeda) | 10 maçãs |
+| 🍩 Rosquinha (30 moedas) | 30 frutas |
+| 🦁 Leão (29.999 moedas) | chuva gigante de 120 frutas, com maçãs douradas |
+| Outros presentes | pelo valor em moedas: 1 moeda = 10 frutas, 5 = 15, 10 = 20, 30 = 30, 100 = chuva de 50, 500 = chuva de 80, 5.000 ou mais = chuva de 120 |
+| 🍀 Sorte | 20% dos presentes (menos as chuvas) vêm **em dobro**, com maçãs douradas |
+
+**O que aparece a cada presente:**
+- Um destaque grande no campo com **"+10 🍎"**, a foto e o nome de quem mandou.
+- Se a mesma pessoa mandar de novo em seguida, o destaque soma e vira **COMBO x2, x3...**, e a fanfarra sobe de tom a cada vez.
+- Na sorte aparece **🍀 SORTE! x2** com um som especial.
+- Confete na tela, e cada fruta que cai brilha e toca uma nota mais aguda que a anterior, como uma cascata.
+
+Mais frutas por presente também deixam a partida mais curta: umas 25 Rosas já enchem o campo. Se a sua live crescer e as partidas ficarem rápidas demais, diminua os números em `por_nome` e `por_moedas` no `config.json`.
 
 - **Combo** (a pessoa segura e manda 10 rosas seguidas) vira 10 maçãs e um aviso só, que vai somando: "10x Rosa".
 - Presentes muito grandes não lotam o jardim: as frutas entram numa fila e vão caindo aos poucos.
@@ -225,6 +236,8 @@ A melodia é composta na hora, dentro da harmonia de cada cenário, e muda a cad
 | `por_nome` | regra para um presente específico, usando o nome em inglês que aparece na janela preta. Ex.: `"Rose": { "frutas": 1 }` |
 | `por_moedas` | regra para todos os outros presentes, pelo valor em moedas. `"chuva": true` mistura maçãs douradas |
 | `maximo_frutas_por_envio` | limite de frutas de um único envio |
+| `sorte_chance` | chance (de 0 a 1) de um presente vir multiplicado, com 🍀 e maçãs douradas. `0` desliga. Padrão: 0.2 (20%) |
+| `sorte_multiplicador` | quantas vezes o presente de sorte multiplica as frutas. Padrão: 2 |
 | `curtidas_por_fruta` | `0` desliga. Com `200`, a cada 200 curtidas na live cai 1 maçã |
 | `chave_euler` | deixe vazio. Veja "Problemas comuns" |
 | `som` → `ligado` | liga ou desliga todo o som (`true` / `false`) |

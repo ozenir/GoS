@@ -131,10 +131,15 @@ function processarPresente(d) {
 
   const regra = regraPara(nome, moedas);
   const maximo = Number(config.presentes?.maximo_frutas_por_envio) || 80;
-  const frutas = Math.min(maximo, Math.round((Number(regra.frutas) || 0) * qtd));
+  let frutas = Math.min(maximo, Math.round((Number(regra.frutas) || 0) * qtd));
+  // Sorte: de vez em quando um presente vem multiplicado (com maçãs douradas). Prêmio surpresa dá mais emoção.
+  const chanceSorte = Math.min(1, Math.max(0, Number(config.presentes?.sorte_chance) || 0));
+  const multSorte = Math.max(1, Number(config.presentes?.sorte_multiplicador) || 2);
+  const sorte = !regra.chuva && frutas > 0 && Math.random() < chanceSorte;
+  if (sorte) frutas = Math.min(maximo, Math.round(frutas * multSorte));
   somar(id, nick, moedas * qtd, avatar);
-  log(`🎁 ${nick} mandou ${qtd}x ${nome} (${moedas} moeda${moedas === 1 ? '' : 's'} cada) → ${frutas} fruta${frutas === 1 ? '' : 's'}`);
-  enviar({ type: 'presente', id, nick, avatar, giftName: nome, image: imagem, count: qtd, coins: moedas, fruits: frutas, chuva: !!regra.chuva, rank: topRank() });
+  log(`🎁 ${nick} mandou ${qtd}x ${nome} (${moedas} moeda${moedas === 1 ? '' : 's'} cada) → ${frutas} fruta${frutas === 1 ? '' : 's'}${sorte ? `  🍀 SORTE x${multSorte}!` : ''}`);
+  enviar({ type: 'presente', id, nick, avatar, giftName: nome, image: imagem, count: qtd, coins: moedas, fruits: frutas, chuva: !!regra.chuva, sorte, sorteMult: multSorte, rank: topRank() });
 }
 
 let curtidasAcumuladas = 0;
