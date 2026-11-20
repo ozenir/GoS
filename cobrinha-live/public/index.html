@@ -199,6 +199,8 @@ let RAINBOW_SECONDS = 1.6;   // 💎 cristal: tempo arco-íris antes de ficar co
 let TENSE_LEN = 200;         // 🎵 a partir desse tamanho a música fica tensa
 let SHROOM_PTS = 250;        // 🍄 cogumelo garantido: ao chegar nesses pontos cai um na hora...
 let SHROOM_EVERY = 90;       // ...e depois mais um a cada esses segundos, com ou sem doações (0 = desliga)
+let SHROOM_HIGH_LEN = 240;   // 🍄 a partir desse tamanho, cada item especial tem SHROOM_HIGH_CHANCE de ser o cogumelo
+let SHROOM_HIGH_CHANCE = 0.6;
 let SHROOM_MIN_LEN = 200;    // 🍄 o cogumelo só aparece quando a cobra tem pelo menos esse tamanho
 let SHRINK_SECONDS = 10;     // cogumelo: durante esse tempo cada maçã diminui 1 de tamanho (os pontos contam normal)
 const MIN_LEN = 4;          // tamanho mínimo da cobra
@@ -239,6 +241,12 @@ const ITEMS = {
 };
 const growOf = kind => ITEMS[kind] ? ITEMS[kind].grow : 1;
 function pickItem() {
+  // cobra muito grande: o cogumelo tem uma chance fixa (60%); o resto fica entre os outros itens
+  if (G.body.length >= SHROOM_HIGH_LEN && SHROOM_HIGH_CHANCE > 0) {
+    if (Math.random() < SHROOM_HIGH_CHANCE) return 'shroom';
+    const others = Object.keys(ITEMS).filter(k => k !== 'shroom'), tot2 = others.reduce((s, k) => s + ITEMS[k].w, 0); let r2 = Math.random() * tot2;
+    for (const k of others) { r2 -= ITEMS[k].w; if (r2 <= 0) return k; } return others[0];
+  }
   // o cogumelo só entra no sorteio quando a cobra já está grande
   const ks = Object.keys(ITEMS).filter(k => k !== 'shroom' || G.body.length >= SHROOM_MIN_LEN), tot = ks.reduce((s, k) => s + ITEMS[k].w, 0); let r = Math.random() * tot;
   for (const k of ks) { r -= ITEMS[k].w; if (r <= 0) return k; } return ks[0];
@@ -1551,6 +1559,8 @@ function applyConfig(m) {
   if (Number(m.cogumelo) > 0) SHRINK_SECONDS = Number(m.cogumelo);
   if (has(m.cogumeloTamanho) && Number(m.cogumeloTamanho) >= 0) SHROOM_MIN_LEN = Number(m.cogumeloTamanho);
   if (has(m.cogumeloPontos) && Number(m.cogumeloPontos) >= 0) SHROOM_PTS = Number(m.cogumeloPontos);
+  if (has(m.cogumeloChanceTamanho) && Number(m.cogumeloChanceTamanho) >= 0) SHROOM_HIGH_LEN = Number(m.cogumeloChanceTamanho);
+  if (has(m.cogumeloChance) && Number(m.cogumeloChance) >= 0) SHROOM_HIGH_CHANCE = clamp(Number(m.cogumeloChance), 0, 1);
   if (has(m.cogumeloCada) && Number(m.cogumeloCada) >= 0) SHROOM_EVERY = Number(m.cogumeloCada);
   if (Number(m.pimenta) > 0) FAST_SECONDS = Number(m.pimenta);
   if (Number(m.pimentaVelocidade) > 0) FAST_SPEED = clamp(Number(m.pimentaVelocidade), 1, 4);
