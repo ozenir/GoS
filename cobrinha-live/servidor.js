@@ -72,11 +72,20 @@ wss.on('connection', c => {
 
 /* ---------- Ranking da live ---------- */
 const ranking = new Map();
-function somar(id, nick, moedas) {
-  const r = ranking.get(id) || { nick, coins: 0 };
-  r.nick = nick; r.coins += moedas; ranking.set(id, r);
+function somar(id, nick, moedas, avatar) {
+  const r = ranking.get(id) || { id, nick, coins: 0, avatar: '' };
+  r.nick = nick; r.coins += moedas; if (avatar) r.avatar = avatar; ranking.set(id, r);
 }
-const topRank = () => [...ranking.values()].sort((a, b) => b.coins - a.coins).slice(0, 3);
+const topRank = () => [...ranking.values()].sort((a, b) => b.coins - a.coins).slice(0, 5);
+// Foto de perfil de quem mandou (o formato muda entre versões da biblioteca, então testamos vários)
+function fotoDe(u) {
+  for (const p of [u.avatarThumb, u.avatarMedium, u.avatarLarge, u.profilePicture]) {
+    const l = p && (p.urlList || p.urls || p.url || p.url_list);
+    if (Array.isArray(l) && l[0]) return String(l[0]);
+    if (typeof l === 'string' && l) return l;
+  }
+  return '';
+}
 
 /* ---------- Presente -> frutas ---------- */
 function regraPara(nome, moedas) {
@@ -105,6 +114,7 @@ function processarPresente(d) {
   const u = d.user || {};
   const id = String(u.displayId || u.uniqueId || u.userId || u.id || u.nickname || 'anonimo');
   const nick = String(u.nickname || u.displayId || u.uniqueId || 'alguém').slice(0, 24);
+  const avatar = fotoDe(u);
   const imagem = g.image?.urlList?.[0] || det.giftImage?.giftPictureUrl || ext.image?.url_list?.[0] || '';
   const total = Math.max(1, Number(d.repeatCount) || 1);
 
@@ -122,9 +132,9 @@ function processarPresente(d) {
   const regra = regraPara(nome, moedas);
   const maximo = Number(config.presentes?.maximo_frutas_por_envio) || 80;
   const frutas = Math.min(maximo, Math.round((Number(regra.frutas) || 0) * qtd));
-  somar(id, nick, moedas * qtd);
+  somar(id, nick, moedas * qtd, avatar);
   log(`🎁 ${nick} mandou ${qtd}x ${nome} (${moedas} moeda${moedas === 1 ? '' : 's'} cada) → ${frutas} fruta${frutas === 1 ? '' : 's'}`);
-  enviar({ type: 'presente', id, nick, giftName: nome, image: imagem, count: qtd, coins: moedas, fruits: frutas, chuva: !!regra.chuva, rank: topRank() });
+  enviar({ type: 'presente', id, nick, avatar, giftName: nome, image: imagem, count: qtd, coins: moedas, fruits: frutas, chuva: !!regra.chuva, rank: topRank() });
 }
 
 let curtidasAcumuladas = 0;

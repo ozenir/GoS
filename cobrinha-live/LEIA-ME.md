@@ -103,6 +103,13 @@ A duração da partida depende de quanta fruta cai: ela come praticamente tudo o
 
 Os obstáculos dos cenários ficam em blocos de 2x2 casas: é isso que garante que o circuito passa por todas as casas livres em todos os mapas.
 
+## O que aparece na tela
+
+- **Em cima:** tamanho 🐍, pontos 🍎 e recorde 🏆, o cenário e os efeitos ativos. Logo abaixo, os **avisos de quem mandou presente**, com a **foto de perfil** da pessoa.
+- **Embaixo:** o **pódio** com as fotos de quem mais mandou moedas na live (até 5). O 1º fica no meio, maior, com coroa 👑 e anel dourado; 2º prata; 3º bronze. Embaixo de cada foto, o nome e as moedas.
+- **Cada fruta de presente tem a mini foto de quem mandou.** Quando a cobra come essa fruta, a fotinho sobe do lugar e a foto da pessoa **dá um pulinho** no pódio. Quando alguém assume o 1º lugar, a coroa pula.
+- A foto vem do perfil do TikTok de quem mandou. Se não tiver foto (ou ela não carregar), aparece um círculo colorido com a inicial do nome.
+
 ## Cenários e itens especiais
 
 A cada partida o campo muda de cenário (a primeira é sempre o Jardim). Os obstáculos mudam de lugar toda vez, mas nunca fecham um pedaço do campo. Encostar neles é fim de jogo, igual à borda.

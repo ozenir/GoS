@@ -44,29 +44,45 @@ body.live .frame{border-radius:0;box-shadow:none}
 /* HUD do jogo. Medidas em cqw (1cqw = 1% da largura da tela do jogo).
    Faixa de cima: 0 a 28,9cqw. Campo da cobra: 28,9 a 148,9cqw. Faixa de baixo: 148,9cqw até o fim. */
 .hud{position:absolute;inset:0;pointer-events:none;font-family:var(--font-display);color:#2a2152;line-height:1.25}
-.chip,.rank,.toast,.legend,.over-card,.intro{background:#fffbe8;color:#2a2152;border:.6cqw solid #2a2152;box-shadow:0 .8cqw 0 #2a2152}
-.hud-top{position:absolute;top:3cqw;left:4.2cqw;right:4.2cqw;display:flex;justify-content:space-between;align-items:flex-start;gap:2cqw}
-.hud-left{display:flex;flex-direction:column;gap:1.8cqw;min-width:0}
-.stats,.sub{display:flex;gap:1.4cqw;flex-wrap:wrap}
-.sub{max-width:58cqw}
-.chip{padding:1cqw 2.5cqw;border-radius:99px;font-size:3.5cqw;font-weight:600;white-space:nowrap;display:flex;gap:1.1cqw;align-items:center;font-variant-numeric:tabular-nums}
+.chip,.toast,.legend,.over-card,.intro{background:#fffbe8;color:#2a2152;border:.6cqw solid #2a2152;box-shadow:0 .8cqw 0 #2a2152}
+.hud-top{position:absolute;top:2.6cqw;left:4.2cqw;right:4.2cqw;display:flex;flex-direction:column;gap:1.6cqw}
+.top-row{display:flex;justify-content:space-between;align-items:center;gap:1.4cqw}
+.stats{display:flex;gap:1.2cqw;flex:none}
+.sub{display:flex;gap:1.1cqw;justify-content:flex-end;flex-wrap:wrap;min-width:0}
+.chip{padding:.9cqw 2.3cqw;border-radius:99px;font-size:3.3cqw;font-weight:600;white-space:nowrap;display:flex;gap:1.1cqw;align-items:center;font-variant-numeric:tabular-nums}
 .chip.small{font-size:2.9cqw;padding:.7cqw 2.2cqw}
 .chip.fx{background:#2a2152;color:#fffbe8;animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
-.rank{border-radius:3.2cqw;padding:1.5cqw 2.8cqw;font-size:2.9cqw;min-width:31cqw}
-.rank h3{margin:0 0 .35em;font-size:2.3cqw;letter-spacing:.08em;text-transform:uppercase;opacity:.7;font-weight:600}
-.rank ol{list-style:none;margin:0;padding:0;display:grid;gap:.2em}
-.rank li{display:flex;justify-content:space-between;gap:2cqw;font-weight:500}
-.rank li span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:23cqw}
-.rank li span:last-child{font-variant-numeric:tabular-nums;opacity:.8}
-.rank .empty{opacity:.6;font-weight:400}
-.hud-bottom{position:absolute;left:4.2cqw;right:4.2cqw;top:150cqw;bottom:1.8cqw;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:1cqw}
-.toasts{display:flex;flex-direction:column;align-items:center;gap:1.1cqw;width:100%}
-.toast{padding:1.1cqw 3.2cqw;border-radius:99px;font-size:3.1cqw;font-weight:500;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 .6cqw 0 #2a2152;animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
+/* Pódio de quem mais mandou presente (faixa de baixo): fotos lado a lado, 1º no meio */
+.hud-bottom{position:absolute;left:2cqw;right:2cqw;top:150.6cqw;bottom:1.4cqw;display:flex;flex-direction:column;align-items:center;justify-content:space-between}
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:1.6cqw;width:100%;min-height:17cqw}
+.fan{display:flex;flex-direction:column;align-items:center;width:17cqw;gap:.25cqw;--ring:#fffbe8}
+.fan.r1{--ring:#ffd23f}.fan.r2{--ring:#d9e1ea}.fan.r3{--ring:#e8955a}
+.ava{position:relative;width:9.6cqw;height:9.6cqw;border-radius:50%;border:.75cqw solid var(--ring);background:#2a2152;box-shadow:0 .6cqw 0 rgba(0,0,0,.35)}
+.fan.r1 .ava{width:12cqw;height:12cqw;border-width:.9cqw;box-shadow:0 .6cqw 0 rgba(0,0,0,.35),0 0 2.4cqw rgba(255,210,63,.55)}
+.ava img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+.crown{position:absolute;top:-4.4cqw;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:4.4cqw;line-height:1;filter:drop-shadow(0 .3cqw 0 rgba(0,0,0,.4))}
+.place{position:absolute;bottom:-1.2cqw;right:-1.2cqw;min-width:4.2cqw;height:4.2cqw;border-radius:99px;background:var(--ring);color:#2a2152;font-size:2.5cqw;font-weight:700;display:grid;place-items:center;border:.4cqw solid #2a2152}
+.nm{font-size:2.6cqw;font-weight:700;color:#fff;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 .3cqw 0 rgba(0,0,0,.65),0 0 1.2cqw rgba(0,0,0,.6);margin-top:.6cqw}
+.cn{font-size:2.2cqw;font-weight:600;color:#ffe48a;font-variant-numeric:tabular-nums;text-shadow:0 .3cqw 0 rgba(0,0,0,.65)}
+.fan.hop .ava{animation:hop .6s cubic-bezier(.3,1.9,.5,1)}
+.fan.hop .ava::after{content:"";position:absolute;inset:-1.4cqw;border-radius:50%;box-shadow:0 0 3.4cqw 1.2cqw rgba(255,226,110,.85);animation:glow .7s ease-out forwards;pointer-events:none}
+.fan.king .crown{animation:king .8s cubic-bezier(.3,1.9,.5,1)}
+.fan.enter{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes hop{0%{transform:none}35%{transform:translateY(-3.8cqw) scale(1.14)}70%{transform:translateY(.4cqw) scale(.97)}100%{transform:none}}
+@keyframes glow{from{opacity:1}to{opacity:0}}
+@keyframes king{0%{transform:translateX(-50%) translateY(0) rotate(-8deg) scale(1)}40%{transform:translateX(-50%) translateY(-3cqw) rotate(12deg) scale(1.5)}100%{transform:translateX(-50%) rotate(-8deg) scale(1)}}
+.podium .empty{font-size:2.8cqw;font-weight:600;color:#fff;text-shadow:0 .3cqw 0 rgba(0,0,0,.65);align-self:center}
+/* Avisos de presente (faixa de cima), com a foto de quem mandou */
+.toasts{display:flex;flex-direction:column;align-items:center;gap:1cqw;width:100%}
+.toast{display:flex;align-items:center;gap:1.3cqw;padding:.6cqw 3cqw .6cqw .6cqw;border-radius:99px;font-size:3cqw;font-weight:500;white-space:nowrap;max-width:100%;overflow:hidden;box-shadow:0 .6cqw 0 #2a2152;animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
+.toast .tava{width:5.6cqw;height:5.6cqw;border-radius:50%;object-fit:cover;flex:none;border:.45cqw solid #2a2152;background:#2a2152}
+.toast .tt{overflow:hidden;text-overflow:ellipsis}
+.over-hero img{width:6cqw;height:6cqw;border-radius:50%;object-fit:cover;vertical-align:middle;border:.5cqw solid #ffd23f;margin-right:1cqw}
 .toast b{font-weight:700}
 .toast em{font-style:normal;font-weight:700;color:#7a52f0}
 .toast .gimg{height:1.25em;width:auto;vertical-align:-.3em}
 .toast.out{animation:out .45s ease-in forwards}
-.legend{padding:.9cqw 3cqw;border-radius:99px;font-size:2.6cqw;font-weight:500;white-space:nowrap;transition:opacity .35s}
+.legend{padding:.55cqw 2.6cqw;border-radius:99px;font-size:2.35cqw;font-weight:500;white-space:nowrap;transition:opacity .35s}
 .legend.fade{opacity:0}
 @keyframes pop{from{transform:translateY(-3cqw) scale(.7);opacity:0}to{transform:none;opacity:1}}
 @keyframes out{to{transform:translateY(-2cqw);opacity:0}}
@@ -105,21 +121,18 @@ body.live .frame{border-radius:0;box-shadow:none}
       <canvas id="game" width="360" height="640" aria-label="Jogo da cobrinha"></canvas>
       <div class="hud">
         <div class="hud-top">
-          <div class="hud-left">
+          <div class="top-row">
             <div class="stats">
               <div class="chip" title="Tamanho da cobra">🐍 <span id="h-len">4</span></div>
               <div class="chip" title="Pontos nesta partida">🍎 <span id="h-score">0</span></div>
               <div class="chip" title="Recorde de tamanho">🏆 <span id="h-best">4</span></div>
             </div>
-            <div class="sub">
-              <div class="chip small" id="h-scene">🌷 Jardim</div>
-              <div class="sub" id="h-fx"></div>
-            </div>
+            <div class="sub"><div class="sub" id="h-fx"></div><div class="chip small" id="h-scene">🌷 Jardim</div></div>
           </div>
-          <div class="rank"><h3>Top presentes</h3><ol id="h-rank"></ol></div>
+          <div class="toasts" id="h-toasts"></div>
         </div>
         <div class="hud-bottom">
-          <div class="toasts" id="h-toasts"></div>
+          <div class="podium" id="h-rank"></div>
           <div class="legend" id="h-legend">🌹 1 maçã · 🍩 5 frutas · 🦁 chuva de frutas</div>
         </div>
         <div class="intro" id="intro" hidden><small id="i-round">Partida 1</small><b id="i-name">🌷 Jardim</b><span id="i-hint"></span></div>
@@ -136,7 +149,7 @@ body.live .frame{border-radius:0;box-shadow:none}
             <div><b id="o-fruits">0</b><span>pontos</span></div>
             <div><b id="o-best">0</b><span>recorde</span></div>
           </div>
-          <div class="over-hero" id="o-hero">Maior apoiador: <b id="o-hero-name"></b></div>
+          <div class="over-hero" id="o-hero"><img id="o-hero-ava" alt="">Maior apoiador: <b id="o-hero-name"></b></div>
           <div class="over-next">Próximo cenário em <b id="o-count">7</b></div>
         </div>
       </div>
@@ -1025,22 +1038,22 @@ function freeCells(nearHeadOk) {
   }
   return out;
 }
-function placeFruit(kind, landed) {
+function placeFruit(kind, landed, from) {
   let free = freeCells(); if (!free.length) free = freeCells(true);   // campo quase cheio: pode nascer perto da cabeça
   if (!free.length) return false;
   const c = pick(free), item = !!ITEMS[kind];
-  G.fruits.push({ kind, item, life: ITEM_LIFE, cx: c.x, cy: c.y, r: kind === 'gold' ? 9 : 8, z: landed ? 0 : 320 + rnd(0, 90), vz: 0, sq: 1, dead: false });
+  G.fruits.push({ kind, item, from: from || null, life: ITEM_LIFE, cx: c.x, cy: c.y, r: kind === 'gold' ? 9 : 8, z: landed ? 0 : 320 + rnd(0, 90), vz: 0, sq: 1, dead: false });
   return true;
 }
 /* Presentes grandes não lotam o campo: as frutas entram numa fila e caem aos poucos.
    Presente que chega na tela de fim de jogo também espera a próxima partida. */
-function queueFruit(kind) { if (G.queue.length < MAX_QUEUE) G.queue.push(kind); }
+function queueFruit(kind, from) { if (G.queue.length < MAX_QUEUE) G.queue.push({ kind, from: from || null }); }
 function dripFruits(dt) {
   if (G.phase !== 'play' || !G.queue.length) return;
   G.dropT -= dt;
   const limit = G.body.length >= ORGANIZE_LEN ? ORGANIZE_MAX_FRUITS : MAX_ON_BOARD;
   while (G.dropT <= 0 && G.queue.length && G.fruits.length < limit) {
-    if (!placeFruit(G.queue[0], false)) break;
+    const q = G.queue[0]; if (!placeFruit(q.kind || q, false, q.from)) break;
     G.queue.shift(); G.dropT += 0.07;
   }
   if (G.dropT < 0) G.dropT = 0;
@@ -1274,6 +1287,7 @@ function eatAt(c) {
   const f = G.fruits.find(f => !f.dead && f.cx === c.x && f.cy === c.y && f.z < 20);
   if (!f) return;
   f.dead = true;
+  if (f.from) celebrateDonor(f.from, c);       // a foto de quem mandou pula no pódio e sobe do lugar da fruta
   if (f.item) { applyItem(f.kind, c); return; }
   G.eaten += f.kind === 'gold' ? 3 : 1;          // a pontuação é sempre a mesma
   G.noEat = 0;
@@ -1324,21 +1338,85 @@ function showOver() {
   $('o-len').textContent = G.body.length; $('o-fruits').textContent = G.eaten; $('o-best').textContent = G.best;
   $('o-rec').hidden = !G.recordHit;
   const hero = Object.values(G.roundRank).sort((a, b) => b.coins - a.coins)[0];
-  $('o-hero').hidden = !hero; if (hero) $('o-hero-name').textContent = hero.nick;
+  $('o-hero').hidden = !hero; if (hero) { $('o-hero-name').textContent = hero.nick; const a = avatarFor(hero.id || hero.nick, hero.nick, hero.avatar); $('o-hero-ava').src = a.url; }
   $('o-count').textContent = OVER_SECONDS;
   $('over').hidden = false;
 }
 
 function updateHud() { $('h-len').textContent = G.body.length; $('h-score').textContent = G.eaten; $('h-best').textContent = G.best; }
-let rankRows = [];
+/* ---------- Fotos de perfil ----------
+   Foto real do TikTok quando o programa manda; se não tiver (ou não carregar), um círculo colorido com a inicial. */
+const AVA = new Map();
+function initialsAvatar(nick) {
+  const c = document.createElement('canvas'); c.width = c.height = 96; const x = c.getContext('2d');
+  let h = 0; for (const ch of String(nick)) h = (h * 31 + ch.charCodeAt(0)) % 360;
+  const g = x.createLinearGradient(0, 0, 96, 96); g.addColorStop(0, `hsl(${h},70%,62%)`); g.addColorStop(1, `hsl(${(h + 40) % 360},70%,45%)`);
+  x.fillStyle = g; x.fillRect(0, 0, 96, 96);
+  x.fillStyle = '#fff'; x.font = '700 52px Fredoka, system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText((String(nick).replace(/[^\p{L}\p{N}]/gu, '')[0] || '?').toUpperCase(), 48, 52);
+  return c.toDataURL();
+}
+function avatarFor(id, nick, url) {
+  id = String(id); let a = AVA.get(id);
+  if (!a) { a = { url: null, fallback: initialsAvatar(nick || id), img: new Image() }; a.img.referrerPolicy = 'no-referrer'; AVA.set(id, a); }
+  const want = url || a.fallback;
+  if (a.url !== want && !(a.failed && want === url)) {
+    a.url = want; a.img.onerror = () => { a.failed = true; a.url = a.fallback; a.img.src = a.fallback; }; a.img.src = want;
+  }
+  return a;
+}
+function avatarImg(a, cls) {
+  const im = document.createElement('img'); im.alt = ''; if (cls) im.className = cls; im.referrerPolicy = 'no-referrer';
+  im.src = a.url; im.onerror = () => { im.onerror = null; im.src = a.fallback; }; return im;
+}
+function drawAva(c, img, x, y, r) {
+  c.save(); c.fillStyle = '#fffbe8'; circle(c, x, y, r + 1.5);
+  c.beginPath(); c.arc(x, y, r, 0, TAU); c.clip();
+  if (img && img.complete && img.naturalWidth) c.drawImage(img, x - r, y - r, r * 2, r * 2); else { c.fillStyle = '#8b6bff'; c.fillRect(x - r, y - r, r * 2, r * 2); }
+  c.restore();
+}
+/* Pódio: até 5 fotos lado a lado (1º no meio, maior, com coroa). Cada foto é sempre o mesmo elemento,
+   então dá para animar: pulinho quando a cobra come a fruta da pessoa, coroa pulando quando alguém assume o 1º lugar. */
+let rankRows = [], lastKing = null;
+const fanEls = new Map(), PODIUM_ORDER = [3, 1, 0, 2, 4];
 function renderRank(rows) {
-  if (rows) rankRows = rows;
-  const ol = $('h-rank');
-  if (!rankRows.length) { const li = document.createElement('li'); li.className = 'empty'; li.textContent = 'Seja o primeiro!'; ol.replaceChildren(li); return; }
-  ol.replaceChildren(...rankRows.slice(0, 3).map((r, i) => {
-    const li = document.createElement('li'), a = document.createElement('span'), b = document.createElement('span');
-    a.textContent = `${['🥇', '🥈', '🥉'][i]} ${r.nick}`; b.textContent = Number(r.coins || 0).toLocaleString('pt-BR'); li.append(a, b); return li;
-  }));
+  if (rows) rankRows = rows.map(r => ({ ...r, id: String(r.id || r.nick) }));
+  const box = $('h-rank'), top = rankRows.slice(0, 5);
+  if (!top.length) { fanEls.clear(); const e = document.createElement('div'); e.className = 'empty'; e.textContent = '🎁 Mande um presente e apareça aqui!'; box.replaceChildren(e); return; }
+  box.querySelector('.empty')?.remove();
+  const keep = new Set(top.map(r => r.id));
+  for (const [id, el] of fanEls) if (!keep.has(id)) { el.remove(); fanEls.delete(id); }
+  PODIUM_ORDER.filter(i => i < top.length).forEach(i => {
+    const r = top[i], a = avatarFor(r.id, r.nick, r.avatar);
+    let el = fanEls.get(r.id);
+    if (!el) {
+      el = document.createElement('div'); el.className = 'fan enter';
+      const ava = document.createElement('div'); ava.className = 'ava'; ava.append(avatarImg(a));
+      const place = document.createElement('span'); place.className = 'place'; ava.append(place);
+      const nm = document.createElement('b'); nm.className = 'nm'; const cn = document.createElement('span'); cn.className = 'cn';
+      el.append(ava, nm, cn); fanEls.set(r.id, el); setTimeout(() => el.classList.remove('enter'), 500);
+    } else { const im = el.querySelector('.ava img'); if (im.getAttribute('src') !== a.url) im.src = a.url; }
+    el.classList.remove('r1', 'r2', 'r3', 'r4', 'r5'); el.classList.add('r' + (i + 1));
+    el.querySelector('.place').textContent = i + 1;
+    el.querySelector('.nm').textContent = r.nick;
+    el.querySelector('.cn').textContent = '🪙 ' + Number(r.coins || 0).toLocaleString('pt-BR');
+    let crown = el.querySelector('.crown');
+    if (i === 0 && !crown) { crown = document.createElement('span'); crown.className = 'crown'; crown.textContent = '👑'; el.querySelector('.ava').append(crown); }
+    if (i !== 0 && crown) crown.remove();
+    box.append(el);
+  });
+  if (lastKing !== null && top[0].id !== lastKing) animateFan(top[0].id, 'king', 900);   // novo 1º lugar: a coroa pula
+  lastKing = top[0].id;
+}
+function animateFan(id, cls, ms) {
+  const el = fanEls.get(String(id)); if (!el) return;
+  el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
+  clearTimeout(el['_t' + cls]); el['_t' + cls] = setTimeout(() => el.classList.remove(cls), ms);
+}
+// A cobra comeu a fruta de alguém: a foto pula no pódio e uma fotinho sobe do lugar da fruta.
+function celebrateDonor(id, c) {
+  animateFan(id, 'hop', 700);
+  const a = AVA.get(String(id)); if (a) parts.push({ ava: a.img, x: cx(c.x), y: cy(c.y) - 22, vx: 0, vy: -34, life: 1.15, age: 0, g: 0 });
 }
 // A legenda de baixo alterna entre os presentes e os itens.
 const LEGENDS = ['🌹 1 maçã · 🍩 5 frutas · 🦁 chuva de frutas', '🍇 cresce · 🌶️ rápida · ❄️ lenta · 💎 cor · 🍄 encolhe'];
@@ -1364,15 +1442,17 @@ function fillToast(tt) {
   const em = document.createElement('em'); em.textContent = fruitText(tt.fruits, tt.chuva);
   if (ev.likes) { b.textContent = 'Curtidas da live'; el.replaceChildren('❤️ ', b, ' ', em); return; }
   b.textContent = ev.nick;
+  const face = avatarImg(avatarFor(ev.id, ev.nick, ev.avatar), 'tava');
   let icon;
   if (ev.emoji || pt) icon = document.createTextNode(ev.emoji || pt[0]);
   else if (ev.image) { icon = document.createElement('img'); icon.className = 'gimg'; icon.alt = ''; icon.src = ev.image; icon.onerror = () => icon.replaceWith('🎁'); }
   else icon = document.createTextNode('🎁');
   const label = (tt.count > 1 ? tt.count + 'x ' : '') + (ev.label || (pt ? pt[1] : ev.giftName));
-  el.replaceChildren(b, ' mandou ', icon, ` ${label} `, em);
+  const txt = document.createElement('span'); txt.className = 'tt'; txt.append(b, ' mandou ', icon, ` ${label} `, em);
+  el.replaceChildren(face, txt);
 }
 /* Quem manda o mesmo presente várias vezes seguidas (combo) vira um aviso só, que vai somando.
-   Os avisos ficam na faixa de baixo, fora do campo: no máximo 2 por vez. */
+   Os avisos ficam na faixa de cima, fora do campo: no máximo 2 por vez. */
 function toast(ev) {
   const box = $('h-toasts'), k = ev.id + '|' + ev.giftName, now = performance.now();
   if (lastToast && lastToast.key === k && now - lastToast.at < 2500 && lastToast.el.isConnected && !lastToast.el.classList.contains('out')) {
@@ -1392,22 +1472,24 @@ function handleGift(ev) {
   ev.nick = String(ev.nick || 'alguém').slice(0, 24); ev.id = String(ev.id || ev.nick);
   if (!ev.likes) {
     const r = G.roundRank[ev.id] || (G.roundRank[ev.id] = { nick: ev.nick, coins: 0 });
-    r.nick = ev.nick; r.coins += (Number(ev.coins) || 0) * ev.count;
+    r.nick = ev.nick; r.coins += (Number(ev.coins) || 0) * ev.count; r.id = ev.id; if (ev.avatar) r.avatar = ev.avatar;
+    avatarFor(ev.id, ev.nick, ev.avatar);
   }
   if (ev.rank) renderRank(ev.rank);
   toast(ev);
   Sound.gift(!!ev.chuva);
   const kinds = ev.chuva ? ['apple', 'green', 'orange', 'gold', 'gold'] : (ev.fruits >= 5 ? ['apple', 'green', 'orange'] : ['apple']);
-  for (let i = 0; i < ev.fruits; i++) queueFruit(pick(kinds));
-  if (ev.chuva && ITEM_EVERY > 0) { queueFruit(pickItem()); queueFruit(pickItem()); }
+  const from = ev.likes ? null : ev.id;
+  for (let i = 0; i < ev.fruits; i++) queueFruit(pick(kinds), from);
+  if (ev.chuva && ITEM_EVERY > 0) { queueFruit(pickItem(), from); queueFruit(pickItem(), from); }
 }
 /* Sem o programa ligado (ex.: abrindo o arquivo direto), os botões de teste funcionam sozinhos. */
 function localGift(kind, name) {
   const g = GIFTS[kind]; if (!g) return;
   name = String(name || 'anônimo').slice(0, 24);
-  const r = liveRank[name] || (liveRank[name] = { nick: name, coins: 0 }); r.coins += g.coins;
+  const r = liveRank[name] || (liveRank[name] = { id: name, nick: name, coins: 0 }); r.coins += g.coins;
   handleGift({ id: name, nick: name, giftName: g.label, label: g.label, emoji: g.emoji, count: 1, coins: g.coins, fruits: g.fruits, chuva: g.fruits > 10,
-    rank: Object.values(liveRank).sort((a, b) => b.coins - a.coins).slice(0, 3) });
+    rank: Object.values(liveRank).sort((a, b) => b.coins - a.coins).slice(0, 5) });
 }
 let ws = null;
 function gift(kind, name) {
@@ -1660,6 +1742,7 @@ function draw() {
   for (const f of G.fruits) {
     const fx = cx(f.cx), fy = cy(f.cy) - f.z - f.r * 0.5;
     if (f.item) drawItem(c, fx, fy, f); else drawFruit(c, fx, fy, f.r, f.kind, f.sq);
+    if (f.from && AVA.has(f.from)) drawAva(c, AVA.get(f.from).img, fx + 8, fy - 9, 5.5);   // "essa fruta é minha!"
   }
 
   for (const q of parts) {
@@ -1667,7 +1750,8 @@ function draw() {
     if (q.txt) {
       c.font = '700 17px Fredoka, system-ui, sans-serif'; c.textAlign = 'center'; c.lineJoin = 'round';
       c.lineWidth = 4; c.strokeStyle = SNAKE.outline; c.strokeText(q.txt, q.x, q.y); c.fillStyle = q.c; c.fillText(q.txt, q.x, q.y);
-    } else { c.fillStyle = q.c; circle(c, q.x, q.y, q.r * (0.4 + k * 0.6)); }
+    } else if (q.ava) { c.globalAlpha = Math.min(1, k * 1.6); drawAva(c, q.ava, q.x, q.y, 10 * (q.age < 0.15 ? 0.6 + q.age / 0.15 * 0.4 : 1)); }
+    else { c.fillStyle = q.c; circle(c, q.x, q.y, q.r * (0.4 + k * 0.6)); }
   }
   c.globalAlpha = 1;
   drawAmbient(c);
