@@ -1079,20 +1079,27 @@ function dripFruits(dt) {
   }
   if (G.dropT < 0) G.dropT = 0;
 }
-/* Fruta que caiu em cima da cobra: pula para 3 casas antes do rabo, no caminho do circuito.
-   A cabeça anda pelo circuito em direção ao rabo, então ela passa por ali e come a fruta a tempo.
-   Se a casa estiver ocupada, tenta a próxima em direção à cabeça; sem espaço (ou na IA clássica), vai para uma casa livre qualquer. */
-const RELOCATE_BEFORE_TAIL = 3;
+/* Fruta que caiu em cima da cobra: vai para 4 casas à frente da cabeça, no caminho do circuito,
+   para ser comida em poucos passos (sem a cobra precisar dar uma volta inteira).
+   Se a casa já tiver fruta, tenta a seguinte. Com o campo quase cheio, essa casa pode estar com a
+   pontinha do rabo, que sai dali antes da cabeça chegar. Na IA clássica, vai para uma casa livre qualquer. */
+const RELOCATE_AHEAD = 4;
 function relocateFruit(f) {
   let cell = null;
   if (STRATEGY === 'perfeita' && CYC.ok) {
-    const b = G.body, L = CYC.L, h = b[0], t = b[b.length - 1];
-    const hi = CYC.idx[key(h.x, h.y)], ti = CYC.idx[key(t.x, t.y)], gap = (ti - hi + L) % L;
-    const busy = new Set(b.map(p => key(p.x, p.y)));
-    for (const o of G.fruits) if (o !== f && !o.dead) busy.add(key(o.cx, o.cy));
-    for (let back = RELOCATE_BEFORE_TAIL; back < gap; back++) {
-      const k = CYC.order[(ti - back + L) % L];
-      if (k >= 0 && !busy.has(k)) { cell = { x: k % COLS, y: (k / COLS) | 0 }; break; }
+    const b = G.body, L = CYC.L, h = b[0], t = b[b.length - 1], hk = key(h.x, h.y);
+    const hi = CYC.idx[hk], ti = CYC.idx[key(t.x, t.y)], gap = (ti - hi + L) % L;
+    const body = new Set(b.map(p => key(p.x, p.y))), fruitAt = new Set();
+    for (const o of G.fruits) if (o !== f && !o.dead) fruitAt.add(key(o.cx, o.cy));
+    // 1º: casa livre a partir de 4 à frente, dentro do trecho livre do caminho
+    for (let ahead = RELOCATE_AHEAD; ahead < gap; ahead++) {
+      const k = CYC.order[(hi + ahead) % L];
+      if (k >= 0 && !body.has(k) && !fruitAt.has(k)) { cell = { x: k % COLS, y: (k / COLS) | 0 }; break; }
+    }
+    // 2º: campo quase cheio (trecho livre menor que 4): 4 casas à frente mesmo assim; o rabo sai dali antes da cabeça chegar
+    if (!cell) for (let ahead = RELOCATE_AHEAD; ahead < Math.min(L, RELOCATE_AHEAD + 8); ahead++) {
+      const k = CYC.order[(hi + ahead) % L];
+      if (k >= 0 && k !== hk && !fruitAt.has(k)) { cell = { x: k % COLS, y: (k / COLS) | 0 }; break; }
     }
   }
   if (!cell) { const free = freeCells(); if (free.length) cell = pick(free); }

@@ -101,7 +101,7 @@ Ela foi **treinada** em milhares de partidas simuladas (5 mapas, muita fruta, po
 
 A duração da partida depende de quanta fruta cai: ela come praticamente tudo o que aparece, então **mais presentes = partida mais rápida**. Só com a maçã automática (uma a cada 5 segundos), encher o campo leva uns 20 minutos.
 
-Se uma fruta cair em cima do corpo da cobra, ela aparece **3 casas antes do rabo**, no caminho por onde a cabeça vai passar, para ser comida a tempo. Se essa casa já tiver fruta, vai para a seguinte em direção à cabeça.
+Se uma fruta cair em cima do corpo da cobra, ela aparece **4 casas à frente da cabeça**, no caminho que a cobra vai fazer, e é comida em poucos passos (sem a cobra precisar dar uma volta inteira). Se essa casa já tiver fruta, vai para a seguinte. Com o campo quase cheio, ela pode aparecer por um instante sobre a pontinha do rabo, que sai dali antes da cabeça chegar.
 
 Os obstáculos dos cenários ficam em blocos de 2x2 casas: é isso que garante que o circuito passa por todas as casas livres em todos os mapas.
 
