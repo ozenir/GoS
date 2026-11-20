@@ -192,6 +192,7 @@ A melodia é composta na hora, dentro da harmonia de cada cenário, e muda a cad
 | `pimenta_velocidade` | quantas vezes mais rápida a cobra fica com a 🌶️ pimenta (de 1 a 4; ex.: 2 = o dobro da velocidade). Padrão: 1.7 |
 | `floco_segundos` | quanto tempo a cobra fica lenta com o ❄️ floco. Padrão: 8 |
 | `cogumelo_segundos` | quanto tempo dura o efeito do 🍄 cogumelo (cada maçã diminui 1 de tamanho). Padrão: 10 |
+| `cogumelo_no_chao_segundos` | o 🍄 cogumelo some se não for comido em tantos segundos depois de cair (pisca antes de sumir). Os outros itens usam `item_no_chao_segundos`. Padrão: 5 |
 | `cogumelo_a_partir_do_tamanho` | o 🍄 cogumelo só começa a aparecer quando a cobra tem pelo menos esse tamanho. `0` = desde o começo. Padrão: 200 |
 | `cogumelo_chance_a_partir_do_tamanho` | a partir desse tamanho, cada item especial que cai tem a chance de `cogumelo_chance` de ser o 🍄 cogumelo. Padrão: 230 |
 | `cogumelo_chance` | chance do cogumelo (de 0 a 1) quando a cobra passa do tamanho acima. Padrão: 0.33 (33%) |

@@ -21,6 +21,7 @@
     "pimenta_velocidade": 1.7,
     "floco_segundos": 8,
     "cogumelo_segundos": 10,
+    "cogumelo_no_chao_segundos": 5,
     "cogumelo_a_partir_do_tamanho": 200,
     "cogumelo_chance_a_partir_do_tamanho": 230,
     "cogumelo_chance": 0.33,

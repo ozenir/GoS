@@ -199,6 +199,7 @@ let RAINBOW_SECONDS = 1.6;   // 💎 cristal: tempo arco-íris antes de ficar co
 let TENSE_LEN = 200;         // 🎵 a partir desse tamanho a música fica tensa
 let SHROOM_PTS = 250;        // 🍄 cogumelo garantido: ao chegar nesses pontos cai um na hora...
 let SHROOM_EVERY = 90;       // ...e depois mais um a cada esses segundos, com ou sem doações (0 = desliga)
+let SHROOM_LIFE = 5;         // 🍄 o cogumelo some se não for comido em tantos segundos depois de cair no chão
 let SHROOM_HIGH_LEN = 230;   // 🍄 a partir desse tamanho, cada item especial tem SHROOM_HIGH_CHANCE de ser o cogumelo
 let SHROOM_HIGH_CHANCE = 0.33;
 let SHROOM_MIN_LEN = 200;    // 🍄 o cogumelo só aparece quando a cobra tem pelo menos esse tamanho
@@ -1060,7 +1061,8 @@ function placeFruit(kind, landed, from) {
   let free = freeCells(); if (!free.length) free = freeCells(true);   // campo quase cheio: pode nascer perto da cabeça
   if (!free.length) return false;
   const c = pick(free), item = !!ITEMS[kind];
-  G.fruits.push({ kind, item, from: from || null, life: ITEM_LIFE, cx: c.x, cy: c.y, r: kind === 'gold' ? 9 : 8, z: landed ? 0 : 320 + rnd(0, 90), vz: 0, sq: 1, dead: false });
+  const life = kind === 'shroom' ? SHROOM_LIFE : ITEM_LIFE;
+  G.fruits.push({ kind, item, from: from || null, life, life0: life, cx: c.x, cy: c.y, r: kind === 'gold' ? 9 : 8, z: landed ? 0 : 320 + rnd(0, 90), vz: 0, sq: 1, dead: false });
   return true;
 }
 /* Presentes grandes não lotam o campo: as frutas entram numa fila e caem aos poucos.
@@ -1560,6 +1562,7 @@ function applyConfig(m) {
   if (has(m.cogumeloTamanho) && Number(m.cogumeloTamanho) >= 0) SHROOM_MIN_LEN = Number(m.cogumeloTamanho);
   if (has(m.cogumeloPontos) && Number(m.cogumeloPontos) >= 0) SHROOM_PTS = Number(m.cogumeloPontos);
   if (has(m.cogumeloChanceTamanho) && Number(m.cogumeloChanceTamanho) >= 0) SHROOM_HIGH_LEN = Number(m.cogumeloChanceTamanho);
+  if (Number(m.cogumeloNoChao) > 0) SHROOM_LIFE = Number(m.cogumeloNoChao);
   if (has(m.cogumeloChance) && Number(m.cogumeloChance) >= 0) SHROOM_HIGH_CHANCE = clamp(Number(m.cogumeloChance), 0, 1);
   if (has(m.cogumeloCada) && Number(m.cogumeloCada) >= 0) SHROOM_EVERY = Number(m.cogumeloCada);
   if (Number(m.pimenta) > 0) FAST_SECONDS = Number(m.pimenta);
@@ -1642,7 +1645,7 @@ function drawFruit(c, x, y, r, kind, sq) {
 function drawItem(c, x, y, f) {
   const kind = f.kind, it = ITEMS[kind];
   c.save(); c.translate(x, y); c.scale(1 + (1 - f.sq) * 0.6, f.sq);
-  if (f.z === 0 && f.life < 4 && Math.floor(G.t * 8) % 2) c.globalAlpha = 0.4;
+  if (f.z === 0 && f.life < Math.min(4, (f.life0 || ITEM_LIFE) * 0.4) && Math.floor(G.t * 8) % 2) c.globalAlpha = 0.4;   // pisca antes de sumir
   const pulse = 1 + Math.sin(G.t * 4 + f.cx) * 0.1;
   const g = c.createRadialGradient(0, 0, 2, 0, 0, 17 * pulse); g.addColorStop(0, it.glow); g.addColorStop(1, 'rgba(255,255,255,0)');
   c.fillStyle = g; circle(c, 0, 0, 17 * pulse);
