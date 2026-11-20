@@ -161,6 +161,7 @@ let SAFE_SCORE = 200;        // a partir desses pontos (🍎) ela nunca arrisca:
 let FILL_SCORE = 160;        // a partir desses pontos ela também ocupa o campo de forma compacta (e já não arrisca)
 let SPREAD_SCORE = 190;      // a partir desses pontos ela ocupa o máximo do campo, com a cabeça o mais longe possível do rabo
 let ORGANIZE_LEN = 190;      // a partir desse TAMANHO ela se organiza antes de comer (frutas e itens ficam em segundo plano)
+let FINAL_AFTER = 10;        // segundos sem comer fruta: se a cabeça estiver a 1 casa do rabo, nasce a fruta final ali e a partida acaba (0 = desliga)
 let ORGANIZE_MAX_FRUITS = 6; // enquanto se organiza, no máximo essas frutas no chão; o resto espera na fila (nada se perde)
 let ITEM_EVERY = 15;         // segundos, em média, entre um item especial e outro (0 = sem itens)
 let AUTO_APPLE = 5;          // cai uma maçã sozinha a cada X segundos, mesmo sem presentes (0 = desliga)
@@ -197,7 +198,7 @@ const cx = x => AX + x * CELL + CELL / 2, cy = y => AY + y * CELL + CELL / 2;
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const WIND = reduceMotion ? 0.35 : 1;
-const FRUIT = { apple: ['#ef4b3f', '#a8221f'], green: ['#a6d443', '#5e8f1c'], orange: ['#ffa236', '#c8611a'], gold: ['#ffd84d', '#d29910'] };
+const FRUIT = { apple: ['#ef4b3f', '#a8221f'], green: ['#a6d443', '#5e8f1c'], orange: ['#ffa236', '#c8611a'], gold: ['#ffd84d', '#d29910'], final: ['#9b4dd6', '#2a0b3d'] };
 const ITEMS = {
   grape:  { emoji: '🍇', color: '#9b5de5', glow: 'rgba(190,140,255,.6)', grow: 3, pts: 3, text: '+3 Cresceu!', w: 25 },
   chili:  { emoji: '🌶️', color: '#e5302b', glow: 'rgba(255,120,80,.6)',  grow: 0, pts: 1, text: 'Rápida!',     w: 20 },
@@ -609,7 +610,7 @@ function floatText(x, y, s) { parts.push({ x, y, vx: 0, vy: -46, life: 1.05, age
 
 /* ---------- Estado ---------- */
 const G = { t: 0, round: 0, body: [], prevTail: null, grow: 0, stepT: 0, phase: 'play', fruits: [], eaten: 0, best: 4, dieT: 0, overT: 0, cause: '',
-  roundRank: {}, queue: [], dropT: 0, popped: 0, wander: null, wanderSteps: 0, bumpTo: null, itemT: 10, autoT: 5, fx: {} };
+  roundRank: {}, queue: [], dropT: 0, popped: 0, wander: null, wanderSteps: 0, bumpTo: null, itemT: 10, autoT: 5, noEat: 0, finalF: null, fx: {} };
 const liveRank = {};
 try { G.best = Math.max(4, parseInt(localStorage.getItem('cobrinha.recorde') || '4', 10) || 4); } catch (e) {}
 
@@ -639,7 +640,7 @@ function reset() {
   G.round++; setScene(nextScene());
   G.body = [{ x: START_X, y: START_Y }, { x: START_X, y: START_Y + 1 }, { x: START_X, y: START_Y + 2 }, { x: START_X, y: START_Y + 3 }];
   G.prevTail = { x: START_X, y: START_Y + 4 }; G.grow = 0; G.stepT = 0; G.phase = 'play'; G.fruits = []; G.eaten = 0;
-  G.roundRank = {}; G.popped = 0; G.wander = null; G.bumpTo = null; G.fx = {}; G.itemT = rnd(6, 10); G.autoT = AUTO_APPLE; SNAKE = PALETTES[0];
+  G.roundRank = {}; G.popped = 0; G.wander = null; G.bumpTo = null; G.fx = {}; G.itemT = rnd(6, 10); G.autoT = AUTO_APPLE; G.noEat = 0; G.finalF = null; G.freezeT = 0; G.frozenPose = false; SNAKE = PALETTES[0];
   $('over').hidden = true;
   ['apple', 'orange', 'green'].forEach(k => placeFruit(k, true));
   updateHud(); showIntro();
@@ -795,7 +796,8 @@ function organizeMove(head, targets) {
 }
 function chooseMove() {
   const head = G.body[0], occ = occMap(G.body, G.grow);
-  const targets = new Set(G.fruits.filter(f => !f.dead && f.z < 170).map(f => key(f.cx, f.cy)));
+  if (G.finalF && Math.abs(G.finalF.cx - head.x) + Math.abs(G.finalF.cy - head.y) === 1) return { x: G.finalF.cx, y: G.finalF.cy };
+  const targets = new Set(G.fruits.filter(f => !f.dead && !f.final && f.z < 170).map(f => key(f.cx, f.cy)));
   // Modo seguro: com muitos pontos ela nunca arrisca e testa mais frutas antes de desistir.
   // O modo preenchimento também liga o modo seguro.
   // Modo espaço máximo: ocupa o campo todo mantendo a cabeça o mais longe possível do rabo.
@@ -890,6 +892,7 @@ function eatAt(c) {
   f.dead = true;
   if (f.item) { applyItem(f.kind, c); return; }
   G.eaten += f.kind === 'gold' ? 3 : 1;          // a pontuação é sempre a mesma
+  G.noEat = 0;
   if (!G.fx.shrink) G.grow += 1;
   else if (G.grow > 0) G.grow -= 1;               // cogumelo ativo: cada maçã diminui 1 de tamanho
   else if (G.body.length > MIN_LEN) {
@@ -899,9 +902,38 @@ function eatAt(c) {
   burst(cx(c.x), cy(c.y), [FRUIT[f.kind][0], '#ffffff', '#ffe27a'], 12);
   floatText(cx(c.x), cy(c.y) - 16, f.kind === 'gold' ? '+3' : '+1');
 }
+/* Fruta final: depois de muito tempo sem comer, se a cabeça estiver a uma casa do rabo,
+   nasce uma fruta nessa casa do meio. A cobra come, morde o próprio rabo e a partida acaba. */
+function maybeFinalFruit() {
+  if (FINAL_AFTER <= 0 || G.finalF || G.noEat < FINAL_AFTER || G.body.length < 5) return;
+  const h = G.body[0], t = G.body[G.body.length - 1], body = new Set(G.body.map(c => key(c.x, c.y)));
+  for (const [dx, dy] of DIRS) {
+    const c = { x: h.x + dx, y: h.y + dy };
+    if (!inside(c.x, c.y) || OBST[key(c.x, c.y)] || body.has(key(c.x, c.y))) continue;
+    if (Math.abs(c.x - t.x) + Math.abs(c.y - t.y) !== 1) continue;
+    G.fruits = G.fruits.filter(f => !(f.cx === c.x && f.cy === c.y));
+    const f = { kind: 'final', final: true, item: false, life: 99, cx: c.x, cy: c.y, r: 9, z: 0, vz: 0, sq: 0.5, dead: false };
+    G.fruits.push(f); G.finalF = f;
+    burst(cx(c.x), cy(c.y), ['#c77dff', '#ffffff', '#7a2fb0'], 18, 130);
+    floatText(cx(c.x), cy(c.y) - 18, 'Fruta final!');
+    return true;
+  }
+  return false;
+}
+function eatFinal(mv) {
+  G.finalF.dead = true; G.finalF = null;
+  G.body.unshift({ x: mv.x, y: mv.y }); G.prevTail = G.body[G.body.length - 1];   // comeu: o rabo não anda
+  G.eaten += 1; updateHud();
+  burst(cx(mv.x), cy(mv.y), ['#c77dff', '#ffffff', '#7a2fb0'], 20, 160);
+  const t = G.body[G.body.length - 1];
+  return die('comeu a fruta final e mordeu o próprio rabo', { x: t.x, y: t.y });
+}
 function step() {
   G.steps = (G.steps || 0) + 1;
   eatAt(G.body[0]);
+  // A fruta final aparece e a cobra para um instante (suspense para o público ver) antes de comer.
+  if (maybeFinalFruit()) { G.freezeT = 1.2; G.prevTail = G.body[G.body.length - 1]; G.frozenPose = true; return; }
+  G.frozenPose = false;
   const mv = chooseMove(), n = G.body.length;
   if (!inside(mv.x, mv.y)) return die(S.wall, mv);
   if (OBST[key(mv.x, mv.y)]) return die(S.obj, mv);
@@ -909,6 +941,7 @@ function step() {
     const s = G.body[i];
     if (s.x === mv.x && s.y === mv.y && !(i === n - 1 && G.grow === 0)) return die('bateu no próprio corpo', mv);
   }
+  if (G.finalF && mv.x === G.finalF.cx && mv.y === G.finalF.cy) return eatFinal(mv);
   G.body.unshift({ x: mv.x, y: mv.y });
   if (G.grow > 0) { G.grow--; G.prevTail = G.body[G.body.length - 1]; } else G.prevTail = G.body.pop();
   if (G.body.length > G.best) { G.best = G.body.length; try { localStorage.setItem('cobrinha.recorde', String(G.best)); } catch (e) {} }
@@ -1036,6 +1069,7 @@ function applyConfig(m) {
   if (has(m.espacoMaximo) && Number(m.espacoMaximo) >= 0) SPREAD_SCORE = Number(m.espacoMaximo);
   if (has(m.organizar) && Number(m.organizar) >= 0) ORGANIZE_LEN = Number(m.organizar);
   if (Number(m.organizarFrutas) > 0) ORGANIZE_MAX_FRUITS = Number(m.organizarFrutas);
+  if (has(m.frutaFinal) && Number(m.frutaFinal) >= 0) FINAL_AFTER = Number(m.frutaFinal);
   if (has(m.itens) && Number(m.itens) >= 0) ITEM_EVERY = Number(m.itens);
   if (Number(m.cogumelo) > 0) SHRINK_SECONDS = Number(m.cogumelo);
   if (Number(m.pimenta) > 0) FAST_SECONDS = Number(m.pimenta);
@@ -1060,6 +1094,7 @@ function connectWs() {
 window.cobrinha = {
   gift, restart: reset,
   passos: () => G.steps || 0,   // usado nos testes
+  frutaFinal: () => !!G.finalF,  // usado nos testes
   item: kind => placeFruit(ITEMS[kind] ? kind : pickItem(), false),
   cenario: id => { if (SCENES[id]) { forcedScene = id; reset(); } }
 };
@@ -1091,6 +1126,10 @@ function bodyPoints(p) {
 function drawFruit(c, x, y, r, kind, sq) {
   const [c1, c2] = FRUIT[kind];
   c.save(); c.translate(x, y); c.scale(1 + (1 - sq) * 0.6, sq);
+  if (kind === 'final') {   // fruta final: maçã roxa escura com brilho pulsando
+    const pr = 18 + Math.sin(G.t * 8) * 3, gl = c.createRadialGradient(0, 0, 2, 0, 0, pr);
+    gl.addColorStop(0, 'rgba(199,125,255,.75)'); gl.addColorStop(1, 'rgba(199,125,255,0)'); c.fillStyle = gl; circle(c, 0, 0, pr);
+  }
   const g = c.createRadialGradient(-r * 0.35, -r * 0.4, 1, 0, 0, r); g.addColorStop(0, c1); g.addColorStop(1, c2);
   c.fillStyle = g; c.beginPath(); c.arc(-r * 0.32, 0, r * 0.82, 0, TAU); c.arc(r * 0.32, 0, r * 0.82, 0, TAU); c.fill();
   c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.ellipse(-r * 0.42, -r * 0.38, r * 0.22, r * 0.13, -0.6, 0, TAU); c.fill();
@@ -1180,7 +1219,7 @@ function draw() {
   c.drawImage(STATIC, 0, 0, W, H);
   drawObstacleFx(c);
 
-  const p = G.phase === 'play' ? clamp(G.stepT / curStep(), 0, 1) : 1;
+  const p = G.phase === 'play' && !G.frozenPose ? clamp(G.stepT / curStep(), 0, 1) : 1;
   let pts = bodyPoints(p);
   if (G.phase === 'dying' && G.bumpTo) {
     const k = Math.sin(clamp(G.dieT / 0.25, 0, 1) * Math.PI) * 0.3, h = G.body[0];
@@ -1258,10 +1297,13 @@ function update(dt) {
   G.t += dt;
   dripFruits(dt);
   if (G.phase === 'play') {
-    tickEffects(dt); spawnItems(dt); autoApple(dt);
-    G.stepT += dt;
-    let st = curStep();
-    while (G.stepT >= st && G.phase === 'play') { G.stepT -= st; step(); st = curStep(); }
+    tickEffects(dt); spawnItems(dt); autoApple(dt); G.noEat += dt;
+    if (G.freezeT > 0) G.freezeT -= dt;          // parada de suspense da fruta final
+    else {
+      G.stepT += dt;
+      let st = curStep();
+      while (G.stepT >= st && G.phase === 'play' && !(G.freezeT > 0)) { G.stepT -= st; step(); st = curStep(); }
+    }
   } else if (G.phase === 'dying') {
     G.dieT += dt; if (G.dieT > 2.1) showOver();
   } else if (G.phase === 'over') {
