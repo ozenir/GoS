@@ -203,7 +203,15 @@ async function tentarConectar() {
       } else {
         setStatus('erro', msg.slice(0, 120));
         log(`❌ Não consegui conectar: ${msg.slice(0, 200)}`);
-        if (/room ?id/i.test(msg)) log(`   Confira se o usuário "${usuario}" está certo no config.json e se a live já está aberta.`);
+        if (/room ?id/i.test(msg)) {
+          log(`   Confira se o usuário "${usuario}" está certo no config.json e se a live já está aberta.`);
+          const motivos = (e?.config?.requestErrs || []).map(x => String(x?.message || x).slice(0, 160));
+          motivos.forEach((m, i) => log(`   motivo ${i + 1}: ${m}`));
+          const tudo = motivos.join(' ');
+          if (/user_not_found/i.test(tudo)) log(`   ➜ O TikTok diz que a conta "${usuario}" NÃO EXISTE. Abra o seu perfil no TikTok, copie o @ exatamente como aparece e coloque em "usuario" no config.json.`);
+          else if (/blocked|captcha/i.test(tudo)) log('   ➜ O TikTok pode estar bloqueando este computador. Tente outra internet (ex.: o 4G do celular) ou use a chave do Euler Stream.');
+          if (/lack of permission|401|402|403/i.test(tudo) && !config.chave_euler) log('   ➜ Coloque a chave grátis do Euler Stream em "chave_euler" no config.json (veja o LEIA-ME, "Problemas comuns").');
+        }
         log(`   Tento de novo em ${espera / 1000} segundos.`);
         await dormir(espera);
         espera = Math.min(espera * 2, 120000);
