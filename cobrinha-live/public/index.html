@@ -160,6 +160,8 @@ const GREED_MIN_LEN = 14;    // só arrisca a partir desse tamanho
 let SAFE_SCORE = 200;        // a partir desses pontos (🍎) ela nunca arrisca: sobreviver vem antes de comer
 let FILL_SCORE = 160;        // a partir desses pontos ela também ocupa o campo de forma compacta (e já não arrisca)
 let SPREAD_SCORE = 190;      // a partir desses pontos ela ocupa o máximo do campo, com a cabeça o mais longe possível do rabo
+let ORGANIZE_LEN = 190;      // a partir desse TAMANHO ela se organiza antes de comer (frutas e itens ficam em segundo plano)
+let ORGANIZE_MAX_FRUITS = 6; // enquanto se organiza, no máximo essas frutas no chão; o resto espera na fila (nada se perde)
 let ITEM_EVERY = 15;         // segundos, em média, entre um item especial e outro (0 = sem itens)
 let AUTO_APPLE = 5;          // cai uma maçã sozinha a cada X segundos, mesmo sem presentes (0 = desliga)
 let FAST_SECONDS = 8;        // 🌶️ pimenta: tempo rápida
@@ -667,7 +669,8 @@ function queueFruit(kind) { if (G.queue.length < MAX_QUEUE) G.queue.push(kind); 
 function dripFruits(dt) {
   if (G.phase !== 'play' || !G.queue.length) return;
   G.dropT -= dt;
-  while (G.dropT <= 0 && G.queue.length && G.fruits.length < MAX_ON_BOARD) {
+  const limit = G.body.length >= ORGANIZE_LEN ? ORGANIZE_MAX_FRUITS : MAX_ON_BOARD;
+  while (G.dropT <= 0 && G.queue.length && G.fruits.length < limit) {
     if (!placeFruit(G.queue[0], false)) break;
     G.queue.shift(); G.dropT += 0.07;
   }
@@ -763,6 +766,33 @@ function compactStep(head, k, dist, slack, fallbackStep, spread) {
   }
   return best;
 }
+/* Modo organizar (cobra grande): a prioridade é arrumar o corpo, não comer.
+   Entre os passos seguros, escolhe o que
+   1) não isola nenhum pedaço do campo (o corpo continua cobrindo a maior área),
+   2) deixa a cabeça o mais longe possível do rabo,
+   3) anda encostado na borda, nos obstáculos ou no corpo (sem deixar buracos).
+   Fruta e item só desempatam: come se estiver no caminho, mas não desorganiza para buscar. */
+function organizeMove(head, targets) {
+  let best = null, bestSc = -1e9;
+  for (const [dx, dy] of DIRS) {
+    const m = { x: head.x + dx, y: head.y + dy };
+    if (blockedForMove(m)) continue;
+    const { vb, r } = afterPath([m]);
+    const vocc = occMap(vb, r + 3), t = vb[vb.length - 1], tk = key(t.x, t.y);
+    const res = bfs(m, vocc, null);
+    const td = res.dist[tk];
+    if (td < 0) continue;                                  // perderia o caminho até o rabo
+    const body = new Set(vb.slice(1).map(c => key(c.x, c.y)));
+    let hug = 0;
+    for (const [ex, ey] of DIRS) { const ax = m.x + ex, ay = m.y + ey; if (!inside(ax, ay) || OBST[key(ax, ay)] || body.has(key(ax, ay))) hug++; }
+    let fd = 40;
+    for (const k of targets) if (res.dist[k] >= 0 && res.dist[k] < fd) fd = res.dist[k];
+    const eats = targets.has(key(m.x, m.y));
+    const sc = 3 * res.count + 2 * td + 1.5 * hug + (eats ? 2 : 0) - 0.3 * fd + Math.random() * 0.1;
+    if (sc > bestSc) { bestSc = sc; best = m; }
+  }
+  return best;
+}
 function chooseMove() {
   const head = G.body[0], occ = occMap(G.body, G.grow);
   const targets = new Set(G.fruits.filter(f => !f.dead && f.z < 170).map(f => key(f.cx, f.cy)));
@@ -777,6 +807,7 @@ function chooseMove() {
   // porque frutas novas podem cair na frente dela depois da conta feita.
   // Encolhida pelo cogumelo: ela já conta com o tamanho que vai recuperar quando o efeito acabar.
   const slack = safeMode ? 3 : 0;
+  if (G.body.length >= ORGANIZE_LEN) { const mv = organizeMove(head, targets); if (mv) return mv; }
   if (targets.size) {
     // Frutas alcançáveis, da mais perto para a mais longe. Ela vai na primeira em que,
     // depois de comer, ainda consegue chegar no próprio rabo (ou seja, não fica presa).
@@ -1003,6 +1034,8 @@ function applyConfig(m) {
   if (has(m.modoSeguro) && Number(m.modoSeguro) >= 0) SAFE_SCORE = Number(m.modoSeguro);
   if (has(m.preenchimento) && Number(m.preenchimento) >= 0) FILL_SCORE = Number(m.preenchimento);
   if (has(m.espacoMaximo) && Number(m.espacoMaximo) >= 0) SPREAD_SCORE = Number(m.espacoMaximo);
+  if (has(m.organizar) && Number(m.organizar) >= 0) ORGANIZE_LEN = Number(m.organizar);
+  if (Number(m.organizarFrutas) > 0) ORGANIZE_MAX_FRUITS = Number(m.organizarFrutas);
   if (has(m.itens) && Number(m.itens) >= 0) ITEM_EVERY = Number(m.itens);
   if (Number(m.cogumelo) > 0) SHRINK_SECONDS = Number(m.cogumelo);
   if (Number(m.pimenta) > 0) FAST_SECONDS = Number(m.pimenta);

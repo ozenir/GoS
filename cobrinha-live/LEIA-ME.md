@@ -132,6 +132,8 @@ De tempos em tempos aparece um **item especial** (ele pisca e some depois de 18 
 | `segundos_por_casa` | velocidade da cobra. Menor é mais rápida (0.12 = rápida, 0.2 = calma) |
 | `modo_seguro_a_partir_de` | pontos (🍎) a partir dos quais a cobra para de arriscar e prioriza não morrer. Padrão: 200 |
 | `otimizar_preenchimento_a_partir_de` | pontos a partir dos quais ela também ocupa o jardim de forma compacta, sem deixar buracos (e já não arrisca). Padrão: 160 |
+| `organizar_a_partir_do_tamanho` | a partir desse **tamanho** a cobra se organiza antes de comer: fica longe do rabo e espalha o corpo pelo campo; frutas e itens ficam em segundo plano. Padrão: 190 |
+| `frutas_no_chao_organizando` | enquanto ela se organiza, no máximo essas frutas ficam no chão ao mesmo tempo; as outras esperam na fila e caem conforme ela come (nada se perde). Padrão: 6 |
 | `espaco_maximo_a_partir_de` | pontos a partir dos quais ela ocupa o máximo do campo, mantendo a cabeça o mais longe possível do rabo. Padrão: 190 |
 | `maca_automatica_a_cada_segundos` | cai uma maçã sozinha a cada X segundos, para a cobra crescer mesmo sem presentes. `0` desliga. Padrão: 5 |
 | `item_no_chao_segundos` | quanto tempo um item especial fica no chão antes de sumir. Padrão: 18 |
