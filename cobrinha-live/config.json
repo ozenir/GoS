@@ -5,6 +5,7 @@
   "curtidas_por_fruta": 0,
   "jogo": {
     "segundos_por_casa": 0.155,
+    "maca_automatica_a_cada_segundos": 5,
     "modo_seguro_a_partir_de": 200,
     "otimizar_preenchimento_a_partir_de": 160,
     "espaco_maximo_a_partir_de": 190,

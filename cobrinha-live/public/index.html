@@ -161,6 +161,7 @@ let SAFE_SCORE = 200;        // a partir desses pontos (🍎) ela nunca arrisca:
 let FILL_SCORE = 160;        // a partir desses pontos ela também ocupa o campo de forma compacta (e já não arrisca)
 let SPREAD_SCORE = 190;      // a partir desses pontos ela ocupa o máximo do campo, com a cabeça o mais longe possível do rabo
 let ITEM_EVERY = 15;         // segundos, em média, entre um item especial e outro (0 = sem itens)
+let AUTO_APPLE = 5;          // cai uma maçã sozinha a cada X segundos, mesmo sem presentes (0 = desliga)
 const EFFECT_SECONDS = 8;    // duração de rápida e lenta
 const SHRINK_SECONDS = 10;   // cogumelo: durante esse tempo cada maçã diminui 1 de tamanho (os pontos contam normal)
 const MIN_LEN = 4;          // tamanho mínimo da cobra
@@ -603,7 +604,7 @@ function floatText(x, y, s) { parts.push({ x, y, vx: 0, vy: -46, life: 1.05, age
 
 /* ---------- Estado ---------- */
 const G = { t: 0, round: 0, body: [], prevTail: null, grow: 0, stepT: 0, phase: 'play', fruits: [], eaten: 0, best: 4, dieT: 0, overT: 0, cause: '',
-  roundRank: {}, queue: [], dropT: 0, popped: 0, wander: null, wanderSteps: 0, bumpTo: null, itemT: 10, fx: {} };
+  roundRank: {}, queue: [], dropT: 0, popped: 0, wander: null, wanderSteps: 0, bumpTo: null, itemT: 10, autoT: 5, fx: {} };
 const liveRank = {};
 try { G.best = Math.max(4, parseInt(localStorage.getItem('cobrinha.recorde') || '4', 10) || 4); } catch (e) {}
 
@@ -633,7 +634,7 @@ function reset() {
   G.round++; setScene(nextScene());
   G.body = [{ x: START_X, y: START_Y }, { x: START_X, y: START_Y + 1 }, { x: START_X, y: START_Y + 2 }, { x: START_X, y: START_Y + 3 }];
   G.prevTail = { x: START_X, y: START_Y + 4 }; G.grow = 0; G.stepT = 0; G.phase = 'play'; G.fruits = []; G.eaten = 0;
-  G.roundRank = {}; G.popped = 0; G.wander = null; G.bumpTo = null; G.fx = {}; G.itemT = rnd(6, 10); SNAKE = PALETTES[0];
+  G.roundRank = {}; G.popped = 0; G.wander = null; G.bumpTo = null; G.fx = {}; G.itemT = rnd(6, 10); G.autoT = AUTO_APPLE; SNAKE = PALETTES[0];
   $('over').hidden = true;
   ['apple', 'orange', 'green'].forEach(k => placeFruit(k, true));
   updateHud(); showIntro();
@@ -668,6 +669,12 @@ function dripFruits(dt) {
     G.queue.shift(); G.dropT += 0.07;
   }
   if (G.dropT < 0) G.dropT = 0;
+}
+// Maçã automática: garante que a cobra cresça mesmo sem doações.
+function autoApple(dt) {
+  if (AUTO_APPLE <= 0) return;
+  G.autoT -= dt;
+  if (G.autoT <= 0) { G.autoT += AUTO_APPLE; queueFruit('apple'); }
 }
 function spawnItems(dt) {
   if (ITEM_EVERY <= 0) return;
@@ -993,6 +1000,7 @@ function applyConfig(m) {
   if (has(m.preenchimento) && Number(m.preenchimento) >= 0) FILL_SCORE = Number(m.preenchimento);
   if (has(m.espacoMaximo) && Number(m.espacoMaximo) >= 0) SPREAD_SCORE = Number(m.espacoMaximo);
   if (has(m.itens) && Number(m.itens) >= 0) ITEM_EVERY = Number(m.itens);
+  if (has(m.macaAutomatica) && Number(m.macaAutomatica) >= 0) { AUTO_APPLE = Number(m.macaAutomatica); G.autoT = Math.min(G.autoT, AUTO_APPLE || G.autoT); }
   if (Array.isArray(m.cenarios)) { const v = m.cenarios.map(s => String(s).toLowerCase()).filter(s => SCENES[s]); if (v.length) { SCENE_LIST = v; sceneBag = []; } }
 }
 function connectWs() {
@@ -1206,7 +1214,7 @@ function update(dt) {
   G.t += dt;
   dripFruits(dt);
   if (G.phase === 'play') {
-    tickEffects(dt); spawnItems(dt);
+    tickEffects(dt); spawnItems(dt); autoApple(dt);
     G.stepT += dt;
     let st = curStep();
     while (G.stepT >= st && G.phase === 'play') { G.stepT -= st; step(); st = curStep(); }
