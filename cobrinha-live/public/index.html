@@ -161,7 +161,9 @@ let SAFE_SCORE = 200;        // a partir desses pontos (🍎) ela nunca arrisca:
 let FILL_SCORE = 160;        // a partir desses pontos ela também ocupa o campo de forma compacta (e já não arrisca)
 let SPREAD_SCORE = 190;      // a partir desses pontos ela ocupa o máximo do campo, com a cabeça o mais longe possível do rabo
 let ITEM_EVERY = 15;         // segundos, em média, entre um item especial e outro (0 = sem itens)
-const EFFECT_SECONDS = 8;    // duração de rápida, lenta e encolhida
+const EFFECT_SECONDS = 8;    // duração de rápida e lenta
+const SHRINK_SECONDS = 10;   // cogumelo: durante esse tempo cada maçã diminui 1 de tamanho (os pontos contam normal)
+const MIN_LEN = 4;          // tamanho mínimo da cobra
 const ITEM_LIFE = 18;        // segundos que um item fica no chão antes de sumir
 const OVER_SECONDS = 7;      // tempo da tela de fim de jogo
 const MAX_ON_BOARD = 40;     // frutas no chão ao mesmo tempo; o resto espera na fila
@@ -195,7 +197,7 @@ const ITEMS = {
   chili:  { emoji: '🌶️', color: '#e5302b', glow: 'rgba(255,120,80,.6)',  grow: 0, pts: 1, text: 'Rápida!',     w: 20 },
   snow:   { emoji: '❄️', color: '#bfe6ff', glow: 'rgba(150,210,255,.7)', grow: 0, pts: 1, text: 'Lenta...',    w: 20 },
   gem:    { emoji: '💎', color: '#7fe3ff', glow: 'rgba(255,255,255,.7)', grow: 0, pts: 1, text: 'Nova cor!',   w: 15 },
-  shroom: { emoji: '🍄', color: '#e5383b', glow: 'rgba(255,150,150,.6)', grow: 0, pts: 1, text: 'Encolheu!',   w: 20 }
+  shroom: { emoji: '🍄', color: '#e5383b', glow: 'rgba(255,150,150,.6)', grow: 0, pts: 1, text: 'Encolhendo!', w: 20 }
 };
 const growOf = kind => ITEMS[kind] ? ITEMS[kind].grow : 1;
 function pickItem() {
@@ -711,7 +713,8 @@ function tailReachable(body, grow) {
 // Simula a cobra andando pelo caminho. Conta TUDO que ela comer no trajeto
 // (não só o alvo), porque cada fruta faz o corpo crescer (a uva, 3 casas).
 function afterPath(path) {
-  const growAt = new Map(); for (const f of G.fruits) if (!f.dead) growAt.set(key(f.cx, f.cy), growOf(f.kind));
+  // Com o cogumelo ativo as maçãs não fazem crescer (fazem diminuir); para ser cuidadosa, ela conta como zero.
+  const growAt = new Map(); for (const f of G.fruits) if (!f.dead) growAt.set(key(f.cx, f.cy), G.fx.shrink && !f.item ? 0 : growOf(f.kind));
   const vb = G.body.slice(); let grow = G.grow;
   for (const c of path) {
     vb.unshift(c);
@@ -763,7 +766,7 @@ function chooseMove() {
   // Margem: no modo seguro ela calcula como se fosse crescer 3 casas a mais,
   // porque frutas novas podem cair na frente dela depois da conta feita.
   // Encolhida pelo cogumelo: ela já conta com o tamanho que vai recuperar quando o efeito acabar.
-  const slack = (safeMode ? 3 : 0) + (G.fx.shrink ? G.fx.shrink.owed : 0);
+  const slack = safeMode ? 3 : 0;
   if (targets.size) {
     // Frutas alcançáveis, da mais perto para a mais longe. Ela vai na primeira em que,
     // depois de comer, ainda consegue chegar no próprio rabo (ou seja, não fica presa).
@@ -819,10 +822,7 @@ function applyItem(kind, c) {
   else if (kind === 'gem') {
     const others = PALETTES.filter(p => p !== SNAKE); SNAKE = pick(others); G.fx.rainbow = 1.6;
   } else if (kind === 'shroom') {
-    const n = G.body.length, cut = n > 6 ? Math.floor((n - 4) * 0.45) : 0;
-    for (let i = 0; i < cut; i++) { const t = G.body.pop(); if (i % 2 === 0) burst(cx(t.x), cy(t.y), [SNAKE.a, SNAKE.b, '#ffffff'], 3, 80); }
-    G.prevTail = G.body[G.body.length - 1];
-    G.fx.shrink = { owed: (G.fx.shrink ? G.fx.shrink.owed : 0) + cut, t: EFFECT_SECONDS };
+    G.fx.shrink = { t: SHRINK_SECONDS };   // comer outro cogumelo renova os 10 segundos
   }
   burst(px, py, [it.color, '#ffffff', '#ffe27a'], 18, 170);
   floatText(px, py - 16, it.text);
@@ -831,16 +831,13 @@ function tickEffects(dt) {
   const fx = G.fx;
   if (fx.speed && (fx.speed.t -= dt) <= 0) fx.speed = null;
   if (fx.rainbow && (fx.rainbow -= dt) <= 0) fx.rainbow = 0;
-  if (fx.shrink && (fx.shrink.t -= dt) <= 0) {
-    G.grow += fx.shrink.owed; fx.shrink = null;
-    const h = G.body[0]; floatText(cx(h.x), cy(h.y) - 16, 'Voltou!');
-  }
+  if (fx.shrink && (fx.shrink.t -= dt) <= 0) fx.shrink = null;
 }
 let fxSig = '';
 function renderFx() {
   const out = [];
   if (G.fx.speed) out.push(G.fx.speed.kind === 'fast' ? `🌶️ Rápida ${Math.ceil(G.fx.speed.t)}s` : `❄️ Lenta ${Math.ceil(G.fx.speed.t)}s`);
-  if (G.fx.shrink) out.push(`🍄 Menor ${Math.ceil(G.fx.shrink.t)}s`);
+  if (G.fx.shrink) out.push(`🍄 Encolhendo ${Math.ceil(G.fx.shrink.t)}s`);
   const sig = out.join('|'); if (sig === fxSig) return; fxSig = sig;
   $('h-fx').replaceChildren(...out.map(t => { const d = document.createElement('div'); d.className = 'chip small fx'; d.textContent = t; return d; }));
 }
@@ -851,7 +848,13 @@ function eatAt(c) {
   if (!f) return;
   f.dead = true;
   if (f.item) { applyItem(f.kind, c); return; }
-  G.grow += 1; G.eaten += f.kind === 'gold' ? 3 : 1;
+  G.eaten += f.kind === 'gold' ? 3 : 1;          // a pontuação é sempre a mesma
+  if (!G.fx.shrink) G.grow += 1;
+  else if (G.grow > 0) G.grow -= 1;               // cogumelo ativo: cada maçã diminui 1 de tamanho
+  else if (G.body.length > MIN_LEN) {
+    const t = G.body.pop(); G.prevTail = G.body[G.body.length - 1];
+    burst(cx(t.x), cy(t.y), [SNAKE.a, SNAKE.b, '#ffffff'], 6, 90);
+  }
   burst(cx(c.x), cy(c.y), [FRUIT[f.kind][0], '#ffffff', '#ffe27a'], 12);
   floatText(cx(c.x), cy(c.y) - 16, f.kind === 'gold' ? '+3' : '+1');
 }

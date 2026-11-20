@@ -108,7 +108,7 @@ De tempos em tempos aparece um **item especial** (ele pisca e some depois de 18 
 | 🌶️ Pimenta | fica rápida por 8 segundos |
 | ❄️ Floco | fica lenta por 8 segundos |
 | 💎 Cristal | muda de cor |
-| 🍄 Cogumelo | encolhe por 8 segundos e depois volta ao tamanho |
+| 🍄 Cogumelo | por 10 segundos, cada maçã comida diminui 1 de tamanho em vez de crescer (os pontos contam normal) |
 
 ## Como os presentes viram frutas
 
