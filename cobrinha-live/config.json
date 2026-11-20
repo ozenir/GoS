@@ -10,7 +10,11 @@
     "otimizar_preenchimento_a_partir_de": 160,
     "espaco_maximo_a_partir_de": 190,
     "itens_a_cada_segundos": 15,
+    "item_no_chao_segundos": 18,
+    "pimenta_segundos": 8,
+    "floco_segundos": 8,
     "cogumelo_segundos": 10,
+    "cristal_arco_iris_segundos": 1.6,
     "cenarios": [
       "jardim",
       "lago",

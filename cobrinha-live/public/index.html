@@ -162,10 +162,12 @@ let FILL_SCORE = 160;        // a partir desses pontos ela também ocupa o campo
 let SPREAD_SCORE = 190;      // a partir desses pontos ela ocupa o máximo do campo, com a cabeça o mais longe possível do rabo
 let ITEM_EVERY = 15;         // segundos, em média, entre um item especial e outro (0 = sem itens)
 let AUTO_APPLE = 5;          // cai uma maçã sozinha a cada X segundos, mesmo sem presentes (0 = desliga)
-const EFFECT_SECONDS = 8;    // duração de rápida e lenta
+let FAST_SECONDS = 8;        // 🌶️ pimenta: tempo rápida
+let SLOW_SECONDS = 8;        // ❄️ floco: tempo lenta
+let RAINBOW_SECONDS = 1.6;   // 💎 cristal: tempo arco-íris antes de ficar com a cor nova
 let SHRINK_SECONDS = 10;     // cogumelo: durante esse tempo cada maçã diminui 1 de tamanho (os pontos contam normal)
 const MIN_LEN = 4;          // tamanho mínimo da cobra
-const ITEM_LIFE = 18;        // segundos que um item fica no chão antes de sumir
+let ITEM_LIFE = 18;          // segundos que um item fica no chão antes de sumir
 const OVER_SECONDS = 7;      // tempo da tela de fim de jogo
 const MAX_ON_BOARD = 40;     // frutas no chão ao mesmo tempo; o resto espera na fila
 const MAX_QUEUE = 400;       // limite da fila de frutas
@@ -824,12 +826,12 @@ function applyItem(kind, c) {
   const it = ITEMS[kind], px = cx(c.x), py = cy(c.y);
   G.eaten += it.pts;
   if (kind === 'grape') G.grow += it.grow;
-  else if (kind === 'chili') G.fx.speed = { kind: 'fast', mul: 0.6, t: EFFECT_SECONDS };
-  else if (kind === 'snow') G.fx.speed = { kind: 'slow', mul: 1.7, t: EFFECT_SECONDS };
+  else if (kind === 'chili') G.fx.speed = { kind: 'fast', mul: 0.6, t: FAST_SECONDS };
+  else if (kind === 'snow') G.fx.speed = { kind: 'slow', mul: 1.7, t: SLOW_SECONDS };
   else if (kind === 'gem') {
-    const others = PALETTES.filter(p => p !== SNAKE); SNAKE = pick(others); G.fx.rainbow = 1.6;
+    const others = PALETTES.filter(p => p !== SNAKE); SNAKE = pick(others); G.fx.rainbow = RAINBOW_SECONDS;
   } else if (kind === 'shroom') {
-    G.fx.shrink = { t: SHRINK_SECONDS };   // comer outro cogumelo renova os 10 segundos
+    G.fx.shrink = { t: SHRINK_SECONDS };   // comer outro cogumelo renova o tempo
   }
   burst(px, py, [it.color, '#ffffff', '#ffe27a'], 18, 170);
   floatText(px, py - 16, it.text);
@@ -1001,6 +1003,10 @@ function applyConfig(m) {
   if (has(m.espacoMaximo) && Number(m.espacoMaximo) >= 0) SPREAD_SCORE = Number(m.espacoMaximo);
   if (has(m.itens) && Number(m.itens) >= 0) ITEM_EVERY = Number(m.itens);
   if (Number(m.cogumelo) > 0) SHRINK_SECONDS = Number(m.cogumelo);
+  if (Number(m.pimenta) > 0) FAST_SECONDS = Number(m.pimenta);
+  if (Number(m.floco) > 0) SLOW_SECONDS = Number(m.floco);
+  if (Number(m.cristal) > 0) RAINBOW_SECONDS = Number(m.cristal);
+  if (Number(m.itemNoChao) > 0) ITEM_LIFE = Number(m.itemNoChao);
   if (has(m.macaAutomatica) && Number(m.macaAutomatica) >= 0) { AUTO_APPLE = Number(m.macaAutomatica); G.autoT = Math.min(G.autoT, AUTO_APPLE || G.autoT); }
   if (Array.isArray(m.cenarios)) { const v = m.cenarios.map(s => String(s).toLowerCase()).filter(s => SCENES[s]); if (v.length) { SCENE_LIST = v; sceneBag = []; } }
 }
