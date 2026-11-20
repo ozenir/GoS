@@ -22,6 +22,8 @@
     "floco_segundos": 8,
     "cogumelo_segundos": 10,
     "cogumelo_a_partir_do_tamanho": 200,
+    "cogumelo_garantido_a_partir_dos_pontos": 250,
+    "cogumelo_garantido_a_cada_segundos": 40,
     "cristal_arco_iris_segundos": 1.6,
     "cenarios": [
       "jardim",

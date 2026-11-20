@@ -174,6 +174,8 @@ let FAST_SPEED = 1.7;        // 🌶️ pimenta: quantas vezes mais rápida que 
 let SLOW_SECONDS = 8;        // ❄️ floco: tempo lenta
 let RAINBOW_SECONDS = 1.6;   // 💎 cristal: tempo arco-íris antes de ficar com a cor nova
 let TENSE_LEN = 200;         // 🎵 a partir desse tamanho a música fica tensa
+let SHROOM_PTS = 250;        // 🍄 cogumelo garantido: ao chegar nesses pontos cai um na hora...
+let SHROOM_EVERY = 40;       // ...e depois mais um a cada esses segundos, com ou sem doações (0 = desliga)
 let SHROOM_MIN_LEN = 200;    // 🍄 o cogumelo só aparece quando a cobra tem pelo menos esse tamanho
 let SHRINK_SECONDS = 10;     // cogumelo: durante esse tempo cada maçã diminui 1 de tamanho (os pontos contam normal)
 const MIN_LEN = 4;          // tamanho mínimo da cobra
@@ -966,7 +968,7 @@ const Sound = (() => {
 
 /* ---------- Estado ---------- */
 const G = { t: 0, round: 0, body: [], prevTail: null, grow: 0, stepT: 0, phase: 'play', fruits: [], eaten: 0, best: 4, dieT: 0, overT: 0, cause: '',
-  roundRank: {}, queue: [], dropT: 0, popped: 0, wander: null, wanderSteps: 0, bumpTo: null, itemT: 10, autoT: 5, noEat: 0, fx: {} };
+  roundRank: {}, queue: [], dropT: 0, popped: 0, wander: null, wanderSteps: 0, bumpTo: null, itemT: 10, autoT: 5, noEat: 0, shroomT: null, fx: {} };
 const liveRank = {};
 try { G.best = Math.max(4, parseInt(localStorage.getItem('cobrinha.recorde') || '4', 10) || 4); } catch (e) {}
 
@@ -1005,7 +1007,7 @@ function reset() {
     G.prevTail = { x: START_X, y: START_Y + 4 };
   }
   G.won = false; G.grow = 0; G.stepT = 0; G.phase = 'play'; G.fruits = []; G.eaten = 0;
-  G.roundRank = {}; G.popped = 0; G.wander = null; G.bumpTo = null; G.fx = {}; G.itemT = rnd(6, 10); G.autoT = AUTO_APPLE; G.noEat = 0; SNAKE = PALETTES[0];
+  G.roundRank = {}; G.popped = 0; G.wander = null; G.bumpTo = null; G.fx = {}; G.itemT = rnd(6, 10); G.autoT = AUTO_APPLE; G.noEat = 0; G.shroomT = null; SNAKE = PALETTES[0];
   $('over').hidden = true;
   ['apple', 'orange', 'green'].forEach(k => placeFruit(k, true));
   updateHud(); showIntro();
@@ -1042,6 +1044,13 @@ function dripFruits(dt) {
     G.queue.shift(); G.dropT += 0.07;
   }
   if (G.dropT < 0) G.dropT = 0;
+}
+// Cogumelo garantido: a partir de SHROOM_PTS pontos cai um na hora e depois um a cada SHROOM_EVERY segundos.
+function autoShroom(dt) {
+  if (SHROOM_EVERY <= 0 || G.eaten < SHROOM_PTS) return;
+  if (G.shroomT === null) G.shroomT = 0;
+  G.shroomT -= dt;
+  if (G.shroomT <= 0) { const ok = placeFruit('shroom', false); G.shroomT = ok ? SHROOM_EVERY : 1; if (ok) G.shroomDrops = (G.shroomDrops || 0) + 1; }   // sem espaço livre: tenta de novo em 1 s
 }
 // Maçã automática: garante que a cobra cresça mesmo sem doações.
 function autoApple(dt) {
@@ -1438,6 +1447,8 @@ function applyConfig(m) {
   if (has(m.itens) && Number(m.itens) >= 0) ITEM_EVERY = Number(m.itens);
   if (Number(m.cogumelo) > 0) SHRINK_SECONDS = Number(m.cogumelo);
   if (has(m.cogumeloTamanho) && Number(m.cogumeloTamanho) >= 0) SHROOM_MIN_LEN = Number(m.cogumeloTamanho);
+  if (has(m.cogumeloPontos) && Number(m.cogumeloPontos) >= 0) SHROOM_PTS = Number(m.cogumeloPontos);
+  if (has(m.cogumeloCada) && Number(m.cogumeloCada) >= 0) SHROOM_EVERY = Number(m.cogumeloCada);
   if (Number(m.pimenta) > 0) FAST_SECONDS = Number(m.pimenta);
   if (Number(m.pimentaVelocidade) > 0) FAST_SPEED = clamp(Number(m.pimentaVelocidade), 1, 4);
   if (Number(m.floco) > 0) SLOW_SECONDS = Number(m.floco);
@@ -1461,6 +1472,8 @@ window.cobrinha = {
   gift, restart: reset,
   passos: () => G.steps || 0,   // usado nos testes
   sorteioItem: () => pickItem(),   // usado nos testes
+  quedasCogumelo: () => G.shroomDrops || 0,   // usado nos testes
+  itensNoChao: () => G.fruits.filter(f => f.item && !f.dead).map(f => f.kind),   // usado nos testes
   item: kind => placeFruit(ITEMS[kind] ? kind : pickItem(), false),
   cenario: id => { if (SCENES[id]) { forcedScene = id; reset(); } },
   // Treino/teste: roda passos do jogo de uma vez, sem desenhar, com uma fruta a cada X passos.
@@ -1671,7 +1684,7 @@ function update(dt) {
   G.t += dt;
   dripFruits(dt);
   if (G.phase === 'play') {
-    tickEffects(dt); spawnItems(dt); autoApple(dt); G.noEat += dt;
+    tickEffects(dt); spawnItems(dt); autoApple(dt); autoShroom(dt); G.noEat += dt;
     G.stepT += dt;
     let st = curStep();
     while (G.stepT >= st && G.phase === 'play') { G.stepT -= st; step(); st = curStep(); }
