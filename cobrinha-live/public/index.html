@@ -163,7 +163,7 @@ let SPREAD_SCORE = 190;      // a partir desses pontos ela ocupa o máximo do ca
 let ITEM_EVERY = 15;         // segundos, em média, entre um item especial e outro (0 = sem itens)
 let AUTO_APPLE = 5;          // cai uma maçã sozinha a cada X segundos, mesmo sem presentes (0 = desliga)
 const EFFECT_SECONDS = 8;    // duração de rápida e lenta
-const SHRINK_SECONDS = 10;   // cogumelo: durante esse tempo cada maçã diminui 1 de tamanho (os pontos contam normal)
+let SHRINK_SECONDS = 10;     // cogumelo: durante esse tempo cada maçã diminui 1 de tamanho (os pontos contam normal)
 const MIN_LEN = 4;          // tamanho mínimo da cobra
 const ITEM_LIFE = 18;        // segundos que um item fica no chão antes de sumir
 const OVER_SECONDS = 7;      // tempo da tela de fim de jogo
@@ -1000,6 +1000,7 @@ function applyConfig(m) {
   if (has(m.preenchimento) && Number(m.preenchimento) >= 0) FILL_SCORE = Number(m.preenchimento);
   if (has(m.espacoMaximo) && Number(m.espacoMaximo) >= 0) SPREAD_SCORE = Number(m.espacoMaximo);
   if (has(m.itens) && Number(m.itens) >= 0) ITEM_EVERY = Number(m.itens);
+  if (Number(m.cogumelo) > 0) SHRINK_SECONDS = Number(m.cogumelo);
   if (has(m.macaAutomatica) && Number(m.macaAutomatica) >= 0) { AUTO_APPLE = Number(m.macaAutomatica); G.autoT = Math.min(G.autoT, AUTO_APPLE || G.autoT); }
   if (Array.isArray(m.cenarios)) { const v = m.cenarios.map(s => String(s).toLowerCase()).filter(s => SCENES[s]); if (v.length) { SCENE_LIST = v; sceneBag = []; } }
 }

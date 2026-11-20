@@ -108,7 +108,7 @@ De tempos em tempos aparece um **item especial** (ele pisca e some depois de 18 
 | 🌶️ Pimenta | fica rápida por 8 segundos |
 | ❄️ Floco | fica lenta por 8 segundos |
 | 💎 Cristal | muda de cor |
-| 🍄 Cogumelo | por 10 segundos, cada maçã comida diminui 1 de tamanho em vez de crescer (os pontos contam normal) |
+| 🍄 Cogumelo | por 10 segundos (ajustável em `cogumelo_segundos`), cada maçã comida diminui 1 de tamanho em vez de crescer (os pontos contam normal) |
 
 ## Como os presentes viram frutas
 
@@ -134,6 +134,7 @@ De tempos em tempos aparece um **item especial** (ele pisca e some depois de 18 
 | `otimizar_preenchimento_a_partir_de` | pontos a partir dos quais ela também ocupa o jardim de forma compacta, sem deixar buracos (e já não arrisca). Padrão: 160 |
 | `espaco_maximo_a_partir_de` | pontos a partir dos quais ela ocupa o máximo do campo, mantendo a cabeça o mais longe possível do rabo. Padrão: 190 |
 | `maca_automatica_a_cada_segundos` | cai uma maçã sozinha a cada X segundos, para a cobra crescer mesmo sem presentes. `0` desliga. Padrão: 5 |
+| `cogumelo_segundos` | quanto tempo dura o efeito do 🍄 cogumelo (cada maçã diminui 1 de tamanho). Padrão: 10 |
 | `itens_a_cada_segundos` | de quanto em quanto tempo (em média) aparece um item especial. `0` desliga os itens. Padrão: 15 |
 | `cenarios` | quais cenários entram no rodízio: `jardim`, `lago`, `vulcao`, `gelo`, `montanhas`. Para jogar só no jardim: `["jardim"]` |
 | `por_nome` | regra para um presente específico, usando o nome em inglês que aparece na janela preta. Ex.: `"Rose": { "frutas": 1 }` |

@@ -10,6 +10,7 @@
     "otimizar_preenchimento_a_partir_de": 160,
     "espaco_maximo_a_partir_de": 190,
     "itens_a_cada_segundos": 15,
+    "cogumelo_segundos": 10,
     "cenarios": [
       "jardim",
       "lago",

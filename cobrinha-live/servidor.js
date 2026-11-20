@@ -61,7 +61,7 @@ function setStatus(st, detalhe = '') {
 }
 wss.on('connection', c => {
   c.send(JSON.stringify({ type: 'estado', ...status, rank: topRank(), velocidade: config.jogo?.segundos_por_casa, modoSeguro: config.jogo?.modo_seguro_a_partir_de, preenchimento: config.jogo?.otimizar_preenchimento_a_partir_de,
-    espacoMaximo: config.jogo?.espaco_maximo_a_partir_de, itens: config.jogo?.itens_a_cada_segundos, macaAutomatica: config.jogo?.maca_automatica_a_cada_segundos, cenarios: config.jogo?.cenarios }));
+    espacoMaximo: config.jogo?.espaco_maximo_a_partir_de, itens: config.jogo?.itens_a_cada_segundos, cogumelo: config.jogo?.cogumelo_segundos, macaAutomatica: config.jogo?.maca_automatica_a_cada_segundos, cenarios: config.jogo?.cenarios }));
   c.on('message', raw => {
     let m; try { m = JSON.parse(String(raw)); } catch { return; }
     if (m && m.type === 'teste') testar(m.presente, m.nome, Math.min(50, Math.max(1, Number(m.vezes) || 1)));
