@@ -5,4 +5,7 @@ if ! command -v node >/dev/null 2>&1; then
   echo "Instale o Node.js (versão LTS) em https://nodejs.org e abra de novo."; read -r; exit 1
 fi
 [ -d node_modules/tiktok-live-connector ] || npm install --omit=dev --no-audit --no-fund || { read -r; exit 1; }
+if [ "$1" = "--demo" ] && command -v open >/dev/null 2>&1; then
+  (sleep 2; open "http://localhost:8080") &
+fi
 node servidor.js "$@"

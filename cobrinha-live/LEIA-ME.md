@@ -254,7 +254,17 @@ Na janela de teste (http://localhost:8080), clique em **↻ Próximo cenário**.
 
 ## No Mac
 
-Use o arquivo `iniciar-mac.command`. Para o modo teste, abra o Terminal na pasta e rode `./iniciar-mac.command --demo`. Depois abra `http://localhost:8080/#live` no navegador ou coloque no OBS como fonte Navegador. O TikTok LIVE Studio não tem versão para Mac, então use o OBS.
+Os atalhos do Mac fazem o mesmo que os `.bat` do Windows:
+
+| Windows | Mac |
+|---|---|
+| `1-testar-sem-live.bat` | `testar-sem-live-mac.command` |
+| `2-iniciar-na-live.bat` | `iniciar-mac.command` |
+| `3-abrir-janela-do-jogo.bat` | `abrir-janela-do-jogo-mac.command` (usa o Google Chrome) |
+
+Na primeira vez que der dois cliques, o Mac pode bloquear dizendo que o desenvolvedor não foi identificado. Nesse caso, clique com o **botão direito > Abrir > Abrir**. Se preferir, rode pelo Terminal, dentro da pasta: `bash testar-sem-live-mac.command`.
+
+Para capturar a janela do jogo no LIVE Studio ou no OBS, o Mac pede permissão de **Gravação de Tela** para esse programa (Ajustes do Sistema > Privacidade e Segurança > Gravação de Tela). No OBS você também pode usar a fonte Navegador com `http://localhost:8080/#live` (1080 x 1920).
 
 ## Créditos
 
