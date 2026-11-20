@@ -77,14 +77,6 @@ body.live .frame{border-radius:0;box-shadow:none}
 .toast{display:flex;align-items:center;gap:1.3cqw;padding:.6cqw 3cqw .6cqw .6cqw;border-radius:99px;font-size:3cqw;font-weight:500;white-space:nowrap;max-width:100%;overflow:hidden;box-shadow:0 .6cqw 0 #2a2152;animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
 .toast .tava{width:5.6cqw;height:5.6cqw;border-radius:50%;object-fit:cover;flex:none;border:.45cqw solid #2a2152;background:#2a2152}
 .toast .tt{overflow:hidden;text-overflow:ellipsis}
-.over-donors{display:grid;grid-template-columns:1fr 1fr;gap:2cqw;width:100%}
-.over-donors.one{grid-template-columns:1fr}
-.od{display:flex;flex-direction:column;align-items:center;gap:.5cqw;background:#f1ecff;border-radius:3cqw;padding:2cqw 1.4cqw;min-width:0}
-.od img{width:10cqw;height:10cqw;border-radius:50%;object-fit:cover;border:.7cqw solid #ffd23f;background:#2a2152}
-#o-last img{border-color:#ef4b3f}
-.od-t{font-size:2.5cqw;font-weight:600;opacity:.7;text-align:center}
-.od b{font-size:3.6cqw;color:#7a52f0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.od-s{font-size:2.4cqw;opacity:.7;font-variant-numeric:tabular-nums}
 .toast b{font-weight:700}
 .toast em{font-style:normal;font-weight:700;color:#7a52f0}
 .toast .gimg{height:1.25em;width:auto;vertical-align:-.3em}
@@ -103,18 +95,41 @@ body.live .frame{border-radius:0;box-shadow:none}
 @keyframes introOut{to{transform:translateX(-50%) translateY(-3cqw);opacity:0}}
 
 .snd-hint{position:absolute;left:50%;top:31cqw;transform:translateX(-50%);font:600 3cqw var(--font-display);background:#2a2152;color:#fffbe8;padding:1cqw 3cqw;border-radius:99px;pointer-events:none;white-space:nowrap}
-.over[hidden],.over-rec[hidden],.od[hidden],.over-donors[hidden]{display:none}
-.over{position:absolute;inset:0;display:grid;place-items:center;background:rgba(20,30,15,.35);pointer-events:none}
-.over-card{width:74cqw;border-radius:5cqw;padding:5cqw 5cqw 4.4cqw;display:flex;flex-direction:column;align-items:center;gap:2.6cqw;text-align:center;font-family:var(--font-display);animation:pop .5s cubic-bezier(.2,1.5,.4,1)}
+.over[hidden],.over-rec[hidden],.hero[hidden]{display:none}
+.over{position:absolute;inset:0;display:grid;place-items:center;background:rgba(20,30,15,.4);pointer-events:none}
+.over-card{width:80cqw;border-radius:5cqw;padding:5cqw 4.4cqw 4cqw;display:flex;flex-direction:column;align-items:center;gap:3cqw;text-align:center;font-family:var(--font-display);animation:pop .5s cubic-bezier(.2,1.5,.4,1);overflow:hidden}
+/* Dois momentos no mesmo lugar: primeiro os números, depois os destaques (desliza para o lado) */
+.op-wrap{display:grid;width:100%}
+.op{grid-area:1/1;display:flex;flex-direction:column;align-items:center;gap:2.4cqw;transition:opacity .5s ease,transform .55s cubic-bezier(.3,1.3,.5,1)}
+.op-heroes{opacity:0;transform:translateX(30cqw)}
+.over-card.show-heroes .op-stats{opacity:0;transform:translateX(-30cqw)}
+.over-card.show-heroes .op-heroes{opacity:1;transform:none}
 .over-title{font-size:8.6cqw;font-weight:700;line-height:1}
+.over-title.small{font-size:6.4cqw}
 .over-why{font-size:3.6cqw;opacity:.75;margin-top:-1cqw}
-.over-rec{font-size:3.4cqw;font-weight:700;color:#fff;background:#7a52f0;border-radius:99px;padding:.8cqw 3cqw}
-.over-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2cqw;width:100%}
-.over-stats div{display:flex;flex-direction:column;align-items:center;background:#f1ecff;border-radius:3cqw;padding:2cqw 1cqw}
-.over-stats b{font-size:6.4cqw;line-height:1.1;font-variant-numeric:tabular-nums}
-.over-stats span{font-size:2.8cqw;opacity:.7}
-.over-hero{font-size:3.5cqw}
-.over-hero b{color:#7a52f0}
+.over-rec{font-size:3.3cqw;font-weight:700;color:#fff;background:#7a52f0;border-radius:99px;padding:.8cqw 3cqw}
+.over-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.8cqw;width:100%}
+.over-stats div{display:flex;flex-direction:column;align-items:center;background:#f1ecff;border-radius:3cqw;padding:2cqw .6cqw 1.6cqw;animation:pop .45s cubic-bezier(.2,1.6,.4,1) both}
+.over-stats div:nth-child(2){animation-delay:.08s}.over-stats div:nth-child(3){animation-delay:.16s}.over-stats div:nth-child(4){animation-delay:.24s}.over-stats div:nth-child(5){animation-delay:.32s}.over-stats div:nth-child(6){animation-delay:.4s}
+.over-stats b{font-size:6.2cqw;line-height:1.1;font-variant-numeric:tabular-nums}
+.over-stats span{font-size:2.6cqw;opacity:.7}
+.hero-row{display:flex;justify-content:center;gap:4cqw;width:100%}
+.hero{display:flex;flex-direction:column;align-items:center;gap:.6cqw;width:32cqw;min-width:0}
+.hava{position:relative;width:21cqw;height:21cqw;margin-top:5cqw;border-radius:50%;border:1.2cqw solid var(--hring);background:#2a2152;box-shadow:0 0 0 .6cqw #2a2152,0 0 5cqw var(--hglow)}
+.hava img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+.hicon{position:absolute;top:-6.6cqw;left:50%;transform:translateX(-50%) rotate(-10deg);font-size:8cqw;line-height:1;filter:drop-shadow(0 .5cqw 0 rgba(0,0,0,.35))}
+.hero.king{--hring:#ffd23f;--hglow:rgba(255,210,63,.75)}
+.hero.killer{--hring:#e5383b;--hglow:rgba(229,56,59,.6)}
+.hero.closer{--hring:#39c47a;--hglow:rgba(57,196,122,.6)}
+.over-card.show-heroes .hero .hava{animation:heroIn .7s cubic-bezier(.2,1.6,.4,1) both}
+.over-card.show-heroes .hero:nth-child(2) .hava{animation-delay:.25s}
+.over-card.show-heroes .hicon{animation:iconDrop .8s cubic-bezier(.3,1.8,.5,1) both .35s}
+.over-card.show-heroes .hero:nth-child(2) .hicon{animation-delay:.6s}
+@keyframes heroIn{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+@keyframes iconDrop{from{transform:translateX(-50%) translateY(-6cqw) rotate(-40deg) scale(1.6);opacity:0}to{transform:translateX(-50%) rotate(-10deg);opacity:1}}
+.ht{font-size:2.8cqw;font-weight:600;opacity:.75;margin-top:1.4cqw}
+.hero b{font-size:4.4cqw;color:#2a2152;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hs{font-size:2.5cqw;opacity:.7;font-variant-numeric:tabular-nums}
 .over-next{font-size:3.2cqw;opacity:.75}
 .over-next b{font-variant-numeric:tabular-nums}
 
@@ -146,21 +161,31 @@ body.live .frame{border-radius:0;box-shadow:none}
       </div>
       <div class="snd-hint" id="snd-hint" hidden>🔇 Clique na tela para ativar o som</div>
       <div class="over" id="over" hidden>
-        <div class="over-card">
-          <div class="over-title" id="o-title">Fim de jogo!</div>
-          <div class="over-rec" id="o-win" hidden>🏆 Pontuação máxima!</div>
-          <div class="over-why" id="o-why">bateu no próprio corpo</div>
-          <div class="over-rec" id="o-rec" hidden>Novo recorde!</div>
-          <div class="over-stats">
-            <div><b id="o-len">0</b><span>tamanho</span></div>
-            <div><b id="o-fruits">0</b><span>pontos</span></div>
-            <div><b id="o-best">0</b><span>recorde</span></div>
+        <div class="over-card" id="over-card">
+          <div class="op-wrap">
+            <div class="op op-stats">
+              <div class="over-title" id="o-title">Fim de jogo!</div>
+              <div class="over-rec" id="o-win" hidden>🏆 Pontuação máxima!</div>
+              <div class="over-why" id="o-why">bateu no próprio corpo</div>
+              <div class="over-rec" id="o-rec" hidden>Novo recorde!</div>
+              <div class="over-stats">
+                <div><b id="o-len">0</b><span>tamanho</span></div>
+                <div><b id="o-eaten">0</b><span>frutas comidas</span></div>
+                <div><b id="o-fruits">0</b><span>pontos</span></div>
+                <div><b id="o-cover">0%</b><span>do campo</span></div>
+                <div><b id="o-time">0:00</b><span>de partida</span></div>
+                <div><b id="o-best">0</b><span>recorde</span></div>
+              </div>
+            </div>
+            <div class="op op-heroes">
+              <div class="over-title small">Destaques da rodada</div>
+              <div class="hero-row">
+                <div class="hero king" id="o-hero"><div class="hava"><img id="o-hero-ava" alt=""><span class="hicon">👑</span></div><span class="ht">Mais doou presentes</span><b id="o-hero-name"></b><span class="hs" id="o-hero-coins"></span></div>
+                <div class="hero killer" id="o-last"><div class="hava"><img id="o-last-ava" alt=""><span class="hicon" id="o-last-icon">💀</span></div><span class="ht" id="o-last-title">Matou a cobra</span><b id="o-last-name"></b><span class="hs">a última fruta foi presente dessa pessoa</span></div>
+              </div>
+            </div>
           </div>
-          <div class="over-donors" id="o-donors">
-            <div class="od" id="o-hero"><img id="o-hero-ava" alt=""><span class="od-t">👑 Mais enviou presentes</span><b id="o-hero-name"></b><span class="od-s" id="o-hero-coins"></span></div>
-            <div class="od" id="o-last"><img id="o-last-ava" alt=""><span class="od-t">🍎 Última fruta comida</span><b id="o-last-name"></b><span class="od-s">presente dessa pessoa</span></div>
-          </div>
-          <div class="over-next">Próximo cenário em <b id="o-count">7</b></div>
+          <div class="over-next">Próximo cenário em <b id="o-count">10</b></div>
         </div>
       </div>
     </div>
@@ -208,7 +233,8 @@ let SHROOM_MIN_LEN = 200;    // 🍄 o cogumelo só aparece quando a cobra tem p
 let SHRINK_SECONDS = 10;     // cogumelo: durante esse tempo cada maçã diminui 1 de tamanho (os pontos contam normal)
 const MIN_LEN = 4;          // tamanho mínimo da cobra
 let ITEM_LIFE = 18;          // segundos que um item fica no chão antes de sumir
-const OVER_SECONDS = 7;      // tempo da tela de fim de jogo
+const OVER_SECONDS = 10;     // tempo da tela de fim de jogo (números e depois destaques)
+const OVER_STATS_SECONDS = 4; // quanto tempo os números ficam antes de mostrar os destaques
 const MAX_ON_BOARD = 40;     // frutas no chão ao mesmo tempo; o resto espera na fila
 const MAX_QUEUE = 400;       // limite da fila de frutas
 const GIFTS = {
@@ -1042,7 +1068,8 @@ function reset() {
     G.prevTail = { x: START_X, y: START_Y + 4 };
   }
   G.won = false; G.grow = 0; G.stepT = 0; G.phase = 'play'; G.fruits = []; G.eaten = 0;
-  G.roundRank = {}; G.popped = 0; G.wander = null; G.bumpTo = null; G.fx = {}; G.itemT = rnd(6, 10); G.autoT = AUTO_APPLE; G.noEat = 0; G.shroomT = null; G.lastFruitFrom = null; G.tailNear = false; SNAKE = PALETTES[0];
+  G.roundRank = {}; G.popped = 0; G.wander = null; G.bumpTo = null; G.fx = {}; G.itemT = rnd(6, 10); G.autoT = AUTO_APPLE; G.noEat = 0; G.shroomT = null; G.lastFruitFrom = null; G.tailNear = false; G.fruitsEaten = 0; G.playT = 0;
+  clearTimeout(G.heroTimer); $('over-card').classList.remove('show-heroes'); SNAKE = PALETTES[0];
   $('over').hidden = true;
   ['apple', 'orange', 'green'].forEach(k => placeFruit(k, true));
   updateHud(); showIntro();
@@ -1356,6 +1383,7 @@ function eatAt(c) {
   if (f.from) { celebrateDonor(f.from, c); G.lastFruitFrom = f.from; }       // a foto de quem mandou pula no pódio e sobe do lugar da fruta
   if (f.item) { applyItem(f.kind, c); return; }
   G.eaten += f.kind === 'gold' ? 3 : 1;          // a pontuação é sempre a mesma
+  G.fruitsEaten = (G.fruitsEaten || 0) + 1;
   G.noEat = 0;
   Sound.bite(f.kind, !!G.fx.shrink);
   if (!G.fx.shrink) G.grow += 1;
@@ -1396,26 +1424,45 @@ function die(cause, to, won) {
   G.phase = 'dying'; G.dieT = 0; G.cause = cause; G.bumpTo = to; G.stepT = 0; G.popped = 0;
   G.recordHit = G.body.length >= G.best && G.body.length > 4;
 }
+// Números que sobem de 0 até o valor final (como placar de jogo)
+function countUp(el, to, fmt = v => String(Math.round(v)), dur = 1000) {
+  const t0 = performance.now();
+  const tick = now => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(to * e); if (k < 1) requestAnimationFrame(tick); };
+  if (reduceMotion) el.textContent = fmt(to); else requestAnimationFrame(tick);
+}
+const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 function showOver() {
   Sound.gameOver(G.won);
   G.phase = 'over'; G.overT = OVER_SECONDS;
+  const card = $('over-card'); card.classList.remove('show-heroes');
+  // 1º momento: os números
   $('o-title').textContent = G.won ? 'Campo completo!' : 'Fim de jogo!';
   $('o-win').hidden = !G.won;
   $('o-why').textContent = `A cobrinha ${G.cause}.`;
-  $('o-len').textContent = G.body.length; $('o-fruits').textContent = G.eaten; $('o-best').textContent = G.best;
   $('o-rec').hidden = !G.recordHit;
+  const total = CYC.ok ? CYC.L : N - OBST_CELLS.length;
+  countUp($('o-len'), G.body.length); countUp($('o-eaten'), G.fruitsEaten || 0); countUp($('o-fruits'), G.eaten);
+  countUp($('o-cover'), Math.min(100, 100 * G.body.length / total), v => Math.round(v) + '%');
+  countUp($('o-time'), G.playT || 0, mmss); countUp($('o-best'), G.best);
+  // 2º momento: os destaques (quem mais doou, com coroa; dono da última fruta comida, com caveira)
   const hero = Object.values(G.roundRank).sort((a, b) => b.coins - a.coins)[0];
   $('o-hero').hidden = !hero;
   if (hero) {
     $('o-hero-name').textContent = hero.nick; $('o-hero-ava').src = avatarFor(hero.id || hero.nick, hero.nick, hero.avatar).url;
     $('o-hero-coins').textContent = '🪙 ' + Number(hero.coins || 0).toLocaleString('pt-BR') + ' nesta rodada';
   }
-  // quem mandou a última fruta (de presente) que a cobra comeu antes da partida acabar
   const lastId = G.lastFruitFrom, lastA = lastId ? AVA.get(String(lastId)) : null;
   $('o-last').hidden = !lastId;
-  if (lastId) { $('o-last-name').textContent = (G.roundRank[lastId] && G.roundRank[lastId].nick) || (lastA && lastA.nick) || lastId; $('o-last-ava').src = lastA ? lastA.url : initialsAvatar(lastId); }
-  $('o-donors').hidden = !hero && !lastId;
-  $('o-donors').classList.toggle('one', !hero || !lastId);
+  if (lastId) {
+    $('o-last-name').textContent = (G.roundRank[lastId] && G.roundRank[lastId].nick) || (lastA && lastA.nick) || lastId;
+    $('o-last-ava').src = lastA ? lastA.url : initialsAvatar(lastId);
+    // campo completo: ninguém matou a cobra, essa pessoa fechou o campo
+    $('o-last').classList.toggle('killer', !G.won); $('o-last').classList.toggle('closer', G.won);
+    $('o-last-icon').textContent = G.won ? '🏆' : '💀';
+    $('o-last-title').textContent = G.won ? 'Fechou o campo' : 'Matou a cobra';
+  }
+  clearTimeout(G.heroTimer);
+  if (hero || lastId) G.heroTimer = setTimeout(() => { if (G.phase === 'over') { card.classList.add('show-heroes'); Sound.gift(true); } }, OVER_STATS_SECONDS * 1000);
   $('o-count').textContent = OVER_SECONDS;
   $('over').hidden = false;
 }
@@ -1859,7 +1906,7 @@ function update(dt) {
   G.t += dt;
   dripFruits(dt);
   if (G.phase === 'play') {
-    tickEffects(dt); spawnItems(dt); autoApple(dt); autoShroom(dt); G.noEat += dt;
+    tickEffects(dt); spawnItems(dt); autoApple(dt); autoShroom(dt); G.playT = (G.playT || 0) + dt; G.noEat += dt;
     G.stepT += dt;
     let st = curStep();
     while (G.stepT >= st && G.phase === 'play') { G.stepT -= st; step(); st = curStep(); }

@@ -110,7 +110,7 @@ Os obstáculos dos cenários ficam em blocos de 2x2 casas: é isso que garante q
 - **Em cima:** tamanho 🐍, pontos 🍎 e recorde 🏆, o cenário e os efeitos ativos. Logo abaixo, os **avisos de quem mandou presente**, com a **foto de perfil** da pessoa.
 - **Embaixo:** o **pódio** com as fotos de quem mais mandou moedas na live (até 5). O 1º fica no meio, maior, com coroa 👑 e anel dourado; 2º prata; 3º bronze. Embaixo de cada foto, o nome e as moedas.
 - **Cada fruta de presente tem a mini foto de quem mandou.** Quando a cobra come essa fruta, a fotinho sobe do lugar e a foto da pessoa **dá um pulinho** no pódio. Quando alguém assume o 1º lugar, a coroa pula.
-- **No fim de cada rodada**, o relatório mostra dois destaques com foto: **👑 quem mais enviou presentes** na rodada (com as moedas) e **🍎 quem mandou a última fruta comida** antes da partida acabar. Se a última fruta foi uma maçã automática (sem dono), aparece quem mandou a última fruta de presente comida antes dela.
+- **No fim de cada rodada**, o relatório aparece em dois momentos. Primeiro os **números**, subindo como placar: tamanho, frutas comidas, pontos, quanto do campo foi coberto, tempo de partida e recorde. Depois desliza para os **destaques da rodada**, com fotos grandes: **👑 quem mais doou presentes** (com as moedas) e **💀 quem matou a cobra** (dono da última fruta comida antes de morrer). Se a rodada terminou com o campo completo, em vez da caveira aparece **🏆 quem fechou o campo**. Se a última fruta foi uma maçã automática (sem dono), aparece quem mandou a última fruta de presente comida antes dela.
 - A foto vem do perfil do TikTok de quem mandou. Se não tiver foto (ou ela não carregar), aparece um círculo colorido com a inicial do nome.
 
 ## Cenários e itens especiais
