@@ -88,6 +88,21 @@ Para transmitir pelo OBS, o TikTok precisa liberar a **chave de transmissão** p
 
 ---
 
+## Como a cobra joga (estratégia perfeita)
+
+A cobra joga sozinha com uma estratégia que **sempre consegue a pontuação máxima** em qualquer mapa:
+
+- A cada partida o jogo sorteia um **circuito que passa por todas as casas livres do campo** e volta ao começo.
+- Seguindo esse circuito, a cobra **nunca se tranca**: o rabo está sempre "à frente" dela no caminho.
+- Enquanto é pequena, ela **corta caminho** até as frutas (sem nunca passar do próprio rabo). Quando passa de 60% do campo, segue o circuito à risca, enchendo o campo em zigue-zague.
+- A partida **sempre termina**: quando ela ocupa o campo inteiro aparece **"Campo completo! 🏆 Pontuação máxima!"** e começa o próximo cenário.
+
+Ela foi **treinada** em milhares de partidas simuladas (5 mapas, muita fruta, pouca fruta e chuva de presentes). Com os ajustes escolhidos, encheu o campo em **100% das partidas**. A IA antiga, nos mesmos testes, não encheu nenhuma.
+
+A duração da partida depende de quanta fruta cai: ela come praticamente tudo o que aparece, então **mais presentes = partida mais rápida**. Só com a maçã automática (uma a cada 5 segundos), encher o campo leva uns 20 minutos.
+
+Os obstáculos dos cenários ficam em blocos de 2x2 casas: é isso que garante que o circuito passa por todas as casas livres em todos os mapas.
+
 ## Cenários e itens especiais
 
 A cada partida o campo muda de cenário (a primeira é sempre o Jardim). Os obstáculos mudam de lugar toda vez, mas nunca fecham um pedaço do campo. Encostar neles é fim de jogo, igual à borda.
@@ -154,6 +169,9 @@ A melodia é composta na hora, dentro da harmonia de cada cenário, e muda a cad
 |---|---|
 | `usuario` | seu @ do TikTok, sem o @ |
 | `segundos_por_casa` | velocidade da cobra. Menor é mais rápida (0.12 = rápida, 0.2 = calma) |
+| `estrategia` | `"perfeita"` (padrão, sempre enche o campo) ou `"classica"` (a IA antiga; as opções de modo seguro, preenchimento, espaço máximo, organizar e fome valem só nela) |
+| `cortar_caminho_ate` | até que fração do campo a cobra corta caminho até as frutas (0 a 1). Treinado: 0.6. Acima de 0.8 ela começa a se trancar |
+| `folga_ao_cortar` | quantas casas de folga ela deixa entre a cabeça e o rabo ao cortar caminho. Padrão: 6 |
 | `modo_seguro_a_partir_de` | pontos (🍎) a partir dos quais a cobra para de arriscar e prioriza não morrer. Padrão: 200 |
 | `otimizar_preenchimento_a_partir_de` | pontos a partir dos quais ela também ocupa o jardim de forma compacta, sem deixar buracos (e já não arrisca). Padrão: 160 |
 | `organizar_a_partir_do_tamanho` | a partir desse **tamanho** a cobra se organiza antes de comer: fica longe do rabo e espalha o corpo pelo campo; frutas e itens ficam em segundo plano. Padrão: 190 |

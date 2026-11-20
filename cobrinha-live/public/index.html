@@ -127,7 +127,8 @@ body.live .frame{border-radius:0;box-shadow:none}
       <div class="snd-hint" id="snd-hint" hidden>🔇 Clique na tela para ativar o som</div>
       <div class="over" id="over" hidden>
         <div class="over-card">
-          <div class="over-title">Fim de jogo!</div>
+          <div class="over-title" id="o-title">Fim de jogo!</div>
+          <div class="over-rec" id="o-win" hidden>🏆 Pontuação máxima!</div>
           <div class="over-why" id="o-why">bateu no próprio corpo</div>
           <div class="over-rec" id="o-rec" hidden>Novo recorde!</div>
           <div class="over-stats">
@@ -254,51 +255,104 @@ function circle(c, x, y, r) { c.beginPath(); c.arc(x, y, Math.max(0.1, r), 0, TA
 function rrect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
 const inArena = (px, py, m = 0) => px > AX - m && px < AX + AW + m && py > AY - m && py < AY + AH + m;
 
-/* ---------- Obstáculos: sorteados a cada partida, sem nunca fechar um pedaço do campo ---------- */
+/* ---------- Obstáculos: sorteados a cada partida em blocos de 2x2 casas ----------
+   Blocos de 2x2 garantem que sempre existe um circuito passando por TODAS as casas livres,
+   então a cobra sempre pode encher o campo inteiro (pontuação máxima) em qualquer mapa. */
+const BW = COLS / 2, BH = ROWS / 2;
+const START_BLOCK = [3, 6];
 function genObstacles(type) {
   if (type === 'none') return [];
-  const startSafe = (x, y) => x >= START_X - 2 && x <= START_X + 2 && y >= START_Y - 4;
-  for (let attempt = 0; attempt < 80; attempt++) {
-    const set = new Set();
-    const add = (x, y) => { if (inside(x, y) && !startSafe(x, y)) set.add(key(x, y)); };
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const blk = new Set();
+    const add = (bx, by) => {
+      if (bx < 0 || by < 0 || bx >= BW || by >= BH) return;
+      if (Math.abs(bx - START_BLOCK[0]) <= 1 && by >= START_BLOCK[1] - 1) return;   // área de saída da cobra livre
+      blk.add(by * BW + bx);
+    };
     if (type === 'lake') {
-      const ox = rnd(3.5, 10.5), oy = rnd(3, 7), rx = rnd(2.3, 3.1), ry = rnd(1.8, 2.5);
-      for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (((x - ox) / rx) ** 2 + ((y - oy) / ry) ** 2 <= 1 + rnd(-0.18, 0.12)) add(x, y);
+      const ox = rnd(1.5, BW - 2.5), oy = rnd(1, 3.5), rx = rnd(1.0, 1.7), ry = rnd(0.9, 1.4);
+      for (let by = 0; by < BH; by++) for (let bx = 0; bx < BW; bx++) if (((bx - ox) / rx) ** 2 + ((by - oy) / ry) ** 2 <= 1 + rnd(-0.15, 0.1)) add(bx, by);
     } else if (type === 'lava') {
-      const n = 3 + (Math.random() < 0.4 ? 1 : 0);
-      for (let i = 0; i < n; i++) {
-        const ox = rnd(1.5, COLS - 2.5), oy = rnd(1.5, ROWS - 2.5), r = rnd(0.9, 1.6);
-        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (Math.hypot(x - ox, y - oy) <= r + rnd(-0.2, 0.2)) add(x, y);
-      }
+      for (let i = irnd(2, 3); i > 0; i--) { const bx = irnd(0, BW - 1), by = irnd(0, BH - 1); add(bx, by); if (Math.random() < 0.6) { const [dx, dy] = pick(DIRS); add(bx + dx, by + dy); } }
     } else if (type === 'ice') {
-      const n = irnd(6, 9), shapes = [[[0, 0]], [[0, 0], [1, 0]], [[0, 0], [0, 1]], [[0, 0], [1, 0], [0, 1], [1, 1]]];
-      for (let i = 0; i < n; i++) { const x0 = irnd(0, COLS - 1), y0 = irnd(0, ROWS - 1); pick(shapes).forEach(([a, b]) => add(x0 + a, y0 + b)); }
+      for (let i = irnd(4, 6); i > 0; i--) add(irnd(0, BW - 1), irnd(0, BH - 1));
     } else if (type === 'rocks') {
-      const n = irnd(5, 7);
-      for (let i = 0; i < n; i++) {
-        let x0 = irnd(0, COLS - 1), y0 = irnd(0, ROWS - 1);
-        for (let j = irnd(1, 3); j > 0; j--) { add(x0, y0); const [dx, dy] = pick(DIRS); x0 += dx; y0 += dy; }
-      }
+      for (let i = irnd(3, 5); i > 0; i--) { const bx = irnd(0, BW - 1), by = irnd(0, BH - 1); add(bx, by); if (Math.random() < 0.3) { const [dx, dy] = pick(DIRS); add(bx + dx, by + dy); } }
     }
-    if (!set.size || set.size > 34) continue;
-    // tudo que sobra tem que estar ligado (nenhum pedaço isolado)
-    const seen = new Uint8Array(N), q = [key(START_X, START_Y)]; seen[q[0]] = 1;
+    if (!blk.size || blk.size > 10) continue;
+    // todos os blocos livres precisam estar ligados entre si
+    const seen = new Uint8Array(BW * BH), s0 = START_BLOCK[1] * BW + START_BLOCK[0], q = [s0]; seen[s0] = 1;
     for (let i = 0; i < q.length; i++) {
-      const k = q[i], x = k % COLS, y = (k / COLS) | 0;
-      for (const [dx, dy] of DIRS) { const nx = x + dx, ny = y + dy, nk = key(nx, ny); if (inside(nx, ny) && !seen[nk] && !set.has(nk)) { seen[nk] = 1; q.push(nk); } }
+      const b = q[i], bx = b % BW, by = (b / BW) | 0;
+      for (const [dx, dy] of DIRS) { const nx = bx + dx, ny = by + dy, nb = ny * BW + nx; if (nx >= 0 && ny >= 0 && nx < BW && ny < BH && !seen[nb] && !blk.has(nb)) { seen[nb] = 1; q.push(nb); } }
     }
-    if (q.length !== N - set.size) continue;
-    // e sem becos de uma casa só (casa livre com 3 lados fechados)
-    let pocket = false;
-    for (let y = 0; y < ROWS && !pocket; y++) for (let x = 0; x < COLS; x++) {
-      if (set.has(key(x, y))) continue;
-      let closed = 0; for (const [dx, dy] of DIRS) { const nx = x + dx, ny = y + dy; if (!inside(nx, ny) || set.has(key(nx, ny))) closed++; }
-      if (closed >= 3) { pocket = true; break; }
-    }
-    if (pocket) continue;
-    return [...set].map(k => ({ x: k % COLS, y: (k / COLS) | 0 }));
+    if (q.length !== BW * BH - blk.size) continue;
+    const cells = [];
+    for (const b of blk) { const bx = b % BW, by = (b / BW) | 0; cells.push({ x: bx * 2, y: by * 2 }, { x: bx * 2 + 1, y: by * 2 }, { x: bx * 2, y: by * 2 + 1 }, { x: bx * 2 + 1, y: by * 2 + 1 }); }
+    return cells;
   }
   return [];
+}
+/* Circuito que passa por todas as casas livres: árvore aleatória ligando os blocos livres de 2x2,
+   e o circuito contorna essa árvore. Um circuito diferente a cada partida. */
+let CYC = { ok: false };
+function buildCycle() {
+  const freeB = (bx, by) => bx >= 0 && by >= 0 && bx < BW && by < BH && !OBST[key(bx * 2, by * 2)];
+  const right = new Uint8Array(BW * BH), down = new Uint8Array(BW * BH), inT = new Uint8Array(BW * BH);
+  const s0 = START_BLOCK[1] * BW + START_BLOCK[0], frontier = [];
+  const addFront = b => { const bx = b % BW, by = (b / BW) | 0; for (const [dx, dy] of DIRS) { const nx = bx + dx, ny = by + dy; if (freeB(nx, ny) && !inT[ny * BW + nx]) frontier.push([b, ny * BW + nx]); } };
+  inT[s0] = 1; addFront(s0);
+  while (frontier.length) {                                   // Prim aleatório
+    const [a, b] = frontier.splice(Math.floor(Math.random() * frontier.length), 1)[0];
+    if (inT[b]) continue;
+    inT[b] = 1;
+    const ax = a % BW, ay = (a / BW) | 0, bx = b % BW, by = (b / BW) | 0;
+    if (ay === by) right[Math.min(a, b)] = 1; else down[ax === bx && ay < by ? a : b] = 1;
+    addFront(b);
+  }
+  const next = new Int16Array(N).fill(-1);
+  for (let by = 0; by < BH; by++) for (let bx = 0; bx < BW; bx++) {
+    if (!freeB(bx, by)) continue;
+    const TL = key(bx * 2, by * 2), TR = key(bx * 2 + 1, by * 2), BR = key(bx * 2 + 1, by * 2 + 1), BL = key(bx * 2, by * 2 + 1);
+    next[TL] = TR; next[TR] = BR; next[BR] = BL; next[BL] = TL;
+  }
+  for (let by = 0; by < BH; by++) for (let bx = 0; bx < BW; bx++) {
+    const b = by * BW + bx;
+    if (right[b]) { next[key(bx * 2 + 1, by * 2)] = key(bx * 2 + 2, by * 2); next[key(bx * 2 + 2, by * 2 + 1)] = key(bx * 2 + 1, by * 2 + 1); }
+    if (down[b]) { next[key(bx * 2 + 1, by * 2 + 1)] = key(bx * 2 + 1, by * 2 + 2); next[key(bx * 2, by * 2 + 2)] = key(bx * 2, by * 2 + 1); }
+  }
+  const idx = new Int16Array(N).fill(-1), prev = new Int16Array(N).fill(-1), start = key(START_BLOCK[0] * 2, START_BLOCK[1] * 2);
+  let c = start, i = 0;
+  do { idx[c] = i++; prev[next[c]] = c; c = next[c]; } while (c !== start && c >= 0 && i <= N);
+  const free = N - OBST_CELLS.length;
+  return { ok: c === start && i === free, L: i, next, prev, idx, start };
+}
+/* Estratégia perfeita: segue o circuito e corta caminho até a fruta quando é seguro.
+   Cortar caminho nunca passa do rabo no circuito, então a cobra nunca se tranca. */
+let STRATEGY = 'perfeita';   // 'perfeita' ou 'classica'
+let CUT_FRAC = 0.6;          // corta caminho até a cobra ocupar esta fração do campo; depois segue o circuito à risca
+let CUT_MARGIN = 6;          // folga mínima (em casas) entre a cabeça e o rabo ao cortar caminho
+function cycleMove() {
+  const C = CYC, b = G.body, head = b[0], tail = b[b.length - 1], L = C.L;
+  const hk = key(head.x, head.y), hi = C.idx[hk], ti = C.idx[key(tail.x, tail.y)];
+  const fwd = (a, c) => (c - a + L) % L;
+  const nk = C.next[hk], nextCell = { x: nk % COLS, y: (nk / COLS) | 0 };
+  if (b.length + G.grow >= CUT_FRAC * L) return nextCell;
+  let tgt = null, td = 1e9;
+  for (const f of G.fruits) { if (f.dead || f.z >= 170) continue; const d = fwd(hi, C.idx[key(f.cx, f.cy)]); if (d > 0 && d < td) { td = d; tgt = f; } }
+  if (!tgt) return nextCell;
+  const gap = fwd(hi, ti) || L, body = new Set();
+  for (let i = 0; i < b.length - (G.grow === 0 ? 1 : 0); i++) body.add(key(b[i].x, b[i].y));
+  let best = nextCell, bestD = 1;
+  for (const [dx, dy] of DIRS) {
+    const x = head.x + dx, y = head.y + dy; if (!inside(x, y)) continue;
+    const k = key(x, y); if (OBST[k] || body.has(k)) continue;
+    const d = fwd(hi, C.idx[k]);
+    if (d > td) continue;                                          // não passa da fruta
+    if (gap - d <= G.grow + growOf(tgt.kind) + CUT_MARGIN) continue;  // não chega perto demais do rabo
+    if (d > bestD) { best = { x, y }; bestD = d; }
+  }
+  return best;
 }
 
 /* ---------- Desenho fixo de cada cenário (borda + chão + obstáculos) ---------- */
@@ -819,6 +873,7 @@ const Sound = (() => {
   }
   function _bonk(t) { osc('sine', 240, t, 0.22, 0.28, out.sfx, { to: 90, glide: 0.2 }); noise(t, 0.12, 0.15, out.sfx, 'lowpass', 500, 0.8); }
   function _over(t) { [67, 64, 60, 55].forEach((m, i) => I.pluck(t + 0.25 + i * 0.2, m, 0.5, 0.12, out.sfx)); I.kick(t + 1.05, 0.25, out.sfx); }
+  function _win(t) { [60, 64, 67, 72, 76, 79, 84].forEach((m, i) => I.pluck(t + i * 0.08, m, 0.6, 0.11, out.sfx)); [72, 76, 79, 84].forEach(m => I.bell(t + 0.65, m, 1.4, 0.05, out.sfx)); I.kick(t + 0.65, 0.3, out.sfx); }
   function _intro(t) { if (!theme) return; const c = theme.prog[0]; [...c, c[0] + 12].forEach((m, i) => I[theme.lead](t + i * 0.09, m + 12, 0.5, theme.leadVol * 0.9, out.music)); }
 
   /* ---- controle ao vivo ---- */
@@ -864,7 +919,7 @@ const Sound = (() => {
     item(kind) { if (ready()) _item(ac.currentTime + 0.01, kind); },
     gift(big) { const now = performance.now(); if (!big && now - lastGift < 140) return; lastGift = now; if (ready()) _gift(ac.currentTime + 0.01, big); },
     bonk() { if (ready()) _bonk(ac.currentTime + 0.005); },
-    gameOver() { if (ready()) _over(ac.currentTime); },
+    gameOver(won) { if (ready()) (won ? _win : _over)(ac.currentTime); },
     /* Gera uma amostra em áudio (usado para conferir o som fora do jogo). */
     async renderDemo(id, seconds, tenseAt) {
       const sr = 44100, oc = new OfflineAudioContext(2, Math.floor(sr * seconds), sr);
@@ -928,6 +983,7 @@ function setScene(id) {
   OBST_CELLS = genObstacles(S.obstacles);
   OBST = new Uint8Array(N); for (const o of OBST_CELLS) OBST[key(o.x, o.y)] = 1;
   BLOBW = new Map(OBST_CELLS.map(o => [key(o.x, o.y), rnd(0.9, 1.1)]));
+  CYC = buildCycle();
   STATIC = renderStatic(); setupDecor();
   $('h-scene').textContent = `${S.icon} ${S.name}`;
 }
@@ -940,8 +996,15 @@ function showIntro() {
 }
 function reset() {
   G.round++; setScene(nextScene());
-  G.body = [{ x: START_X, y: START_Y }, { x: START_X, y: START_Y + 1 }, { x: START_X, y: START_Y + 2 }, { x: START_X, y: START_Y + 3 }];
-  G.prevTail = { x: START_X, y: START_Y + 4 }; G.grow = 0; G.stepT = 0; G.phase = 'play'; G.fruits = []; G.eaten = 0;
+  if (CYC.ok) {   // a cobra começa deitada sobre o circuito
+    const cell = k => ({ x: k % COLS, y: (k / COLS) | 0 }); let k = CYC.start; G.body = [];
+    for (let i = 0; i < 4; i++) { G.body.push(cell(k)); k = CYC.prev[k]; }
+    G.prevTail = cell(k);
+  } else {
+    G.body = [{ x: START_X, y: START_Y }, { x: START_X, y: START_Y + 1 }, { x: START_X, y: START_Y + 2 }, { x: START_X, y: START_Y + 3 }];
+    G.prevTail = { x: START_X, y: START_Y + 4 };
+  }
+  G.won = false; G.grow = 0; G.stepT = 0; G.phase = 'play'; G.fruits = []; G.eaten = 0;
   G.roundRank = {}; G.popped = 0; G.wander = null; G.bumpTo = null; G.fx = {}; G.itemT = rnd(6, 10); G.autoT = AUTO_APPLE; G.noEat = 0; SNAKE = PALETTES[0];
   $('over').hidden = true;
   ['apple', 'orange', 'green'].forEach(k => placeFruit(k, true));
@@ -1098,6 +1161,7 @@ function organizeMove(head, targets) {
   return best;
 }
 function chooseMove() {
+  if (STRATEGY === 'perfeita' && CYC.ok) return cycleMove();
   const head = G.body[0], occ = occMap(G.body, G.grow);
   const targets = new Set(G.fruits.filter(f => !f.dead && f.z < 170).map(f => key(f.cx, f.cy)));
   // Fome: muito tempo sem comer, ela vai atrás de fruta — por um caminho seguro se existir,
@@ -1226,17 +1290,27 @@ function step() {
   }
   G.body.unshift({ x: mv.x, y: mv.y });
   if (G.grow > 0) { G.grow--; G.prevTail = G.body[G.body.length - 1]; } else G.prevTail = G.body.pop();
+  // Campo completo: a cobra ocupa todas as casas livres. Pontuação máxima, fim da partida.
+  const fullAt = CYC.ok ? CYC.L : N - OBST_CELLS.length;
+  if (G.body.length + G.grow >= fullAt) {
+    if (G.body.length > G.best) { G.best = G.body.length; try { localStorage.setItem('cobrinha.recorde', String(G.best)); } catch (e) {} }
+    updateHud(); return die('encheu o campo inteiro', null, true);
+  }
   if (G.body.length > G.best) { G.best = G.body.length; try { localStorage.setItem('cobrinha.recorde', String(G.best)); } catch (e) {} }
   updateHud();
 }
-function die(cause, to) {
-  Sound.bonk();
+function die(cause, to, won) {
+  G.won = !!won;
+  if (won) { G.fx.rainbow = 99; for (let i = 0; i < 14; i++) burst(rnd(AX, AX + AW), rnd(AY, AY + AH), ['#ffd84d', '#ff6bd6', '#39f3c4', '#ffffff', '#8b6bff'], 10, 200); }
+  else Sound.bonk();
   G.phase = 'dying'; G.dieT = 0; G.cause = cause; G.bumpTo = to; G.stepT = 0; G.popped = 0;
   G.recordHit = G.body.length >= G.best && G.body.length > 4;
 }
 function showOver() {
-  Sound.gameOver();
+  Sound.gameOver(G.won);
   G.phase = 'over'; G.overT = OVER_SECONDS;
+  $('o-title').textContent = G.won ? 'Campo completo!' : 'Fim de jogo!';
+  $('o-win').hidden = !G.won;
   $('o-why').textContent = `A cobrinha ${G.cause}.`;
   $('o-len').textContent = G.body.length; $('o-fruits').textContent = G.eaten; $('o-best').textContent = G.best;
   $('o-rec').hidden = !G.recordHit;
@@ -1358,6 +1432,9 @@ function applyConfig(m) {
   if (has(m.organizar) && Number(m.organizar) >= 0) ORGANIZE_LEN = Number(m.organizar);
   if (Number(m.organizarFrutas) > 0) ORGANIZE_MAX_FRUITS = Number(m.organizarFrutas);
   if (has(m.fome) && Number(m.fome) >= 0) HUNGER = Number(m.fome);
+  if (m.estrategia === 'perfeita' || m.estrategia === 'classica') STRATEGY = m.estrategia;
+  if (Number(m.cortarAte) > 0) CUT_FRAC = clamp(Number(m.cortarAte), 0, 1);
+  if (has(m.folga) && Number(m.folga) >= 0) CUT_MARGIN = Number(m.folga);
   if (has(m.itens) && Number(m.itens) >= 0) ITEM_EVERY = Number(m.itens);
   if (Number(m.cogumelo) > 0) SHRINK_SECONDS = Number(m.cogumelo);
   if (has(m.cogumeloTamanho) && Number(m.cogumeloTamanho) >= 0) SHROOM_MIN_LEN = Number(m.cogumeloTamanho);
@@ -1385,7 +1462,19 @@ window.cobrinha = {
   passos: () => G.steps || 0,   // usado nos testes
   sorteioItem: () => pickItem(),   // usado nos testes
   item: kind => placeFruit(ITEMS[kind] ? kind : pickItem(), false),
-  cenario: id => { if (SCENES[id]) { forcedScene = id; reset(); } }
+  cenario: id => { if (SCENES[id]) { forcedScene = id; reset(); } },
+  // Treino/teste: roda passos do jogo de uma vez, sem desenhar, com uma fruta a cada X passos.
+  simular(passos, frutaACada = 8, rajada = 0) {
+    const somOn = Sound.on; Sound.setOn(false); const t0 = performance.now(); let i = 0;
+    for (; i < passos && G.phase === 'play'; i++) {
+      if (i % frutaACada === 0) placeFruit('apple', true);
+      if (rajada && i % (frutaACada * 25) === 0) for (let k = 0; k < rajada; k++) placeFruit(pick(['apple', 'green', 'orange']), true);
+      G.noEat += curStep(); step(); G.fruits = G.fruits.filter(f => !f.dead);
+    }
+    parts.length = 0; Sound.setOn(somOn);
+    return { passos: i, tamanho: G.body.length, total: CYC.ok ? CYC.L : null, pontos: G.eaten, fase: G.phase, causa: G.cause, venceu: !!G.won, cenario: sceneId, ms: Math.round(performance.now() - t0) };
+  },
+  ajustar(o) { if (o.estrategia) STRATEGY = o.estrategia; if (o.cortarAte !== undefined) CUT_FRAC = o.cortarAte; if (o.folga !== undefined) CUT_MARGIN = o.folga; }
 };
 
 /* ---------- Desenho ---------- */
@@ -1512,7 +1601,7 @@ function draw() {
   }
   const total = pts.length;
   let visible = total;
-  if (G.phase === 'dying' || G.phase === 'over') {
+  if ((G.phase === 'dying' || G.phase === 'over') && !G.won) {
     const k = clamp((G.dieT - 0.7) / 1.1, 0, 1); visible = Math.max(0, Math.round(total * (1 - k)));
     while (G.popped < total - visible) {
       const q = pts[total - 1 - G.popped];
@@ -1534,7 +1623,7 @@ function draw() {
   }
   if (n > 0) {
     const flash = G.phase === 'dying' && G.dieT < 0.7 && Math.floor(G.dieT * 12) % 2 === 0;
-    const rainbow = G.fx.rainbow > 0 && G.phase === 'play';
+    const rainbow = G.fx.rainbow > 0 && (G.phase === 'play' || G.won);
     c.fillStyle = S.shadow; for (let i = n - 1; i >= 0; i--) circle(c, pts[i].x + 3, pts[i].y + 5, rad(i) + 1);
     c.fillStyle = SNAKE.outline; for (let i = n - 1; i >= 1; i--) circle(c, pts[i].x, pts[i].y, rad(i) + 2.2);
     for (let i = n - 1; i >= 1; i--) {
@@ -1552,7 +1641,7 @@ function draw() {
       const h = pts[0], q = pts[Math.min(3, n - 1)];
       let ang = Math.atan2(h.y - q.y, h.x - q.x);
       if (Math.hypot(h.x - q.x, h.y - q.y) < 0.5) { const b0 = G.body[0], b1 = G.body[1]; ang = Math.atan2(b0.y - b1.y, b0.x - b1.x); }
-      drawHead(c, h.x, h.y, ang, R, G.phase !== 'play');
+      drawHead(c, h.x, h.y, ang, R, G.phase !== 'play' && !G.won);
     }
   }
   for (const f of G.fruits) {
