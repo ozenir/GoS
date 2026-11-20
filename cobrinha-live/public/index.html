@@ -163,6 +163,7 @@ let SPREAD_SCORE = 190;      // a partir desses pontos ela ocupa o máximo do ca
 let ITEM_EVERY = 15;         // segundos, em média, entre um item especial e outro (0 = sem itens)
 let AUTO_APPLE = 5;          // cai uma maçã sozinha a cada X segundos, mesmo sem presentes (0 = desliga)
 let FAST_SECONDS = 8;        // 🌶️ pimenta: tempo rápida
+let FAST_SPEED = 1.7;        // 🌶️ pimenta: quantas vezes mais rápida que o normal
 let SLOW_SECONDS = 8;        // ❄️ floco: tempo lenta
 let RAINBOW_SECONDS = 1.6;   // 💎 cristal: tempo arco-íris antes de ficar com a cor nova
 let SHRINK_SECONDS = 10;     // cogumelo: durante esse tempo cada maçã diminui 1 de tamanho (os pontos contam normal)
@@ -826,7 +827,7 @@ function applyItem(kind, c) {
   const it = ITEMS[kind], px = cx(c.x), py = cy(c.y);
   G.eaten += it.pts;
   if (kind === 'grape') G.grow += it.grow;
-  else if (kind === 'chili') G.fx.speed = { kind: 'fast', mul: 0.6, t: FAST_SECONDS };
+  else if (kind === 'chili') G.fx.speed = { kind: 'fast', mul: 1 / FAST_SPEED, t: FAST_SECONDS };
   else if (kind === 'snow') G.fx.speed = { kind: 'slow', mul: 1.7, t: SLOW_SECONDS };
   else if (kind === 'gem') {
     const others = PALETTES.filter(p => p !== SNAKE); SNAKE = pick(others); G.fx.rainbow = RAINBOW_SECONDS;
@@ -868,6 +869,7 @@ function eatAt(c) {
   floatText(cx(c.x), cy(c.y) - 16, f.kind === 'gold' ? '+3' : '+1');
 }
 function step() {
+  G.steps = (G.steps || 0) + 1;
   eatAt(G.body[0]);
   const mv = chooseMove(), n = G.body.length;
   if (!inside(mv.x, mv.y)) return die(S.wall, mv);
@@ -1004,6 +1006,7 @@ function applyConfig(m) {
   if (has(m.itens) && Number(m.itens) >= 0) ITEM_EVERY = Number(m.itens);
   if (Number(m.cogumelo) > 0) SHRINK_SECONDS = Number(m.cogumelo);
   if (Number(m.pimenta) > 0) FAST_SECONDS = Number(m.pimenta);
+  if (Number(m.pimentaVelocidade) > 0) FAST_SPEED = clamp(Number(m.pimentaVelocidade), 1, 4);
   if (Number(m.floco) > 0) SLOW_SECONDS = Number(m.floco);
   if (Number(m.cristal) > 0) RAINBOW_SECONDS = Number(m.cristal);
   if (Number(m.itemNoChao) > 0) ITEM_LIFE = Number(m.itemNoChao);
@@ -1023,6 +1026,7 @@ function connectWs() {
 }
 window.cobrinha = {
   gift, restart: reset,
+  passos: () => G.steps || 0,   // usado nos testes
   item: kind => placeFruit(ITEMS[kind] ? kind : pickItem(), false),
   cenario: id => { if (SCENES[id]) { forcedScene = id; reset(); } }
 };

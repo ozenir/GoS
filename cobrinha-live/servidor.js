@@ -62,7 +62,7 @@ function setStatus(st, detalhe = '') {
 wss.on('connection', c => {
   c.send(JSON.stringify({ type: 'estado', ...status, rank: topRank(), velocidade: config.jogo?.segundos_por_casa, modoSeguro: config.jogo?.modo_seguro_a_partir_de, preenchimento: config.jogo?.otimizar_preenchimento_a_partir_de,
     espacoMaximo: config.jogo?.espaco_maximo_a_partir_de, itens: config.jogo?.itens_a_cada_segundos, cogumelo: config.jogo?.cogumelo_segundos,
-    pimenta: config.jogo?.pimenta_segundos, floco: config.jogo?.floco_segundos, cristal: config.jogo?.cristal_arco_iris_segundos,
+    pimenta: config.jogo?.pimenta_segundos, pimentaVelocidade: config.jogo?.pimenta_velocidade, floco: config.jogo?.floco_segundos, cristal: config.jogo?.cristal_arco_iris_segundos,
     itemNoChao: config.jogo?.item_no_chao_segundos, macaAutomatica: config.jogo?.maca_automatica_a_cada_segundos, cenarios: config.jogo?.cenarios }));
   c.on('message', raw => {
     let m; try { m = JSON.parse(String(raw)); } catch { return; }

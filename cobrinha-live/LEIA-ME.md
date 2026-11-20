@@ -136,6 +136,7 @@ De tempos em tempos aparece um **item especial** (ele pisca e some depois de 18 
 | `maca_automatica_a_cada_segundos` | cai uma maçã sozinha a cada X segundos, para a cobra crescer mesmo sem presentes. `0` desliga. Padrão: 5 |
 | `item_no_chao_segundos` | quanto tempo um item especial fica no chão antes de sumir. Padrão: 18 |
 | `pimenta_segundos` | quanto tempo a cobra fica rápida com a 🌶️ pimenta. Padrão: 8 |
+| `pimenta_velocidade` | quantas vezes mais rápida a cobra fica com a 🌶️ pimenta (de 1 a 4; ex.: 2 = o dobro da velocidade). Padrão: 1.7 |
 | `floco_segundos` | quanto tempo a cobra fica lenta com o ❄️ floco. Padrão: 8 |
 | `cogumelo_segundos` | quanto tempo dura o efeito do 🍄 cogumelo (cada maçã diminui 1 de tamanho). Padrão: 10 |
 | `cristal_arco_iris_segundos` | quanto tempo a cobra fica arco-íris com o 💎 cristal antes de ficar com a cor nova. Padrão: 1.6 |
