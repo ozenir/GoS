@@ -12,4 +12,4 @@ if not exist "%NAV%" (
   exit /b
 )
 rem Janela so com o jogo, em pe (9:16), que nao congela quando fica atras de outra janela.
-start "" "%NAV%" --app=http://localhost:8080/#live --window-size=540,990 --user-data-dir="%~dp0.janela-do-jogo" --no-first-run --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-background-timer-throttling
+start "" "%NAV%" --app=http://localhost:8080/#live --window-size=540,990 --user-data-dir="%~dp0.janela-do-jogo" --no-first-run --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-background-timer-throttling --autoplay-policy=no-user-gesture-required

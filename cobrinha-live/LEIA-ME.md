@@ -110,6 +110,29 @@ De tempos em tempos aparece um **item especial** (ele pisca e some depois de 18 
 | 💎 Cristal | fica arco-íris por um instante e muda de cor (ajustável em `cristal_arco_iris_segundos`) |
 | 🍄 Cogumelo | só aparece com a cobra a partir do tamanho 200 (ajustável em `cogumelo_a_partir_do_tamanho`); por 10 segundos (ajustável em `cogumelo_segundos`), cada maçã comida diminui 1 de tamanho em vez de crescer (os pontos contam normal) |
 
+## Som
+
+O jogo gera a própria música e os efeitos na hora (nada de arquivos de áudio e nada de música de terceiros, então não tem problema de direitos autorais na live).
+
+| Momento | Som |
+|---|---|
+| 🌷 Jardim | tema alegre com marimba e passarinhos |
+| 🦆 Lago | tema calmo com sinos suaves e gotas d'água |
+| 🌋 Vulcão | tema épico com tambores graves |
+| ❄️ Gelo | tema cristalino com sinos e vento |
+| ⛰️ Montanhas | tema "folk" com flauta e vento |
+| 🍎 Maçã | mordida crocante, com uma notinha que sobe a cada maçã seguida |
+| 🌶️ Pimenta | arrancada; enquanto durar, a música acelera |
+| ❄️ Floco | sinos de "congelar"; enquanto durar, a música fica lenta e abafada |
+| 🍇 🍄 💎 | cada um tem seu som; o cogumelo ainda deixa um baixo engraçado tocando enquanto dura |
+
+A melodia é composta na hora, dentro da harmonia de cada cenário, e muda a cada poucos compassos.
+
+**Para o som chegar na live:**
+- **OBS:** na fonte Navegador, marque **"Controlar áudio pelo OBS"**. O som aparece no mixer do OBS e você ajusta o volume ali.
+- **TikTok LIVE Studio:** a captura de janela pega só a imagem. Deixe ligado o som do computador (áudio do sistema) no LIVE Studio para a música ir junto.
+- Abrindo pelo atalho `3-abrir-janela-do-jogo.bat` o som começa sozinho. Num navegador comum, clique uma vez na página para liberar o som (é uma regra dos navegadores).
+
 ## Como os presentes viram frutas
 
 | Presente | O que acontece |
@@ -151,6 +174,9 @@ De tempos em tempos aparece um **item especial** (ele pisca e some depois de 18 
 | `maximo_frutas_por_envio` | limite de frutas de um único envio |
 | `curtidas_por_fruta` | `0` desliga. Com `200`, a cada 200 curtidas na live cai 1 maçã |
 | `chave_euler` | deixe vazio. Veja "Problemas comuns" |
+| `som` → `ligado` | liga ou desliga todo o som (`true` / `false`) |
+| `som` → `volume_musica` | volume da música, de 0 a 1. Padrão: 0.45 |
+| `som` → `volume_efeitos` | volume dos efeitos (mordida, itens...), de 0 a 1. Padrão: 0.8 |
 | `porta` | só mude se aparecer o erro de porta em uso |
 
 Depois de mudar o `config.json`, feche a janela preta e abra de novo.

@@ -28,6 +28,11 @@
       "montanhas"
     ]
   },
+  "som": {
+    "ligado": true,
+    "volume_musica": 0.45,
+    "volume_efeitos": 0.8
+  },
   "presentes": {
     "maximo_frutas_por_envio": 80,
     "por_nome": {
