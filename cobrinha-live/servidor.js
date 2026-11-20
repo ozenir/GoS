@@ -182,6 +182,7 @@ function iniciarDemo() {
 
 /* ---------- Ligação com a live do TikTok ---------- */
 let conexao = null, desligando = false, tentando = false, espera = 15000;
+let avisouSemLive = false;
 async function tentarConectar() {
   if (tentando || desligando) return;
   tentando = true;
@@ -196,22 +197,25 @@ async function tentarConectar() {
       break;
     } catch (e) {
       const msg = String(e?.message || e);
-      if (e instanceof UserOfflineError || /offline|not live|isn't live|ended/i.test(msg)) {
+      const motivos = (e?.config?.requestErrs || []).map(x => String(x?.message || x).slice(0, 160));
+      const tudo = motivos.join(' ');
+      // Sem live aberta, o TikTok responde "user_not_found" ao procurar a sala: é o mesmo que "ainda não está ao vivo".
+      const semLive = /user_not_found/i.test(tudo);
+      if (e instanceof UserOfflineError || semLive || /offline|not live|isn't live|ended/i.test(msg)) {
         setStatus('aguardando');
-        log(`⏳ @${usuario} ainda não está ao vivo. Confiro de novo a cada 30 segundos...`);
-        try { await conexao.waitUntilLive(30); } catch { await dormir(30000); }
+        log(`⏳ @${usuario} ainda não está ao vivo (o TikTok não achou nenhuma live aberta). Confiro de novo a cada 30 segundos...`);
+        if (semLive && !avisouSemLive) {
+          avisouSemLive = true;
+          log('   Já está ao vivo e continua aparecendo isso depois de 1 minuto? Confira se o @ no config.json é o mesmo da conta que está fazendo a live.');
+        }
+        if (semLive) await dormir(30000);
+        else { try { await conexao.waitUntilLive(30); } catch { await dormir(30000); } }
       } else {
         setStatus('erro', msg.slice(0, 120));
         log(`❌ Não consegui conectar: ${msg.slice(0, 200)}`);
-        if (/room ?id/i.test(msg)) {
-          log(`   Confira se o usuário "${usuario}" está certo no config.json e se a live já está aberta.`);
-          const motivos = (e?.config?.requestErrs || []).map(x => String(x?.message || x).slice(0, 160));
-          motivos.forEach((m, i) => log(`   motivo ${i + 1}: ${m}`));
-          const tudo = motivos.join(' ');
-          if (/user_not_found/i.test(tudo)) log(`   ➜ O TikTok diz que a conta "${usuario}" NÃO EXISTE. Abra o seu perfil no TikTok, copie o @ exatamente como aparece e coloque em "usuario" no config.json.`);
-          else if (/blocked|captcha/i.test(tudo)) log('   ➜ O TikTok pode estar bloqueando este computador. Tente outra internet (ex.: o 4G do celular) ou use a chave do Euler Stream.');
-          if (/lack of permission|401|402|403/i.test(tudo) && !config.chave_euler) log('   ➜ Coloque a chave grátis do Euler Stream em "chave_euler" no config.json (veja o LEIA-ME, "Problemas comuns").');
-        }
+        motivos.forEach((m, i) => log(`   motivo ${i + 1}: ${m}`));
+        if (/blocked|captcha/i.test(tudo)) log('   ➜ O TikTok pode estar bloqueando este computador. Tente outra internet (ex.: o 4G do celular) ou use a chave do Euler Stream.');
+        else if (/lack of permission|401|402|403/i.test(tudo) && !config.chave_euler) log('   ➜ Coloque a chave grátis do Euler Stream em "chave_euler" no config.json (veja o LEIA-ME, "Problemas comuns").');
         log(`   Tento de novo em ${espera / 1000} segundos.`);
         await dormir(espera);
         espera = Math.min(espera * 2, 120000);
