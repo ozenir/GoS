@@ -1,5 +1,14 @@
 @echo off
 where node >nul 2>nul
+if errorlevel 1 if exist "%ProgramFiles%\nodejs\node.exe" set "PATH=%ProgramFiles%\nodejs;%PATH%"
+where node >nul 2>nul
+if errorlevel 1 (
+  echo.
+  echo  Instalando o Node.js, so na primeira vez. Se o Windows pedir permissao, clique em Sim.
+  winget install -e --id OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements
+  set "PATH=%ProgramFiles%\nodejs;%PATH%"
+)
+where node >nul 2>nul
 if errorlevel 1 (
   echo.
   echo  O Node.js nao esta instalado.

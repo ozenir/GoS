@@ -9,6 +9,21 @@ São duas peças que trabalham juntas:
 
 ---
 
+## Jeito mais fácil (Windows): um comando só
+
+1. Aperte **Windows + R**, digite `powershell` e aperte Enter.
+2. Cole isto e aperte Enter:
+
+   ```
+   irm https://raw.githubusercontent.com/ozenir/GoS/claude/nice-newton-l0ayop/cobrinha-live/instalar.ps1 | iex
+   ```
+
+Ele baixa o jogo para a pasta `cobrinha-live` na Área de Trabalho e instala o Node.js se faltar. Também cria o atalho **Cobrinha LIVE** na Área de Trabalho e já liga tudo: o programa dos presentes, a janela do jogo e o TikTok LIVE Studio. Rodar de novo atualiza o jogo, mas o `config.json` volta ao padrão: só a `chave_euler` é mantida, então qualquer outro ajuste seu precisa ser refeito.
+
+Nas próximas lives, basta dar dois cliques em **Cobrinha LIVE** (ou em `ligar-tudo.bat`). No LIVE Studio, só na primeira vez, configure a tela em retrato e a **Captura de janela** da janela "Cobrinha do Jardim" (passo 5 abaixo). Depois é só clicar em **Entrar ao vivo**.
+
+---
+
 ## O que você precisa
 
 1. **Um computador com Windows.** No Mac também funciona, veja o final.
