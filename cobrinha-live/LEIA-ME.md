@@ -199,7 +199,7 @@ A melodia é composta na hora, dentro da harmonia de cada cenário, e muda a cad
 | `cogumelo_chance_a_partir_do_tamanho` | a partir desse tamanho, cada item especial que cai tem a chance de `cogumelo_chance` de ser o 🍄 cogumelo. Padrão: 230 |
 | `cogumelo_chance` | chance do cogumelo (de 0 a 1) quando a cobra passa do tamanho acima. Padrão: 0.33 (33%) |
 | `cogumelo_perto_do_rabo_distancia` | quando a cabeça chega a essa distância da ponta do rabo (contando pelo caminho da cobra), sorteia a queda de um 🍄 cogumelo. Padrão: 3 |
-| `cogumelo_perto_do_rabo_chance` | chance desse sorteio (de 0 a 1). O sorteio acontece uma vez a cada vez que a cabeça chega a essa distância. Padrão: 0.5 (50%) |
+| `cogumelo_perto_do_rabo_chance` | chance desse sorteio (de 0 a 1). O sorteio acontece uma vez a cada vez que a cabeça chega a essa distância. Padrão: 0.6 (60%) |
 | `cogumelo_garantido_a_partir_dos_pontos` | ao chegar nesses **pontos** cai um 🍄 cogumelo na hora, com ou sem doações. Padrão: 250 |
 | `cogumelo_garantido_a_cada_segundos` | depois disso, cai mais um cogumelo a cada esses segundos até o fim da partida. `0` desliga. Padrão: 90 (1 min 30 s) |
 | `cristal_arco_iris_segundos` | quanto tempo a cobra fica arco-íris com o 💎 cristal antes de ficar com a cor nova. Padrão: 1.6 |
