@@ -199,6 +199,8 @@ let RAINBOW_SECONDS = 1.6;   // 💎 cristal: tempo arco-íris antes de ficar co
 let TENSE_LEN = 200;         // 🎵 a partir desse tamanho a música fica tensa
 let SHROOM_PTS = 250;        // 🍄 cogumelo garantido: ao chegar nesses pontos cai um na hora...
 let SHROOM_EVERY = 90;       // ...e depois mais um a cada esses segundos, com ou sem doações (0 = desliga)
+let SHROOM_TAIL_DIST = 3;     // 🍄 quando a cabeça chega a essa distância da ponta do rabo...
+let SHROOM_TAIL_CHANCE = 0.5; // ...há essa chance de cair um cogumelo (sorteio uma vez por aproximação)
 let SHROOM_LIFE = 5;         // 🍄 o cogumelo some se não for comido em tantos segundos depois de cair no chão
 let SHROOM_HIGH_LEN = 230;   // 🍄 a partir desse tamanho, cada item especial tem SHROOM_HIGH_CHANCE de ser o cogumelo
 let SHROOM_HIGH_CHANCE = 0.33;
@@ -1040,7 +1042,7 @@ function reset() {
     G.prevTail = { x: START_X, y: START_Y + 4 };
   }
   G.won = false; G.grow = 0; G.stepT = 0; G.phase = 'play'; G.fruits = []; G.eaten = 0;
-  G.roundRank = {}; G.popped = 0; G.wander = null; G.bumpTo = null; G.fx = {}; G.itemT = rnd(6, 10); G.autoT = AUTO_APPLE; G.noEat = 0; G.shroomT = null; G.lastFruitFrom = null; SNAKE = PALETTES[0];
+  G.roundRank = {}; G.popped = 0; G.wander = null; G.bumpTo = null; G.fx = {}; G.itemT = rnd(6, 10); G.autoT = AUTO_APPLE; G.noEat = 0; G.shroomT = null; G.lastFruitFrom = null; G.tailNear = false; SNAKE = PALETTES[0];
   $('over').hidden = true;
   ['apple', 'orange', 'green'].forEach(k => placeFruit(k, true));
   updateHud(); showIntro();
@@ -1109,6 +1111,18 @@ function relocateFruit(f) {
     burst(cx(cell.x), cy(cell.y), ['#ffffff', ...S.dust], 6, 70);
     G.relocated = (G.relocated || 0) + 1;
   }
+}
+/* Cogumelo perto do rabo: quando a distância da cabeça até a ponta do rabo vira SHROOM_TAIL_DIST,
+   sorteia uma vez (SHROOM_TAIL_CHANCE) a queda de um cogumelo. A distância é contada pelo caminho do circuito
+   (o caminho real da cabeça até o rabo); na IA clássica, em linha reta. */
+function shroomNearTail() {
+  if (SHROOM_TAIL_CHANCE <= 0 || G.body.length < 5) return;
+  const h = G.body[0], t = G.body[G.body.length - 1];
+  const d = (STRATEGY === 'perfeita' && CYC.ok) ? (CYC.idx[key(t.x, t.y)] - CYC.idx[key(h.x, h.y)] + CYC.L) % CYC.L : Math.abs(h.x - t.x) + Math.abs(h.y - t.y);
+  if (d !== SHROOM_TAIL_DIST) { G.tailNear = false; return; }
+  if (G.tailNear) return;
+  G.tailNear = true; G.tailRolls = (G.tailRolls || 0) + 1;
+  if (Math.random() < SHROOM_TAIL_CHANCE && placeFruit('shroom', false)) G.tailDrops = (G.tailDrops || 0) + 1;
 }
 // Cogumelo garantido: a partir de SHROOM_PTS pontos cai um na hora e depois um a cada SHROOM_EVERY segundos.
 function autoShroom(dt) {
@@ -1372,6 +1386,7 @@ function step() {
     updateHud(); return die('encheu o campo inteiro', null, true);
   }
   if (G.body.length > G.best) { G.best = G.body.length; try { localStorage.setItem('cobrinha.recorde', String(G.best)); } catch (e) {} }
+  shroomNearTail();
   updateHud();
 }
 function die(cause, to, won) {
@@ -1595,6 +1610,8 @@ function applyConfig(m) {
   if (has(m.cogumeloPontos) && Number(m.cogumeloPontos) >= 0) SHROOM_PTS = Number(m.cogumeloPontos);
   if (has(m.cogumeloChanceTamanho) && Number(m.cogumeloChanceTamanho) >= 0) SHROOM_HIGH_LEN = Number(m.cogumeloChanceTamanho);
   if (Number(m.cogumeloNoChao) > 0) SHROOM_LIFE = Number(m.cogumeloNoChao);
+  if (Number(m.cogumeloRaboDist) > 0) SHROOM_TAIL_DIST = Number(m.cogumeloRaboDist);
+  if (has(m.cogumeloRaboChance) && Number(m.cogumeloRaboChance) >= 0) SHROOM_TAIL_CHANCE = clamp(Number(m.cogumeloRaboChance), 0, 1);
   if (has(m.cogumeloChance) && Number(m.cogumeloChance) >= 0) SHROOM_HIGH_CHANCE = clamp(Number(m.cogumeloChance), 0, 1);
   if (has(m.cogumeloCada) && Number(m.cogumeloCada) >= 0) SHROOM_EVERY = Number(m.cogumeloCada);
   if (Number(m.pimenta) > 0) FAST_SECONDS = Number(m.pimenta);
@@ -1621,6 +1638,7 @@ window.cobrinha = {
   passos: () => G.steps || 0,   // usado nos testes
   sorteioItem: () => pickItem(),   // usado nos testes
   quedasCogumelo: () => G.shroomDrops || 0,   // usado nos testes
+  cogumeloRabo: () => ({ sorteios: G.tailRolls || 0, quedas: G.tailDrops || 0 }),   // usado nos testes
   itensNoChao: () => G.fruits.filter(f => f.item && !f.dead).map(f => f.kind),   // usado nos testes
   item: kind => placeFruit(ITEMS[kind] ? kind : pickItem(), false),
   cenario: id => { if (SCENES[id]) { forcedScene = id; reset(); } },
@@ -1630,7 +1648,14 @@ window.cobrinha = {
     for (; i < passos && G.phase === 'play'; i++) {
       if (i % frutaACada === 0) placeFruit('apple', true);
       if (rajada && i % (frutaACada * 25) === 0) for (let k = 0; k < rajada; k++) placeFruit(pick(['apple', 'green', 'orange']), true);
-      G.noEat += curStep(); step(); G.fruits = G.fruits.filter(f => !f.dead);
+      const dt = curStep(); G.noEat += dt; tickEffects(dt); step();
+      // como no jogo: frutas pousam (se caírem na cobra, são realocadas) e itens somem com o tempo
+      const occ = new Map(G.body.map((b, j) => [key(b.x, b.y), j]));
+      for (const f of G.fruits) {
+        if (f.z > 0) { f.z = 0; f.vz = 0; const j = occ.get(key(f.cx, f.cy)); if (j !== undefined && j > 0) relocateFruit(f); }
+        else if (f.item && (f.life -= dt) <= 0) f.dead = true;
+      }
+      G.fruits = G.fruits.filter(f => !f.dead);
     }
     parts.length = 0; Sound.setOn(somOn);
     return { passos: i, tamanho: G.body.length, total: CYC.ok ? CYC.L : null, pontos: G.eaten, fase: G.phase, causa: G.cause, venceu: !!G.won, cenario: sceneId, ms: Math.round(performance.now() - t0) };

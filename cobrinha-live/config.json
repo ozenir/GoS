@@ -25,6 +25,8 @@
     "cogumelo_a_partir_do_tamanho": 200,
     "cogumelo_chance_a_partir_do_tamanho": 230,
     "cogumelo_chance": 0.33,
+    "cogumelo_perto_do_rabo_distancia": 3,
+    "cogumelo_perto_do_rabo_chance": 0.5,
     "cogumelo_garantido_a_partir_dos_pontos": 250,
     "cogumelo_garantido_a_cada_segundos": 90,
     "cristal_arco_iris_segundos": 1.6,
