@@ -88,6 +88,28 @@ Para transmitir pelo OBS, o TikTok precisa liberar a **chave de transmissão** p
 
 ---
 
+## Cenários e itens especiais
+
+A cada partida o campo muda de cenário (a primeira é sempre o Jardim). Os obstáculos mudam de lugar toda vez, mas nunca fecham um pedaço do campo. Encostar neles é fim de jogo, igual à borda.
+
+| Cenário | O que tem |
+|---|---|
+| 🌷 Jardim | grama e cerca viva, sem obstáculos |
+| 🦆 Lago | um lago no meio do jardim |
+| 🌋 Vulcão | poças de lava e fagulhas subindo |
+| ❄️ Gelo | blocos de gelo e neve caindo |
+| ⛰️ Montanhas | pedras pelo campo e névoa |
+
+De tempos em tempos aparece um **item especial** (ele pisca e some depois de 18 segundos). A chuva do Leão também solta 2 itens.
+
+| Item | Efeito |
+|---|---|
+| 🍇 Uva gigante | cresce 3 de uma vez (vale 3 pontos) |
+| 🌶️ Pimenta | fica rápida por 8 segundos |
+| ❄️ Floco | fica lenta por 8 segundos |
+| 💎 Cristal | muda de cor |
+| 🍄 Cogumelo | encolhe por 8 segundos e depois volta ao tamanho |
+
 ## Como os presentes viram frutas
 
 | Presente | O que acontece |
@@ -110,6 +132,9 @@ Para transmitir pelo OBS, o TikTok precisa liberar a **chave de transmissão** p
 | `segundos_por_casa` | velocidade da cobra. Menor é mais rápida (0.12 = rápida, 0.2 = calma) |
 | `modo_seguro_a_partir_de` | pontos (🍎) a partir dos quais a cobra para de arriscar e prioriza não morrer. Padrão: 200 |
 | `otimizar_preenchimento_a_partir_de` | pontos a partir dos quais ela também ocupa o jardim de forma compacta, sem deixar buracos (e já não arrisca). Padrão: 160 |
+| `espaco_maximo_a_partir_de` | pontos a partir dos quais ela ocupa o máximo do campo, mantendo a cabeça o mais longe possível do rabo. Padrão: 190 |
+| `itens_a_cada_segundos` | de quanto em quanto tempo (em média) aparece um item especial. `0` desliga os itens. Padrão: 15 |
+| `cenarios` | quais cenários entram no rodízio: `jardim`, `lago`, `vulcao`, `gelo`, `montanhas`. Para jogar só no jardim: `["jardim"]` |
 | `por_nome` | regra para um presente específico, usando o nome em inglês que aparece na janela preta. Ex.: `"Rose": { "frutas": 1 }` |
 | `por_moedas` | regra para todos os outros presentes, pelo valor em moedas. `"chuva": true` mistura maçãs douradas |
 | `maximo_frutas_por_envio` | limite de frutas de um único envio |
@@ -147,7 +172,7 @@ npm install tiktok-live-connector@latest
 ```
 
 **Quero começar a partida do zero**
-Na janela de teste (http://localhost:8080), clique em **↻ Recomeçar**.
+Na janela de teste (http://localhost:8080), clique em **↻ Próximo cenário**. O botão **✨ Item** (ou a tecla 4) solta um item especial para testar.
 
 ---
 
