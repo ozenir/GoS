@@ -1150,12 +1150,8 @@ function draw() {
   const near = [];
   for (let i = 0; i < n; i += 3) near.push(pts[i]);
 
-  const front = [];
-  for (const tf of tufts) {
-    let best = null, bd = 1e9;
-    for (const q of near) { const dd = Math.abs(q.x - tf.x) + Math.abs(q.y - tf.y); if (dd < bd) { bd = dd; best = q; } }
-    if (best && bd < 50 && tf.y > best.y - 2) front.push(tf); else drawTuft(c, tf, near);
-  }
+  // Moitas de grama sempre na camada de baixo: a cobra passa por cima e elas só se abrem.
+  for (const tf of tufts) drawTuft(c, tf, near);
   for (const f of G.fruits) {
     const k = clamp(1 - f.z / 520, 0.2, 1);
     c.fillStyle = S.shadow; c.globalAlpha = k * 1.2; c.beginPath(); c.ellipse(cx(f.cx) + 1, cy(f.cy) + 3, f.r * k + 1, f.r * 0.45 * k + 0.5, 0, 0, TAU); c.fill(); c.globalAlpha = 1;
@@ -1187,7 +1183,6 @@ function draw() {
     const fx = cx(f.cx), fy = cy(f.cy) - f.z - f.r * 0.5;
     if (f.item) drawItem(c, fx, fy, f); else drawFruit(c, fx, fy, f.r, f.kind, f.sq);
   }
-  for (const tf of front) drawTuft(c, tf, near);
 
   for (const q of parts) {
     const k = 1 - q.age / q.life; c.globalAlpha = k;
