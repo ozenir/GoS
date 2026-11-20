@@ -124,6 +124,7 @@ O jogo gera a própria música e os efeitos na hora (nada de arquivos de áudio 
 | 🍎 Maçã | mordida crocante, com uma notinha que sobe a cada maçã seguida |
 | 🌶️ Pimenta | arrancada; enquanto durar, a música acelera |
 | ❄️ Floco | sinos de "congelar"; enquanto durar, a música fica lenta e abafada |
+| 🐍 Tamanho 200+ | a música vira uma versão **tensa** do cenário: tom menor, baixo pulsando, coração batendo e subidas de suspense. Volta ao normal se a cobra ficar menor |
 | 🍇 🍄 💎 | cada um tem seu som; o cogumelo ainda deixa um baixo engraçado tocando enquanto dura |
 
 A melodia é composta na hora, dentro da harmonia de cada cenário, e muda a cada poucos compassos.
@@ -177,6 +178,7 @@ A melodia é composta na hora, dentro da harmonia de cada cenário, e muda a cad
 | `som` → `ligado` | liga ou desliga todo o som (`true` / `false`) |
 | `som` → `volume_musica` | volume da música, de 0 a 1. Padrão: 0.45 |
 | `som` → `volume_efeitos` | volume dos efeitos (mordida, itens...), de 0 a 1. Padrão: 0.8 |
+| `som` → `musica_tensa_a_partir_do_tamanho` | a partir desse tamanho a música do cenário fica tensa (tom menor, coração batendo, suspense). Padrão: 200 |
 | `porta` | só mude se aparecer o erro de porta em uso |
 
 Depois de mudar o `config.json`, feche a janela preta e abra de novo.

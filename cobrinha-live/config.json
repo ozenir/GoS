@@ -31,7 +31,8 @@
   "som": {
     "ligado": true,
     "volume_musica": 0.45,
-    "volume_efeitos": 0.8
+    "volume_efeitos": 0.8,
+    "musica_tensa_a_partir_do_tamanho": 200
   },
   "presentes": {
     "maximo_frutas_por_envio": 80,

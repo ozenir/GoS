@@ -172,6 +172,7 @@ let FAST_SECONDS = 8;        // 🌶️ pimenta: tempo rápida
 let FAST_SPEED = 1.7;        // 🌶️ pimenta: quantas vezes mais rápida que o normal
 let SLOW_SECONDS = 8;        // ❄️ floco: tempo lenta
 let RAINBOW_SECONDS = 1.6;   // 💎 cristal: tempo arco-íris antes de ficar com a cor nova
+let TENSE_LEN = 200;         // 🎵 a partir desse tamanho a música fica tensa
 let SHROOM_MIN_LEN = 200;    // 🍄 o cogumelo só aparece quando a cobra tem pelo menos esse tamanho
 let SHRINK_SECONDS = 10;     // cogumelo: durante esse tempo cada maçã diminui 1 de tamanho (os pontos contam normal)
 const MIN_LEN = 4;          // tamanho mínimo da cobra
@@ -621,7 +622,7 @@ const Sound = (() => {
   let ac = null, out = null, enabled = true, musicVol = 0.45, sfxVol = 0.8;
   const MASTER = 1.8;
   const themeGain = () => (theme && theme.gain) || 1;
-  let theme = null, phrase = null, nextTime = 0, step = 0;
+  let theme = null, cur = null, tense = false, phrase = null, nextTime = 0, step = 0;   // theme = tema do cenário; cur = o que está tocando (normal ou tenso)
   let combo = 0, lastBite = 0, lastGift = 0;
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -713,13 +714,28 @@ const Sound = (() => {
     soft: (s, t, D) => { if (s === 0 || s === 8) I.kick(t, 0.3, D); if (s % 4 === 2) I.shaker(t, 0.05, D); if (s === 4 || s === 12) I.hat(t, 0.03, D); },
     folk: (s, t, D) => { if (s === 0 || s === 10) I.kick(t, 0.26, D); if (s % 2 === 0) I.shaker(t, s % 4 === 2 ? 0.05 : 0.022, D); },
     taiko: (s, t, D) => { if (s === 0) I.tom(t, 90, 0.42, D); if (s === 6 || s === 11) I.tom(t, 120, 0.24, D); if (s === 8) I.tom(t, 75, 0.36, D); if (s === 14) I.tom(t, 150, 0.16, D); if (s % 4 === 2) I.hat(t, 0.022, D); },
-    none: (s, t, D) => { if (s === 8) I.shaker(t, 0.025, D); }
+    none: (s, t, D) => { if (s === 8) I.shaker(t, 0.025, D); },
+    heart: (s, t, D) => { if (s === 0 || s === 8) I.kick(t, 0.34, D); if (s === 2 || s === 10) I.kick(t, 0.2, D); if (s % 2 === 1) I.hat(t, 0.018, D); }
   };
   function extra(kind, t, D) {
     if (kind === 'birds') { for (let k = 0; k < 2; k++) osc('sine', 2600 + Math.random() * 800, t + k * 0.13, 0.08, 0.025, D, { to: 4200, glide: 0.07 }); }
     else if (kind === 'drops') osc('sine', 900 + Math.random() * 500, t, 0.12, 0.05, D, { to: 300, glide: 0.1 });
     else if (kind === 'rumble') noise(t, 1.2, 0.07, D, 'lowpass', 140, 0.7, 0.3);
     else if (kind === 'wind') noise(t, 2.5, 0.03, D, 'bandpass', 500 + Math.random() * 400, 0.8, 1.0, 900);
+  }
+  /* Versão tensa (cobra grande): tom menor que termina em acorde maior de suspense, mais rápida,
+     baixo pulsando, arpejo escuro, batida de coração e subida de suspense a cada 4 compassos.
+     O instrumento principal do cenário continua, para lembrar onde estamos. */
+  function tenseOf(base) {
+    return { ...base, tense: true, bpm: Math.round(base.bpm * 1.12),
+      prog: [[48, 51, 55], [44, 48, 51], [41, 44, 48], [43, 47, 50]], bass: [36, 32, 29, 31], bassSteps: [0, 2, 4, 6, 8, 10, 12, 14],
+      scale: [72, 74, 75, 77, 79, 80, 83, 84], rhythm: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1], leadVol: base.leadVol * 0.9, leadLen: 2,
+      arp: 'saw', arpEvery: 1, arpPat: [0, 1, 2, 1], arpOct: 1, arpVol: 0.035, pad: 'sawtooth', padVol: 0.07, bassVol: 0.2, drums: 'heart' };
+  }
+  function _tenseIn(t) {   // "boom" grave marcando a virada
+    osc('sine', 70, t, 1.3, 0.5, out.music, { to: 34, glide: 1.1 });
+    noise(t, 1.1, 0.12, out.music, 'lowpass', 220, 0.7, 0.01);
+    I.bell(t + 0.05, 48, 1.6, 0.06, out.music);
   }
   function makePhrase(th) {
     const out = [];
@@ -740,7 +756,7 @@ const Sound = (() => {
     return out;
   }
   function playStep(i, t, spb, fx) {
-    const th = theme, M = out.music, bars = th.prog.length, bar = Math.floor(i / 16) % bars, s = i % 16, chord = th.prog[bar];
+    const th = cur || theme, M = out.music, bars = th.prog.length, bar = Math.floor(i / 16) % bars, s = i % 16, chord = th.prog[bar];
     if (s === 0) I.pad(t, chord.map(m => m + 12), spb * 16, th.padVol, M, th.pad);
     if (th.bassSteps.includes(s)) I.bass(t, th.bass[bar], spb * (s === 0 ? 6 : 3), th.bassVol, M);
     if (s % th.arpEvery === 0) {
@@ -750,6 +766,7 @@ const Sound = (() => {
     const n = phrase[i % phrase.length]; if (n != null) I[th.lead](t, n, spb * th.leadLen, th.leadVol, M);
     DRUMS[th.drums](s, t, M);
     if (s === 0 && Math.random() < 0.5) extra(th.extra, t + spb * Math.floor(Math.random() * 12), M);
+    if (th.tense && s === 0 && bar === bars - 1) noise(t, 0.25, 0.07, M, 'bandpass', 300, 2, spb * 15, 3200);   // subida de suspense
     // música dos itens enquanto o efeito dura
     if (fx.fast) { I.hat(t, s % 2 ? 0.03 : 0.05, M); if (s % 2 === 0) I.bass(t, th.bass[bar] + 12, spb * 1.5, th.bassVol * 0.7, M); if (s % 4 === 0) I.kick(t, 0.22, M); }
     if (fx.slow && s % 4 === 2 && Math.random() < 0.6) I.bell(t, th.scale[Math.floor(Math.random() * th.scale.length)] + 12, 1.2, 0.05, M);
@@ -802,7 +819,12 @@ const Sound = (() => {
     const fx = fxState(), now = ac.currentTime;
     out.music.gain.setTargetAtTime(musicVol * themeGain() * (G.phase === 'play' ? 1 : 0.35), now, 0.25);
     out.musicFilter.frequency.setTargetAtTime(fx.slow ? 1300 : 18000, now, 0.3);
-    const spb = 60 / (theme.bpm * speedOf(fx)) / 4;
+    const want = G.phase === 'play' && G.body.length >= TENSE_LEN;
+    if (want !== tense) {                                  // entra/sai da música tensa no começo de um compasso novo
+      tense = want; cur = tense ? tenseOf(theme) : theme; phrase = makePhrase(cur); step = 0;
+      nextTime = Math.max(nextTime, now + 0.05); if (tense) _tenseIn(nextTime);
+    }
+    const spb = 60 / ((cur || theme).bpm * speedOf(fx)) / 4;
     if (nextTime < now - 0.3) nextTime = now + 0.05;      // a aba ficou parada: não despeja notas atrasadas
     while (nextTime < now + 0.15) { playStep(step, nextTime, spb, fx); nextTime += spb; step++; }
   }
@@ -815,7 +837,7 @@ const Sound = (() => {
     setOn(v) { enabled = !!v; if (out) out.master.gain.setTargetAtTime(enabled ? MASTER : 0, ac.currentTime, 0.05); if (enabled) this.unlock(); },
     setVolumes(m, s) { if (m >= 0) musicVol = m; if (s >= 0) sfxVol = s; if (out) { out.music.gain.value = musicVol; out.sfx.gain.value = sfxVol; } },
     setScene(id) {
-      theme = THEMES[id] || THEMES.jardim; phrase = makePhrase(theme); step = 0;
+      theme = THEMES[id] || THEMES.jardim; cur = theme; tense = false; phrase = makePhrase(theme); step = 0;
       if (ready()) { nextTime = ac.currentTime + 0.6; _intro(ac.currentTime + 0.05); }
     },
     bite(kind, shrinking) {
@@ -827,9 +849,9 @@ const Sound = (() => {
     bonk() { if (ready()) _bonk(ac.currentTime + 0.005); },
     gameOver() { if (ready()) _over(ac.currentTime); },
     /* Gera uma amostra em áudio (usado para conferir o som fora do jogo). */
-    async renderDemo(id, seconds) {
+    async renderDemo(id, seconds, tenseAt) {
       const sr = 44100, oc = new OfflineAudioContext(2, Math.floor(sr * seconds), sr);
-      const saved = { ac, out, theme, phrase };
+      const saved = { ac, out, theme, cur, phrase };
       if (id === 'efeitos') {   // amostra só com os efeitos: mordidas seguidas, cada item, presentes, batida e fim
         ac = oc; out = build(oc); theme = THEMES.jardim;
         let tt = 0.3; for (let c = 0; c < 6; c++, tt += 0.55) _bite(tt, c === 5 ? 'gold' : 'apple', false, c);
@@ -838,16 +860,20 @@ const Sound = (() => {
         ac = saved.ac; out = saved.out; theme = saved.theme; phrase = saved.phrase;
         return finish(await oc.startRendering(), sr);
       }
-      ac = oc; out = build(oc); theme = THEMES[id]; phrase = makePhrase(theme); out.music.gain.value = musicVol * themeGain();
-      const fastA = seconds * 0.45, fastB = seconds * 0.62, slowA = seconds * 0.74, slowB = seconds * 0.9;
+      ac = oc; out = build(oc); theme = THEMES[id]; cur = theme; phrase = makePhrase(theme); out.music.gain.value = musicVol * themeGain();
+      const fastA = tenseAt ? 1e9 : seconds * 0.45, fastB = tenseAt ? 1e9 : seconds * 0.62, slowA = tenseAt ? 1e9 : seconds * 0.74, slowB = tenseAt ? 1e9 : seconds * 0.9;
       out.musicFilter.frequency.setValueAtTime(18000, 0);
-      out.musicFilter.frequency.setValueAtTime(1300, slowA); out.musicFilter.frequency.setValueAtTime(18000, slowB);
+      if (!tenseAt) { out.musicFilter.frequency.setValueAtTime(1300, slowA); out.musicFilter.frequency.setValueAtTime(18000, slowB); }
       _intro(0.05);
       let t = 0.7, i = 0;
-      while (t < seconds - 0.4) { const fx = { fast: t > fastA && t < fastB, slow: t > slowA && t < slowB, shrink: false, rainbow: false }; const spb = 60 / (theme.bpm * speedOf(fx)) / 4; playStep(i, t, spb, fx); t += spb; i++; }
-      let c = 0; for (let b = 1.5; b < fastA - 0.5; b += 1.1) _bite(b, b > 4 && b < 4.6 ? 'gold' : 'apple', false, c++);
-      _gift(1.0, false); _item(fastA - 0.2, 'chili'); _item(slowA - 0.2, 'snow');
-      ac = saved.ac; out = saved.out; theme = saved.theme; phrase = saved.phrase;
+      let switched = false;
+      while (t < seconds - 0.4) {
+        if (tenseAt && !switched && t >= tenseAt) { switched = true; cur = tenseOf(theme); phrase = makePhrase(cur); i = 0; _tenseIn(t); }
+        const fx = { fast: t > fastA && t < fastB, slow: t > slowA && t < slowB, shrink: false, rainbow: false }; const spb = 60 / (cur.bpm * speedOf(fx)) / 4; playStep(i, t, spb, fx); t += spb; i++;
+      }
+      let c = 0; for (let b = 1.5; b < Math.min(fastA, tenseAt || 1e9) - 0.5; b += 1.1) _bite(b, b > 4 && b < 4.6 ? 'gold' : 'apple', false, c++);
+      _gift(1.0, false); if (!tenseAt) { _item(fastA - 0.2, 'chili'); _item(slowA - 0.2, 'snow'); }
+      ac = saved.ac; out = saved.out; theme = saved.theme; cur = saved.cur; phrase = saved.phrase;
       return finish(await oc.startRendering(), sr);
     }
   };
@@ -1305,6 +1331,7 @@ function showStatus(m) {
 }
 function applyConfig(m) {
   if (typeof m.somLigado === 'boolean') { Sound.setOn(m.somLigado); updateSoundBtn(); }
+  if (has(m.musicaTensa) && Number(m.musicaTensa) >= 0) TENSE_LEN = Number(m.musicaTensa);
   Sound.setVolumes(has(m.volumeMusica) ? Number(m.volumeMusica) : -1, has(m.volumeEfeitos) ? Number(m.volumeEfeitos) : -1);
   if (Number(m.velocidade) > 0) STEP = clamp(Number(m.velocidade), 0.06, 0.5);
   if (has(m.modoSeguro) && Number(m.modoSeguro) >= 0) SAFE_SCORE = Number(m.modoSeguro);
