@@ -131,7 +131,7 @@ De tempos em tempos aparece um **item especial** (ele pisca e some depois de 18 
 | 🌶️ Pimenta | fica rápida por 8 segundos (ajustável em `pimenta_segundos`) |
 | ❄️ Floco | fica lenta por 8 segundos (ajustável em `floco_segundos`) |
 | 💎 Cristal | fica arco-íris por um instante e muda de cor (ajustável em `cristal_arco_iris_segundos`) |
-| 🍄 Cogumelo | aparece sorteado com a cobra a partir do tamanho 200 (ajustável em `cogumelo_a_partir_do_tamanho`); **a partir do tamanho 240, cada item tem 60% de chance de ser o cogumelo** e **cai garantido ao chegar a 250 pontos e depois a cada 1 min 30 s**, com ou sem doações; por 10 segundos (ajustável em `cogumelo_segundos`), cada maçã comida diminui 1 de tamanho em vez de crescer (os pontos contam normal) |
+| 🍄 Cogumelo | aparece sorteado com a cobra a partir do tamanho 200 (ajustável em `cogumelo_a_partir_do_tamanho`); **a partir do tamanho 230, cada item tem 60% de chance de ser o cogumelo** e **cai garantido ao chegar a 250 pontos e depois a cada 1 min 30 s**, com ou sem doações; por 10 segundos (ajustável em `cogumelo_segundos`), cada maçã comida diminui 1 de tamanho em vez de crescer (os pontos contam normal) |
 
 ## Som
 
@@ -193,7 +193,7 @@ A melodia é composta na hora, dentro da harmonia de cada cenário, e muda a cad
 | `floco_segundos` | quanto tempo a cobra fica lenta com o ❄️ floco. Padrão: 8 |
 | `cogumelo_segundos` | quanto tempo dura o efeito do 🍄 cogumelo (cada maçã diminui 1 de tamanho). Padrão: 10 |
 | `cogumelo_a_partir_do_tamanho` | o 🍄 cogumelo só começa a aparecer quando a cobra tem pelo menos esse tamanho. `0` = desde o começo. Padrão: 200 |
-| `cogumelo_chance_a_partir_do_tamanho` | a partir desse tamanho, cada item especial que cai tem a chance de `cogumelo_chance` de ser o 🍄 cogumelo. Padrão: 240 |
+| `cogumelo_chance_a_partir_do_tamanho` | a partir desse tamanho, cada item especial que cai tem a chance de `cogumelo_chance` de ser o 🍄 cogumelo. Padrão: 230 |
 | `cogumelo_chance` | chance do cogumelo (de 0 a 1) quando a cobra passa do tamanho acima. Padrão: 0.6 (60%) |
 | `cogumelo_garantido_a_partir_dos_pontos` | ao chegar nesses **pontos** cai um 🍄 cogumelo na hora, com ou sem doações. Padrão: 250 |
 | `cogumelo_garantido_a_cada_segundos` | depois disso, cai mais um cogumelo a cada esses segundos até o fim da partida. `0` desliga. Padrão: 90 (1 min 30 s) |

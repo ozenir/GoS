@@ -22,7 +22,7 @@
     "floco_segundos": 8,
     "cogumelo_segundos": 10,
     "cogumelo_a_partir_do_tamanho": 200,
-    "cogumelo_chance_a_partir_do_tamanho": 240,
+    "cogumelo_chance_a_partir_do_tamanho": 230,
     "cogumelo_chance": 0.6,
     "cogumelo_garantido_a_partir_dos_pontos": 250,
     "cogumelo_garantido_a_cada_segundos": 90,
