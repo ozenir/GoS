@@ -108,7 +108,7 @@ De tempos em tempos aparece um **item especial** (ele pisca e some depois de 18 
 | 🌶️ Pimenta | fica rápida por 8 segundos (ajustável em `pimenta_segundos`) |
 | ❄️ Floco | fica lenta por 8 segundos (ajustável em `floco_segundos`) |
 | 💎 Cristal | fica arco-íris por um instante e muda de cor (ajustável em `cristal_arco_iris_segundos`) |
-| 🍄 Cogumelo | por 10 segundos (ajustável em `cogumelo_segundos`), cada maçã comida diminui 1 de tamanho em vez de crescer (os pontos contam normal) |
+| 🍄 Cogumelo | só aparece com a cobra a partir do tamanho 200 (ajustável em `cogumelo_a_partir_do_tamanho`); por 10 segundos (ajustável em `cogumelo_segundos`), cada maçã comida diminui 1 de tamanho em vez de crescer (os pontos contam normal) |
 
 ## Como os presentes viram frutas
 
@@ -142,6 +142,7 @@ De tempos em tempos aparece um **item especial** (ele pisca e some depois de 18 
 | `pimenta_velocidade` | quantas vezes mais rápida a cobra fica com a 🌶️ pimenta (de 1 a 4; ex.: 2 = o dobro da velocidade). Padrão: 1.7 |
 | `floco_segundos` | quanto tempo a cobra fica lenta com o ❄️ floco. Padrão: 8 |
 | `cogumelo_segundos` | quanto tempo dura o efeito do 🍄 cogumelo (cada maçã diminui 1 de tamanho). Padrão: 10 |
+| `cogumelo_a_partir_do_tamanho` | o 🍄 cogumelo só começa a aparecer quando a cobra tem pelo menos esse tamanho. `0` = desde o começo. Padrão: 200 |
 | `cristal_arco_iris_segundos` | quanto tempo a cobra fica arco-íris com o 💎 cristal antes de ficar com a cor nova. Padrão: 1.6 |
 | `itens_a_cada_segundos` | de quanto em quanto tempo (em média) aparece um item especial. `0` desliga os itens. Padrão: 15 |
 | `cenarios` | quais cenários entram no rodízio: `jardim`, `lago`, `vulcao`, `gelo`, `montanhas`. Para jogar só no jardim: `["jardim"]` |

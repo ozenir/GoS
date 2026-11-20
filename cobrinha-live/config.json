@@ -18,6 +18,7 @@
     "pimenta_velocidade": 1.7,
     "floco_segundos": 8,
     "cogumelo_segundos": 10,
+    "cogumelo_a_partir_do_tamanho": 200,
     "cristal_arco_iris_segundos": 1.6,
     "cenarios": [
       "jardim",
