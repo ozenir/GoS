@@ -359,7 +359,8 @@ function buildCycle() {
   let c = start, i = 0;
   do { idx[c] = i++; prev[next[c]] = c; c = next[c]; } while (c !== start && c >= 0 && i <= N);
   const free = N - OBST_CELLS.length;
-  return { ok: c === start && i === free, L: i, next, prev, idx, start };
+  const order = new Int16Array(i).fill(-1); for (let k = 0; k < N; k++) if (idx[k] >= 0) order[idx[k]] = k;   // posição no circuito -> casa
+  return { ok: c === start && i === free, L: i, next, prev, idx, order, start };
 }
 /* Estratégia perfeita: segue o circuito e corta caminho até a fruta quando é seguro.
    Cortar caminho nunca passa do rabo no circuito, então a cobra nunca se tranca. */
@@ -1077,6 +1078,30 @@ function dripFruits(dt) {
     G.queue.shift(); G.dropT += 0.07;
   }
   if (G.dropT < 0) G.dropT = 0;
+}
+/* Fruta que caiu em cima da cobra: pula para 3 casas antes do rabo, no caminho do circuito.
+   A cabeça anda pelo circuito em direção ao rabo, então ela passa por ali e come a fruta a tempo.
+   Se a casa estiver ocupada, tenta a próxima em direção à cabeça; sem espaço (ou na IA clássica), vai para uma casa livre qualquer. */
+const RELOCATE_BEFORE_TAIL = 3;
+function relocateFruit(f) {
+  let cell = null;
+  if (STRATEGY === 'perfeita' && CYC.ok) {
+    const b = G.body, L = CYC.L, h = b[0], t = b[b.length - 1];
+    const hi = CYC.idx[key(h.x, h.y)], ti = CYC.idx[key(t.x, t.y)], gap = (ti - hi + L) % L;
+    const busy = new Set(b.map(p => key(p.x, p.y)));
+    for (const o of G.fruits) if (o !== f && !o.dead) busy.add(key(o.cx, o.cy));
+    for (let back = RELOCATE_BEFORE_TAIL; back < gap; back++) {
+      const k = CYC.order[(ti - back + L) % L];
+      if (k >= 0 && !busy.has(k)) { cell = { x: k % COLS, y: (k / COLS) | 0 }; break; }
+    }
+  }
+  if (!cell) { const free = freeCells(); if (free.length) cell = pick(free); }
+  if (cell) {   // aparece direto no chão da casa nova (com um "puf"), para já poder ser comida
+    burst(cx(f.cx), cy(f.cy), S.dust, 4, 50);
+    f.cx = cell.x; f.cy = cell.y; f.z = 0; f.vz = 0; f.sq = 0.5;
+    burst(cx(cell.x), cy(cell.y), ['#ffffff', ...S.dust], 6, 70);
+    G.relocated = (G.relocated || 0) + 1;
+  }
 }
 // Cogumelo garantido: a partir de SHROOM_PTS pontos cai um na hora e depois um a cada SHROOM_EVERY segundos.
 function autoShroom(dt) {
@@ -1823,7 +1848,7 @@ function update(dt) {
         else {
           f.vz = 0;
           const i = occ.get(key(f.cx, f.cy));
-          if (i !== undefined && i > 0) { const free = freeCells(); if (free.length) { const c = pick(free); f.cx = c.x; f.cy = c.y; f.z = 70; } }
+          if (i !== undefined && i > 0) relocateFruit(f);
         }
       }
     } else if (f.item && G.phase === 'play' && (f.life -= dt) <= 0) {
