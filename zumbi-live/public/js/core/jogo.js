@@ -14,6 +14,7 @@ import {
   TORCIDA, aplicarTorcida, aplicarPericias, PERICIAS
 } from './dano.js';
 import { STATUS, Estados, sincronizarAtributos } from './status.js';
+import { AMBIENTE, efeitoDoAmbiente, faixaLivre, machuca } from './ambiente.js';
 import {
   AMEACA, furiaDaHorda, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos
 } from './ameaca.js';
@@ -117,7 +118,8 @@ export class Jogo {
     this.zumbis = [];
     this.aliados = [];
     this.itens = [];
-    this.armadilhas = [];
+    this.zonas = [];          // perigos que aparecem durante o jogo (vidro de presente, fogo de explosão...)
+    this.zonasAgora = [];     // perigos perto do herói neste quadro (cidade ou prédio + os de cima)
     this.agendados = [];
     this.filaCd = 0;
     this.voto = null;
@@ -204,6 +206,7 @@ export class Jogo {
     }
     this.protecao = Math.max(0, this.protecao - dt);
     this.atualizarTorcida(dt);
+    this.atualizarZonas(dt);
     this.noiteT = Math.max(0, this.noiteT - dt);
     this.heliT = Math.max(0, this.heliT - dt);
     this.diretor(dt);
@@ -212,7 +215,6 @@ export class Jogo {
     this.atualizarAliados(dt);
     this.atualizarZumbis(dt);
     this.atualizarItens(dt);
-    this.atualizarArmadilhas(dt);
   }
 
   agendar(t, fn, sempre = false) { this.agendados.push({ t, fn, sempre }); }
@@ -332,7 +334,7 @@ export class Jogo {
     for (const a of this.aliados) { a.x = h.x + this.rng.range(-1, 1); a.y = h.y - 0.3; }
     // Itens que estavam caindo lá fora entram junto
     for (const it of this.itens) { const p = this.room.pontoLivre(this.rng, null); it.x = p.x; it.y = p.y; }
-    this.armadilhas = [];
+    this.zonas = [];
     const info = this.room.info;
     const nZ = Math.round(info.zumbis * multPredio(this.nivelAmeaca, this.A));
     for (let k = 0; k < nZ; k++) {
@@ -566,9 +568,16 @@ export class Jogo {
       // Passou do cruzamento (foi empurrado por zumbis): volta até ele
       return { x: alvo.x, y: alvo.y };
     }
-    // Segue o meio da rua, olhando um pouco à frente
+    // Segue o meio da rua, olhando um pouco à frente; se tem perigo no chão, desvia pela faixa livre
     const passo = Math.min(1.6, Math.max(0, falta));
-    return dx ? { x: h.x + dx * passo, y: alvo.y } : { x: alvo.x, y: h.y + dy * passo };
+    this.faixaT = (this.faixaT || 0) - dt;
+    if (this.faixaT <= 0) {
+      this.faixaT = 0.3;
+      const cx = dx ? h.x : alvo.x, cy = dx ? alvo.y : h.y;
+      this.faixa = faixaLivre(cx, cy, dx, dy, this.zonasAgora, Math.min(3.5, Math.max(0.5, falta)));
+    }
+    const lado = this.faixa || 0;
+    return dx ? { x: h.x + dx * passo, y: alvo.y + dx * lado } : { x: alvo.x - dy * lado, y: h.y + dy * passo };
   }
 
   /* =================== Herói =================== */
@@ -668,20 +677,9 @@ export class Jogo {
     }
     const vm = Math.hypot(vx, vy);
     if (vm > 1) { vx /= vm; vy /= vm; }
-    // armadilhas de vidro
-    let noVidro = false;
-    if (!this.room) for (const a of this.armadilhas) {
-      if (a.tipo === 'vidro' && h.x > a.x0 && h.x < a.x1 && h.y > a.y0 && h.y < a.y1) {
-        if (!a.pisou) {
-          a.pisou = true;
-          this.deixarLento(a.segundos);
-          if (this.ferirHeroi(3, a.quem, 'cacos de vidro', 'corte')) this.aplicarStatus(h, 'sangramento', { pilhas: 2, fonte: a.quem });
-          this.emit('vidro_pisou', { x: h.x, y: h.y });
-        }
-        noVidro = true;
-      }
-    }
-    const vel = velocidadeHeroi(h, this.cfg.velHeroi, { lutando: lutando && !perto, noVidro }) * h.estados.lentidao();
+    // Perigos do chão (ambiente.js): machucam, causam status e deixam lento
+    const amb = this.ambienteNoHeroi(dt);
+    const vel = velocidadeHeroi(h, this.cfg.velHeroi, { lutando: lutando && !perto }) * h.estados.lentidao() * amb.lentidao;
     const antesX = h.x, antesY = h.y;
     this.mover(h, vx * vel * dt, vy * vel * dt, 0.22);
     const andou = Math.hypot(h.x - antesX, h.y - antesY);
@@ -1010,6 +1008,16 @@ export class Jogo {
       for (const d of st.danos) this.ferirZumbi(z, danoNoZumbi(z, d.valor, d.tipo), null, true);
       if (z.morto) continue;
       if (z.estados.parado()) { z.atkCd = Math.max(z.atkCd, 0.25); continue; }
+      // Perigos do chão também pegam os zumbis
+      let lentidaoChao = 1;
+      if (this.zonasAgora.length) {
+        const amb = efeitoDoAmbiente(z, this.zonasAgora, dt, this.t, this.rng);
+        lentidaoChao = amb.lentidao;
+        for (const d of amb.danos) this.ferirZumbi(z, danoNoZumbi(z, d.valor, d.tipo), null, true);
+        if (z.morto) continue;
+        for (const s of amb.status) this.aplicarStatus(z, s.id, { duracao: s.duracao, pilhas: s.pilhas });
+        if (amb.apagaFogo) z.estados.remover('queimando');
+      }
       // empurrão
       if (z.kx || z.ky) {
         this.mover(z, z.kx * dt, z.ky * dt, 0.2);
@@ -1061,7 +1069,7 @@ export class Jogo {
           if (dd < rr * rr && dd > 1e-6) { const q = Math.sqrt(dd); sx += ddx / q * (rr - q); sy += ddy / q * (rr - q); }
         }
       }
-      const vel = z.vel * z.velMult * z.estados.lentidao() * (noite ? 1.12 : 1) * (vivo ? 1 : 0.25);
+      const vel = z.vel * z.velMult * z.estados.lentidao() * lentidaoChao * (noite ? 1.12 : 1) * (vivo ? 1 : 0.25);
       const perto = d < T.alcance + 0.12;
       const avanco = perto ? 0 : vel * dt;
       this.mover(z, mx * avanco + sx * 0.5 * dt * 4, my * avanco + sy * 0.5 * dt * 4, Math.min(0.3, T.raio * 0.7));
@@ -1114,6 +1122,8 @@ export class Jogo {
 
   explodir(x, y, raio, danoHeroi, danoZumbi, quem, causa) {
     this.emit('explosao', { x, y, raio });
+    // explosão grande deixa o chão pegando fogo por alguns segundos
+    if (raio >= 1.5 && this.zonas.length < 12) { const m = raio * 0.55; this.zonas.push({ tipo: 'fogo', x0: x - m, y0: y - m, x1: x + m, y1: y + m, t: 4, semente: this.rng.int(1, 1e6) }); }
     const h = this.hero;
     const dh = dist(x, y, h.x, h.y);
     if (danoHeroi > 0 && dh < raio) this.ferirHeroi(danoExplosao(danoHeroi, dh, raio), quem, causa, 'explosao');
@@ -1343,14 +1353,37 @@ export class Jogo {
     }
   }
 
+  // Presente "cacos de vidro": cobre a rua de lado a lado logo à frente (não tem como desviar)
   armadilhaVidro(seg, quem) {
     const h = this.hero;
     if (this.room) { this.deixarLento(seg); this.emit('vidro_pisou', { x: h.x, y: h.y }); return; }
     const p = this.pontoAFrente(4);
     const [dx] = DIRS[this.rota.dir];
-    // cobre a rua de lado a lado, 2 casas de comprimento
     const a = dx ? { x0: p.x - 1, x1: p.x + 1, y0: p.y - 2.5, y1: p.y + 2.5 } : { x0: p.x - 2.5, x1: p.x + 2.5, y0: p.y - 1, y1: p.y + 1 };
-    this.armadilhas.push({ tipo: 'vidro', ...a, segundos: seg, quem, t: 30, pisou: false, semente: this.rng.int(1, 1e6) });
+    this.zonas.push({ tipo: 'vidro', ...a, t: 30, quem, lentoAoEntrar: seg, semente: this.rng.int(1, 1e6) });
+  }
+
+  // Perigos ativos perto do herói (uma vez por quadro) e o tempo de vida dos que aparecem no jogo
+  atualizarZonas(dt) {
+    for (const z of this.zonas) z.t -= dt;
+    if (this.zonas.some(z => z.t <= 0)) this.zonas = this.zonas.filter(z => z.t > 0);
+    const h = this.hero;
+    const fixas = this.room ? (this.room.zonas || []) : this.city.zonasEm(h.x - 26, h.y - 26, h.x + 26, h.y + 26);
+    this.zonasAgora = this.zonas.length ? fixas.concat(this.zonas) : fixas;
+  }
+
+  ambienteNoHeroi(dt) {
+    const h = this.hero;
+    const r = efeitoDoAmbiente(h, this.zonasAgora, dt, this.t, this.rng);
+    for (const z of r.entrou) {
+      if (z.lentoAoEntrar) { this.deixarLento(z.lentoAoEntrar); this.aplicarStatus(h, 'sangramento', { pilhas: 2, fonte: z.quem }); this.emit('vidro_pisou', { x: h.x, y: h.y }); }
+      if (machuca(z.tipo)) this.emit('ambiente', { tipo: z.tipo, x: h.x, y: h.y });
+    }
+    for (const d of r.danos) this.ferirHeroi(d.valor, d.zona.quem || null, AMBIENTE[d.zona.tipo].nome.toLowerCase(), d.tipo, !d.golpe);
+    if (this.fase !== 'jogo') return r;
+    for (const s of r.status) this.aplicarStatus(h, s.id, { duracao: s.duracao, pilhas: s.pilhas, fonte: s.zona.quem });
+    if (r.apagaFogo && h.estados.tem('queimando')) h.estados.remover('queimando');
+    return r;
   }
 
   alarme(seg, quem) {
@@ -1550,10 +1583,6 @@ export class Jogo {
     return null;
   }
 
-  atualizarArmadilhas(dt) {
-    for (const a of this.armadilhas) a.t -= dt;
-    this.armadilhas = this.armadilhas.filter(a => a.t > 0);
-  }
 }
 
 export { SHOPS };

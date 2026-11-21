@@ -197,6 +197,7 @@ function tocar(e, g) {
     case 'recorde': som.recorde(); break;
     case 'noite': som.noite(); break;
     case 'historia': som.historia(); break;
+    case 'ambiente': som.ambiente(e.tipo); break;
     case 'caminho': if (e.tipo === 'perigoso') som.perigo(); else som.livre(); break;
   }
 }

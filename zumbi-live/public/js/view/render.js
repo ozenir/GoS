@@ -4,6 +4,7 @@ import { mod, hash2, DIRS, clamp, dist } from '../core/util.js';
 import { P, T as TT } from '../core/city.js';
 import { ZUMBIS, CLASSES } from '../core/dados.js';
 import { STATUS } from '../core/status.js';
+import { AMBIENTE, ligado as ligadoZona } from '../core/ambiente.js';
 import { fillPoly, line, disc, canvas as novoCanvas } from './pixel.js';
 import * as S from './sprites.js';
 
@@ -85,6 +86,12 @@ export class Render {
         else if (e.critico && this.t - (this.ultCrit || -9) > 0.5) { this.ultCrit = this.t; this.texto(e.x, e.y, 'CRÍTICO', '#ffe27a', 0.85); }
         break;
       }
+      case 'ambiente': {
+        const A = AMBIENTE[e.tipo];
+        this.ultAmb = this.ultAmb || {};
+        if (A && this.t - (this.ultAmb[e.tipo] || -9) > 2) { this.ultAmb[e.tipo] = this.t; this.texto(e.x, e.y, `${A.emoji} ${A.nome.toLowerCase()}!`, '#ffb08a', 0.85); }
+        break;
+      }
       case 'esquiva': this.texto(e.x, e.y, '💨 desviou!', '#9fe8ff', 0.95); break;
       case 'status': { const S = STATUS[e.id]; this.texto(e.x, e.y, `${S.emoji} ${S.nome.toLowerCase()}`, S.lado === 'positivo' ? '#9dffb0' : '#ff9a90', 0.9); break; }
       case 'morte_zumbi': {
@@ -163,7 +170,7 @@ export class Render {
     this.atualizarEfeitos(dt, g);
     if (g.room) this.chaoSala(g); else this.chaoCidade(g);
     this.desenharDecals(g);
-    this.desenharArmadilhas(g);
+    this.desenharZonas(g);
     this.setasVotacao(g);
     this.objetos(g);
     this.fantasmaHeroi(g);
@@ -259,16 +266,68 @@ export class Render {
     }
   }
 
-  desenharArmadilhas(g) {
+  // Perigos do chão (ambiente.js), cada um com o seu desenho
+  desenharZonas(g) {
     const ctx = this.ctx;
-    for (const a of g.armadilhas) {
-      if (a.tipo !== 'vidro') continue;
-      for (let i = 0; i < 70; i++) {
-        const x = a.x0 + hash2(i, a.semente, 1) * (a.x1 - a.x0), y = a.y0 + hash2(i, a.semente, 2) * (a.y1 - a.y0);
-        const [sx, sy] = this.tela(x, y);
-        const brilho = Math.sin(this.t * 6 + i) > 0.6;
-        ctx.fillStyle = brilho ? '#ffffff' : i % 3 ? '#9fd8e8' : '#5a8a9a';
-        ctx.fillRect(sx, sy, brilho ? 2 : 1, 1);
+    for (const z of g.zonasAgora || []) {
+      const [mx, my] = this.tela((z.x0 + z.x1) / 2, (z.y0 + z.y1) / 2);
+      if (mx < -80 || mx > W + 80 || my < -80 || my > H + 80) continue;
+      const cantos = [this.tela(z.x0, z.y0), this.tela(z.x1, z.y0), this.tela(z.x1, z.y1), this.tela(z.x0, z.y1)];
+      const sem = z.semente || ((Math.floor(z.x0) * 73 + Math.floor(z.y0) * 31) | 0);
+      const area = Math.max(1, (z.x1 - z.x0) * (z.y1 - z.y0));
+      const pontos = (n, fn) => {
+        for (let i = 0; i < n; i++) {
+          const [px, py] = this.tela(z.x0 + hash2(i, sem, 1) * (z.x1 - z.x0), z.y0 + hash2(i, sem, 2) * (z.y1 - z.y0));
+          fn(px, py, i);
+        }
+      };
+      switch (z.tipo) {
+        case 'vidro':
+          pontos(Math.round(area * 7), (px, py, i) => {
+            const brilho = Math.sin(this.t * 6 + i) > 0.6;
+            ctx.fillStyle = brilho ? '#ffffff' : i % 3 ? '#9fd8e8' : '#5a8a9a';
+            ctx.fillRect(px, py, brilho ? 2 : 1, 1);
+          });
+          break;
+        case 'arame': {
+          const pts = []; pontos(Math.round(area * 2.5) + 3, (px, py) => pts.push([px, py]));
+          pts.sort((a, b) => a[0] - b[0]);
+          for (let i = 1; i < pts.length; i++) line(ctx, pts[i - 1][0], pts[i - 1][1] - 3, pts[i][0], pts[i][1] - 3, '#8a8a90');
+          for (const [px, py] of pts) { ctx.fillStyle = '#5a5a60'; ctx.fillRect(px, py - 6, 1, 6); ctx.fillStyle = '#c0c0c8'; ctx.fillRect(px - 1, py - 4, 3, 1); }
+          break;
+        }
+        case 'fogo':
+          ctx.globalAlpha = 0.35; fillPoly(ctx, cantos, '#ff7a20'); ctx.globalAlpha = 1;
+          pontos(Math.round(area * 4) + 4, (px, py, i) => {
+            const hh = 2 + ((this.t * 14 + i * 3) % 5);
+            ctx.fillStyle = i % 3 ? '#ff8a2a' : '#ffd23f'; ctx.fillRect(px, py - hh, 2, hh);
+            if (i % 2 === 0) { ctx.fillStyle = '#ffe9a0'; ctx.fillRect(px, py - hh, 1, 1); }
+          });
+          if (Math.random() < 0.3) this.particula({ x: z.x0 + Math.random() * (z.x1 - z.x0), y: z.y0 + Math.random() * (z.y1 - z.y0), z: 0.3, vz: 1.2, g: -0.5, life: 0.6, cor: 'rgba(70,60,60,0.6)', tam: 3, fumaca: true });
+          break;
+        case 'acido':
+          ctx.globalAlpha = 0.6; fillPoly(ctx, cantos, '#6ac83a'); ctx.globalAlpha = 1;
+          pontos(Math.round(area * 2) + 2, (px, py, i) => { if (Math.sin(this.t * 4 + i * 1.7) > 0.3) { ctx.fillStyle = '#c8ff8a'; ctx.fillRect(px, py, 2, 2); } });
+          break;
+        case 'lama':
+          ctx.globalAlpha = 0.75; fillPoly(ctx, cantos, '#5a3e22'); ctx.globalAlpha = 1;
+          pontos(Math.round(area * 2), (px, py) => { ctx.fillStyle = '#3e2a16'; ctx.fillRect(px, py, 3, 1); });
+          break;
+        case 'agua':
+          fillPoly(ctx, cantos, '#2e5a86');
+          pontos(Math.round(area * 1.5) + 2, (px, py, i) => { if ((this.t * 2 + i) % 3 < 1.5) { ctx.fillStyle = '#7ab4e0'; ctx.fillRect(px, py, 4, 1); } });
+          break;
+        case 'fios': {
+          const [ax, ay] = cantos[0], [bx, by] = cantos[2];
+          ctx.fillStyle = '#4a3a2a'; ctx.fillRect(ax, ay - 16, 2, 16); ctx.fillRect(bx, by - 16, 2, 16);
+          const meio = [(ax + bx) / 2, (ay + by) / 2 - 4];
+          line(ctx, ax, ay - 15, meio[0], meio[1], '#1a1a1a'); line(ctx, meio[0], meio[1], bx, by - 15, '#1a1a1a');
+          if (ligadoZona(z, g.t)) for (let i = 0; i < 3; i++) if (Math.random() < 0.6) { ctx.fillStyle = Math.random() < 0.5 ? '#fff3a0' : '#9fe8ff'; ctx.fillRect(meio[0] + (Math.random() - 0.5) * 10, meio[1] + (Math.random() - 0.2) * 8, 2, 2); }
+          break;
+        }
+        case 'entulho':
+          pontos(Math.round(area * 3) + 3, (px, py, i) => { ctx.fillStyle = i % 2 ? '#6a6460' : '#8a7a62'; ctx.fillRect(px - 2, py - 2, 4 + (i % 3), 2 + (i % 2)); ctx.fillStyle = '#4a4440'; ctx.fillRect(px - 2, py, 4, 1); });
+          break;
       }
     }
   }
@@ -645,6 +704,7 @@ export class Render {
         if (o.kind === 'prop' && o.p.alarme && Math.floor(this.t * 4) % 2) { const [sx, sy] = this.tela(o.p.x + 1, o.p.y + 0.5); buraco(sx, sy, 50, 0.8); }
       }
       for (const it of g.itens) if (it.kind.startsWith('bau')) { const [sx, sy] = this.tela(it.x, it.y); buraco(sx, sy, 26, 0.7); }
+      for (const z of g.zonasAgora || []) if (AMBIENTE[z.tipo]?.luz && ligadoZona(z, g.t)) { const [sx, sy] = this.tela((z.x0 + z.x1) / 2, (z.y0 + z.y1) / 2); buraco(sx, sy, z.tipo === 'fogo' ? 46 : 30, 0.7); }
     }
     ex.globalCompositeOperation = 'source-over';
     ctx.drawImage(this.escuro, 0, 0);

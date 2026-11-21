@@ -136,7 +136,15 @@ export class Som {
   historia() { [392, 494, 587, 740, 587].forEach((f, i) => this.osc('sine', f, f, 0.6, 0.07, i * 0.18)); this.osc('triangle', 98, 98, 1.6, 0.08); }
   perigo() { this.osc('sawtooth', 110, 55, 0.5, 0.18); this.noise(0.4, 0.2, 'lowpass', 500, 0, 0.7, 120); }
   livre() { [523, 659].forEach((f, i) => this.osc('sine', f, f, 0.4, 0.07, i * 0.12)); }
-  noite() { this.osc('sine', 110, 55, 2.5, 0.2); this.osc('sine', 165, 82, 2.5, 0.12); }
+  ambiente(tipo) {
+    if (!this.pode('amb' + tipo, 0.8)) return;
+    if (tipo === 'vidro') this.vidro();
+    else if (tipo === 'fios') { this.osc('sawtooth', 120, 2400, 0.12, 0.12); this.noise(0.15, 0.25, 'highpass', 3000); }
+    else if (tipo === 'fogo') this.noise(0.35, 0.25, 'lowpass', 900, 0, 0.5, 300);
+    else if (tipo === 'acido') { this.noise(0.25, 0.15, 'bandpass', 2500, 0, 2); this.osc('sine', 900, 300, 0.2, 0.05); }
+    else if (tipo === 'arame') { this.osc('square', 1800, 900, 0.06, 0.06); this.noise(0.1, 0.15, 'highpass', 4000); }
+  }
+    noite() { this.osc('sine', 110, 55, 2.5, 0.2); this.osc('sine', 165, 82, 2.5, 0.12); }
 
   /* ---------- música ambiente: um zumbido grave e um pulso que acelera com o perigo ---------- */
   iniciarMusica() {

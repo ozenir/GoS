@@ -50,6 +50,8 @@ export const TIPOS_DANO = {
   explosao:    { nome: 'explosão', emoji: '💥' },
   mordida:     { nome: 'mordida', emoji: '🦷' },      // ataque dos zumbis
   sangramento: { nome: 'sangramento', emoji: '🩸' },  // ignora armadura e resistência
+  quimico:     { nome: 'químico', emoji: '🧪' },      // ácido
+  eletrico:    { nome: 'elétrico', emoji: '⚡' },     // fios desencapados
   infeccao:    { nome: 'infecção', emoji: '🦠' }      // ignora armadura e resistência
 };
 // Tipos que atravessam defesa e resistências (dano "por dentro")
