@@ -270,6 +270,12 @@ function loop(agora) {
     if (d2 < 121 && !(z.nascendo > 0) && !z.dormindo) vistos.push({ d: Math.sqrt(d2), tipo: z.tipo });
   }
   som.vozes(dt, jogo.fase === 'jogo' ? vistos : []);
+  // sozinho: só os próprios passos e a respiração (som.js → solidao)
+  som.solidao(dt, {
+    sozinho: jogo.fase === 'jogo' && !jogo.caido && !vistos.length,
+    andando: h.andando, anda: h.animT || 0, vida: pct,
+    chao: jogo.room ? (jogo.room.praia ? 'grama' : 'piso') : jogo.bairroAtual === 'parque' ? 'grama' : 'asfalto'   // areia da praia soa como grama
+  });
   som.musica(jogo.fase === 'jogo' ? clamp(perto / 18 + (1 - pct) * 0.4 + (jogo.noiteT > 0 ? 0.25 : 0) + chefe * 0.4, 0, 1) : 0, dt, jogo.fase === 'jogo' && pct < 0.5 ? clamp((0.5 - pct) / 0.5, 0.05, 1) : 0);
   if (jogo.fase === 'jogo' && pct < 0.3) { coracaoT -= dt; if (coracaoT <= 0) { coracaoT = pct < 0.15 ? 0.55 : 0.85; som.coracao(); } }
   // tique dos últimos segundos da votação

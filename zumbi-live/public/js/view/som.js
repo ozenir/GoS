@@ -18,6 +18,9 @@ export function acustica(d = 0) {
   return { vol: CAMERA_ALTURA / r, corte: 280 + 6500 * Math.exp(-extra / 6), atraso: extra * METROS_POR_CASA / VEL_SOM };
 }
 
+// Sozinho (sem zumbi na tela): espera em segundos, casas por passo, segundos por respiração, volume da música
+export const SOZINHO = { espera: 1.5, passo: 0.55, respiracao: 3.6, musica: 0.3 };
+
 // Avisos da tela uma oitava abaixo (sinos e marimba graves, como ouvidos de longe)
 const OITAVA = 0.5;
 
@@ -51,7 +54,9 @@ export class Som {
       const ecoG = this.ac.createGain(); ecoG.gain.value = 0.3;
       this.tela.connect(telaLp); telaLp.connect(this.fx);
       telaLp.connect(eco); eco.connect(ecoLp); ecoLp.connect(ecoG); ecoG.connect(this.fx); ecoG.connect(eco);
-      this.mus = this.ac.createGain(); this.mus.connect(this.master);
+      // música → "abaixa quando está sozinho" (solidao) → master
+      this.musDuck = this.ac.createGain(); this.musDuck.connect(this.master);
+      this.mus = this.ac.createGain(); this.mus.connect(this.musDuck);
       const n = this.ac.sampleRate * 1.5;
       this.ruido = this.ac.createBuffer(1, n, this.ac.sampleRate);
       const d = this.ruido.getChannelData(0);
@@ -194,6 +199,57 @@ export class Som {
       else if (tipo === 'fogo') this.noise(0.35, 0.25, 'lowpass', 900, 0, 0.5, 300);
       else if (tipo === 'acido') { this.noise(0.25, 0.15, 'bandpass', 2500, 0, 2); this.osc('sine', 900, 300, 0.2, 0.05); }
       else if (tipo === 'arame') { this.osc('square', 1800, 900, 0.06, 0.06); this.noise(0.1, 0.15, 'highpass', 4000); }
+    });
+  }
+
+  /* ---------- sozinho: só os próprios passos e a respiração ---------- */
+  // Sem nenhum zumbi na tela, depois de SOZINHO.espera segundos, o herói ouve só ele mesmo: passos baixinhos
+  // (um a cada SOZINHO.passo casas andadas, pé esquerdo e direito um pouco diferentes) e a respiração lenta.
+  // A música abaixa junto (fica SOZINHO.musica do volume), pra a solidão aparecer. Zumbi apareceu: some rápido
+  // e a música volta. Chão: asfalto (cidade), grama (parque) ou piso com eco (dentro de prédio).
+  // Com a vida baixa, a respiração fica mais pesada e mais rápida.
+  //   e = { sozinho, andando, anda (casas andadas, h.animT), chao: 'asfalto'|'grama'|'piso', vida (0..1) }
+  solidao(dt, e) {
+    if (!this.running) return;
+    const S = SOZINHO;
+    this.semNinguem = e.sozinho ? (this.semNinguem || 0) + dt : 0;
+    const alvo = this.semNinguem > S.espera ? 1 : 0;
+    this.soz = (this.soz || 0) + (alvo - (this.soz || 0)) * Math.min(1, dt * (alvo ? 0.8 : 6));   // entra devagar, sai rápido
+    this.musDuck.gain.setTargetAtTime(1 - (1 - S.musica) * this.soz, this.ac.currentTime, 0.4);
+    if (this.soz < 0.05) { this.passoN = Math.floor(e.anda / S.passo); this.respT = 0.5; return; }
+    // passos
+    const n = Math.floor(e.anda / S.passo);
+    if (e.andando && n !== this.passoN) {
+      this.passoN = n;
+      this.pisada(e.chao, n % 2, this.soz);
+    }
+    // respiração: puxa e solta, num ciclo que acelera com a vida baixa
+    const aflito = Math.max(0, 0.5 - e.vida) * 2;   // 0 com metade da vida ou mais, 1 quase morto
+    this.respT = (this.respT ?? 0.5) - dt;
+    if (this.respT <= 0) {
+      const ciclo = S.respiracao * (1 - 0.45 * aflito) * (0.9 + Math.random() * 0.2);
+      this.respT = ciclo;
+      this.respirar(ciclo, this.soz * (1 + aflito * 0.8));
+    }
+  }
+  pisada(chao, pe, k = 1) {
+    this.noMundo(0, 0.5, () => {
+      const v = 0.06 * k * (0.85 + Math.random() * 0.3), f = pe ? 1 : 0.9;
+      if (chao === 'grama') {
+        this.noise(0.12, v * 0.9, 'bandpass', 650 * f, 0, 0.9, 380, 0.01);        // pisada abafada na grama
+        this.nota('sine', 80 * f, 0, 0.08, v * 0.8, 0.004, 200, 50);
+      } else {
+        this.nota('sine', 95 * f, 0, 0.07, v * 1.2, 0.002, 300, 55);              // calcanhar
+        this.noise(0.05, v * 0.6, 'bandpass', 900 * f, 0, 1.2, 500, 0.002);      // sola raspando
+        if (chao === 'piso') this.noise(0.05, v * 0.25, 'bandpass', 700 * f, 0.11, 1.2, 400, 0.002);   // eco da sala
+      }
+    });
+  }
+  respirar(ciclo, k = 1) {
+    this.noMundo(0, ciclo + 0.5, () => {
+      const v = 0.04 * k;
+      this.noise(ciclo * 0.38, v, 'bandpass', 520, 0, 1.4, 760, ciclo * 0.25);               // puxa o ar
+      this.noise(ciclo * 0.5, v * 1.15, 'bandpass', 480, ciclo * 0.42, 1.4, 300, ciclo * 0.08);   // solta
     });
   }
 
