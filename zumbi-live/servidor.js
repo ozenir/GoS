@@ -12,6 +12,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { TikTokLiveConnection, WebcastEvent, ControlEvent, UserOfflineError } from 'tiktok-live-connector';
+import { pessoa, textoDoComentario, curtidasDe } from './leitura.js';
+import { lerVoto, lerEscolha, OPCOES } from './public/js/core/votacao.js';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(DIR, 'public');
@@ -76,20 +78,7 @@ wss.on('connection', c => {
   });
 });
 
-/* ---------- Quem é quem ---------- */
-function fotoDe(u) {
-  for (const p of [u.avatarThumb, u.avatarMedium, u.avatarLarge, u.profilePicture]) {
-    const l = p && (p.urlList || p.urls || p.url || p.url_list);
-    if (Array.isArray(l) && l[0]) return String(l[0]);
-    if (typeof l === 'string' && l) return l;
-  }
-  return '';
-}
-function pessoa(u = {}) {
-  const id = String(u.uniqueId || u.displayId || u.userId || u.id || u.nickname || 'anonimo');
-  const nick = String(u.nickname || u.uniqueId || u.displayId || 'alguém').slice(0, 24);
-  return { id, nick, avatar: fotoDe(u) };
-}
+/* ---------- Quem é quem: leitura.js (aceita o formato novo e o antigo das mensagens da live) ---------- */
 
 /* ---------- Ranking da live: quem mais ajudou e quem mais atrapalhou ---------- */
 // Efeitos que atrapalham o herói. Todo o resto ajuda.
@@ -150,10 +139,17 @@ function processarPresente(d) {
 }
 
 /* ---------- Comentários, entradas, seguidores, compartilhamentos e curtidas ---------- */
-function processarChat(d) {
-  const texto = String(d.comment || '').slice(0, 80).trim();
+function processarChat(d, mostrar = true) {
+  const texto = textoDoComentario(d);
   if (!texto) return;
-  enviar({ type: 'chat', ...pessoa(d.user), texto });
+  const p = pessoa(d.user);
+  // Mostra na janela preta: assim dá pra ver que o comentário chegou e se ele virou voto
+  if (mostrar) {
+    const voto = lerVoto(texto), letra = lerEscolha(texto);
+    const extra = voto ? `  → voto ${OPCOES[voto].n} ${OPCOES[voto].nome}` : letra ? `  → habilidade ${letra.toUpperCase()}` : '';
+    log(`💬 ${p.nick}: ${texto}${extra}`);
+  }
+  enviar({ type: 'chat', ...p, texto });
 }
 function processarEntrada(d) { enviar({ type: 'entrou', ...pessoa(d.user) }); }
 const jaSeguiu = new Set();
@@ -171,7 +167,7 @@ function processarCompartilhar(d) {
 }
 // Curtidas chegam aos montes: juntamos e mandamos uma vez por segundo.
 let curtidasPendentes = 0;
-function processarCurtidas(d) { curtidasPendentes += Math.max(0, Number(d.likeCount) || 0); }
+function processarCurtidas(d) { curtidasPendentes += curtidasDe(d); }
 setInterval(() => {
   if (curtidasPendentes <= 0) return;
   enviar({ type: 'curtidas', qtd: curtidasPendentes });
@@ -204,7 +200,7 @@ function testarEvento(evento, nome) {
 
 const NOMES = ['ana.lu', 'pedrinho_gamer', 'mari.flor', 'joaovictor', 'bia.santos', 'lucas_rs', 'tia.cida', 'rafa99', 'gabi.oliveira', 'duda.m', 'caio.zl', 'leticia_br', 'thiaguinho', 'nanda.s'];
 const FALAS = ['kkkkk', 'corre!!', 'atira nele', 'vai herói', 'nãooo', 'que isso', 'boa!', 'socorro', '🔥🔥', 'manda o leão'];
-const VOTOS = ['1', '2', '3', '4', 'esquerda', 'direita', 'frente', 'entrar', 'e', 'd', 'f'];
+const VOTOS = ['1', '2', '3', '4', '5', 'esquerda', 'direita', 'frente', 'entrar', 'voltar', 'e', 'd', 'f', 'a', 'b', 'c'];
 function iniciarDemo() {
   const pick = a => a[Math.floor(Math.random() * a.length)];
   const presentes = Object.entries(config.presentes?.por_nome || {});
@@ -220,7 +216,7 @@ function iniciarDemo() {
   (function chat() {
     setTimeout(() => {
       const nome = pick(NOMES);
-      processarChat({ user: { uniqueId: 'demo_' + nome, nickname: nome }, comment: Math.random() < 0.7 ? pick(VOTOS) : pick(FALAS) });
+      processarChat({ user: { uniqueId: 'demo_' + nome, nickname: nome }, comment: Math.random() < 0.7 ? pick(VOTOS) : pick(FALAS) }, false);
       chat();
     }, 700 + Math.random() * 2200);
   })();

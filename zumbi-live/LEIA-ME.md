@@ -33,7 +33,7 @@ Dê dois cliques em **`1-testar-sem-live.bat`**. O jogo abre no navegador com um
 1. Dois cliques em **`2-iniciar-na-live.bat`**. Deixe a janela preta aberta a live toda.
 2. Dois cliques em **`3-abrir-janela-do-jogo.bat`**. Abre a janela em pé, só com o jogo.
 3. No **TikTok LIVE Studio**: tela em **retrato**, fonte **Captura de janela** com a janela **Herói contra Hordas**, esticada na tela toda. Deixe o **áudio do sistema** ligado para o som ir junto.
-4. **Entrar ao vivo.** Em até 1 minuto a janela preta mostra `✅ Ligado na live de @...`.
+4. **Entrar ao vivo.** Em até 1 minuto a janela preta mostra `✅ Ligado na live de @...`. Daí em diante, cada comentário aparece na janela preta (e se virou voto).
 
 **Primeiro teste de verdade:** peça para um amigo comentar `2` num cruzamento e mandar uma Rosa. Na janela preta aparece o presente, e no jogo aparece o aviso com o nome dele e o herói se cura.
 
@@ -374,6 +374,11 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 
 **Aparece "🔇 Clique na tela para ativar o som"**
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
+
+**Comentei e o voto não contou**
+Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`).
+- Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.
+- Se aparece mas não contou no jogo: o voto de direção só vale com a votação aberta (fora de prédio, arena e praia), e cada pessoa vota **uma vez por cruzamento** (vale o primeiro voto). A letra (A, B, C) só vale com a escolha de habilidade aparecendo embaixo, e tem que ser só a letra no comentário.
 
 **Os votos do chat chegam depois que a votação já fechou**
 O atraso da sua live é maior que 6 segundos. Para medir: abra a sua live no celular, olhe o relógio do jogo (⏱) no computador e no celular ao mesmo tempo e veja a diferença. Coloque esse número (arredondado pra cima) em `atraso_da_live_segundos` e, se precisar, aumente `segundos_caido` para o atraso + 6.
