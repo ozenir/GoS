@@ -221,6 +221,15 @@ export class Hud {
     this.set('h-colete', h.colete > 0 ? `🛡️${h.colete}` : '');
     const C = CLASSES[h.classe];
     this.set('h-emoji', C.emoji);
+    // herói com nome de espectador: a foto dele aparece no lugar do emoji (o emoji da classe vira um selinho)
+    const foto = urlOk(h.viewer?.avatar) ? h.viewer.avatar : '';
+    if (this.cache['h-foto'] !== foto) {
+      this.cache['h-foto'] = foto;
+      const img = $('h-foto'), av = $('h-av');
+      img.onerror = () => { img.hidden = true; av.classList.remove('foto'); };
+      if (foto) img.src = foto; else img.removeAttribute('src');
+      img.hidden = !foto; av.classList.toggle('foto', !!foto);
+    }
     this.set('h-heroi', `${h.viewer ? h.viewer.nick : C.nome} #${h.n}`);
     const a = h.arma ? ARMAS[h.arma] : null;
     const cp = CORPO[h.corpo];
