@@ -107,6 +107,7 @@ export class Hud {
     switch (e.type) {
       case 'presente': this.toast(e); break;
       case 'chefe':
+        if (e.arena) break;   // na arena o aviso é o da arena
         if (e.tipo === 'rei') this.banner('👑 REI ZUMBI!', `despertado por ${e.nome}`, 'perigo', 3.2);
         else if (e.tipo === 'exheroi') this.banner('🧟 O EX-HERÓI VOLTOU!', 'derrote ele pra pegar a arma de volta', 'perigo', 3);
         else this.banner(`🎆 CHEFÃO DE ${e.nome.toUpperCase()}!`, 'a tela vai tremer...', 'perigo', 3);
@@ -121,6 +122,9 @@ export class Hud {
       case 'aviso': this.banner(e.texto, '', e.tipo === 'perigo' ? 'perigo' : 'bom', 2.4); break;
       case 'ameaca': this.banner(`☠️ AMEAÇA ${e.nivel}`, 'zumbis mais resistentes e hordas maiores', 'perigo', 1.8); break;
       case 'horda': this.banner('🧟 HORDA CHEGANDO!', `${e.qtd} zumbis`, 'perigo', 2); break;
+      case 'arena': this.banner('⚔️ ARENA!', `derrote o ${e.nome}`, 'perigo', 2.6); break;
+      case 'arena_vencida': this.banner('🏆 ARENA VENCIDA!', 'pegue a recompensa', 'ouro', 2.6); break;
+      case 'arena_tempo': this.banner('⏱️ FIM DA ARENA', 'o chefe ainda está solto...', 'perigo', 2); break;
       case 'bairro': this.banner(`${e.emoji} ${e.nome.toUpperCase()}`, 'bairro novo à vista', '', 2); break;
       case 'beco': this.banner('🚧 RUA SEM SAÍDA', 'tem um baú lá no fim...', 'ouro', 2); break;
       case 'beco_emboscada': this.banner('⚠️ EMBOSCADA!', 'a horda fechou a saída do beco', 'perigo', 2.2); break;
@@ -228,6 +232,7 @@ export class Hud {
 
     // situação
     const st = [];
+    if (g.arena && g.fase === 'jogo') { const ch = g.arena.chefe; st.push(`<span class="chip mal">⚔️ arena · chefe ${ch.morto ? 'derrotado' : Math.ceil(Math.max(0, ch.vida) / ch.vidaMax * 100) + '%'} · ${Math.max(0, Math.ceil(100 - g.arena.t))}s</span>`); }
     if (!g.room && g.bairroAtual) { const B = BAIRROS[g.bairroAtual]; st.push(`<span class="chip">${B.emoji} ${esc(B.nome)}</span>`); }
     if (g.protecao > 0 && g.fase === 'jogo') st.push(`<span class="chip ok">🛡️ proteção ${Math.ceil(g.protecao)}s</span>`);
     if (g.fila.length && g.protecao > 0) st.push(`<span class="chip mal">😈 ${g.fila.length} na fila</span>`);
@@ -282,9 +287,9 @@ export class Hud {
       ops.style.setProperty('--n', todas.length);
       ops.innerHTML = todas.map(o => {
         if (o.bloqueada) return `<div class="op bloq"><span class="num">${o.n}</span><span class="nome"><small>🚧</small> ${o.nome}</span><span class="cnt">bloqueada</span></div>`;
-        const icone = o.id === 'entrar' ? esc(o.shop.emoji) : o.seta;
+        const icone = o.id === 'entrar' ? (o.praca ? '⚔️' : esc(o.shop.emoji)) : o.seta;
         const extra = o.semSaida ? ' <small>📦</small>' : '';
-        return `<div class="op${o.semSaida ? ' beco' : ''}" data-op="${o.id}"><i class="fill"></i><span class="num">${o.n}</span><span class="nome"><small>${icone}</small> ${o.id === 'entrar' ? 'ENTRAR' : o.nome}${extra}</span><span class="cnt">${o.semSaida ? 'sem saída' : '0 votos'}</span></div>`;
+        return `<div class="op${o.semSaida ? ' beco' : ''}" data-op="${o.id}"><i class="fill"></i><span class="num">${o.n}</span><span class="nome"><small>${icone}</small> ${o.id === 'entrar' ? (o.praca ? 'ARENA' : 'ENTRAR') : o.nome}${extra}</span><span class="cnt">${o.semSaida ? 'sem saída' : '0 votos'}</span></div>`;
       }).join('');
       this.cache.vt = null;
     }
@@ -309,7 +314,7 @@ export class Hud {
     } else {
       tempo.hidden = true; res.hidden = false;
       const r = v.resultado, op = v.opcoes.find(o => o.id === r.id);
-      const nome = op.id === 'entrar' ? `ENTRAR NA ${op.shop.nome.toUpperCase()}` : op.nome;
+      const nome = op.id === 'entrar' ? (op.praca ? 'ARENA DA PRAÇA' : `ENTRAR NA ${op.shop.nome.toUpperCase()}`) : op.nome;
       const txt = r.auto ? `🤖 ninguém votou · a IA escolheu <b>${esc(nome)}</b>` : `➜ <b>${esc(nome)}</b> com ${r.votos} voto${r.votos === 1 ? '' : 's'}${r.empate ? ' (desempate no sorteio)' : ''}`;
       this.html('v-res', txt);
       this.set('v-titulo', '🗳️ O CHAT DECIDIU');

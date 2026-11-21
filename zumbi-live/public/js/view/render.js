@@ -172,6 +172,7 @@ export class Render {
     this.desenharDecals(g);
     this.desenharZonas(g);
     this.setasVotacao(g);
+    this.bordaArena(g);
     this.objetos(g);
     this.fantasmaHeroi(g);
     this.desenharParticulas();
@@ -332,6 +333,15 @@ export class Render {
     }
   }
 
+  // Borda vermelha piscando em volta da praça durante a arena
+  bordaArena(g) {
+    if (!g.arena || g.room) return;
+    const { bi, bj } = g.arena.praca, x0 = bi * 20 + 5, y0 = bj * 20 + 5, x1 = x0 + 15, y1 = y0 + 15;
+    const c = [this.tela(x0, y0), this.tela(x1, y0), this.tela(x1, y1), this.tela(x0, y1)];
+    const cor = Math.floor(this.t * 3) % 2 ? '#ff3a2a' : '#ff9a3a';
+    for (let i = 0; i < 4; i++) line(this.ctx, c[i][0], c[i][1], c[(i + 1) % 4][0], c[(i + 1) % 4][1], cor, 2);
+  }
+
   // Setas no chão do próximo cruzamento, com os números da votação
   setasVotacao(g) {
     if (g.room || g.fase !== 'jogo') return;
@@ -358,7 +368,7 @@ export class Render {
       const lider = !v.resultado && max > 0 && o.votos === max;
       const cor = escolhida ? '#7dff9a' : lider ? '#ffd23f' : 'rgba(255,255,255,0.75)';
       if (o.id === 'entrar') {
-        const d = o.shop.door;
+        const d = o.praca ? o.praca.entrada : o.shop.door;
         const [sx, sy] = this.tela(d.x, d.y);
         ctx.globalAlpha = 0.6 + 0.4 * pulso;
         disc(ctx, sx, sy, 9, cor, 0.5);

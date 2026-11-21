@@ -126,6 +126,8 @@ export class Jogo {
     this.votoAbreT = 1.2;
     this.decisao = null;
     this.indoPorta = null;
+    this.indoPraca = null;
+    this.arena = null;
     this.ultimaLoja = -9;
     this.stats = { inicio: this.t, quarteiroes: 0, abates: 0, predios: 0, ajudou: new Map(), atrapalhou: new Map(), matador: null, cruzamentos: 0, caminhos: { perigoso: 0, livre: 0, historia: 0 } };
     this.fase = 'jogo';
@@ -241,6 +243,7 @@ export class Jogo {
     }
 
     if (this.room) { this.atualizarSala(dt); return; }
+    if (this.arena) { this.atualizarArena(dt); return; }
 
     // Alarme de carro: zumbis chegando sem parar
     if (this.alarmeT > 0) {
@@ -415,11 +418,13 @@ export class Jogo {
       if (t.s.bloqueio) { bloqueadas.push({ id, dir: d, ...OPCOES[id] }); continue; }
       ops.push({ id, dir: d, semSaida: !!t.s.semSaida, bairro: t.s.bairro });
     }
+    const praca = this.city.pracaAt(N.i, N.j);
     if (shop) ops.push({ id: 'entrar', shop });
-    for (const o of ops) Object.assign(o, OPCOES[o.id]);
+    else if (praca) ops.push({ id: 'entrar', praca });
+    for (const o of ops) { Object.assign(o, OPCOES[o.id]); if (o.praca) { o.nome = 'ARENA'; o.seta = '⚔️'; } }
     ops.sort((a, b) => a.n - b.n);
     this.voto = new Votacao(ops, this.cfg.votoDur);
-    this.voto.loja = shop;
+    this.voto.loja = shop || (praca ? { nome: 'Praça: arena de chefe', emoji: '⚔️', tipo: 'praca' } : null);
     this.voto.bloqueadas = bloqueadas;
     this.voto.no = { ...N };
     this.emit('votacao_abriu', { opcoes: ops.map(o => o.id), loja: shop ? { tipo: shop.tipo, nome: shop.nome, emoji: shop.emoji } : null });
@@ -437,6 +442,7 @@ export class Jogo {
   escolhaIA(ops) {
     const h = this.hero, vidaPct = h.vida / h.vidaMax;
     const pesos = ops.map(o => {
+      if (o.id === 'entrar' && o.praca) return [o.id, this.stats.cruzamentos - this.ultimaLoja < 3 ? 0.1 : vidaPct > 0.6 ? 0.8 : 0.15];
       if (o.id === 'entrar') {
         const recente = this.stats.cruzamentos - this.ultimaLoja < 3;
         if (recente) return [o.id, 0.15];
@@ -458,7 +464,7 @@ export class Jogo {
     this.voto = null;
     this.stats.cruzamentos++;
     if (op.id === 'entrar') {
-      this.indoPorta = op.shop;
+      if (op.praca) this.indoPraca = op.praca; else this.indoPorta = op.shop;
       return;
     }
     r.i = r.alvo.i; r.j = r.alvo.j;
@@ -472,6 +478,87 @@ export class Jogo {
     const t = this.city.trecho(r.i, r.j, r.dir);
     if (t.s.semSaida) this.entrarBeco(t);
     else this.iniciarTrecho();
+  }
+
+  /* =================== Arena (praça com chefe) =================== */
+  // Duração máxima e ritmo das ondas da arena
+  static ARENA = { duracao: 100, ondaCada: 9, chefeVida: 1.6 };
+
+  iniciarArena(praca) {
+    const A = Jogo.ARENA;
+    this.indoPraca = null;
+    this.ultimaLoja = this.stats.cruzamentos;
+    this.stats.arenas = (this.stats.arenas || 0) + 1;
+    this.trecho = null;
+    const c = praca.centro, h = this.hero;
+    // chefe nasce do outro lado da fonte
+    const ox = c.x + (c.x - h.x) * 0.6, oy = c.y + (c.y - h.y) * 0.6;
+    const nomes = { centro: 'Brutamontes da Praça', residencial: 'Síndico Zumbi', parque: 'Guarda do Parque', industrial: 'Operário Gigante' };
+    const nome = nomes[praca.bairro] || 'Chefe da Praça';
+    const tipo = this.nivelAmeaca >= 8 ? 'rei' : 'chefao';
+    const p = this.pontoPerto({ x: ox, y: oy }, 1.5) || { x: ox, y: oy };
+    const chefe = this.criarZumbi(tipo, p.x, p.y, null, { nome, nascendo: 1.2, vidaMult: A.chefeVida });
+    this.arena = { praca, t: 0, ondaT: 3, chefe, vencida: false, fimT: 0 };
+    this.emit('arena', { nome, bairro: praca.bairro });
+    this.emit('chefe', { tipo, nome, x: p.x, y: p.y, arena: true });
+  }
+
+  atualizarArena(dt) {
+    const a = this.arena, A = Jogo.ARENA;
+    a.t += dt;
+    if (!a.vencida) {
+      a.ondaT -= dt;
+      if (a.ondaT <= 0) {
+        a.ondaT = A.ondaCada;
+        // ondas entrando pelas bordas da praça
+        const q = tamanhoGrupo(this.nivelAmeaca, this.A) + 2;
+        const { bi, bj } = a.praca;
+        for (let k = 0; k < q; k++) {
+          const lado = this.rng.int(0, 3), r = this.rng.range(0, 15);
+          const x = bi * PERIODO + 5 + (lado === 0 ? r : lado === 1 ? 14.5 : lado === 2 ? r : 0.5);
+          const y = bj * PERIODO + 5 + (lado === 0 ? 0.5 : lado === 1 ? r : lado === 2 ? 14.5 : r);
+          const pt = this.pontoPerto({ x, y }, 1);
+          if (pt) this.criarZumbi(this.rng.chance(0.25) ? 'corredor' : 'comum', pt.x, pt.y, null, { nascendo: 0.6 + k * 0.1 });
+        }
+      }
+      if (a.chefe.morto) {
+        a.vencida = true; a.fimT = 4;
+        const px = a.chefe.x, py = a.chefe.y, p1 = this.pontoPerto({ x: px, y: py }, 0.8) || { x: px, y: py }, p2 = this.pontoPerto({ x: px, y: py }, 1.2) || p1;
+        this.soltarItemEm(this.rng.chance(0.5) ? 'bau_lendario' : 'bau_medio', {}, null, p1.x, p1.y).arena = true;
+        this.soltarItemEm('kit', { valor: 35 }, null, p2.x, p2.y).arena = true;
+        this.emit('arena_vencida', {});
+      } else if (a.t > A.duracao) { a.vencida = true; a.fimT = 0.5; this.emit('arena_tempo', {}); }
+    } else {
+      a.fimT -= dt;
+      const premio = this.itens.some(it => it.arena);
+      // sai quando pegou a recompensa (ou depois de 12 s, por segurança)
+      if (a.fimT <= 0 && (!premio || a.fimT < -12)) this.sairArena();
+    }
+  }
+
+  // Na arena o herói gira em volta da fonte (chefe correndo atrás) e pega o que cair
+  objetivoArena() {
+    const a = this.arena, c = a.praca.centro, h = this.hero;
+    // venceu: vai buscar a recompensa
+    const premio = a.vencida && this.itens.filter(it => it.arena).sort((p, q) => dist2(p.x, p.y, h.x, h.y) - dist2(q.x, q.y, h.x, h.y))[0];
+    if (premio) return { x: premio.x, y: premio.y, item: true };
+    const ang = Math.atan2(h.y - c.y, h.x - c.x) + 0.6;
+    return { x: c.x + Math.cos(ang) * 4.2, y: c.y + Math.sin(ang) * 4.2, arena: true };
+  }
+
+  sairArena() {
+    const a = this.arena, s = a.praca.saida, r = this.rota, h = this.hero;
+    this.arena = null;
+    const p = this.city.nodePos(s.i, s.j);
+    // continua no sentido "pra fora" da praça
+    const dirFora = s.i > a.praca.i ? 1 : s.i < a.praca.i ? 3 : s.j > a.praca.j ? 2 : 0;
+    r.i = s.i; r.j = s.j; r.dir = this.direcaoLivre(s.i, s.j, dirFora); r.beco = null;
+    r.alvo = { i: s.i + DIRS[r.dir][0], j: s.j + DIRS[r.dir][1] };
+    h.x = p.x; h.y = p.y; h.fx = DIRS[r.dir][0]; h.fy = DIRS[r.dir][1];
+    this.stats.quarteiroes += 2;
+    this.decisao = null; this.voto = null; this.votoAbreT = 0.8; this.trecho = null;
+    this.emit('saiu_predio', { tipo: 'praca' });
+    this.checarRecorde();
   }
 
   // Direção pra seguir a partir de um cruzamento sem passar por rua bloqueada nem sem saída:
@@ -539,6 +626,12 @@ export class Jogo {
   // Ponto pra onde o herói quer ir agora (sem contar zumbis e itens)
   objetivoRota(dt) {
     const h = this.hero, r = this.rota;
+    if (this.arena) return this.objetivoArena();
+    if (this.indoPraca) {
+      const e = this.indoPraca.entrada;
+      if (dist(h.x, h.y, e.x, e.y) < 0.9) { this.iniciarArena(this.indoPraca); return this.objetivoArena(); }
+      return { x: e.x, y: e.y, porta: true };
+    }
     if (this.indoPorta) {
       const d = this.indoPorta.door;
       if (dist(h.x, h.y, d.x, d.y) < 0.45) { this.entrarPredio(this.indoPorta); return null; }
@@ -641,7 +734,7 @@ export class Jogo {
     if (perto && h.mira && !obj.porta && !obj.saida && h.focoRota <= 0) {
       const m = h.mira, dz = dist(h.x, h.y, m.x, m.y), alc = CORPO[h.corpo].alcance * 0.75 + ZUMBIS[m.tipo].raio;
       let vale = true;
-      if (!this.room) {   // quem vem por trás leva o golpe automático quando chega, mas não tira o herói do caminho
+      if (!this.room && !this.arena) {   // quem vem por trás leva o golpe automático quando chega, mas não tira o herói do caminho
         const [rx, ry] = DIRS[this.rota.dir];
         const frente = ((m.x - h.x) * rx + (m.y - h.y) * ry) / dz;
         const no = this.city.nodePos(this.rota.alvo.i, this.rota.alvo.j);
@@ -688,7 +781,7 @@ export class Jogo {
     if (!h.mira && h.andando) { h.fx = (h.x - antesX) / andou; h.fy = (h.y - antesY) / andou; }
 
     // Anti-travamento: se ficou muito tempo sem sair do lugar e sem zumbi perto, dá um jeito
-    if (dist(h.x, h.y, h.ultimaPos.x, h.ultimaPos.y) > 0.5 || obj.esperando || rm > 0.01) { h.parado = 0; h.travas = 0; h.ultimaPos = { x: h.x, y: h.y }; }
+    if (dist(h.x, h.y, h.ultimaPos.x, h.ultimaPos.y) > 0.5 || obj.esperando || rm > 0.01 || this.arena) { h.parado = 0; h.travas = 0; h.ultimaPos = { x: h.x, y: h.y }; }
     else if ((h.parado += dt) > 6) {
       h.parado = 0;
       h.travas = (h.travas || 0) + 1;
@@ -709,7 +802,7 @@ export class Jogo {
   vigiarProgresso(dt) {
     const h = this.hero;
     h.focoRota = Math.max(0, (h.focoRota || 0) - dt);
-    if (this.room) { h.semProgresso = 0; return; }
+    if (this.room || this.arena) { h.semProgresso = 0; return; }
     const no = this.city.nodePos(this.rota.alvo.i, this.rota.alvo.j);
     const d = dist(h.x, h.y, no.x, no.y);
     const chave = this.rota.alvo.i + ',' + this.rota.alvo.j;

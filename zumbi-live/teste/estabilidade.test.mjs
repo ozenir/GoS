@@ -16,7 +16,7 @@ for (const classe of Object.keys(CLASSES)) {
     // herói vivo tem que continuar andando de cruzamento em cruzamento
     if (j.fase === 'jogo') {
       if (j.stats.quarteiroes !== ultimoQ) { ultimoQ = j.stats.quarteiroes; semAndar = 0; }
-      else if (!j.room) semAndar += DT;
+      else if (!j.room && !j.arena) semAndar += DT;
       assert.ok(semAndar < 120, `${classe}: herói ficou 2 minutos sem chegar a nenhum cruzamento (travou?)`);
       assert.ok(j.t - j.stats.inicio < VIDA_MAXIMA, `${classe}: herói passou de 10 minutos vivo sem interação (imortal?)`);
     } else { semAndar = 0; ultimoQ = -1; }
