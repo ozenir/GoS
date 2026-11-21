@@ -23,13 +23,74 @@ export const ATRIBUTOS = {
   corpo:      { base: 1,    min: 0.1,  nome: 'dano corpo a corpo' },   // multiplica só o corpo a corpo (além de "dano")
   cadencia:   { base: 1,    min: 0.2, max: 6, nome: 'cadência' },      // maior = atira mais rápido
   velocidade: { base: 1,    min: 0.2, max: 3, nome: 'velocidade' },
-  defesa:     { base: 0,    min: 0, max: 0.75, nome: 'defesa' },       // fração do dano recebido que é ignorada (máx. 75%)
+  defesa:     { base: 0,    min: -0.5, max: 0.75, nome: 'defesa' },    // fração do dano recebido que é ignorada (negativo = toma mais dano)
   regen:      { base: 0,    min: 0,    nome: 'regeneração' },          // vida por segundo
   critChance: { base: 0.05, min: 0, max: 1, nome: 'chance de crítico' },
   critMult:   { base: 1.8,  min: 1,    nome: 'dano crítico' },
   alcance:    { base: 1,    min: 0.5, max: 2, nome: 'alcance' },       // multiplica o alcance das armas
-  cura:       { base: 1,    min: 0,    nome: 'cura recebida' }         // multiplica toda cura
+  cura:       { base: 1,    min: 0,    nome: 'cura recebida' },        // multiplica toda cura
+  esquiva:    { base: 0,    min: 0, max: 0.6, nome: 'esquiva' },        // chance de desviar de um ataque
+  curaPorAcerto: { base: 0, min: 0,    nome: 'cura por acerto' },      // vida que volta a cada golpe corpo a corpo que acerta
+  chanceStatus:  { base: 0, min: 0, max: 1, nome: 'chance de efeito' }, // soma na chance de causar sangramento, atordoar...
+  // Resistência do herói por tipo de dano (fração ignorada)
+  resMordida:   { base: 0, min: -0.5, max: 0.8, nome: 'resistência a mordida' },
+  resImpacto:   { base: 0, min: -0.5, max: 0.8, nome: 'resistência a impacto' },
+  resCorte:     { base: 0, min: -0.5, max: 0.8, nome: 'resistência a corte' },
+  resFogo:      { base: 0, min: -0.5, max: 0.8, nome: 'resistência a fogo' },
+  resExplosao:  { base: 0, min: -0.5, max: 0.8, nome: 'resistência a explosão' },
+  resInfeccao:  { base: 0, min: 0, max: 1, nome: 'resistência a infecção' }   // chance de não pegar infecção
 };
+
+/* ---------------- Tipos de dano ---------------- */
+export const TIPOS_DANO = {
+  perfuracao:  { nome: 'perfuração', emoji: '🔫' },   // tiros
+  corte:       { nome: 'corte', emoji: '🔪' },        // facas, machados, vidro
+  impacto:     { nome: 'impacto', emoji: '🔨' },      // empurrão, taco, chave inglesa, pancada de chefão
+  fogo:        { nome: 'fogo', emoji: '🔥' },
+  explosao:    { nome: 'explosão', emoji: '💥' },
+  mordida:     { nome: 'mordida', emoji: '🦷' },      // ataque dos zumbis
+  sangramento: { nome: 'sangramento', emoji: '🩸' },  // ignora armadura e resistência
+  infeccao:    { nome: 'infecção', emoji: '🦠' }      // ignora armadura e resistência
+};
+// Tipos que atravessam defesa e resistências (dano "por dentro")
+const IGNORA_ARMADURA = new Set(['sangramento', 'infeccao']);
+const RES_DO_HEROI = { mordida: 'resMordida', impacto: 'resImpacto', corte: 'resCorte', fogo: 'resFogo', explosao: 'resExplosao' };
+
+// Afinidade de cada zumbi com cada tipo de dano: 1 = normal, maior = fraco contra (super efetivo), menor = resiste.
+export const AFINIDADES = {
+  comum:     {},
+  gordo:     { impacto: 0.6, corte: 1.4, perfuracao: 0.85, fogo: 1.15 },
+  corredor:  { impacto: 1.4, perfuracao: 1.15, corte: 1.1 },
+  explosivo: { fogo: 2.0, perfuracao: 1.3, corte: 0.75, impacto: 0.8 },
+  chefao:    { perfuracao: 0.7, impacto: 0.8, corte: 1.3, fogo: 1.2, explosao: 1.25 },
+  rei:       { perfuracao: 0.75, explosao: 0.7, impacto: 0.7, corte: 1.25, fogo: 1.35 },
+  exheroi:   { perfuracao: 0.9, corte: 1.1 }
+};
+export const SUPER_EFETIVO = 1.25, POUCO_EFETIVO = 0.8;
+export const afinidade = (tipoZumbi, tipoDano) => (AFINIDADES[tipoZumbi] && AFINIDADES[tipoZumbi][tipoDano]) ?? 1;
+export function efetividade(m) { return m >= SUPER_EFETIVO ? 'super' : m <= POUCO_EFETIVO ? 'fraco' : null; }
+
+/* ---------------- Perícias ---------------- */
+// Cada arma pertence a uma perícia. Quanto mais perícia, mais dano, mais rápido e mais chance de causar efeitos.
+// O valor de cada perícia vem do personagem e sobe com o nível (dados.js → CLASSES).
+export const PERICIAS = {
+  armas_fogo: { nome: 'Armas de fogo', emoji: '🔫' },
+  facas:      { nome: 'Facas', emoji: '🔪' },
+  machados:   { nome: 'Machados', emoji: '🪓' },
+  impacto:    { nome: 'Pancada', emoji: '🔨' },
+  explosivos: { nome: 'Fogo e explosivos', emoji: '💥' },
+  agilidade:  { nome: 'Agilidade', emoji: '💨' }
+};
+export const PERICIA_PADRAO = 2;   // quem não tem a perícia definida usa isto (2 = sem bônus nem penalidade)
+export const EFEITO_PERICIA = {
+  dano: 0.07,          // +7% de dano por ponto (perícia 0 = -14%, perícia 2 = normal, perícia 10 = +56%)
+  cadencia: 0.03,      // +3% de velocidade de ataque por ponto acima de 2
+  chanceStatus: 0.03,  // +3% de chance de causar o efeito da arma por ponto acima de 2
+  critico: 0.01        // +1% de crítico por ponto acima de 2
+};
+export const periciaDe = (h, cat) => (h.pericias && h.pericias[cat] != null ? h.pericias[cat] : PERICIA_PADRAO);
+export const multPericia = p => 1 + (p - PERICIA_PADRAO) * EFEITO_PERICIA.dano;
+export const cadenciaPericia = p => Math.max(0.5, 1 + (p - PERICIA_PADRAO) * EFEITO_PERICIA.cadencia);
 
 let proxMod = 1;
 
@@ -108,21 +169,39 @@ export function atributosDaClasse(C, heroi) {
 }
 
 // Dano que o herói causa num zumbi.
-//   tipo: 'tiro' | 'corpo' | 'chama' (contínuo, sem crítico) | 'explosao'
-//   base: dano da arma (dados.js), ou dano por segundo × dt no caso da chama
-export function danoDoHeroi(h, base, tipo, alvo, rng) {
-  let d = base * h.attr.get('dano');
-  if (tipo === 'corpo') d *= h.attr.get('corpo');
+//   ataque: a arma ou golpe (dados.js → ARMAS / CORPO), com { dano, tipo, categoria, corpo }
+//   opts.base: troca o dano da arma (ex.: dano por segundo × dt do lança-chamas)
+//   opts.continuo: true = dano contínuo, sem crítico
+// Conta, nesta ordem: atributo "dano" × "corpo" (se for corpo a corpo) × perícia × crítico
+//   × afinidade do zumbi com o tipo de dano × (1 - resistência) × status de quem apanha (ex.: marcado)
+// Devolve { dano, critico, mult (afinidade), efetividade: 'super' | 'fraco' | null }
+export function danoDoHeroi(h, ataque, alvo, rng, opts = {}) {
+  const base = opts.base ?? ataque.dano;
+  const p = periciaDe(h, ataque.categoria);
+  let d = base * h.attr.get('dano') * multPericia(p);
+  if (ataque.corpo) d *= h.attr.get('corpo');
   let critico = false;
-  if (tipo !== 'chama' && rng && rng.next() < h.attr.get('critChance')) { d *= h.attr.get('critMult'); critico = true; }
-  d *= 1 - resistenciaDe(alvo);
-  return { dano: d, critico };
+  const chanceCrit = h.attr.get('critChance') + Math.max(0, p - PERICIA_PADRAO) * EFEITO_PERICIA.critico;
+  if (!opts.continuo && rng && rng.next() < chanceCrit) { d *= h.attr.get('critMult'); critico = true; }
+  const m = alvo ? afinidade(alvo.tipo, ataque.tipo) : 1;
+  d *= m * (1 - resistenciaDe(alvo)) * (alvo?.estados ? alvo.estados.danoRecebido() : 1);
+  return { dano: Math.max(0, d), critico, mult: m, efetividade: efetividade(m) };
 }
 
+// Dano em zumbi que não vem do herói (explosões, fogo, aliados, status): afinidade, resistência e status contam.
+export function danoNoZumbi(z, base, tipo) {
+  if (IGNORA_ARMADURA.has(tipo)) return base;
+  return Math.max(0, base * afinidade(z.tipo, tipo) * (1 - resistenciaDe(z)) * (z.estados ? z.estados.danoRecebido() : 1));
+}
+
+// Chance de a arma causar o efeito dela (sangramento, atordoar...): base da arma + perícia + atributo
+export const chanceDoStatus = (h, ataque, base) =>
+  Math.min(1, base + Math.max(0, periciaDe(h, ataque.categoria) - PERICIA_PADRAO) * EFEITO_PERICIA.chanceStatus + h.attr.get('chanceStatus'));
+
 // Tempo entre um tiro e outro
-export const intervaloTiro = (h, arma) => arma.cd / h.attr.get('cadencia');
-// Tempo entre golpes de corpo a corpo (a cadência ajuda pela metade)
-export const intervaloCorpo = (h, corpo) => corpo.cd / (1 + (h.attr.get('cadencia') - 1) * 0.5);
+export const intervaloTiro = (h, arma) => arma.cd / (h.attr.get('cadencia') * cadenciaPericia(periciaDe(h, arma.categoria)));
+// Tempo entre golpes de corpo a corpo (a cadência ajuda pela metade; a perícia ajuda inteira)
+export const intervaloCorpo = (h, corpo) => corpo.cd / ((1 + (h.attr.get('cadencia') - 1) * 0.5) * cadenciaPericia(periciaDe(h, corpo.categoria)));
 // Alcance da arma
 export const alcanceArma = (h, arma) => arma.alcance * h.attr.get('alcance');
 
@@ -131,12 +210,17 @@ export function velocidadeHeroi(h, base, { lutando = false, noVidro = false } = 
   return base * h.attr.get('velocidade') * (lutando ? 0.8 : 1) * (noVidro ? 0.6 : 1);
 }
 
-// Dano que o herói recebe. Ordem: invencível → colete (segura o golpe inteiro) → defesa.
-// Devolve { bloqueado: 'invencivel' | 'colete' | null, dano }
-export function danoNoHeroi(h, bruto) {
+// Dano que o herói recebe.
+// Ordem: invencível → esquiva (sorteio) → colete (segura o golpe inteiro) → defesa → resistência ao tipo.
+// Sangramento e infecção vêm de dentro: ignoram esquiva, colete, defesa e resistência.
+// Devolve { bloqueado: 'invencivel' | 'esquiva' | 'colete' | null, dano }
+export function danoNoHeroi(h, bruto, tipo = 'mordida', rng = null) {
   if (h.invT > 0) return { bloqueado: 'invencivel', dano: 0 };
+  if (IGNORA_ARMADURA.has(tipo)) return { bloqueado: null, dano: bruto };
+  if (rng && rng.next() < h.attr.get('esquiva')) return { bloqueado: 'esquiva', dano: 0 };
   if (h.colete > 0) return { bloqueado: 'colete', dano: 0 };
-  return { bloqueado: null, dano: Math.max(0, bruto * (1 - h.attr.get('defesa'))) };
+  const res = RES_DO_HEROI[tipo] ? h.attr.get(RES_DO_HEROI[tipo]) : 0;
+  return { bloqueado: null, dano: Math.max(0, bruto * (1 - h.attr.get('defesa')) * (1 - res)) };
 }
 
 // Quanto uma cura (em % da vida máxima) devolve de vida
@@ -160,7 +244,8 @@ export function aplicarTorcida(h, pessoas, T = TORCIDA) {
 
 /* ---------------- Zumbis ---------------- */
 // Resistência = fração do dano recebido que o zumbi ignora (0 a 0,6).
-export const resistenciaDe = z => (z && z.resistencia) || 0;
+// Status como "armadura quebrada" diminuem a resistência.
+export const resistenciaDe = z => (z ? Math.max(0, Math.min(0.9, (z.resistencia || 0) + (z.estados ? z.estados.resistencia() : 0))) : 0);
 
 // Números de um zumbi novo. T = tabela do tipo (dados.js → ZUMBIS). ameaca = nível de ameaça (1, 2, 3...).
 // Quanto o zumbi fica mais forte a cada nível de ameaça (quando a ameaça sobe: ameaca.js).

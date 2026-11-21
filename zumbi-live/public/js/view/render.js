@@ -3,6 +3,7 @@
 import { mod, hash2, DIRS, clamp, dist } from '../core/util.js';
 import { P, T as TT } from '../core/city.js';
 import { ZUMBIS, CLASSES } from '../core/dados.js';
+import { STATUS } from '../core/status.js';
 import { fillPoly, line, disc, canvas as novoCanvas } from './pixel.js';
 import * as S from './sprites.js';
 
@@ -50,7 +51,13 @@ export class Render {
     }
   }
   decal(o) { this.decals.push({ age: 0, life: 14, ...o }); if (this.decals.length > 90) this.decals.shift(); }
-  texto(x, y, txt, cor = '#fff', tam = 1) { this.textos.push({ x, y, txt, cor, tam, age: 0, life: 1.3 }); if (this.textos.length > 30) this.textos.shift(); }
+  // textos que nascem juntos no mesmo lugar sobem empilhados, sem ficar um em cima do outro
+  texto(x, y, txt, cor = '#fff', tam = 1) {
+    let pilha = 0;
+    for (const t of this.textos) if (t.age < 0.5 && Math.abs(t.x - x) < 1.5 && Math.abs(t.y - y) < 1.5) pilha++;
+    this.textos.push({ x, y, txt, cor, tam, age: 0, life: 1.3, dz: pilha * 9 });
+    if (this.textos.length > 30) this.textos.shift();
+  }
   tremer(v) { this.shake = Math.max(this.shake, v); }
   piscar(cor, a = 0.5) { this.flash = { cor, a }; }
 
@@ -70,7 +77,16 @@ export class Render {
         this.raios.push({ x: e.x, y: e.y, age: 0, life: 0.08, r: 40 });
         break;
       }
-      case 'acerto': this.sangue(e.x, e.y, 3); break;
+      case 'acerto': {
+        this.sangue(e.x, e.y, 3);
+        // textos de super efetivo / resistiu / crítico (com limite pra não poluir a tela)
+        if (e.efetividade === 'super' && this.t - (this.ultSuper || -9) > 0.7) { this.ultSuper = this.t; this.texto(e.x, e.y, 'SUPER EFETIVO!', '#ffb02a', 0.95); }
+        else if (e.efetividade === 'fraco' && this.t - (this.ultFraco || -9) > 1.2) { this.ultFraco = this.t; this.texto(e.x, e.y, 'resistiu', '#a0a8b8', 0.8); }
+        else if (e.critico && this.t - (this.ultCrit || -9) > 0.5) { this.ultCrit = this.t; this.texto(e.x, e.y, 'CRÍTICO', '#ffe27a', 0.85); }
+        break;
+      }
+      case 'esquiva': this.texto(e.x, e.y, '💨 desviou!', '#9fe8ff', 0.95); break;
+      case 'status': { const S = STATUS[e.id]; this.texto(e.x, e.y, `${S.emoji} ${S.nome.toLowerCase()}`, S.lado === 'positivo' ? '#9dffb0' : '#ff9a90', 0.9); break; }
       case 'morte_zumbi': {
         this.sangue(e.x, e.y, e.chefe ? 30 : 10);
         this.decal({ tipo: 'sangue', x: e.x, y: e.y, s: Math.random(), r: e.chefe ? 1.4 : 0.6 });
@@ -93,7 +109,6 @@ export class Render {
       case 'dano_heroi': this.sangue(e.x, e.y, 4, ['#a8282a', '#7a1a1c']); this.tremer(2); this.piscar('#ff2a2a', 0.18); break;
       case 'colete': this.texto(e.x, e.y, '🛡️ bloqueou', '#9fd0ff'); break;
       case 'cura': this.texto(e.x, e.y, `+${Math.round(e.valor)}% ❤️`, '#7dff9a', 1.2); for (let i = 0; i < 10; i++) this.particula({ x: e.x + (Math.random() - 0.5), y: e.y + (Math.random() - 0.5), z: 0.3, vz: 1.5 + Math.random(), g: -0.5, life: 0.9, cor: i % 2 ? '#7dff9a' : '#ffffff', tam: 2 }); break;
-      case 'nivel': this.texto(g.hero.x, g.hero.y, `NÍVEL ${e.nivel}!`, '#ffd23f', 1.5); break;
       case 'bau': {
         const lend = e.raridade === 'lendario';
         for (let i = 0; i < (lend ? 40 : 18); i++) {
@@ -417,12 +432,18 @@ export class Render {
       const rapido = z.pavio >= 0;
       if (Math.floor(this.t * (rapido ? 12 : 3)) % 2) { this.ctx.fillStyle = '#ff3a2a'; this.ctx.fillRect(sx - 1, sy - 18, 3, 2); }
     }
-    if (z.fogo > 0 && Math.random() < 0.5) this.particula({ x: z.x + (Math.random() - 0.5) * 0.4, y: z.y + (Math.random() - 0.5) * 0.4, z: 0.6, vz: 1.5, g: -1, life: 0.4, cor: Math.random() < 0.5 ? '#ff8a2a' : '#ffd23f', tam: 2, fogo: true });
+    if (z.estados.tem('queimando') && Math.random() < 0.5) this.particula({ x: z.x + (Math.random() - 0.5) * 0.4, y: z.y + (Math.random() - 0.5) * 0.4, z: 0.6, vz: 1.5, g: -1, life: 0.4, cor: Math.random() < 0.5 ? '#ff8a2a' : '#ffd23f', tam: 2, fogo: true });
     if (T.chefe && nasc >= 1) {
       const bw = 14 * esc, frac = clamp(z.vida / z.vidaMax, 0, 1);
       const by = sy - S.PE_Y * esc - 4;
       this.ctx.fillStyle = '#1a1420'; this.ctx.fillRect(sx - bw / 2 - 1, by - 1, bw + 2, 4);
       this.ctx.fillStyle = z.tipo === 'exheroi' ? '#9fd0ff' : '#e8442a'; this.ctx.fillRect(sx - bw / 2, by, Math.round(bw * frac), 2);
+    }
+    // ícones dos status do zumbi (sangrando, atordoado, queimando...)
+    if (z.estados.lista.size && nasc >= 1) {
+      let ic = '';
+      for (const s of z.estados.lista.values()) { ic += STATUS[s.id].emoji; if (ic.length > 6) break; }
+      this.nomes.push({ x: sx, y: sy - S.PE_Y * esc - (z.nome ? (T.chefe ? 16 : 9) : (T.chefe ? 8 : 1)), txt: ic, cor: '#fff', tam: 4.5 });
     }
     if (z.nome && nasc >= 1) this.nomes.push({ x: sx, y: sy - S.PE_Y * esc - (T.chefe ? 8 : 2), txt: z.nome, chefe: T.chefe, cor: z.tipo === 'exheroi' ? '#9fd0ff' : T.chefe ? '#ff6a4a' : '#ffd8a8' });
   }
@@ -450,7 +471,7 @@ export class Render {
     line(ctx, hx, hy, hx + ux * len, hy + uy * len, cor, h.arma === 'pistola' ? 1 : 2);
     if (h.corpo === 'taco') line(ctx, sx - 4, sy - 16, sx - 2, sy - 6, '#8a5a32', 1);
     if (h.colete > 0) { ctx.fillStyle = '#5a9ad8'; for (let i = 0; i < Math.min(h.colete, 6); i++) ctx.fillRect(sx - 6 + i * 2, sy - 29, 1, 2); }
-    if (h.attr.restante('lento') > 0 && Math.random() < 0.3) this.particula({ x: h.x, y: h.y, z: 0.1, vz: 0.5, life: 0.3, cor: '#d8f4ff', tam: 1 });
+    if (h.estados.tem('lento') && Math.random() < 0.3) this.particula({ x: h.x, y: h.y, z: 0.1, vz: 0.5, life: 0.3, cor: '#d8f4ff', tam: 1 });
     this.heroiTela = [sx, sy];
     if (h.viewer && g.fase === 'jogo') this.nomes.push({ x: sx, y: sy - 30, txt: h.viewer.nick, cor: '#ffd23f' });
   }
@@ -635,7 +656,7 @@ export class Render {
         tx.globalAlpha = 1;
         continue;
       }
-      escrever(n.txt, n.x, n.y, n.chefe ? 8 : 5.5, n.cor);
+      escrever(n.txt, n.x, n.y, n.tam || (n.chefe ? 8 : 5.5), n.cor);
     }
     for (const m of this.marcadores || []) {
       if (g.room || !g.voto) continue;
@@ -645,7 +666,7 @@ export class Render {
       tx.textBaseline = 'middle'; escrever(m.txt, sx, sy - 5, 9, m.cor, 'rgba(0,0,0,0)'); tx.textBaseline = 'bottom';
     }
     for (const t of this.textos) {
-      const [sx, sy] = this.tela(t.x, t.y, 26 + t.age * 18);
+      const [sx, sy] = this.tela(t.x, t.y, 26 + t.age * 18 + (t.dz || 0));
       tx.globalAlpha = clamp((t.life - t.age) / 0.4, 0, 1);
       escrever(t.txt, sx, sy, 7 * t.tam, t.cor);
       tx.globalAlpha = 1;

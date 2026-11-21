@@ -1,14 +1,16 @@
 // Tabelas do jogo: tipos de zumbi, classes de herói, armas e melhorias de nível.
 // Mexa aqui pra mudar números (vida, dano, velocidade...). Velocidade em casas por segundo.
 
+// ataque: tipo de dano do golpe do zumbi (dano.js → TIPOS_DANO) e efeitos que ele pode causar no herói (status.js)
+// Fraquezas e resistências de cada zumbi a cada tipo de dano: dano.js → AFINIDADES
 export const ZUMBIS = {
-  comum:     { nome: 'Zumbi',        vida: 30,   vel: 0.75, dano: 6,  cd: 1.0, raio: 0.32, xp: 1,  alcance: 0.62 },
-  gordo:     { nome: 'Zumbi gordo',  vida: 55,   vel: 0.58, dano: 8,  cd: 1.2, raio: 0.4,  xp: 2,  alcance: 0.66 },
-  corredor:  { nome: 'Corredor',     vida: 20,   vel: 1.9,  dano: 4,  cd: 0.7, raio: 0.28, xp: 1,  alcance: 0.6 },
-  explosivo: { nome: 'Explosivo',    vida: 40,   vel: 0.72, dano: 0,  cd: 1.0, raio: 0.42, xp: 3,  alcance: 0.9 },
-  chefao:    { nome: 'Chefão',       vida: 480,  vel: 0.72, dano: 11, cd: 1.3, raio: 0.6,  xp: 25, alcance: 1.05, chefe: true },
-  rei:       { nome: 'Rei Zumbi',    vida: 1400, vel: 0.62, dano: 16, cd: 1.5, raio: 0.85, xp: 60, alcance: 1.35, chefe: true },
-  exheroi:   { nome: 'Ex-herói',     vida: 300,  vel: 1.0,  dano: 9,  cd: 1.0, raio: 0.45, xp: 15, alcance: 0.8, chefe: true }
+  comum:     { nome: 'Zumbi',        vida: 30,   vel: 0.75, dano: 6,  cd: 1.0, raio: 0.32, xp: 1,  alcance: 0.62, ataque: { tipo: 'mordida', status: [{ id: 'infectado', chance: 0.06 }] } },
+  gordo:     { nome: 'Zumbi gordo',  vida: 55,   vel: 0.58, dano: 8,  cd: 1.2, raio: 0.4,  xp: 2,  alcance: 0.66, ataque: { tipo: 'mordida', status: [{ id: 'infectado', chance: 0.1 }] } },
+  corredor:  { nome: 'Corredor',     vida: 20,   vel: 1.9,  dano: 4,  cd: 0.7, raio: 0.28, xp: 1,  alcance: 0.6,  ataque: { tipo: 'mordida', status: [{ id: 'sangramento', chance: 0.15 }] } },
+  explosivo: { nome: 'Explosivo',    vida: 40,   vel: 0.72, dano: 0,  cd: 1.0, raio: 0.42, xp: 3,  alcance: 0.9,  ataque: { tipo: 'explosao' } },
+  chefao:    { nome: 'Chefão',       vida: 480,  vel: 0.72, dano: 11, cd: 1.3, raio: 0.6,  xp: 25, alcance: 1.05, chefe: true, ataque: { tipo: 'impacto', status: [{ id: 'atordoado', chance: 0.2, duracao: 0.6 }] } },
+  rei:       { nome: 'Rei Zumbi',    vida: 1400, vel: 0.62, dano: 16, cd: 1.5, raio: 0.85, xp: 60, alcance: 1.35, chefe: true, ataque: { tipo: 'impacto', status: [{ id: 'atordoado', chance: 0.2, duracao: 0.7 }, { id: 'lento', chance: 0.3 }] } },
+  exheroi:   { nome: 'Ex-herói',     vida: 300,  vel: 1.0,  dano: 9,  cd: 1.0, raio: 0.45, xp: 15, alcance: 0.8,  chefe: true, ataque: { tipo: 'mordida', status: [{ id: 'sangramento', chance: 0.25 }, { id: 'infectado', chance: 0.1 }] } }
 };
 
 // Classes de herói. Todas usam o mesmo corpo, muda roupa e o jeito de jogar.
@@ -21,18 +23,25 @@ export const CLASSES = {
 };
 
 // Armas de fogo. cd = segundos entre tiros. alcance em casas.
+// tipo = tipo de dano (dano.js → TIPOS_DANO). categoria = perícia que melhora a arma (dano.js → PERICIAS).
+// status = efeitos que o tiro pode causar: { id (status.js), chance, duracao?, pilhas? }
 export const ARMAS = {
-  pistola:     { nome: 'Pistola',       emoji: '🔫', dano: 14, cd: 0.42, alcance: 6.5, balas: 1, espalha: 0.05 },
-  escopeta:    { nome: 'Escopeta',      emoji: '💥', dano: 10, cd: 0.8,  alcance: 4.6, balas: 6, espalha: 0.45, municao: 30 },
-  metralhadora:{ nome: 'Metralhadora',  emoji: '🔥', dano: 11, cd: 0.085, alcance: 7, balas: 1, espalha: 0.09, tempo: 45, lendaria: true },
-  lanca:       { nome: 'Lança-chamas',  emoji: '🔥', dps: 75,  alcance: 3.3, cone: 0.5, tempo: 45, lendaria: true, chama: true }
+  pistola:     { nome: 'Pistola',       emoji: '🔫', dano: 14, cd: 0.42, alcance: 6.5, balas: 1, espalha: 0.05, tipo: 'perfuracao', categoria: 'armas_fogo' },
+  escopeta:    { nome: 'Escopeta',      emoji: '💥', dano: 10, cd: 0.8,  alcance: 4.6, balas: 6, espalha: 0.45, municao: 30, tipo: 'perfuracao', categoria: 'armas_fogo', status: [{ id: 'atordoado', chance: 0.08, duracao: 0.5 }] },
+  metralhadora:{ nome: 'Metralhadora',  emoji: '🔥', dano: 11, cd: 0.085, alcance: 7, balas: 1, espalha: 0.09, tempo: 45, lendaria: true, tipo: 'perfuracao', categoria: 'armas_fogo' },
+  lanca:       { nome: 'Lança-chamas',  emoji: '🔥', dps: 75,  alcance: 3.3, cone: 0.5, tempo: 45, lendaria: true, chama: true, tipo: 'fogo', categoria: 'explosivos', status: [{ id: 'queimando', chance: 1 }] }
 };
 
-// Ataque de perto (automático quando um zumbi encosta)
+// Ataques de perto. alcance = distância do golpe (casas). arco = abertura do golpe (radianos; maior pega mais zumbis).
+// golpes = quantos golpes até quebrar (só armas achadas).
 export const CORPO = {
-  empurrao: { nome: 'Empurrão', dano: 8,  cd: 0.7,  empurra: 0.7 },
-  taco:     { nome: 'Taco com pregos', emoji: '🏏', dano: 40, cd: 0.55, empurra: 0.9, golpes: 60 }
+  empurrao: { nome: 'Empurrão',        emoji: '✋', dano: 8,  cd: 0.7,  empurra: 0.7, alcance: 1.05, arco: 1.1, tipo: 'impacto', categoria: 'impacto', status: [{ id: 'atordoado', chance: 0.1, duracao: 0.5 }] },
+  taco:     { nome: 'Taco com pregos', emoji: '🏏', dano: 40, cd: 0.55, empurra: 0.9, alcance: 1.1,  arco: 1.2, tipo: 'impacto', categoria: 'impacto', golpes: 60, status: [{ id: 'atordoado', chance: 0.25, duracao: 0.6 }, { id: 'sangramento', chance: 0.15 }] },
+  faca:     { nome: 'Facas',           emoji: '🔪', dano: 14, cd: 0.32, empurra: 0.2, alcance: 1.0,  arco: 0.9, tipo: 'corte',   categoria: 'facas', status: [{ id: 'sangramento', chance: 0.45 }] },
+  machado:  { nome: 'Machado',         emoji: '🪓', dano: 36, cd: 0.85, empurra: 1.0, alcance: 1.3,  arco: 1.7, tipo: 'corte',   categoria: 'machados', status: [{ id: 'quebrado', chance: 0.35 }, { id: 'sangramento', chance: 0.25 }] },
+  chave:    { nome: 'Chave inglesa',   emoji: '🔧', dano: 22, cd: 0.55, empurra: 0.8, alcance: 1.05, arco: 1.1, tipo: 'impacto', categoria: 'impacto', status: [{ id: 'atordoado', chance: 0.3, duracao: 0.7 }] }
 };
+for (const c of Object.values(CORPO)) c.corpo = true;
 
 // Melhorias ao subir de nível. "mod" é um modificador de atributo (ver dano.js); "cura" devolve vida na hora.
 export const MELHORIAS = [

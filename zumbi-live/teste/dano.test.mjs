@@ -2,15 +2,18 @@
 import assert from 'node:assert/strict';
 import {
   Atributos, atributosDaClasse, danoDoHeroi, danoNoHeroi, intervaloTiro, intervaloCorpo, alcanceArma,
-  velocidadeHeroi, valorCura, statsZumbi, danoExplosao, danoAliado, ESCALA_AMEACA, TORCIDA, aplicarTorcida
+  velocidadeHeroi, valorCura, statsZumbi, danoExplosao, danoAliado, ESCALA_AMEACA, TORCIDA, aplicarTorcida,
+  danoNoZumbi, afinidade, efetividade, chanceDoStatus, multPericia, PERICIA_PADRAO, EFEITO_PERICIA
 } from '../public/js/core/dano.js';
+import { Estados } from '../public/js/core/status.js';
 import { CLASSES, ARMAS, CORPO, ZUMBIS } from '../public/js/core/dados.js';
 
 let ok = 0;
 const teste = (nome, fn) => { fn(); ok++; console.log('  ✔', nome); };
 const perto = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} ≠ ${b}`);
 const rngFixo = v => ({ next: () => v });
-const heroi = (classe = 'policial') => { const h = { vida: 0, vidaMax: 0, colete: 0, invT: 0 }; h.attr = atributosDaClasse(CLASSES[classe], h); h.vidaMax = h.attr.get('vidaMax'); h.vida = h.vidaMax; return h; };
+const zumbi = (tipo = 'comum', extra = {}) => ({ tipo, resistencia: 0, estados: new Estados(), ...extra });
+const heroi = (classe = 'policial') => { const h = { vida: 0, vidaMax: 0, colete: 0, invT: 0, pericias: {} }; h.attr = atributosDaClasse(CLASSES[classe], h); h.vidaMax = h.attr.get('vidaMax'); h.vida = h.vidaMax; return h; };
 
 console.log('Atributos');
 teste('base vem da tabela quando não informado', () => {
@@ -87,25 +90,24 @@ teste('adrenalina: +25% de dano só abaixo de 25% de vida', () => {
 });
 teste('dano de tiro sem crítico', () => {
   const h = heroi();
-  const r = danoDoHeroi(h, ARMAS.pistola.dano, 'tiro', { resistencia: 0 }, rngFixo(0.99));
-  assert.equal(r.dano, 14); assert.equal(r.critico, false);
+  const r = danoDoHeroi(h, ARMAS.pistola, zumbi(), rngFixo(0.99));
+  assert.equal(r.dano, 14); assert.equal(r.critico, false); assert.equal(r.efetividade, null);
 });
 teste('crítico multiplica pelo dano crítico', () => {
-  const h = heroi();
-  const r = danoDoHeroi(h, 10, 'tiro', null, rngFixo(0));
+  const r = danoDoHeroi(heroi(), ARMAS.pistola, null, rngFixo(0), { base: 10 });
   assert.equal(r.critico, true); perto(r.dano, 18);
 });
-teste('chama nunca dá crítico', () => {
-  assert.equal(danoDoHeroi(heroi(), 10, 'chama', null, rngFixo(0)).critico, false);
+teste('dano contínuo (lança-chamas) nunca dá crítico', () => {
+  assert.equal(danoDoHeroi(heroi(), ARMAS.lanca, null, rngFixo(0), { base: 10, continuo: true }).critico, false);
 });
-teste('corpo a corpo usa "dano" e "corpo"', () => {
+teste('corpo a corpo usa "dano" e "corpo"; tiro só "dano"', () => {
   const h = heroi();
   h.attr.addMod({ attr: 'dano', mult: 2 }); h.attr.addMod({ attr: 'corpo', mult: 1.5 });
-  perto(danoDoHeroi(h, CORPO.taco.dano, 'corpo', null, rngFixo(0.99)).dano, 120);
-  perto(danoDoHeroi(h, 10, 'tiro', null, rngFixo(0.99)).dano, 20);
+  perto(danoDoHeroi(h, CORPO.taco, null, rngFixo(0.99)).dano, 120);
+  perto(danoDoHeroi(h, ARMAS.pistola, null, rngFixo(0.99), { base: 10 }).dano, 20);
 });
 teste('resistência do zumbi reduz o dano', () => {
-  perto(danoDoHeroi(heroi(), 100, 'tiro', { resistencia: 0.3 }, rngFixo(0.99)).dano, 70);
+  perto(danoDoHeroi(heroi(), ARMAS.pistola, zumbi('comum', { resistencia: 0.3 }), rngFixo(0.99), { base: 100 }).dano, 70);
 });
 teste('cadência maior = intervalo menor; corpo a corpo ganha metade', () => {
   const h = heroi('mecanico');
@@ -123,7 +125,8 @@ teste('alcance e velocidade', () => {
 teste('dano recebido: invencível, colete, defesa', () => {
   const h = heroi();
   h.invT = 1; assert.equal(danoNoHeroi(h, 50).bloqueado, 'invencivel'); h.invT = 0;
-  h.colete = 2; assert.equal(danoNoHeroi(h, 50).bloqueado, 'colete'); h.colete = 0;
+  h.colete = 2; assert.equal(danoNoHeroi(h, 50).bloqueado, 'colete');
+  assert.equal(danoNoHeroi(h, 50, 'sangramento').bloqueado, null, 'sangramento atravessa o colete'); h.colete = 0;
   h.attr.addMod({ attr: 'defesa', soma: 0.2 });
   perto(danoNoHeroi(h, 50).dano, 40);
 });
@@ -156,6 +159,58 @@ teste('explosão perde metade do dano na borda e zera fora', () => {
 teste('aliados ficam mais fortes com a ameaça', () => {
   assert.equal(danoAliado('cachorro', 1), 22);
   assert.ok(danoAliado('cachorro', 3) > 22);
+});
+
+console.log('Tipos de dano, afinidades, perícias');
+teste('gordo resiste a impacto e é fraco contra corte', () => {
+  const h = heroi();
+  const g = zumbi('gordo');
+  const imp = danoDoHeroi(h, CORPO.taco, g, rngFixo(0.99)), cor = danoDoHeroi(h, CORPO.faca, g, rngFixo(0.99));
+  assert.equal(imp.efetividade, 'fraco'); assert.equal(cor.efetividade, 'super');
+  perto(imp.dano, 40 * 0.6); perto(cor.dano, 14 * 1.4);
+});
+teste('explosivo leva o dobro de fogo', () => {
+  perto(danoNoZumbi(zumbi('explosivo'), 10, 'fogo'), 20);
+  assert.equal(efetividade(afinidade('explosivo', 'fogo')), 'super');
+});
+teste('chefe resiste a tiro', () => assert.equal(efetividade(afinidade('chefao', 'perfuracao')), 'fraco'));
+teste('sangramento ignora afinidade e resistência', () => {
+  assert.equal(danoNoZumbi(zumbi('rei', { resistencia: 0.4 }), 10, 'sangramento'), 10);
+});
+teste('status do zumbi: marcado leva mais dano; armadura quebrada perde resistência', () => {
+  const z = zumbi('comum', { resistencia: 0.3 });
+  const antes = danoNoZumbi(z, 100, 'perfuracao');
+  z.estados.aplicar('quebrado');
+  assert.ok(danoNoZumbi(z, 100, 'perfuracao') > antes);
+  z.estados.aplicar('marcado');
+  perto(danoNoZumbi(z, 100, 'perfuracao'), 100 * (1 - 0.1) * 1.25);
+});
+teste('perícia: 2 = normal, mais = mais dano, menos = menos', () => {
+  assert.equal(multPericia(PERICIA_PADRAO), 1);
+  const h = heroi();
+  h.pericias = { armas_fogo: 6 };
+  perto(danoDoHeroi(h, ARMAS.pistola, null, rngFixo(0.99)).dano, 14 * (1 + 4 * EFEITO_PERICIA.dano));
+  h.pericias = { armas_fogo: 0 };
+  assert.ok(danoDoHeroi(h, ARMAS.pistola, null, rngFixo(0.99)).dano < 14);
+});
+teste('perícia aumenta cadência e chance de efeito', () => {
+  const h = heroi();
+  h.pericias = { facas: 8 };
+  assert.ok(intervaloCorpo(h, CORPO.faca) < CORPO.faca.cd);
+  assert.ok(chanceDoStatus(h, CORPO.faca, 0.45) > 0.45);
+  h.pericias = { facas: 2 };
+  perto(chanceDoStatus(h, CORPO.faca, 0.45), 0.45);
+});
+teste('herói: esquiva, resistência a explosão e defesa negativa', () => {
+  const h = heroi();
+  h.attr.addMod({ attr: 'esquiva', soma: 1 });
+  assert.equal(danoNoHeroi(h, 10, 'mordida', rngFixo(0.1)).bloqueado, 'esquiva');
+  const h2 = heroi();
+  h2.attr.addMod({ attr: 'resExplosao', soma: 0.5 });
+  perto(danoNoHeroi(h2, 20, 'explosao').dano, 10);
+  perto(danoNoHeroi(h2, 20, 'mordida').dano, 20);
+  h2.attr.addMod({ attr: 'defesa', soma: -0.2 });
+  perto(danoNoHeroi(h2, 20, 'mordida').dano, 24);
 });
 
 console.log('Torcida');
