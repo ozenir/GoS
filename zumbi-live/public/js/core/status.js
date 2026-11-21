@@ -26,6 +26,7 @@ export const STATUS = {
   atordoado:   { nome: 'Atordoado', emoji: '💫', lado: 'negativo', duracao: 0.9, maxPilhas: 1, parado: true },
   lento:       { nome: 'Lento', emoji: '🐌', lado: 'negativo', duracao: 3, maxPilhas: 1, lentidao: 0.5 },
   marcado:     { nome: 'Marcado', emoji: '🎯', lado: 'negativo', duracao: 5, maxPilhas: 1, danoRecebido: 1.25, so: 'zumbi' },
+  cansado:     { nome: 'Cansado', emoji: '😵', lado: 'negativo', duracao: 9999, maxPilhas: 1, lentidao: 0.35, so: 'zumbi' },   // colosso da doação quando o herói chega em 30% (recompensas.js)
   quebrado:    { nome: 'Armadura quebrada', emoji: '💔', lado: 'negativo', duracao: 5, maxPilhas: 1, resistencia: -0.2, so: 'zumbi' },
   infectado:   { nome: 'Infectado', emoji: '🦠', lado: 'negativo', duracao: 8, maxPilhas: 3, porSegundo: { dano: 1 }, tipoDano: 'infeccao', mods: [{ attr: 'cura', mult: 0.6 }], so: 'heroi' },
 
@@ -35,7 +36,20 @@ export const STATUS = {
   furia:       { nome: 'Fúria', emoji: '😤', lado: 'positivo', duracao: 6, maxPilhas: 1, mods: [{ attr: 'dano', mult: 1.3 }, { attr: 'velocidade', mult: 1.1 }], so: 'heroi' },
   instinto:    { nome: 'Instinto de sobrevivência', emoji: '🧡', lado: 'positivo', duracao: 6, maxPilhas: 1, porSegundo: { cura: 2.5 }, mods: [{ attr: 'defesa', soma: 0.25 }], so: 'heroi' },
   foco:        { nome: 'Foco', emoji: '👁️', lado: 'positivo', duracao: 6, maxPilhas: 1, mods: [{ attr: 'critChance', soma: 0.15 }], so: 'heroi' },
-  blindado:    { nome: 'Blindado', emoji: '🛡️', lado: 'positivo', duracao: 4, maxPilhas: 1, mods: [{ attr: 'defesa', soma: 0.4 }], so: 'heroi' }
+  blindado:    { nome: 'Blindado', emoji: '🛡️', lado: 'positivo', duracao: 4, maxPilhas: 1, mods: [{ attr: 'defesa', soma: 0.4 }], so: 'heroi' },
+  // Inspiração (doação, recompensas.js): toma 20% do dano e solta pulsos de luz em volta (jogo.js)
+  inspirado:   { nome: 'Inspirado', emoji: '✨', lado: 'positivo', duracao: 10, maxPilhas: 1, so: 'heroi' },
+
+  /* ------------- drops de paraquedas (presente de 1 moeda; recompensas.js) -------------
+     Duram quarteirões e ACUMULAM: cada pilha soma o bônus de novo (porPilha). (duracao só vale se alguém
+     aplicar sem quarteirões) */
+  d_forca:     { nome: 'Força do chat', emoji: '💪', lado: 'positivo', duracao: 30, maxPilhas: 5, porPilha: true, mods: [{ attr: 'dano', mult: 1.15 }], so: 'heroi', texto: '+15% de dano por pilha' },
+  d_cadencia:  { nome: 'Dedo nervoso', emoji: '⚡', lado: 'positivo', duracao: 30, maxPilhas: 5, porPilha: true, mods: [{ attr: 'cadencia', mult: 1.15 }], so: 'heroi', texto: 'ataca 15% mais rápido por pilha' },
+  d_casca:     { nome: 'Casca grossa', emoji: '🛡️', lado: 'positivo', duracao: 30, maxPilhas: 5, porPilha: true, mods: [{ attr: 'defesa', soma: 0.06 }], so: 'heroi', texto: '+6% de defesa por pilha' },
+  d_folego:    { nome: 'Fôlego', emoji: '💚', lado: 'positivo', duracao: 30, maxPilhas: 5, porSegundo: { cura: 1.5 }, so: 'heroi', texto: 'recupera 1,5 de vida por segundo por pilha' },
+  d_mira:      { nome: 'Olho vivo', emoji: '🎯', lado: 'positivo', duracao: 30, maxPilhas: 5, porPilha: true, mods: [{ attr: 'critChance', soma: 0.05 }], so: 'heroi', texto: '+5% de crítico por pilha' },
+  d_pernas:    { nome: 'Pernas leves', emoji: '👟', lado: 'positivo', duracao: 30, maxPilhas: 5, porPilha: true, mods: [{ attr: 'velocidade', mult: 1.06 }], so: 'heroi', texto: '+6% de velocidade por pilha' },
+  d_sorte:     { nome: 'Sortudo', emoji: '🍀', lado: 'positivo', duracao: 30, maxPilhas: 5, so: 'heroi', texto: '+25% de experiência por pilha' }
 };
 
 // Status ativos de uma entidade (herói ou zumbi)
@@ -53,10 +67,11 @@ export class Estados {
       if (atual) {
         atual.q = opts.acumula ? Math.min(opts.maxQuarteiroes ?? Infinity, (atual.q || 0) + n) : Math.max(atual.q || 0, n);
         atual.t = Infinity;
+        if (opts.pilhas) atual.pilhas = Math.min(S.maxPilhas || 1, atual.pilhas + opts.pilhas);
         if (opts.fonte) atual.fonte = opts.fonte;
         return false;
       }
-      this.lista.set(id, { id, t: Infinity, q: n, pilhas: 1, fonte: opts.fonte || null });
+      this.lista.set(id, { id, t: Infinity, q: n, pilhas: Math.min(S.maxPilhas || 1, opts.pilhas || 1), fonte: opts.fonte || null });
       return true;
     }
     // opts.mult: multiplica o dano por segundo desta aplicação (ex.: sangramento de caco de vidro 1/6).
@@ -117,14 +132,18 @@ export class Estados {
 
 // Mantém os modificadores de atributo (herói) iguais aos status ativos.
 // Cada status com "mods" vira modificadores com id "st:<status>:<n>" em attr (dano.js → Atributos).
+// Status com porPilha: o bônus vale uma vez por pilha (mult 1,15 com 3 pilhas = 1,45; soma 0,06 = 0,18).
 export function sincronizarAtributos(estados, attr) {
   for (const [id, S] of Object.entries(STATUS)) {
     if (!S.mods) continue;
-    const ativo = estados.tem(id);
+    const ativo = estados.tem(id), k = S.porPilha ? estados.pilhas(id) : 1;
     S.mods.forEach((m, n) => {
       const mid = `st:${id}:${n}`;
-      if (ativo) { if (!attr.tem(mid)) attr.addMod({ id: mid, attr: m.attr, mult: m.mult ?? 1, soma: m.soma ?? 0, fonte: S.nome }); }
-      else if (attr.tem(mid)) attr.removeMod(mid);
+      if (ativo) {
+        const mult = 1 + ((m.mult ?? 1) - 1) * k, soma = (m.soma ?? 0) * k;
+        const atual = attr.mods.find(x => x.id === mid);
+        if (!atual || atual.mult !== mult || atual.soma !== soma) attr.addMod({ id: mid, attr: m.attr, mult, soma, fonte: S.nome });
+      } else if (attr.tem(mid)) attr.removeMod(mid);
     });
   }
 }

@@ -57,7 +57,8 @@ function rodar(id, seed) {
   const faixa = n => n < 5 ? '1-4' : n < 10 ? '5-9' : n < 15 ? '10-14' : n < 20 ? '15-19' : n < 25 ? '20-24' : '25+';
   let minV = {}; const minVs = [], morreuNivel = {}, tempo10 = [];
   let heroiAtual = jogo.hero, chegou10 = false, nasceu = jogo.t;
-  const limpas = [];
+  const limpas = [], lutas = [];
+  let inicioLuta = null;
   const t0 = Date.now();
   while (res.length < N) {
     publico(jogo, rng, DT, c);
@@ -82,6 +83,8 @@ function rodar(id, seed) {
     for (const e of jogo.drainEvents()) {
       contagem[e.type] = (contagem[e.type] || 0) + 1;
       if (e.type === 'area_limpa') limpas.push(e.segundos);
+      if (e.type === 'colosso') inicioLuta = jogo.t;
+      if (e.type === 'colosso_vencido' && inicioLuta != null) { lutas.push(jogo.t - inicioLuta); inicioLuta = null; }
       if (e.type === 'heroi_morreu') { res.push(e.relatorio); const f = faixa(e.relatorio.nivel); morreuNivel[f] = (morreuNivel[f] || 0) + 1; }
     }
     if (passos > 30 * 60 * 60 * 3) { console.log('  (parei: 3 horas de jogo simulado)'); break; }
@@ -101,6 +104,7 @@ function rodar(id, seed) {
   const t10 = tempo10.slice().sort((a, b) => a - b);
   if (t10.length) console.log(`  chegaram no nível 10: ${t10.length}/${res.length} · tempo mediano ${fmtTempo(t10[Math.floor(t10.length / 2)])}`);
   if (limpas.length) { const l = limpas.slice().sort((a, b) => a - b); console.log(`  limpar a área no cruzamento: ${l.length} vezes, mediana ${l[l.length >> 1]} s, 90% até ${l[Math.floor(l.length * 0.9)]} s · hordas gigantes ${contagem.horda_quadra || 0}`); }
+  if (contagem.colosso) console.log(`  presentes: ${contagem.drop || 0} drops pegos, ${contagem.inspiracao || 0} inspirações · colossos: ${contagem.colosso} apareceram, ${contagem.colosso_cansou || 0} cansaram, ${contagem.colosso_vencido || 0} vencidos${lutas.length ? `, luta mediana ${fmtTempo(lutas.sort((a, b) => a - b)[lutas.length >> 1])}` : ''}`);
   const porClasse = {};
   for (const r of res) (porClasse[r.nome] ||= []).push(r.tempo);
   console.log('  por personagem:', Object.entries(porClasse).map(([k, v]) => `${k} ${fmtTempo(v.reduce((a, b) => a + b, 0) / v.length)} (${v.length})`).join(' · '));

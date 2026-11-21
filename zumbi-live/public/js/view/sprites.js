@@ -124,6 +124,7 @@ export function spriteZumbi(tipo, roupa) {
   if (tipo === 'explosivo') o = { ...o, largura: 2, pele: '#b8c860', camisa: '#7a8a3a', cabelo: '#6a7a30' };
   if (tipo === 'chefao') o = { ...o, largura: 1, pele: '#8a6a6a', camisa: '#4a2a2a', calca: '#2a1a1a', cabelo: '#2a1010' };
   if (tipo === 'rei') o = { ...o, largura: 1, pele: '#7a8aa0', camisa: '#5a2a7a', calca: '#2a1a3a', capa: '#8a1e3a', chapeu: { tipo: 'coroa' } };
+  if (tipo === 'colosso') o = { ...o, largura: 2, pele: '#7a6a5a', camisa: '#2e2a4a', calca: '#1a1826', cabelo: '#2a2018', capa: '#c8a030' };
   if (tipo === 'esticado') o = { ...o, largura: -1, pele: '#9aa07a', camisa: '#3a4656', calca: '#262a32', cabelo: '#3a3a2a' };
   const s = setDePessoa(o);
   cache.set(k, s);
@@ -303,6 +304,16 @@ export function spriteItem(kind) {
     fillPoly(x, [[4, 9], [10, 13], [10, 15], [4, 11]], '#d8c8a8');
     fillPoly(x, [[10, 13], [17, 9], [17, 11], [10, 15]], '#c0ae8a');
     r(8, 8, 4, 1, '#8a7a5a'); r(9, 9, 4, 1, '#8a7a5a'); r(11, 10, 3, 1, '#8a7a5a');
+  } else if (kind === 'drop') {
+    // caixa de presente do paraquedas: roxa com fita dourada
+    caixaIso(x, 10, 17, 7, 6, 6, '#8b6bff', '#6a4fd0', '#5238a8');
+    r(10, 5, 1, 9, '#ffd23f'); r(5, 10, 10, 1, '#ffd23f'); r(8, 4, 2, 2, '#ffd23f'); r(11, 4, 2, 2, '#ffd23f');
+  } else if (kind === 'runa') {
+    // pedra da runa: cristal roxo
+    fillPoly(x, [[10, 2], [15, 9], [10, 18], [5, 9]], '#9b6bff');
+    fillPoly(x, [[10, 2], [15, 9], [10, 10]], '#c8a8ff');
+    fillPoly(x, [[10, 10], [15, 9], [10, 18]], '#6a3fd0');
+    r(9, 7, 2, 4, '#fff3d0');
   } else if (kind === 'arma') {
     r(3, 9, 13, 3, '#3a3a40'); r(12, 12, 3, 4, '#5a3a22'); r(15, 9, 2, 2, '#3a3a40'); r(4, 10, 8, 1, '#6a6a70');
   }

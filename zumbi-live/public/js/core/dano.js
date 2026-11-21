@@ -52,10 +52,11 @@ export const TIPOS_DANO = {
   sangramento: { nome: 'sangramento', emoji: '🩸' },  // ignora armadura e resistência
   quimico:     { nome: 'químico', emoji: '🧪' },      // ácido
   eletrico:    { nome: 'elétrico', emoji: '⚡' },     // fios desencapados
-  infeccao:    { nome: 'infecção', emoji: '🦠' }      // ignora armadura e resistência
+  infeccao:    { nome: 'infecção', emoji: '🦠' },     // ignora armadura e resistência
+  esmagar:     { nome: 'esmagar', emoji: '👊' }        // golpe do colosso: atravessa armadura, colete e esquiva
 };
 // Tipos que atravessam defesa e resistências (dano "por dentro")
-const IGNORA_ARMADURA = new Set(['sangramento', 'infeccao']);
+const IGNORA_ARMADURA = new Set(['sangramento', 'infeccao', 'esmagar']);
 const RES_DO_HEROI = { mordida: 'resMordida', impacto: 'resImpacto', corte: 'resCorte', fogo: 'resFogo', explosao: 'resExplosao' };
 
 // Afinidade de cada zumbi com cada tipo de dano: 1 = normal, maior = fraco contra (super efetivo), menor = resiste.

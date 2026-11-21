@@ -124,6 +124,8 @@ export class Render {
       case 'arremesso': this.arremessos.push({ ...e, age: 0, life: e.t }); break;
       case 'raio': this.choques.push({ pts: e.pts, age: 0, life: 0.22 }); for (const p of e.pts.slice(1)) this.raios.push({ x: p[0], y: p[1], age: 0, life: 0.15, r: 22 }); break;
       case 'onda': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.45 }); this.tremer(3); break;
+      case 'inspiracao_pulso': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.35, cor: '#ffd23f' }); break;
+      case 'colosso_cansou': this.tremer(4); for (let i = 0; i < 14; i++) this.particula({ x: e.x + (Math.random() - 0.5), y: e.y + (Math.random() - 0.5), z: 1.5, vz: 1, g: 1, life: 1, cor: '#9fd0ff', tam: 2 }); break;
       case 'segundo_folego': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.6 }); this.tremer(4); break;
       case 'habilidade': {
         const c = e.carta;
@@ -291,7 +293,7 @@ export class Render {
         const spr = S.spriteZumbi(d.ztipo === 'exheroi' ? 'chefao' : d.ztipo, d.roupa || 0);
         const k = 'deitado';
         spr[k] = spr[k] || S.deitado(spr.frente[0]);
-        const esc = d.ztipo === 'rei' ? 3 : d.ztipo === 'chefao' || d.ztipo === 'exheroi' ? 2 : 1;
+        const esc = d.ztipo === 'rei' || d.ztipo === 'colosso' ? 3 : d.ztipo === 'chefao' || d.ztipo === 'exheroi' ? 2 : 1;
         ctx.drawImage(spr[k], sx - 14 * esc, sy - 9 * esc, 28 * esc, 18 * esc);
       }
       ctx.globalAlpha = 1;
@@ -573,7 +575,7 @@ export class Render {
     const T = ZUMBIS[z.tipo];
     if (z.tipo === 'lobo') return this.desenharLobo(z, T);
     const set = z.tipo === 'exheroi' ? S.spriteHeroi(CLASSES[z.extra?.classe]?.roupa || 'sobrevivente', true) : S.spriteZumbi(z.tipo, z.roupa);
-    const esc = z.tipo === 'rei' ? 3 : z.tipo === 'chefao' || z.tipo === 'exheroi' ? 2 : 1;
+    const esc = z.tipo === 'rei' || z.tipo === 'colosso' ? 3 : z.tipo === 'chefao' || z.tipo === 'exheroi' ? 2 : 1;
     const spr = this.quadro(set, z.fx, z.fy, z.animT * (z.tipo === 'corredor' ? 1.4 : 1), !z.dormindo);
     const nasc = z.nascendo > 0 ? 1 - z.nascendo / 0.8 : 1;
     if (z.nascendo > 0 && !this.vistos.has(z.id)) {
@@ -591,7 +593,7 @@ export class Render {
       const bw = 14 * esc, frac = clamp(z.vida / z.vidaMax, 0, 1);
       const by = sy - S.PE_Y * esc - 4;
       this.ctx.fillStyle = '#1a1420'; this.ctx.fillRect(sx - bw / 2 - 1, by - 1, bw + 2, 4);
-      this.ctx.fillStyle = z.tipo === 'exheroi' ? '#9fd0ff' : '#e8442a'; this.ctx.fillRect(sx - bw / 2, by, Math.round(bw * frac), 2);
+      this.ctx.fillStyle = z.doacao ? (z.doacao.cansado ? '#9dffb0' : '#ffd23f') : z.tipo === 'exheroi' ? '#9fd0ff' : '#e8442a'; this.ctx.fillRect(sx - bw / 2, by, Math.round(bw * frac), 2);
     }
     // ícones dos status do zumbi (sangrando, atordoado, queimando...)
     if (z.estados.lista.size && nasc >= 1) {
@@ -680,6 +682,12 @@ export class Render {
     disc(ctx, ax, ay, 6, 'rgba(26,20,32,0.9)', 0.45);
     ctx.globalAlpha = 1;
     if (g.caido) { this.heroiCaido(g, spr, ax, ay); return; }
+    // inspirado (doação): aura dourada pulsando
+    if (h.estados.tem('inspirado')) {
+      const k = Math.sin(this.t * 9) * 0.5 + 0.5;
+      ctx.globalAlpha = 0.25 + 0.2 * k; disc(ctx, ax, ay - 8, 15 + k * 4, '#ffd23f', 0.8); ctx.globalAlpha = 1;
+      if (Math.random() < 0.4) this.particula({ x: h.x + (Math.random() - 0.5) * 0.8, y: h.y + (Math.random() - 0.5) * 0.8, z: 0.3, vz: 2, g: -0.5, life: 0.7, cor: Math.random() < 0.5 ? '#fff3a0' : '#ffd23f', tam: 1 });
+    }
     const [sx, sy] = this.pessoa(spr, h.x, h.y, 1, g.fase === 'jogo' ? 1 : 0.6);
     this.heroiSpr = [sx, sy, spr];
     if ((h.invT > 0 || h.invQ > 0) && Math.floor(this.t * 10) % 2) { ctx.globalAlpha = 0.55; ctx.drawImage(this.branco(spr), sx - S.PE_X, sy - S.PE_Y); ctx.globalAlpha = 1; }
@@ -759,15 +767,17 @@ export class Render {
     const z = Math.round(it.z * 14);
     const sh = S.sombra(Math.max(4, 12 - z / 6));
     ctx.drawImage(sh, sx - Math.floor(sh.width / 2), sy - 2);
-    const brilha = it.kind === 'bau_lendario' || it.kind === 'arma' || it.kind === 'bau_medio' || it.kind === 'historia';
+    const brilha = it.kind === 'bau_lendario' || it.kind === 'arma' || it.kind === 'bau_medio' || it.kind === 'historia' || it.kind === 'drop' || it.kind === 'runa';
     if (brilha && z === 0) {
       const p = 0.5 + 0.5 * Math.sin(this.t * 5 + it.id);
-      ctx.globalAlpha = 0.25 + 0.25 * p; disc(ctx, sx, sy - 6, 10 + p * 3, it.kind === 'bau_lendario' ? '#ffd23f' : it.kind === 'historia' ? '#fff3d0' : '#9fd0ff', 0.7); ctx.globalAlpha = 1;
+      ctx.globalAlpha = 0.25 + 0.25 * p; disc(ctx, sx, sy - 6, 10 + p * 3, it.kind === 'bau_lendario' ? '#ffd23f' : it.kind === 'historia' ? '#fff3d0' : it.kind === 'drop' || it.kind === 'runa' ? '#b89cff' : '#9fd0ff', 0.7); ctx.globalAlpha = 1;
       if (Math.random() < 0.08) this.particula({ x: it.x + (Math.random() - 0.5) * 0.6, y: it.y + (Math.random() - 0.5) * 0.6, z: 0.5, vz: 1.2, g: -0.3, life: 0.8, cor: it.kind === 'bau_lendario' ? '#fff3a0' : '#d8f0ff', tam: 1 });
     }
     if (z > 0) { // paraquedas
-      ctx.fillStyle = it.kind === 'suprimento' ? '#e8e8e8' : '#d84a3a';
-      fillPoly(ctx, [[sx - 10, sy - z - 22], [sx + 10, sy - z - 22], [sx + 7, sy - z - 27], [sx - 7, sy - z - 27]], ctx.fillStyle);
+      const balanca = it.paraquedas ? Math.round(Math.sin(this.t * 2.2 + it.id) * 2) : 0;   // o drop balança descendo
+      ctx.fillStyle = it.kind === 'suprimento' ? '#e8e8e8' : it.kind === 'drop' ? '#ffd23f' : '#d84a3a';
+      fillPoly(ctx, [[sx - 10 + balanca, sy - z - 22], [sx + 10 + balanca, sy - z - 22], [sx + 7 + balanca, sy - z - 27], [sx - 7 + balanca, sy - z - 27]], ctx.fillStyle);
+      if (it.kind === 'drop') { fillPoly(ctx, [[sx - 3 + balanca, sy - z - 22], [sx + 3 + balanca, sy - z - 22], [sx + 2 + balanca, sy - z - 27], [sx - 2 + balanca, sy - z - 27]], '#8b6bff'); this.nomes.push({ x: sx + balanca, y: sy - z - 31, txt: '❓', cor: '#fff', tam: 5 }); }
       line(ctx, sx - 9, sy - z - 22, sx - 3, sy - z - 10, '#c0c0c0'); line(ctx, sx + 9, sy - z - 22, sx + 3, sy - z - 10, '#c0c0c0');
     }
     if (it.vida < 6 && it.vida < 900 && Math.floor(this.t * 8) % 2) ctx.globalAlpha = 0.4;
@@ -859,7 +869,7 @@ export class Render {
       let ant = null;
       for (let i = 0; i <= 24; i++) {
         const a = i / 24 * Math.PI * 2, p = this.tela(o.x + Math.cos(a) * r, o.y + Math.sin(a) * r, 2);
-        if (ant) line(ctx, ant[0], ant[1], p[0], p[1], '#cfe8ff', 2);
+        if (ant) line(ctx, ant[0], ant[1], p[0], p[1], o.cor || '#cfe8ff', 2);
         ant = p;
       }
       ctx.globalAlpha = 1;

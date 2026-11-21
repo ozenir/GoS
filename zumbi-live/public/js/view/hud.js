@@ -119,6 +119,14 @@ export class Hud {
       case 'bau': if (e.raridade === 'lendario') this.banner(`✨ ${ARMAS[e.arma]?.nome.toUpperCase() || 'ARMA LENDÁRIA'}!`, e.quem ? `baú lendário de ${e.quem}` : 'baú lendário', 'ouro', 2.8); break;
       case 'nivel': this.banner(`⭐ NÍVEL ${e.nivel}`, (e.pericias || []).join(' · '), 'ouro', 1.6); break;
       case 'passiva': this.banner(e.texto, '', 'bom', 1.8); break;
+      // recompensas de presente (recompensas.js)
+      case 'drop': this.banner(`🪂 ${e.emoji} ${e.nome.toUpperCase()}${e.pilhas > 1 ? ' x' + e.pilhas : ''}!`, `${e.texto} · 5 quarteirões${e.quem ? ' · presente de ' + e.quem : ''}`, 'bom', 2.2); break;
+      case 'inspiracao': this.banner('✨ INSPIRADO!', `${e.nick ? e.nick + ' doou · ' : ''}${e.segundos} s tomando só 20% do dano e machucando quem chega perto`, 'bom', 2.6); break;
+      case 'colosso_vem': this.banner('👹 VEM AÍ UM COLOSSO!', `no próximo quarteirão${e.nick ? ' · doação de ' + e.nick : ''}`, 'perigo', 2.6); break;
+      case 'colosso': this.banner(`👹 ${e.nome.toUpperCase()}!`, `${e.vida.toLocaleString('pt-BR')} de vida · aguenta até ele cansar`, 'perigo', 3); break;
+      case 'colosso_cansou': this.banner('😵 O COLOSSO CANSOU!', 'agora ele está lento e frágil: é a hora!', 'bom', 2.6); break;
+      case 'colosso_vencido': this.banner('🏆 COLOSSO DERROTADO!', 'ele deixou uma 🔮 runa', 'bom', 2.4); break;
+      case 'runa': this.banner(`🔮 RUNA DE ${e.tipo === 'dano' ? 'DANO' : 'RESISTÊNCIA'}!`, `grudou em ${e.emojiHab} ${e.nomeHab} e cresce com ela: ${e.tipo === 'dano' ? (e.hab === 'principal' ? '+10% de dano por nível de treino' : '+25% de dano por nível') : '+4% de defesa por nível'}`, 'bom', 3.2); break;
       case 'segundo_folego': this.banner('💢 SEGUNDO FÔLEGO!', 'o herói empurra a horda e respira (só até o nível 10)', 'bom', 2); break;
       case 'helicoptero': this.banner('🚁 RESGATE AÉREO!', e.quem ? `chamado por ${e.quem}` : '', 'bom', 3); break;
       case 'noite': this.banner('🌙 A NOITE CHEGOU', 'mais zumbis, menos visão', 'perigo', 2.4); break;

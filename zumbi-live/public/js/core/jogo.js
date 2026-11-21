@@ -9,7 +9,8 @@ import { FlowField } from './flow.js';
 import { ZUMBIS, CLASSES, ARMAS, CORPO, xpParaNivel, multVidaNivel } from './dados.js';
 import { EFEITOS, ladoDo } from './efeitos.js';
 import { Votacao, lerVoto, lerEscolha, OPCOES } from './votacao.js';
-import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasSupremas, supremaSegura, NIVEL_SUPREMA } from './habilidades.js';
+import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasSupremas, supremaSegura, NIVEL_SUPREMA, ATIVAS } from './habilidades.js';
+import { RECOMPENSA, DROPS, XP_POR_PILHA_SORTE, defesaRuna } from './recompensas.js';
 import {
   atributosDaClasse, danoDoHeroi, intervaloTiro, intervaloCorpo, alcanceArma, velocidadeHeroi,
   danoNoHeroi, valorCura, statsZumbi, danoDoZumbi, danoNoZumbi, chanceDoStatus, danoExplosao, danoAliado, ALIADOS,
@@ -29,7 +30,10 @@ export const PADRAO = {
   velHeroi: 1.1, noiteCada: 150, noiteDur: 35, predioT: 70, torcidaMax: TORCIDA.maxPessoas,
   atraso: 6,        // atraso da live (s): quanto tempo a tela do TikTok chega atrasada pra quem assiste
   escolhaDur: 12,   // tempo da contagem da escolha de habilidade (A, B, C) ao subir de nível
-  caidoDur: 12      // quanto tempo o herói fica caído esperando presente antes de morrer (0 = morre na hora)
+  caidoDur: 12,     // quanto tempo o herói fica caído esperando presente antes de morrer (0 = morre na hora)
+  // recompensas de presente (recompensas.js)
+  dropAteMoedas: RECOMPENSA.dropAteMoedas, doacaoAPartirDe: RECOMPENSA.doacaoAPartirDe,
+  inspiracaoSeg: RECOMPENSA.inspiracao.segundos, colossoVida: RECOMPENSA.chefe.vida
 };
 const CHAVES = {
   segundos_de_votacao: 'votoDur', segundos_do_relatorio: 'relNum', segundos_dos_destaques: 'relDest',
@@ -37,7 +41,9 @@ const CHAVES = {
   velocidade_do_heroi: 'velHeroi',
   noite_a_cada_segundos: 'noiteCada', noite_dura_segundos: 'noiteDur', segundos_dentro_do_predio: 'predioT',
   torcida_maximo_pessoas: 'torcidaMax', atraso_da_live_segundos: 'atraso', segundos_caido: 'caidoDur',
-  segundos_escolha_habilidade: 'escolhaDur'
+  segundos_escolha_habilidade: 'escolhaDur',
+  drop_ate_moedas: 'dropAteMoedas', doacao_a_partir_de_moedas: 'doacaoAPartirDe', inspiracao_segundos: 'inspiracaoSeg',
+  vida_do_colosso: 'colossoVida'
 };
 // Campos do config.json que mexem no nível de ameaça (ameaca.js)
 const CHAVES_AMEACA = {
@@ -166,6 +172,7 @@ export class Jogo {
     this.hordaT = this.A.hordaCadaSegundos;
     this.cotaRua = null;            // zumbis da rua que ainda nascem neste quarteirão (null = calcula na hora)
     this.limpando = null;           // esperando no cruzamento a área ficar limpa
+    this.colossoPendente = null;    // doação: o colosso que vem no próximo quarteirão (recompensas.js)
     this.proxHordaQ = this.A.hordaCadaQuarteiroes;   // quarteirão da próxima horda gigante
     this.alarmeT = 0;
     this.alarmeCarro = null;
@@ -1005,6 +1012,21 @@ export class Jogo {
     if (this.fase !== 'jogo') return;
     if (st.cura > 0) h.vida = Math.min(h.vidaMax, h.vida + st.cura * h.attr.get('cura'));
     if (st.acabaram.length) sincronizarAtributos(h.estados, h.attr);
+    // inspiração (doação): pulsos de luz que machucam todos os zumbis em volta
+    if (h.estados.tem('inspirado')) {
+      const I = RECOMPENSA.inspiracao;
+      h.inspPulso = (h.inspPulso || 0) - dt;
+      if (h.inspPulso <= 0) {
+        h.inspPulso = I.pulso;
+        const forca = I.dano * h.attr.get('dano') * (1 + 0.15 * (this.nivelAmeaca - 1));
+        for (const z of this.zumbis) {
+          if (z.morto || z.nascendo > 0) continue;
+          const r = I.raio + ZUMBIS[z.tipo].raio;
+          if (dist2(z.x, z.y, h.x, h.y) < r * r) this.ferirZumbi(z, danoNoZumbi(z, forca, 'impacto'), null, true);
+        }
+        this.emit('inspiracao_pulso', { x: h.x, y: h.y, raio: I.raio });
+      }
+    }
     // Passiva "instinto" (bombeira): com pouca vida, ganha o status instinto (defesa e cura)
     const P = CLASSES[h.classe].passiva;
     if (P?.id === 'instinto') {
@@ -1397,7 +1419,10 @@ export class Jogo {
     if (r.bloqueado === 'esquiva') { this.emit('esquiva', { x: h.x, y: h.y }); return false; }
     if (r.bloqueado === 'colete') { h.colete--; this.emit('colete', { x: h.x, y: h.y, resta: h.colete }); return false; }
     dano = r.dano;
+    if (h.estados.tem('inspirado')) dano *= RECOMPENSA.inspiracao.danoRecebido;   // doação: toma só 20% do dano
     h.vida -= dano;
+    // o golpe que levou o herói a 30% cansa o colosso na hora (antes da mochila ou de outra cura chegar)
+    if (h.vida / h.vidaMax <= RECOMPENSA.chefe.cansaVida) this.cansarColosso();
     // segundo fôlego (antes do nível 10): com a vida quase no fim, o herói empurra todo mundo e respira
     if (h.vida / h.vidaMax < FOLEGO.limite && h.nivel < FOLEGO.ateNivel && !h.suprema && h.folegoCd <= 0) this.segundoFolego();
     if (!silencioso) this.emit('dano_heroi', { dano, x: h.x, y: h.y });
@@ -1428,7 +1453,7 @@ export class Jogo {
 
   ganharXp(x) {
     const h = this.hero;
-    h.xp += x;
+    h.xp += x * (1 + XP_POR_PILHA_SORTE * h.estados.pilhas('d_sorte'));   // drop Sortudo: mais experiência
     while (h.xp >= xpParaNivel(h.nivel)) {
       h.xp -= xpParaNivel(h.nivel);
       h.nivel++;
@@ -1487,6 +1512,8 @@ export class Jogo {
     this.stats.quarteiroes += n;
     // quarteirão novo: cota de zumbis da rua nova
     this.cotaRua = null;
+    // doação: o colosso aparece no quarteirão seguinte
+    if (this.colossoPendente?.estado === 'esperando') { this.colossoPendente.estado = 'chamado'; this.agendar(2.5, () => this.surgirColosso()); }
     this.limpando = null;
     // a cada 5 quarteirões, a horda gigante
     const cada = this.A.hordaCadaQuarteiroes;
@@ -1593,6 +1620,12 @@ export class Jogo {
       const T = ZUMBIS[z.tipo];
       z.flash = Math.max(0, z.flash - dt);
       if (z.nascendo > 0) { z.nascendo -= dt; continue; }
+      // colosso da doação: cansa quando o herói chega em 30% de vida (ou a luta demora demais)
+      if (z.doacao && vivo) {
+        const D = z.doacao, C = RECOMPENSA.chefe;
+        D.t += dt;
+        if (!D.cansado && (h.vida / h.vidaMax <= C.cansaVida || D.t > C.cansaSegundos)) this.cansarColosso(z);
+      }
       // Status (status.js): dano por segundo, atordoado
       const st = z.estados.update(dt);
       for (const d of st.danos) this.ferirZumbi(z, danoNoZumbi(z, d.valor, d.tipo), null, true);
@@ -1715,7 +1748,11 @@ export class Jogo {
         if (alvoAliado) { /* aliados não morrem: só seguram o zumbi */ }
         else {
           const A = T.ataque || { tipo: 'mordida' };
-          const entrou = this.ferirHeroi(danoDoZumbi(z), z.dono, z.dono ? `${T.nome.toLowerCase()} de ${z.dono.nick}` : 'a horda', A.tipo);
+          // colosso: cada golpe tira 10% da vida máxima do herói e atravessa a armadura (tipo "esmagar");
+          // cansado, bate bem mais fraco
+          const C = RECOMPENSA.chefe;
+          const golpe = z.doacao ? h.vidaMax * C.golpe * (z.doacao.cansado ? C.cansadoDano : 1) : danoDoZumbi(z);
+          const entrou = this.ferirHeroi(golpe, z.dono, z.doacao ? 'o colosso' : z.dono ? `${T.nome.toLowerCase()} de ${z.dono.nick}` : 'a horda', z.doacao ? 'esmagar' : A.tipo);
           if (entrou) for (const s of A.status || []) if (this.rng.next() < s.chance) this.aplicarStatus(h, s.id, { duracao: s.duracao, fonte: z.dono });
         }
         this.emit('mordida', { x: z.x, y: z.y, chefe: !!T.chefe });
@@ -1729,6 +1766,7 @@ export class Jogo {
   // dano já calculado (dano.js). critico e efetividade ('super' | 'fraco') só servem pra mostrar na tela.
   ferirZumbi(z, dano, quem, silencioso = false, critico = false, efetividade = null) {
     if (z.morto) return;
+    if (z.doacao?.cansado) dano *= RECOMPENSA.chefe.cansadoDanoRecebido;   // colosso cansado: frágil
     z.vida -= dano;
     z.dormindo = false;
     if (!silencioso) { z.flash = 0.1; this.emit('acerto', { x: z.x, y: z.y, tipo: z.tipo, critico, efetividade }); }
@@ -1749,6 +1787,11 @@ export class Jogo {
         const arma = z.extra?.arma;
         if (arma && arma !== 'pistola' && ARMAS[arma]) this.soltarItemEm('arma', { arma }, null, z.x, z.y);
         else this.soltarItemEm('bau_medio', {}, null, z.x, z.y);
+      } else if (z.doacao) {
+        // colosso da doação: deixa uma runa (e o próximo colosso já pode vir)
+        this.soltarItemEm('runa', {}, z.doacao.quem, z.x, z.y);
+        this.colossoPendente = null;
+        this.emit('colosso_vencido', { nome: z.nome, x: z.x, y: z.y });
       } else this.soltarItemEm(z.tipo === 'rei' ? 'bau_lendario' : 'kit', { valor: 40 }, null, z.x, z.y);
     }
   }
@@ -1867,7 +1910,8 @@ export class Jogo {
     const h = this.hero;
     for (const it of this.itens) {
       if (it.z > 0) {
-        it.vz += 14 * dt; it.z -= it.vz * dt;
+        if (it.paraquedas) it.z -= RECOMPENSA.dropQueda * dt;   // drop: desce devagar, pra todo mundo ver
+        else { it.vz += 14 * dt; it.z -= it.vz * dt; }
         if (it.z <= 0) { it.z = 0; it.vz = 0; this.emit('item_pousou', { x: it.x, y: it.y, kind: it.kind }); }
         continue;
       }
@@ -1896,6 +1940,13 @@ export class Jogo {
       case 'bau_medio': this.abrirBau('medio', quem); break;
       case 'bau_lendario': this.abrirBau('lendario', quem); break;
       case 'arma': this.trocarArma(it.data.arma, quem); this.emit('bau', { raridade: 'medio', arma: it.data.arma, x: it.x, y: it.y }); break;
+      case 'drop': {
+        const id = it.data.buff, S = STATUS[id];
+        this.aplicarStatus(h, id, { quarteiroes: RECOMPENSA.dropQuarteiroes, pilhas: 1, fonte: quem });
+        this.emit('drop', { id, nome: S.nome, emoji: S.emoji, texto: S.texto, pilhas: h.estados.pilhas(id), quem: quem?.nick || null, x: it.x, y: it.y });
+        break;
+      }
+      case 'runa': this.ganharRuna(quem); break;
       case 'historia': {
         const f = HISTORIA.fragmentos.find(x => x.id === it.data.id);
         if (!f) break;
@@ -1991,6 +2042,92 @@ export class Jogo {
       const h = this.hero;
       if (h.vida / h.vidaMax < 0.6) this.curar(valor, quem, true);
       else if (!this.guardarNaMochila(valor, quem)) this.curarPresente(valor, quem);
+    }
+  }
+
+  /* =================== Recompensas de presente (recompensas.js) =================== */
+  // moedas = valor de UMA unidade do presente; qtd = quantas vieram juntas
+  recompensaDePresente(moedas, qtd, quem) {
+    if (moedas <= this.cfg.dropAteMoedas) {
+      const n = Math.min(RECOMPENSA.dropsPorPresente, Math.max(1, qtd));
+      for (let k = 0; k < n; k++) this.agendar(0.3 + k * 0.45, () => this.soltarDrop(quem));
+    }
+    if (moedas >= this.cfg.doacaoAPartirDe) this.doacao(quem);
+  }
+
+  // Caixa de paraquedas com um bônus sorteado (o bônus só aparece quando o herói pega)
+  soltarDrop(quem) {
+    if (this.fase !== 'jogo') return;
+    const h = this.hero;
+    const buff = this.rng.weighted(DROPS.map(d => [d.id, d.peso]));
+    let p;
+    if (this.room) p = this.room.pontoLivre(this.rng, h, 3);
+    else { const a = this.pontoAFrente(2 + this.rng.range(0, 2.5)); p = this.pontoPerto(a, 1.2) || a; }
+    const it = this.soltarItemEm('drop', { buff }, quem, p.x, p.y, RECOMPENSA.dropAltura);
+    it.paraquedas = true;
+  }
+
+  // Doação: inspiração, um drop e o colosso no próximo quarteirão (um por vez)
+  doacao(quem) {
+    const h = this.hero;
+    this.aplicarStatus(h, 'inspirado', { duracao: this.cfg.inspiracaoSeg });
+    h.inspPulso = 0;
+    this.emit('inspiracao', { nick: quem?.nick || null, segundos: this.cfg.inspiracaoSeg });
+    this.soltarDrop(quem);
+    if (!this.colossoPendente) {
+      this.colossoPendente = { quem, estado: 'esperando' };
+      this.emit('colosso_vem', { nick: quem?.nick || null });
+    }
+  }
+
+  surgirColosso() {
+    const c = this.colossoPendente;
+    if (!c || c.estado !== 'chamado' || this.fase !== 'jogo') return;
+    if (this.room || this.arena || this.caido || this.rota.beco) { this.agendar(3, () => this.surgirColosso()); return; }   // espera voltar pra rua
+    const C = RECOMPENSA.chefe;
+    const a = this.pontoAFrente(7), p = this.pontoPerto(a, 1.5) || a;
+    const nome = c.quem?.nick ? `Colosso de ${nomeSeguro(c.quem.nick, 12)}` : 'Colosso';
+    const z = this.criarZumbi('colosso', p.x, p.y, null, { nome, nascendo: 1.6 });
+    z.vida = z.vidaMax = this.cfg.colossoVida * (1 + C.vidaPorNivel * (this.hero.nivel - 1));
+    z.doacao = { t: 0, cansado: false, quem: c.quem };
+    c.estado = 'vivo';
+    this.emit('chefe', { tipo: 'colosso', nome, x: p.x, y: p.y });
+    this.emit('colosso', { nome, vida: Math.round(z.vida) });
+  }
+
+  // O colosso cansa: fica lento (😵 em cima dele), frágil e bate fraco. O herói não muda.
+  cansarColosso(so = null) {
+    for (const z of so ? [so] : this.zumbis) {
+      if (z.morto || !z.doacao || z.doacao.cansado || z.nascendo > 0) continue;
+      z.doacao.cansado = true;
+      z.estados.aplicar('cansado');
+      this.emit('colosso_cansou', { x: z.x, y: z.y, nome: z.nome });
+    }
+  }
+
+  // Runa do colosso: dano ou resistência, grudada numa habilidade que o herói já tem
+  ganharRuna(quem) {
+    const h = this.hero;
+    const tipo = this.rng.chance(0.5) ? 'dano' : 'resistencia';
+    const ids = Object.keys(h.habs || {});
+    const livres = ids.filter(id => !h.runas?.[id]?.[tipo]);
+    const alvo = ids.length ? this.rng.pick(livres.length ? livres : ids) : 'principal';
+    h.runas = h.runas || {};
+    const r = h.runas[alvo] = h.runas[alvo] || {};
+    r[tipo] = (r[tipo] || 0) + 1;
+    this.aplicarRunas();
+    const hab = alvo === 'principal' ? { nome: 'ataque principal', emoji: '⚔️' } : ATIVAS[alvo];
+    this.emit('runa', { tipo, hab: alvo, nomeHab: hab.nome, emojiHab: hab.emoji, quem: quem?.nick || null, x: h.x, y: h.y });
+  }
+
+  // O que as runas dão agora (chamado ao ganhar runa e quando uma habilidade ou o treino sobe de nível).
+  // A runa de dano numa habilidade fica em habilidades.js (atualizarHabilidades).
+  aplicarRunas() {
+    const h = this.hero, R = RECOMPENSA;
+    for (const [id, r] of Object.entries(h.runas || {})) {
+      const nivel = id === 'principal' ? 1 + (h.treino || 0) : (h.habs?.[id] || 1);
+      if (r.resistencia) h.attr.addMod({ id: 'runa:def:' + id, attr: 'defesa', soma: defesaRuna(r, nivel), fonte: 'runa' });
+      if (id === 'principal' && r.dano) h.attr.addMod({ id: 'runa:dano:principal', attr: 'dano', mult: 1 + R.runa.principal * nivel * r.dano, fonte: 'runa' });
     }
   }
 
@@ -2222,6 +2359,8 @@ export class Jogo {
     // Resposta na hora, em cima do herói, com o nome de quem mandou (mesmo que o efeito vá pra fila)
     if (this.fase === 'jogo') this.emit('presente_heroi', { nick: quem.nick, emoji: emoji || regra.emoji || '🎁', lado, x: this.hero.x, y: this.hero.y });
     if (lado === 'ajuda' && (coins > 0 || giftName === 'seguiu')) this.ultimaAjudaT = this.t;
+    // recompensas de presente (recompensas.js): drop de paraquedas (1 moeda) e doação (inspiração + colosso)
+    if (coins > 0 && quem.id !== '__curtidas' && this.fase === 'jogo') this.recompensaDePresente(coins, qtd, quem);
     if (lado === 'ajuda') {
       if (this.fase === 'jogo') {
         // caído: qualquer presente de ajuda (ou seguir) levanta; compartilhar e curtidas não (são de graça e sem limite)

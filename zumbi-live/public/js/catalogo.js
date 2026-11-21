@@ -143,5 +143,9 @@ export const JOGO_PADRAO = {
   "caminho_historia_porcento": 2,
   "noite_a_cada_segundos": 150,
   "noite_dura_segundos": 35,
-  "segundos_dentro_do_predio": 70
+  "segundos_dentro_do_predio": 70,
+  "drop_ate_moedas": 1,
+  "doacao_a_partir_de_moedas": 2,
+  "inspiracao_segundos": 10,
+  "vida_do_colosso": 10000
 };

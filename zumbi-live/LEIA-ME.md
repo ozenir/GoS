@@ -105,7 +105,7 @@ Facas e cacos de vidro fazem sangrar, a chave e o taco atordoam, o machado quebr
 
 Tudo anda mais devagar que antes (herói e zumbis), então tem menos decisão por minuto e mais tempo de ver a luta. Cada nível pede mais experiência que o anterior, e zumbi mais forte (ameaça maior) dá mais experiência.
 
-**O som.** Todo som é gerado pelo jogo. O que acontece na rua (tiros, explosões, zumbis) passa por uma **acústica de verdade**: a câmera fica no alto, como num helicóptero, então tudo já chega um pouco mais grave. E quanto mais longe do herói, mais baixo, mais abafado (o ar absorve primeiro os agudos) e um tiquinho atrasado (a velocidade do som). A **pistola** é um estampido grave, curto e seco. A **explosão** é um estrondo fundo, que vai sumindo devagar e ecoa nos prédios. Jogar a granada faz só o "fffu" do braço. Com zumbi na tela, de vez em quando um deles **geme, rosna ou engasga** (3 vozes, nunca a mesma duas vezes seguidas; gordo e chefe têm a voz mais grossa, corredor e lobo mais fina). Zumbi morrendo solta o **último suspiro** (3 jeitos: gemido que termina num sopro, engasgo, estertor). Os **avisos da tela** (presente, voto, nível, baú, chefão...) seguem a mesma ideia, como um videogame de 16 bits ouvido de longe: poucos instrumentos (sino, marimba, metal grave e tambor), entrada suave, sem o brilho dos agudos e um eco curto. Coisa boa soa em sino, subindo; coisa ruim é grave, em metal e tambor.
+**O som.** Todo som é gerado pelo jogo. O que acontece na rua (tiros, explosões, zumbis) passa por uma **acústica de verdade**: a câmera fica no alto, como num helicóptero, então tudo já chega um pouco mais grave. E quanto mais longe do herói, mais baixo, mais abafado (o ar absorve primeiro os agudos) e um tiquinho atrasado (a velocidade do som). A **pistola** é um estampido grave, curto e seco. A **explosão** é um estrondo fundo, que vai sumindo devagar e ecoa nos prédios. Jogar a granada faz só o "fffu" do braço. Com zumbi na tela, de vez em quando um deles **geme, rosna ou engasga** (3 vozes, nunca a mesma duas vezes seguidas; gordo e chefe têm a voz mais grossa, corredor e lobo mais fina). Zumbi morrendo solta o **último suspiro** (3 jeitos: gemido que termina num sopro, engasgo, estertor). Os **avisos da tela** (presente, voto, nível, baú, chefão...) seguem a mesma ideia, como um videogame de 16 bits ouvido de longe: poucos instrumentos (sino, marimba, metal grave e tambor), entrada suave, sem o brilho dos agudos e um eco curto. Coisa boa soa em sino, subindo; coisa ruim é grave, em metal e tambor. Tudo uma oitava abaixo, pra não ficar agudo.
 
 **A cidade vai sendo destruída.** Quanto mais tempo a run dura, mais destruídas vêm as ruas e prédios novos: começa depois de 1 minuto e chega no máximo com 10 minutos.
 - 🕳️ **buracos no asfalto** (machucam e deixam lento)
@@ -248,6 +248,30 @@ Quando falta alguma categoria, a carta é completada com outra. Cada habilidade 
 
 ## Presentes
 
+### Recompensas pra quem dá presente (pensadas pra live de quem tem pouca moeda)
+
+Todo presente continua fazendo o que faz (tabela abaixo). Além disso:
+
+- **🪂 Presente de 1 moeda (Rosa, TikTok, Sorvete...): cai um DROP de paraquedas.** Uma caixa roxa com ❓ desce devagar, balançando, perto do herói (uns 5 segundos, pra todo mundo ver). Quando ele pega, aparece o **bônus sorteado**, que dura **5 quarteirões**. Os bônus **acumulam**: pegar o mesmo de novo soma uma pilha (fica mais forte, até x5) e o tempo volta pros 5 quarteirões; bônus diferentes valem juntos. Presente repetido (Rosa x5) solta uma caixa por unidade (até 5).
+
+  | Bônus | Por pilha |
+  |---|---|
+  | 💪 Força do chat | +15% de dano |
+  | ⚡ Dedo nervoso | ataca 15% mais rápido |
+  | 🛡️ Casca grossa | +6% de defesa |
+  | 💚 Fôlego | recupera 1,5 de vida por segundo |
+  | 🎯 Olho vivo | +5% de crítico |
+  | 👟 Pernas leves | +6% de velocidade |
+  | 🍀 Sortudo | +25% de experiência |
+
+- **✨ Doação (presente de 2 moedas ou mais):**
+  - **Inspiração**: por 10 segundos o herói brilha dourado, **toma só 20% do dano** e solta pulsos de luz que machucam todos os zumbis em volta.
+  - Ganha um **drop** também.
+  - **👹 Vem um COLOSSO no próximo quarteirão**, com o nome de quem doou ("Colosso de ana.lu"). Tem uns **10 mil de vida** (cresce com o nível do herói) e começa batendo muito forte: cada golpe tira 10% da vida do herói e atravessa armadura, colete e esquiva. É condicional: **quando a vida do herói chega em 30%, o colosso CANSA** (😵 em cima dele): fica lento, **toma 3x mais dano** e bate bem mais fraco, pra o herói virar a luta. Se a luta passar de 75 segundos, ele cansa também. O herói não fica lento. Só um colosso por vez (outras doações enquanto ele está vivo dão inspiração e drop).
+  - **🔮 Vencendo, o colosso deixa uma RUNA**: uma habilidade única de **dano** ou de **resistência** que gruda numa habilidade que o herói já tem e **cresce junto com ela**. Runa de dano: aquela habilidade causa **+25% de dano por nível dela** (granada nível 3 = +75%). Runa de resistência: **+4% de defesa por nível** da habilidade. Subiu a habilidade, a runa fica mais forte. Sem habilidade ainda, a runa vai pro ataque principal (+10% de dano por nível de treino). As runas aparecem no cartão do herói com 🔮.
+
+Os valores ficam no `config.json` → `jogo`: `drop_ate_moedas` (1), `doacao_a_partir_de_moedas` (2), `inspiracao_segundos` (10) e `vida_do_colosso` (10000). O resto (bônus, força das runas, quando o colosso cansa) fica em `public/js/core/recompensas.js`.
+
 Tudo que **ajuda** acontece na hora (e se adapta à situação, veja "O atraso da live" acima). Tudo que **atrapalha** entra numa fila: sai um a cada meio segundo e **nada sai nos primeiros 15 segundos de um herói novo** (proteção de nascimento). Presentes caros furam a fila. Os efeitos aparecem sempre **na rua logo à frente do herói**, então quem mandou vê o resultado em poucos segundos.
 
 **Bônus duram quarteirões, não segundos.** Tiro rápido, fúria, foco, blindado, arma lendária, cachorro e sobrevivente ajudante e o invencível do helicóptero valem pelos **próximos N quarteirões** que o herói andar (ex.: "tiro rápido nos próximos 3 quarteirões"). Cada cruzamento conta 1; sair de prédio, 1; sair da arena ou da praia, 2. Na tela, o que falta aparece com 📍 (ex.: `⚡ tiro rápido 📍2`). O que não é bônus continua em segundos: proteção de nascimento, sangramento, atordoado, queimando, e os efeitos de quem atrapalha (noite, alarme, vidro).
@@ -323,6 +347,10 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 | `torcida_maximo_pessoas` | quantas pessoas da torcida contam no máximo (0 desliga a torcida) | 10 |
 | `noite_a_cada_segundos` / `noite_dura_segundos` | ciclo da noite (0 desliga) | 150 / 35 |
 | `segundos_dentro_do_predio` | quanto tempo até o alarme mandar ele sair | 70 |
+| `drop_ate_moedas` | presente de até tantas moedas solta um drop de paraquedas | 1 |
+| `doacao_a_partir_de_moedas` | presente a partir de tantas moedas é doação: inspiração, drop e colosso | 2 |
+| `inspiracao_segundos` | quanto dura a inspiração | 10 |
+| `vida_do_colosso` | vida do colosso no nível 1 do herói (+25% por nível) | 10000 |
 
 **Presentes:** em `presentes` → `por_nome`, cada presente tem `efeito` e os números do efeito. Os efeitos que existem:
 
@@ -354,9 +382,9 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 |---|---|---|---|
 | Sem nenhuma interação | **4 min** (o mais longo 7 min 11 s) | 10 | mais da metade cai entre o 5 e o 9 (sem curtida, torcida nem presente, ninguém ajuda) |
 | Só chat (6 pessoas comentando e votando, curtidas) | **8 min 23 s** | 17 | quase ninguém cai; a vida chega a ~40-60% entre o 5 e o 9. A maioria cai entre o nível 15 e o 24 |
-| Chat + presentes misturados (8 por minuto) | **~18 min** (a maioria cai no **golpe final** de quem atrapalha; o mais longo 30 min) | 33 | ninguém cai |
-| Chat + só presentes que ajudam (4 por minuto) | ~20 min (o mais longo 29 min) | 36 | ninguém cai |
-| Chat + só presentes que atrapalham (4 por minuto) | 5 min 49 s (a maioria cai no golpe final) | 17 | quase ninguém cai |
+| Chat + presentes misturados (8 por minuto) | **~28 min** (a maioria cai no **golpe final** de quem atrapalha; o mais longo 35 min). Uns 70 colossos em 6 heróis, quase todos vencidos, luta de ~45 s | 40+ | ninguém cai |
+| Chat + só presentes que ajudam (4 por minuto) | ~30 min (o mais longo 35 min) | 40+ | ninguém cai |
+| Chat + só presentes que atrapalham (4 por minuto) | 6 min 44 s (a maioria cai no golpe final). Aqui o colosso aperta: 3 de cada 4 cansaram, luta de ~1 min | 20 | ninguém cai |
 
 Os primeiros níveis vêm rápido (a primeira escolha de habilidade sai no primeiro minuto) e depois cada nível pede mais. O nível 10 chega por volta dos 3 minutos em lives com chat; o 20 (lobos e braços longos), em lives que ajudam; o 30 (praia), em lives muito engajadas. Cada quarteirão leva perto de 1 minuto (limpar a área inclusive), então a horda gigante vem a cada 4 ou 5 minutos.
 
@@ -387,7 +415,7 @@ Cada assunto tem o seu arquivo em `public/js/core/`:
 | `habilidades.js` | **as habilidades do roguelike**: ativas, passivas, armas novas, treino, como as 3 cartas são sorteadas e o que a IA escolhe. Habilidade nova = acrescentar em `ATIVAS` ou `PASSIVAS` (instruções no começo do arquivo) |
 | `jogo.js` | o resto: herói, zumbis, arena, herói caído, mochila e presentes inteligentes |
 
-**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/som.test.mjs` (acústica), `node teste/catalogo.test.mjs` (a prévia sem o programa usa os mesmos números do config.json), `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade, força por nível, combos, suprema, vida por nível, Anti-explosão e inchados instáveis), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (começo puxado, cota da quadra, limpar a área, horda a cada 5 quarteirões, segundo fôlego, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
+**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/som.test.mjs` (acústica), `node teste/recompensas.test.mjs` (drops, inspiração, colosso e runas), `node teste/catalogo.test.mjs` (a prévia sem o programa usa os mesmos números do config.json), `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade, força por nível, combos, suprema, vida por nível, Anti-explosão e inchados instáveis), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (começo puxado, cota da quadra, limpar a área, horda a cada 5 quarteirões, segundo fôlego, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
 
 **Para testar o equilíbrio sem live:** `node teste/simular.mjs` roda dezenas de partidas em segundos em 5 cenários (sem interação, só chat, presentes misturados, só presentes que ajudam, só presentes que atrapalham) e mostra quanto cada herói durou. Para testar números sem mexer no `config.json`: `AJUSTES='{"horda_base":8}' node teste/simular.mjs 20 nada`. Também dá pra mexer em `ameaca.js` e na força dos zumbis só na simulação: `AMEACA='{"medioForca":1.5}' ESCALA='{"vida":0.3}' node teste/simular.mjs 20 chat`, e `SEED=1` roda outra sequência de partidas. O simulador mostra em que faixa de nível os heróis caem, a vida mínima em cada faixa, quando chegam no nível 10 e quanto tempo levam pra limpar a área.
 
@@ -411,7 +439,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.10.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.11.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.

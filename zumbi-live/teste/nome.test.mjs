@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const presente = (j, id, nick, coins, efeito) => j.handle({ type: 'presente', id, nick, giftName: 'x', count: 1, coins, regra: { efeito, valor: 10, qtd: 1 } });
 const passar = (j, s) => { for (let i = 0; i < s * 30; i++) j.update(1 / 30); };
 // derruba o herói (sem o segundo fôlego do começo)
-const derrubar = j => { j.hero.folegoCd = 1e9; j.ferirHeroi(9999, null, 'teste'); };
+const derrubar = j => { j.hero.folegoCd = 1e9; j.hero.invT = 0; j.ferirHeroi(1e6, null, 'teste', 'sangramento'); };   // sangramento: sem esquiva nem colete
 // caso 1: quem atrapalhou doou primeiro, mesmo doando menos que o ajudante
 let j = new Jogo({ seed: 1 }); passar(j, 2);
 presente(j, 't', 'trollzinho', 1, 'zumbis'); passar(j, 1);

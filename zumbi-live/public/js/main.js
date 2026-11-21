@@ -198,7 +198,7 @@ function tocar(e, g) {
     case 'entrou_praia': som.perigo(); break;
     case 'praia_vencida': som.recorde(); break;
     case 'virou': som.virou(); break;
-    case 'chefe': som.chefe(e.tipo === 'rei'); break;
+    case 'chefe': som.chefe(e.tipo === 'rei' || e.tipo === 'colosso'); break;
     case 'alarme': som.alarme(e.sala ? 4 : 6); break;
     case 'latido': som.latido(longe(e, g)); break;
     case 'vidro_pisou': som.vidro(); break;
@@ -211,6 +211,14 @@ function tocar(e, g) {
     case 'braco': som.esticar(longe(e, g)); break;
     case 'horda_quadra': som.perigo(); break;
     case 'segundo_folego': som.onda(); break;
+    case 'item_caindo': if (e.kind === 'drop') som.paraquedas(longe(e, g)); break;
+    case 'drop': som.drop(e.pilhas); break;
+    case 'inspiracao': som.inspiracao(); break;
+    case 'inspiracao_pulso': som.pulso(); break;
+    case 'colosso_vem': som.perigo(); break;
+    case 'colosso_cansou': som.cansou(longe(e, g)); break;
+    case 'colosso_vencido': som.recorde(); break;
+    case 'runa': som.runa(); break;
     case 'novos_inimigos': som.chefe(false); break;
     case 'onda': som.onda(); break;
     case 'arremesso': som.arremesso(); break;

@@ -18,6 +18,9 @@ export function acustica(d = 0) {
   return { vol: CAMERA_ALTURA / r, corte: 280 + 6500 * Math.exp(-extra / 6), atraso: extra * METROS_POR_CASA / VEL_SOM };
 }
 
+// Avisos da tela uma oitava abaixo (sinos e marimba graves, como ouvidos de longe)
+const OITAVA = 0.5;
+
 // Vozes dos zumbis (só ambiente): altura da voz de cada tipo
 const VOZ_BASE = { comum: 110, gordo: 78, corredor: 150, explosivo: 92, lobo: 170, esticado: 100, chefao: 62, rei: 50, exheroi: 85 };
 
@@ -42,9 +45,9 @@ export class Som {
       this.mundo.connect(altura); altura.connect(grave); grave.connect(this.fx);
       // tela (avisos) → sem o brilho de cima → fx, com o eco curto dos consoles de 16 bits (repete 0,19 s depois, mais abafado)
       this.tela = this.ac.createGain();
-      const telaLp = this.ac.createBiquadFilter(); telaLp.type = 'lowpass'; telaLp.frequency.value = 3200; telaLp.Q.value = 0.6;
+      const telaLp = this.ac.createBiquadFilter(); telaLp.type = 'lowpass'; telaLp.frequency.value = 2000; telaLp.Q.value = 0.5;
       const eco = this.ac.createDelay(1); eco.delayTime.value = 0.19;
-      const ecoLp = this.ac.createBiquadFilter(); ecoLp.type = 'lowpass'; ecoLp.frequency.value = 1500;
+      const ecoLp = this.ac.createBiquadFilter(); ecoLp.type = 'lowpass'; ecoLp.frequency.value = 1100;
       const ecoG = this.ac.createGain(); ecoG.gain.value = 0.3;
       this.tela.connect(telaLp); telaLp.connect(this.fx);
       telaLp.connect(eco); eco.connect(ecoLp); ecoLp.connect(ecoG); ecoG.connect(this.fx); ecoG.connect(eco);
@@ -140,15 +143,15 @@ export class Som {
     this.noMundo(d, 2.5 * longo, () => {
       const qual = Math.floor(Math.random() * 3);
       if (qual === 0) {
-        this.voz(f, f * 0.5, 0.9 * longo, vol, [[420, 4, 1.5], [900, 5, 0.6]], 0, 0.25, 0.03);
-        this.noise(0.7 * longo, vol * 0.45, 'bandpass', 800, 0.5 * longo, 1.2, 300, 0.08);       // o ar saindo
+        this.voz(f, f * 0.5, 0.9 * longo, vol, [[380, 4, 1.5], [720, 5, 0.5]], 0, 0.25, 0.03);
+        this.noise(0.7 * longo, vol * 0.45, 'bandpass', 480, 0.5 * longo, 1.2, 200, 0.08);       // o ar saindo
       } else if (qual === 1) {
-        this.noise(0.28, vol * 0.5, 'bandpass', 1300, 0, 2.5, 2200, 0.12);                        // puxa o ar
-        this.voz(f * 1.1, f * 0.6, 0.6 * longo, vol, [[520, 4, 1.4], [1100, 5, 0.6]], 0.26, 0.4);
-        this.noise(0.5 * longo, vol * 0.35, 'bandpass', 700, 0.7, 1.2, 250, 0.06);
+        this.noise(0.28, vol * 0.45, 'bandpass', 700, 0, 2.5, 1000, 0.12);                        // puxa o ar
+        this.voz(f * 1.1, f * 0.6, 0.6 * longo, vol, [[460, 4, 1.4], [850, 5, 0.5]], 0.26, 0.4);
+        this.noise(0.5 * longo, vol * 0.35, 'bandpass', 450, 0.7, 1.2, 180, 0.06);
       } else {
         this.voz(f * 0.8, f * 0.55, 1.1 * longo, vol * 0.9, [[380, 4, 1.4], [820, 5, 0.7]], 0, 0.95);   // estertor
-        this.noise(0.9 * longo, vol * 0.3, 'bandpass', 600, 0.2, 1.5, 220, 0.15);
+        this.noise(0.9 * longo, vol * 0.3, 'bandpass', 420, 0.2, 1.5, 160, 0.15);
       }
       if (chefe) this.nota('sine', 80, 0.15, 0.6, 0.25 * k, 0.004, 300, 38);   // o corpo grande caindo
     });
@@ -224,14 +227,14 @@ export class Som {
     if (!this.running) return;
     const f = (VOZ_BASE[tipo] || 110) * (0.9 + Math.random() * 0.2), vol = 0.16;
     this.noMundo(d, 2, () => {
-      if (qual === 0) this.voz(f, f * 0.72, 1.1 + Math.random() * 0.4, vol, [[320, 5, 1.6], [760, 6, 0.9]], 0, 0, 0.035);
+      if (qual === 0) this.voz(f, f * 0.72, 1.1 + Math.random() * 0.4, vol, [[300, 5, 1.6], [650, 6, 0.7]], 0, 0, 0.035);
       else if (qual === 1) {
-        this.voz(f * 0.8, f * 0.65, 0.75 + Math.random() * 0.3, vol * 1.1, [[480, 4, 1.4], [1150, 6, 0.6]], 0, 0.85);
-        this.noise(0.6, 0.05, 'bandpass', 650, 0.05, 2, 400, 0.08);
+        this.voz(f * 0.8, f * 0.65, 0.75 + Math.random() * 0.3, vol * 1.1, [[420, 4, 1.4], [900, 6, 0.45]], 0, 0.85);
+        this.noise(0.6, 0.05, 'bandpass', 450, 0.05, 2, 300, 0.08);
       } else {
-        this.voz(f * 1.15, f * 0.95, 0.16, vol, [[600, 5, 1.4], [1300, 6, 0.8]], 0, 0.5);
-        this.voz(f * 1.05, f * 0.7, 0.3, vol * 0.9, [[620, 5, 1.4], [1250, 6, 0.7]], 0.24, 0.3);
-        this.noise(0.03, 0.06, 'bandpass', 1500, 0.2, 3);
+        this.voz(f * 1.15, f * 0.95, 0.16, vol, [[520, 5, 1.4], [1000, 6, 0.5]], 0, 0.5);
+        this.voz(f * 1.05, f * 0.7, 0.3, vol * 0.9, [[540, 5, 1.4], [980, 6, 0.45]], 0.24, 0.3);
+        this.noise(0.03, 0.05, 'bandpass', 900, 0.2, 3);
       }
     });
   }
@@ -271,14 +274,15 @@ export class Som {
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + ataque); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(lp); lp.connect(g); g.connect(this.alvo || this.fx); o.start(t); o.stop(t + dur + 0.05);
   }
-  // sino (glockenspiel de 16 bits): fundamental + harmônicos que somem mais rápido
+  // Os avisos tocam uma oitava abaixo do escrito (OITAVA): grave, como sino ouvido de longe
+  // sino (glockenspiel de 16 bits): fundamental + um harmônico que some rápido
   sino(f, quando = 0, dur = 0.7, vol = 0.1) {
-    this.nota('triangle', f, quando, dur, vol, 0.006, 2400);
-    this.nota('sine', f * 2, quando, dur * 0.5, vol * 0.35, 0.004, 3200);
-    this.nota('sine', f * 3.01, quando, dur * 0.25, vol * 0.12, 0.003, 3200);
+    f *= OITAVA;
+    this.nota('triangle', f, quando, dur, vol, 0.008, 1600);
+    this.nota('sine', f * 2, quando, dur * 0.35, vol * 0.18, 0.006, 1800);
   }
   // marimba: batida de madeira, curta
-  madeira(f, quando = 0, vol = 0.08) { this.nota('sine', f, quando, 0.22, vol, 0.003, 2000); this.nota('sine', f * 3.98, quando, 0.05, vol * 0.25, 0.002, 2600); }
+  madeira(f, quando = 0, vol = 0.08) { f *= OITAVA; this.nota('sine', f, quando, 0.24, vol, 0.004, 1400); this.nota('sine', f * 3.98, quando, 0.04, vol * 0.12, 0.003, 1800); }
   // metal grave (trompa ao longe): duas ondas quadradas um pouco desafinadas, bem abafadas, entrando devagar
   metal(f, quando = 0, dur = 0.6, vol = 0.07) { this.nota('square', f, quando, dur, vol, 0.05, 700); this.nota('square', f * 1.006, quando, dur, vol * 0.7, 0.07, 600); }
   // tambor ao longe (taiko)
@@ -293,7 +297,7 @@ export class Som {
       this.noise(0.35, 0.12, 'bandpass', 380, 0, 3, 700, 0.06);   // tampa rangendo
       const notas = lendario ? [523, 659, 784, 1047, 1319, 1568] : [392, 523, 659, 784];
       notas.forEach((f, i) => this.sino(f, 0.2 + i * 0.09, 0.8, lendario ? 0.07 : 0.08));
-      if (lendario) for (let i = 0; i < 8; i++) this.sino(1568 + Math.random() * 800, 0.75 + i * 0.07, 0.4, 0.025);
+      if (lendario) for (let i = 0; i < 8; i++) this.sino(1047 + Math.random() * 500, 0.75 + i * 0.07, 0.4, 0.025);
     });
   }
   item() { this.naTela(() => { this.sino(784, 0, 0.35, 0.06); this.sino(1175, 0.06, 0.4, 0.05); }); }
@@ -335,6 +339,38 @@ export class Som {
   historia() { this.naTela(() => { [392, 494, 587, 740, 587].forEach((f, i) => this.sino(f, i * 0.2, 1.2, 0.05)); this.nota('triangle', 98, 0, 2, 0.06, 0.3, 500); }); }
   perigo() { this.naTela(() => { this.tambor(0, 0.3); this.metal(110, 0.02, 0.7, 0.07); this.metal(116.5, 0.04, 0.7, 0.05); }); }
   livre() { this.naTela(() => { this.sino(523, 0, 0.7, 0.05); this.sino(659, 0.13, 0.8, 0.05); }); }
+  /* ---------- recompensas de presente (recompensas.js) ---------- */
+  // o paraquedas abrindo lá em cima: um "fump" de pano e o vento
+  paraquedas(d = 3) { if (this.pode('paraq', 0.25)) this.noMundo(d, 1.2, () => { this.noise(0.12, 0.14, 'lowpass', 500, 0, 0.8, 200, 0.01); this.noise(0.9, 0.04, 'bandpass', 350, 0.1, 0.8, 250, 0.2); }); }
+  // pegou o drop: caixa abrindo e sinos subindo; quanto mais pilhas, mais alto o último sino
+  drop(pilhas = 1) {
+    this.naTela(() => {
+      this.noise(0.18, 0.1, 'bandpass', 420, 0, 2, 700, 0.03);
+      [523, 659, 784].forEach((f, i) => this.sino(f, 0.08 + i * 0.07, 0.7, 0.07));
+      this.sino([784, 880, 988, 1047, 1175][Math.min(4, pilhas - 1)], 0.32, 1, 0.08);
+    });
+  }
+  // inspiração: um coro grave (acorde de três notas entrando devagar) e um sopro de luz
+  inspiracao() {
+    this.naTela(() => {
+      [131, 165, 196, 262].forEach((f, i) => this.nota('triangle', f, i * 0.04, 2.2, 0.05, 0.35, 900));
+      this.noise(1.4, 0.06, 'bandpass', 300, 0, 0.8, 900, 0.4);
+      this.sino(784, 0.25, 1.2, 0.05);
+    });
+  }
+  // pulso da inspiração: baixinho, só um "tum" grave
+  pulso() { if (this.pode('pulso', 0.3)) this.naTela(() => this.nota('sine', 110, 0, 0.25, 0.08, 0.01, 300, 70)); }
+  // o colosso cansou: um gemido grande e grave, descendo
+  cansou(d = 3) {
+    this.noMundo(d, 2.4, () => {
+      this.voz(62, 34, 1.8, 0.22, [[300, 4, 1.6], [620, 5, 0.5]], 0, 0.6, 0.02);
+      this.noise(1.4, 0.08, 'bandpass', 380, 0.3, 1.2, 160, 0.2);
+    });
+    this.naTela(() => { this.sino(523, 0.4, 0.9, 0.06); this.sino(659, 0.52, 1, 0.06); });
+  }
+  // runa: sinos graves e um brilho
+  runa() { this.naTela(() => { [392, 523, 659, 784, 1047].forEach((f, i) => this.sino(f, i * 0.1, 1.2, 0.06)); this.nota('triangle', 98, 0, 2, 0.06, 0.3, 500); }); }
+
   noite() { this.naTela(() => { this.nota('triangle', 110, 0, 2.6, 0.12, 0.4, 500, 82); this.nota('triangle', 165, 0.1, 2.6, 0.07, 0.5, 500, 123); }); }
 
   /* ---------- música ambiente: um zumbido grave e um pulso que acelera com o perigo ---------- */

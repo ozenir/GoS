@@ -20,6 +20,7 @@
 import { ZUMBIS, ARMAS, CORPO, CLASSES } from './dados.js';
 import { danoNoZumbi, aplicarPericias, PERICIAS } from './dano.js';
 import { dist, dist2 } from './util.js';
+import { multRunaDano } from './recompensas.js';
 
 export const MAX_ATIVAS = 3;     // quantas habilidades ativas o herói pode ter ao mesmo tempo
 
@@ -518,6 +519,7 @@ export function aplicarCarta(g, carta) {
     if (carta.id === 'escopeta') { h.armaFixa = 'escopeta'; g.trocarArma('escopeta', null); }
     if (carta.id === 'taco') { h.corpoFixo = 'taco'; h.corpo = 'taco'; h.golpes = Infinity; }
   }
+  g.aplicarRunas?.();   // runa de resistência cresce com o nível da habilidade em que está
 }
 
 /* ---------------- Rodar as habilidades ativas ---------------- */
@@ -530,13 +532,23 @@ export function atualizarHabilidades(g, dt) {
   for (const [id, n0] of Object.entries(h.habs)) {
     // habilidade evoluída por combo: roda a versão do combo; o nível dela é o da passiva do combo
     const C = h.evo?.[id] ? COMBOS[h.evo[id]] : null;
-    const A = C || ATIVAS[id], n = C ? (h.passivas[C.passiva] || 1) : n0;
+    const A0 = C || ATIVAS[id], n = C ? (h.passivas[C.passiva] || 1) : n0;
+    // runa de dano do colosso (recompensas.js): a habilidade bate mais forte, e cresce com o nível dela
+    const A = h.runas?.[id]?.dano ? comRuna(A0, multRunaDano(h.runas[id], n0)) : A0;
     if (A.sempre) A.sempre(g, h, n, dt);
     if (A.continua) { A.atualizar(g, h, n, dt); continue; }
     h.habT[id] = (h.habT[id] ?? 1) - dt;
     if (h.habT[id] > 0) continue;
     h.habT[id] = A.usar(g, h, n) ? A.cd(n) : 0.4;   // sem alvo: tenta de novo logo
   }
+}
+
+// A mesma habilidade, com o dano (e o fogo) multiplicado por k
+function comRuna(A, k) {
+  const B = Object.create(A);
+  if (A.dano) B.dano = n => A.dano(n) * k;
+  if (A.fogo) B.fogo = n => A.fogo(n) * k;
+  return B;
 }
 
 function atualizarSuprema(g, h, dt) {
@@ -565,5 +577,11 @@ export function habilidadesDoHeroi(h) {
   for (const [id, n] of Object.entries(h.passivas || {})) l.push({ emoji: PASSIVAS[id].emoji, nome: PASSIVAS[id].nome, nivel: n, tipo: 'passiva' });
   if (h.treino) l.push({ emoji: '🎓', nome: 'Treino', nivel: h.treino, tipo: 'passiva' });
   if (h.suprema) { const S = SUPREMAS[h.suprema]; l.unshift({ emoji: S.emoji, nome: S.nome, nivel: 1, tipo: 'suprema', pronta: S.continua || (h.supremaT ?? 0) <= 0.2 }); }
+  // runas do colosso: 🔮 + o que ela faz, no número a quantidade
+  for (const [id, r] of Object.entries(h.runas || {})) {
+    const hab = id === 'principal' ? 'ataque principal' : ATIVAS[id]?.nome;
+    if (r.dano) l.push({ emoji: '🔮💥', nome: `Runa de dano: ${hab}`, nivel: r.dano, tipo: 'runa' });
+    if (r.resistencia) l.push({ emoji: '🔮🛡️', nome: `Runa de resistência: ${hab}`, nivel: r.resistencia, tipo: 'runa' });
+  }
   return l;
 }
