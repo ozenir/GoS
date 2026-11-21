@@ -43,15 +43,46 @@ Dê dois cliques em **`1-testar-sem-live.bat`**. O jogo abre no navegador com um
 
 ## Como o jogo funciona
 
-**O herói.** Anda sozinho pelo meio da rua, atira no zumbi mais perigoso, empurra quem encosta, desvia de explosivos, pega os itens que caem e foge de chefões. A cada zumbi derrotado ganha experiência e, ao subir de nível, ganha uma melhoria (dano, cadência, vida ou velocidade). Ele só muda quando morre. Cada novo sobrevivente é sorteado entre 5 tipos:
+**O herói.** Anda sozinho pelo meio da rua, luta, pega os itens que caem e foge do que é perigoso demais. A cada zumbi derrotado ganha experiência; ao subir de nível ganha uma melhoria (dano, cadência, vida ou velocidade) e as **perícias** dele sobem. Ele só muda quando morre. Cada novo sobrevivente é sorteado entre 5 personagens, cada um com o seu jeito de lutar:
 
-| Sobrevivente | Diferença |
-|---|---|
-| 👮 Policial | atira mais rápido |
-| 🧑‍🚒 Bombeira | mais vida e começa com taco com pregos |
-| 🛵 Entregador | corre mais |
-| 🩺 Enfermeira | se cura sozinha aos poucos |
-| 🔧 Mecânico | começa com escopeta |
+| Personagem | Ataque | Perícia que sobe com o nível | Ponto forte | Ponto fraco |
+|---|---|---|---|---|
+| 👮 Policial | 🔫 pistola (à distância) | armas de fogo | colete; tiro crítico **marca** o zumbi (+25% de dano nele) | pouca coisa de perto |
+| 🩺 Enfermeira | 🔪 facas (de perto) | facas e agilidade | **cada golpe que acerta cura 1 de vida** (cura mais com a perícia); resiste a infecção | **armadura baixa** (toma mais dano) |
+| 🧑‍🚒 Bombeira | 🪓 machado (de perto, pega vários) | machados e pancada | **muito resistente**, aguenta fogo e explosão; **instinto de sobrevivência** com pouca vida (defesa e cura) | lenta |
+| 🛵 Entregador | 🔫 pistola (à distância) | agilidade | rápido e **desvia de ataques** (a esquiva sobe com a agilidade) | pouca vida extra |
+| 🔧 Mecânico | 💥 escopeta + 🔧 chave inglesa | pancada e explosivos | a chave **atordoa** e **quebra a armadura** dos zumbis; aguenta explosões | munição curta |
+
+Quem luta de perto vai pra cima dos zumbis que estão à frente, não ataca os explosivos (recua deles) e só foge de chefe quando a vida está baixa. Se pegar uma arma de fogo num baú, usa, mas com pouca perícia ela rende menos. Para quem luta de perto, o baú médio vira **arma afiada** (fúria + foco).
+
+**O nome do herói.** O herói novo recebe o nome de alguém da live: entre **quem mais ajudou** e **quem mais atrapalhou** na rodada anterior, ganha **quem doou primeiro**. Se só um dos lados doou, é ele. Se ninguém doou, o herói fica sem nome. O nome aparece em cima do herói, no painel, no relatório, no Hall dos heróis e no ex-herói que volta zumbi ("ana.lu zumbi").
+
+**Dano, fraquezas e resistências.** Cada ataque tem um tipo: 🔫 perfuração, 🔪 corte, 🔨 impacto, 🔥 fogo, 💥 explosão, 🦷 mordida, 🩸 sangramento. Cada zumbi é fraco contra uns e resiste a outros, e a tela mostra **SUPER EFETIVO!** ou **resistiu**:
+
+| Zumbi | Fraco contra | Resiste a |
+|---|---|---|
+| Comum | – | – |
+| Gordo | corte, fogo | impacto, tiro |
+| Corredor | impacto, tiro, corte | – |
+| Explosivo | **fogo (dobro)**, tiro | corte, impacto |
+| Chefão | corte, explosão, fogo | tiro, impacto |
+| Rei Zumbi | fogo, corte | tiro, explosão, impacto |
+
+O herói também tem resistências por tipo (a bombeira aguenta fogo; o mecânico, explosão). Sangramento e infecção vêm "de dentro": atravessam armadura, colete e resistência.
+
+**Status (efeitos que duram um tempo).** Valem para o herói e para os zumbis e aparecem em cima de cada um:
+
+| Negativos | O que fazem | Positivos | O que fazem |
+|---|---|---|---|
+| 🩸 Sangrando | dano por segundo, acumula até 5× | ⚡ Tiro rápido | atira 2× mais rápido |
+| 🔥 Queimando | dano de fogo por segundo | 💚 Regenerando | cura por segundo |
+| 💫 Atordoado | não anda nem ataca | 😤 Fúria | +30% de dano, +10% de velocidade |
+| 🐌 Lento | metade da velocidade | 🧡 Instinto | +25% de defesa e cura |
+| 🎯 Marcado | leva +25% de dano | 👁️ Foco | +15% de crítico |
+| 💔 Armadura quebrada | perde resistência | 🛡️ Blindado | +40% de defesa |
+| 🦠 Infectado | dano por segundo e cura pela metade | | |
+
+Facas e cacos de vidro fazem sangrar, a chave e o taco atordoam, o machado quebra armadura, o lança-chamas queima. As mordidas podem infectar o herói, e os chefes podem atordoá-lo.
 
 **O ex-herói volta.** Uns 45 segundos depois de um novo sobrevivente começar, o anterior aparece como **zumbi chefão**, com a roupa dele. Derrotar ele solta a arma que ele usava (ou um baú, se era só a pistola).
 
@@ -79,7 +110,7 @@ Dê dois cliques em **`1-testar-sem-live.bat`**. O jogo abre no navegador com um
 
 **A história.** São 12 fragmentos em 3 capítulos ("Os Diários de Porto Sereno"), encontrados um por vez, na ordem. O progresso continua de um herói para o outro e de uma live para a outra. Para escrever ou mudar a história, mexa só no arquivo `public/js/core/historia.js` (as instruções estão no começo dele).
 
-**O nível de ameaça (☠️).** Começa em 1 e sobe com o tempo vivo, com os quarteirões andados, com cada caminho perigoso e com o nível do herói. Assim, quanto mais forte o herói fica, mais fortes os zumbis ficam. A cada nível os zumbis nascem com mais vida, dano, velocidade e **resistência** (ignoram parte do dano), aparecem mais zumbis na rua e as **hordas ficam maiores**: a horda que chega sozinha de tempos em tempos e também as mandadas por presentes. De tempos em tempos vem uma **noite** (escuro, mais zumbis). Quando a vida está muito baixa, o jogo alivia um pouco os zumbis normais (os mandados pelo público nunca são aliviados).
+**O nível de ameaça (☠️).** Começa em 1 e sobe com o tempo vivo, com os quarteirões andados, com cada caminho perigoso e com o nível do herói. Assim, quanto mais forte o herói fica, mais fortes os zumbis ficam. A cada nível os zumbis nascem com mais vida, dano, velocidade e **resistência** (ignoram parte do dano; ver também as fraquezas de cada zumbi acima), aparecem mais zumbis na rua e as **hordas ficam maiores**: a horda que chega sozinha de tempos em tempos e também as mandadas por presentes. De tempos em tempos vem uma **noite** (escuro, mais zumbis). Quando a vida está muito baixa, o jogo alivia um pouco os zumbis normais (os mandados pelo público nunca são aliviados).
 
 **A torcida (📣).** Comentar também ajuda: cada pessoa diferente que comentou nos últimos 30 segundos dá +3% de dano e um pouco de regeneração ao herói (até 10 pessoas).
 
@@ -181,11 +212,13 @@ Tudo que **ajuda** acontece na hora. Tudo que **atrapalha** entra numa fila: sai
 
 | Cenário | Quanto o herói dura em média |
 |---|---|
-| Sem nenhuma interação | **2 min 05 s** (metade cai até 2 min 01 s) |
-| Só chat (6 pessoas comentando e votando, curtidas) | 2 min 41 s (+29%) |
-| Chat + presentes misturados (8 por minuto) | 3 min 04 s (+47%) |
-| Chat + só presentes que ajudam (4 por minuto) | 3 min 14 s (+55%) |
-| Chat + só presentes que atrapalham (4 por minuto) | 2 min 18 s |
+| Sem nenhuma interação | **2 min 01 s** (cada personagem entre 1 min 54 s e 2 min 03 s) |
+| Só chat (6 pessoas comentando e votando, curtidas) | 3 min 19 s |
+| Chat + presentes misturados (8 por minuto) | 3 min 19 s |
+| Chat + só presentes que ajudam (4 por minuto) | **4 min 23 s** |
+| Chat + só presentes que atrapalham (4 por minuto) | 2 min 56 s |
+
+**Trava contra herói imortal:** depois de 3 minutos vivo, os zumbis que nascem batem 20% mais forte a cada minuto. Por mais forte ou curado que o herói fique, um dia ele cai e a live troca de herói. O herói também nunca fica parado: se passar do cruzamento, volta; se travar, é levado até ele.
 
 O que mais mexe nisso é `ameaca_por_minuto` (maior = partidas mais curtas) e o tamanho/frequência das hordas. Subir a ameaça devagar e começar com mais pressão faz a ajuda do público render mais; subir rápido deixa tudo mais curto, com ou sem ajuda.
 
@@ -195,14 +228,15 @@ Cada assunto tem o seu arquivo em `public/js/core/`:
 
 | Arquivo | O que tem |
 |---|---|
-| `dano.js` | **todas as contas de combate**: atributos do herói (vida, dano, cadência, velocidade, defesa, crítico, alcance, cura, regeneração), dano de armas, corpo a corpo, fogo, zumbis, explosões, aliados e torcida. Buff novo = um modificador (`h.attr.addMod(...)`); as instruções estão no começo do arquivo |
-| `ameaca.js` | quando a ameaça sobe e quantos zumbis vêm (hordas, grupos, prédios) |
+| `dano.js` | **todas as contas de combate**: tipos de dano, fraquezas e resistências dos zumbis (AFINIDADES), perícias, atributos do herói (vida, dano, cadência, velocidade, defesa, esquiva, resistências por tipo, crítico, alcance, cura, cura por golpe, regeneração), dano de armas, corpo a corpo, fogo, zumbis, explosões, aliados e torcida. Buff novo = um modificador (`h.attr.addMod(...)`); as instruções estão no começo do arquivo |
+| `ameaca.js` | quando a ameaça sobe, quantos zumbis vêm (hordas, grupos, prédios) e a trava contra herói imortal |
 | `caminhos.js` | as chances dos caminhos e os tipos de perigo |
 | `historia.js` | a história (só texto) |
-| `dados.js` | tabelas de zumbis, classes, armas e melhorias de nível |
+| `status.js` | os status positivos e negativos (sangrando, atordoado, fúria...) |
+| `dados.js` | **personagens** (arma, golpe, perícias, crescimento por nível, atributos, passiva), zumbis (vida, dano, tipo de ataque), armas e golpes (tipo de dano, perícia, efeitos) e melhorias de nível |
 | `efeitos.js` | o que cada presente faz |
 
-**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/ameaca.test.mjs` e `node teste/caminhos.test.mjs`.
+**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs` e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
 
 **Para testar o equilíbrio sem live:** `node teste/simular.mjs` roda dezenas de partidas em segundos em 5 cenários (sem interação, só chat, presentes misturados, só presentes que ajudam, só presentes que atrapalham) e mostra quanto cada herói durou. Para testar números sem mexer no `config.json`: `AJUSTES='{"horda_base":8}' node teste/simular.mjs 20 nada`.
 

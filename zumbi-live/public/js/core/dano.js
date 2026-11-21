@@ -272,13 +272,14 @@ export const ESCALA_AMEACA = {
   resistencia: 0.025,   // +2,5% de resistência (dano ignorado) por nível...
   resistenciaMax: 0.4   // ...até no máximo 40%
 };
-export function statsZumbi(T, ameaca, vidaMult = 1) {
+// danoMult: multiplicador extra de dano (ameaca.js → furiaDaHorda)
+export function statsZumbi(T, ameaca, vidaMult = 1, danoMult = 1) {
   const n = Math.max(0, ameaca - 1);
   const E = ESCALA_AMEACA;
   const vida = T.vida * (1 + n * E.vida) * vidaMult;
   return {
     vida, vidaMax: vida,
-    dano: T.dano * (1 + n * E.dano),
+    dano: T.dano * (1 + n * E.dano) * danoMult,
     vel: T.vel * (1 + Math.min(E.velMax, n * E.vel)),
     resistencia: Math.min(E.resistenciaMax, (T.resistencia || 0) + n * E.resistencia)
   };

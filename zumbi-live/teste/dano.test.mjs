@@ -77,26 +77,27 @@ teste('atributo desconhecido dá erro (evita erro de digitação silencioso)', (
 
 console.log('Herói');
 teste('personagens: vida, velocidade e atributos do kit', () => {
-  assert.equal(heroi('bombeiro').attr.get('vidaMax'), 130);
-  perto(heroi('bombeiro').attr.get('defesa'), 0.15);
-  perto(heroi('bombeiro').attr.get('resFogo'), 0.5);
-  perto(heroi('entregador').attr.get('velocidade'), 1.22);
-  perto(heroi('entregador').attr.get('esquiva'), 0.1);
-  perto(heroi('policial').attr.get('defesa'), 0.1);
-  perto(heroi('enfermeira').attr.get('defesa'), -0.15);
-  perto(heroi('enfermeira').attr.get('curaPorAcerto'), 1);
-  perto(heroi('mecanico').attr.get('resExplosao'), 0.5);
+  // os números vêm da própria tabela (dados.js), então o teste não quebra quando o equilíbrio muda
+  for (const [id, C] of Object.entries(CLASSES)) {
+    const h = heroi(id);
+    assert.equal(h.attr.get('vidaMax'), C.vida, id);
+    perto(h.attr.get('velocidade'), C.vel);
+    for (const [k, v] of Object.entries(C.attr || {})) perto(h.attr.get(k), v);
+  }
+  assert.ok(CLASSES.enfermeira.attr.defesa < 0, 'enfermeira tem armadura baixa');
+  assert.ok(CLASSES.bombeiro.attr.defesa > 0 && CLASSES.bombeiro.attr.resFogo > 0, 'bombeira é resistente');
+  assert.equal(CLASSES.enfermeira.attr.curaPorAcerto, 1, 'enfermeira cura 1 por ataque');
 });
 teste('perícias mexem nos atributos: agilidade dá esquiva e velocidade; facas dão cura por golpe', () => {
   const e = heroi('entregador');
   e.pericias = { agilidade: 6 };
   aplicarPericias(e, CLASSES.entregador);
-  perto(e.attr.get('esquiva'), 0.1 + 4 * 0.015);
+  perto(e.attr.get('esquiva'), CLASSES.entregador.attr.esquiva + 4 * 0.015);
   perto(e.attr.get('velocidade'), 1.22 * (1 + 4 * 0.02));
   const n = heroi('enfermeira');
   n.pericias = { facas: 8, agilidade: 2 };
   aplicarPericias(n, CLASSES.enfermeira);
-  perto(n.attr.get('curaPorAcerto'), 1 + 4 * 0.25);
+  perto(n.attr.get('curaPorAcerto'), 1 + 4 * CLASSES.enfermeira.porPericia[0].soma);
 });
 teste('adrenalina: +25% de dano só abaixo de 25% de vida', () => {
   const h = heroi('mecanico');
@@ -183,7 +184,7 @@ teste('gordo resiste a impacto e é fraco contra corte', () => {
   const g = zumbi('gordo');
   const imp = danoDoHeroi(h, CORPO.taco, g, rngFixo(0.99)), cor = danoDoHeroi(h, CORPO.faca, g, rngFixo(0.99));
   assert.equal(imp.efetividade, 'fraco'); assert.equal(cor.efetividade, 'super');
-  perto(imp.dano, 40 * 0.6); perto(cor.dano, 14 * 1.4);
+  perto(imp.dano, CORPO.taco.dano * 0.6); perto(cor.dano, CORPO.faca.dano * 1.4);
 });
 teste('explosivo leva o dobro de fogo', () => {
   perto(danoNoZumbi(zumbi('explosivo'), 10, 'fogo'), 20);

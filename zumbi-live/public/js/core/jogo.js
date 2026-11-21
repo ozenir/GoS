@@ -15,7 +15,7 @@ import {
 } from './dano.js';
 import { STATUS, Estados, sincronizarAtributos } from './status.js';
 import {
-  AMEACA, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos
+  AMEACA, furiaDaHorda, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos
 } from './ameaca.js';
 import { CHANCES_PADRAO, PERIGOS, AMEACA_POR_PERIGO, ATRASO_PERIGO, sortearCaminho } from './caminhos.js';
 import { Historia, HISTORIA } from './historia.js';
@@ -249,8 +249,12 @@ export class Jogo {
     const noite = this.noiteT > 0;
     const vidaPct = h.vida / h.vidaMax;
     const nv = this.nivelAmeaca;
-    // Caminho livre: nenhum zumbi novo até o próximo cruzamento
-    if (this.trecho?.livre) return;
+    // Caminho livre: nenhum zumbi novo até o próximo cruzamento (no máximo 40 s, por segurança)
+    if (this.trecho?.livre) {
+      this.trecho.t = (this.trecho.t || 0) + dt;
+      if (this.trecho.t < 40) return;
+      this.trecho.livre = false;
+    }
     // Horda que chega sozinha de tempos em tempos (cresce com a ameaça)
     if (this.protecao <= 0 && this.A.hordaCadaSegundos > 0) {
       this.hordaT -= dt;
@@ -491,9 +495,13 @@ export class Jogo {
     const alvo = this.city.nodePos(r.alvo.i, r.alvo.j);
     const [dx, dy] = DIRS[r.dir];
     const falta = (alvo.x - h.x) * dx + (alvo.y - h.y) * dy;
-    if (falta < 0.5 && dist(h.x, h.y, alvo.x, alvo.y) < 1.4) {
-      if (this.decisao) { this.aplicarDecisao(); return this.objetivoRota(0); }
-      return { x: alvo.x, y: alvo.y, esperando: true };
+    if (falta < 0.5) {
+      if (dist(h.x, h.y, alvo.x, alvo.y) < 1.4) {
+        if (this.decisao) { this.aplicarDecisao(); return this.objetivoRota(0); }
+        return { x: alvo.x, y: alvo.y, esperando: true };
+      }
+      // Passou do cruzamento (foi empurrado por zumbis): volta até ele
+      return { x: alvo.x, y: alvo.y };
     }
     // Segue o meio da rua, olhando um pouco à frente
     const passo = Math.min(1.6, Math.max(0, falta));
@@ -554,12 +562,22 @@ export class Jogo {
     const dObj = Math.hypot(dirObj.x, dirObj.y);
     if (!obj.esperando && dObj > 0.05) { vx = dirObj.x / dObj; vy = dirObj.y / dObj; }
     else if (obj.esperando && dObj > 0.15) { vx = dirObj.x / dObj * 0.6; vy = dirObj.y / dObj * 0.6; }
-    // Sem arma de fogo: vai pra cima do zumbi mirado até ficar no alcance do golpe
+    // Sem arma de fogo: vai pra cima do zumbi mirado até ficar no alcance do golpe.
+    // Na rua, só persegue quem está à frente no caminho, pra nunca largar a rota.
     const perto = !h.arma;
-    if (perto && h.mira && !obj.porta && !obj.saida) {
+    this.vigiarProgresso(dt);
+    if (perto && h.mira && !obj.porta && !obj.saida && h.focoRota <= 0) {
       const m = h.mira, dz = dist(h.x, h.y, m.x, m.y), alc = CORPO[h.corpo].alcance * 0.75 + ZUMBIS[m.tipo].raio;
-      if (dz > alc && dz > 0.01) { vx = vx * 0.1 + (m.x - h.x) / dz * 0.9; vy = vy * 0.1 + (m.y - h.y) / dz * 0.9; }
-      else { vx *= 0.2; vy *= 0.2; }
+      let vale = true;
+      if (!this.room) {   // quem vem por trás leva o golpe automático quando chega, mas não tira o herói do caminho
+        const [rx, ry] = DIRS[this.rota.dir];
+        const frente = ((m.x - h.x) * rx + (m.y - h.y) * ry) / dz;
+        const no = this.city.nodePos(this.rota.alvo.i, this.rota.alvo.j);
+        const foraDaRua = rx ? Math.abs(m.y - no.y) > 2.6 : Math.abs(m.x - no.x) > 2.6;
+        vale = frente > -0.2 && !foraDaRua;
+      }
+      if (vale && dz > alc && dz > 0.01) { vx = vx * 0.1 + (m.x - h.x) / dz * 0.9; vy = vy * 0.1 + (m.y - h.y) / dz * 0.9; }
+      else if (vale) { vx *= 0.2; vy *= 0.2; }
     }
 
     // Zumbis perto: recua deles; se tiver muitos na frente, para e luta
@@ -609,16 +627,34 @@ export class Jogo {
     if (!h.mira && h.andando) { h.fx = (h.x - antesX) / andou; h.fy = (h.y - antesY) / andou; }
 
     // Anti-travamento: se ficou muito tempo sem sair do lugar e sem zumbi perto, dá um jeito
-    if (dist(h.x, h.y, h.ultimaPos.x, h.ultimaPos.y) > 0.5 || obj.esperando || rm > 0.01) { h.parado = 0; h.ultimaPos = { x: h.x, y: h.y }; }
+    if (dist(h.x, h.y, h.ultimaPos.x, h.ultimaPos.y) > 0.5 || obj.esperando || rm > 0.01) { h.parado = 0; h.travas = 0; h.ultimaPos = { x: h.x, y: h.y }; }
     else if ((h.parado += dt) > 6) {
       h.parado = 0;
+      h.travas = (h.travas || 0) + 1;
       if (!this.room) {
         const alvo = this.city.nodePos(this.rota.alvo.i, this.rota.alvo.j);
         const [dx, dy] = DIRS[this.rota.dir];
-        h.x = dx ? h.x : alvo.x; h.y = dy ? h.y : alvo.y;   // volta pro meio da rua
+        if (h.travas >= 2) { h.x = alvo.x; h.y = alvo.y; h.travas = 0; }       // segunda vez: vai direto pro cruzamento
+        else { h.x = dx ? h.x : alvo.x; h.y = dy ? h.y : alvo.y; }           // primeira vez: volta pro meio da rua
+        h.ultimaPos = { x: h.x, y: h.y };
         this.itens = this.itens.filter(it => it !== item);
-      } else if (this.room) this.sairPredio();
+        this.emit('destravou', { vez: h.travas });
+      } else this.sairPredio();
     }
+  }
+
+  // Se o herói passa muito tempo sem chegar mais perto do próximo cruzamento, ele prioriza o caminho
+  // por alguns segundos (para de perseguir zumbis). Garante que a votação do chat sempre tem efeito.
+  vigiarProgresso(dt) {
+    const h = this.hero;
+    h.focoRota = Math.max(0, (h.focoRota || 0) - dt);
+    if (this.room) { h.semProgresso = 0; return; }
+    const no = this.city.nodePos(this.rota.alvo.i, this.rota.alvo.j);
+    const d = dist(h.x, h.y, no.x, no.y);
+    const chave = this.rota.alvo.i + ',' + this.rota.alvo.j;
+    if (h.progressoNo !== chave || d < (h.melhorDist ?? 1e9) - 1) { h.progressoNo = chave; h.melhorDist = d; h.semProgresso = 0; return; }
+    h.semProgresso = (h.semProgresso || 0) + dt;
+    if (h.semProgresso > 20 && h.focoRota <= 0) { h.focoRota = 8; h.semProgresso = 0; h.melhorDist = d; }
   }
 
   objetivoSala() {
@@ -879,7 +915,7 @@ export class Jogo {
   criarZumbi(tipo, x, y, quem, opts = {}) {
     const T = ZUMBIS[tipo];
     const z = {
-      id: proxId++, tipo, x, y, ...statsZumbi(T, this.ameaca(), opts.vidaMult || 1),
+      id: proxId++, tipo, x, y, ...statsZumbi(T, this.ameaca(), opts.vidaMult || 1, furiaDaHorda((this.t - this.stats.inicio) / 60, this.A)),
       atkCd: 0.5 + this.rng.next(), velMult: 0.85 + this.rng.next() * 0.3, nascendo: opts.nascendo ?? 0.7,
       dono: quem || null, nome: opts.nome || null, kx: 0, ky: 0, fx: 0, fy: 1, animT: this.rng.next() * 10,
       flash: 0, estados: new Estados(), pavio: -1, dormindo: !!opts.dormindo, roupa: this.rng.int(0, 5), extra: opts.extra || null

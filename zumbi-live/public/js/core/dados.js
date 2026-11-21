@@ -28,44 +28,44 @@ export const CLASSES = {
     arma: 'pistola', corpo: 'empurrao', estilo: 'distancia',
     pericias: { armas_fogo: 4, impacto: 2, facas: 1, machados: 1, explosivos: 2, agilidade: 2 },
     crescimento: { armas_fogo: 1 },
-    attr: { defesa: 0.1 },
+    attr: { defesa: 0.05 },
     passiva: { id: 'tiro_certeiro', texto: 'tiro crítico marca o zumbi (+25% de dano nele)' },
     descricao: 'perito em armas de fogo · colete da polícia'
   },
   enfermeira: {
-    nome: 'Enfermeira', emoji: '🩺', roupa: 'enfermeira', vida: 95, vel: 1.05,
+    nome: 'Enfermeira', emoji: '🩺', roupa: 'enfermeira', vida: 115, vel: 1.05,
     arma: null, corpo: 'faca', estilo: 'perto',
     pericias: { facas: 4, armas_fogo: 1, impacto: 1, machados: 1, explosivos: 1, agilidade: 3 },
     crescimento: { facas: 1, agilidade: 0.5 },
-    attr: { defesa: -0.15, curaPorAcerto: 1, resInfeccao: 0.6 },
-    porPericia: [{ pericia: 'facas', attr: 'curaPorAcerto', soma: 0.25, desde: 4 }],
+    attr: { defesa: -0.1, curaPorAcerto: 1, resInfeccao: 0.6 },
+    porPericia: [{ pericia: 'facas', attr: 'curaPorAcerto', soma: 0.1, desde: 4 }],
     passiva: { id: 'cura_por_golpe', texto: 'cada golpe que acerta cura 1 de vida (sobe com a perícia)' },
     descricao: 'perita em facas · armadura baixa · resiste a infecção'
   },
   bombeiro: {
-    nome: 'Bombeira', emoji: '🧑‍🚒', roupa: 'bombeiro', vida: 130, vel: 0.95,
+    nome: 'Bombeira', emoji: '🧑‍🚒', roupa: 'bombeiro', vida: 160, vel: 0.95,
     arma: null, corpo: 'machado', estilo: 'perto',
     pericias: { machados: 4, impacto: 3, armas_fogo: 1, facas: 1, explosivos: 2, agilidade: 1 },
-    crescimento: { machados: 1, impacto: 0.5 },
-    attr: { defesa: 0.15, resFogo: 0.5, resExplosao: 0.3 },
-    passiva: { id: 'instinto', texto: 'com pouca vida, ativa o instinto de sobrevivência', limite: 0.35, recarga: 25 },
+    crescimento: { machados: 0.7, impacto: 0.5 },
+    attr: { defesa: 0.1, resFogo: 0.5, resExplosao: 0.3 },
+    passiva: { id: 'instinto', texto: 'com pouca vida, ativa o instinto de sobrevivência', limite: 0.3, recarga: 35 },
     descricao: 'perita em machado · muito resistente · aguenta fogo'
   },
   entregador: {
-    nome: 'Entregador', emoji: '🛵', roupa: 'entregador', vida: 95, vel: 1.22,
+    nome: 'Entregador', emoji: '🛵', roupa: 'entregador', vida: 105, vel: 1.22,
     arma: 'pistola', corpo: 'empurrao', estilo: 'distancia',
     pericias: { agilidade: 4, armas_fogo: 2, impacto: 2, facas: 2, machados: 1, explosivos: 1 },
     crescimento: { agilidade: 1, armas_fogo: 0.5 },
-    attr: { esquiva: 0.1 },
+    attr: { esquiva: 0.16 },
     passiva: { id: 'esquiva', texto: 'desvia de ataques (a esquiva sobe com a agilidade)' },
     descricao: 'perito em agilidade · rápido e escorregadio'
   },
   mecanico: {
-    nome: 'Mecânico', emoji: '🔧', roupa: 'mecanico', vida: 110, vel: 0.98,
-    arma: 'escopeta', municao: 14, corpo: 'chave', estilo: 'distancia',
+    nome: 'Mecânico', emoji: '🔧', roupa: 'mecanico', vida: 100, vel: 0.98,
+    arma: 'escopeta', municao: 8, corpo: 'chave', estilo: 'distancia',
     pericias: { impacto: 4, explosivos: 3, armas_fogo: 2, facas: 1, machados: 2, agilidade: 1 },
-    crescimento: { impacto: 1, explosivos: 0.5 },
-    attr: { defesa: 0.05, resExplosao: 0.5 },
+    crescimento: { impacto: 0.6, explosivos: 0.5 },
+    attr: { defesa: 0, resExplosao: 0.5 },
     passiva: { id: 'pancada', texto: 'a chave inglesa atordoa e quebra a armadura dos zumbis' },
     descricao: 'perito em pancada e explosivos · aguenta explosões'
   }
@@ -86,9 +86,9 @@ export const ARMAS = {
 export const CORPO = {
   empurrao: { nome: 'Empurrão',        emoji: '✋', dano: 8,  cd: 0.7,  empurra: 0.7, alcance: 1.05, arco: 1.1, tipo: 'impacto', categoria: 'impacto', status: [{ id: 'atordoado', chance: 0.1, duracao: 0.5 }] },
   taco:     { nome: 'Taco com pregos', emoji: '🏏', dano: 40, cd: 0.55, empurra: 0.9, alcance: 1.1,  arco: 1.2, tipo: 'impacto', categoria: 'impacto', golpes: 60, status: [{ id: 'atordoado', chance: 0.25, duracao: 0.6 }, { id: 'sangramento', chance: 0.15 }] },
-  faca:     { nome: 'Facas',           emoji: '🔪', dano: 14, cd: 0.32, empurra: 0.2, alcance: 1.0,  arco: 0.9, tipo: 'corte',   categoria: 'facas', status: [{ id: 'sangramento', chance: 0.45 }] },
-  machado:  { nome: 'Machado',         emoji: '🪓', dano: 36, cd: 0.85, empurra: 1.0, alcance: 1.3,  arco: 1.7, tipo: 'corte',   categoria: 'machados', status: [{ id: 'quebrado', chance: 0.35 }, { id: 'sangramento', chance: 0.25 }] },
-  chave:    { nome: 'Chave inglesa',   emoji: '🔧', dano: 22, cd: 0.55, empurra: 0.8, alcance: 1.05, arco: 1.1, tipo: 'impacto', categoria: 'impacto', status: [{ id: 'atordoado', chance: 0.3, duracao: 0.7 }, { id: 'quebrado', chance: 0.2 }] }
+  faca:     { nome: 'Facas',           emoji: '🔪', dano: 15, cd: 0.32, empurra: 0.3, alcance: 1.05, arco: 1.1, tipo: 'corte',   categoria: 'facas', status: [{ id: 'sangramento', chance: 0.45 }] },
+  machado:  { nome: 'Machado',         emoji: '🪓', dano: 32, cd: 0.85, empurra: 1.0, alcance: 1.3,  arco: 1.35, tipo: 'corte',   categoria: 'machados', status: [{ id: 'quebrado', chance: 0.35 }, { id: 'sangramento', chance: 0.25 }] },
+  chave:    { nome: 'Chave inglesa',   emoji: '🔧', dano: 14, cd: 0.7, empurra: 0.8, alcance: 1.05, arco: 1.1, tipo: 'impacto', categoria: 'impacto', status: [{ id: 'atordoado', chance: 0.14, duracao: 0.5 }, { id: 'quebrado', chance: 0.2 }] }
 };
 for (const c of Object.values(CORPO)) c.corpo = true;
 

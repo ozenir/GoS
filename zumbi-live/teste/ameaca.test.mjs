@@ -1,6 +1,6 @@
 // Testes do nível de ameaça.   Rodar:  node teste/ameaca.test.mjs
 import assert from 'node:assert/strict';
-import { AMEACA, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos } from '../public/js/core/ameaca.js';
+import { AMEACA, furiaDaHorda, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos } from '../public/js/core/ameaca.js';
 import { statsZumbi, ESCALA_AMEACA } from '../public/js/core/dano.js';
 import { ZUMBIS } from '../public/js/core/dados.js';
 
@@ -38,5 +38,11 @@ teste('corredor só a partir do nível 2, explosivo a partir do 3', () => {
   const peso = (n, t) => pesosTipos(n).find(x => x[0] === t)[1];
   assert.equal(peso(1, 'corredor'), 0); assert.ok(peso(2, 'corredor') > 0);
   assert.equal(peso(2, 'explosivo'), 0); assert.ok(peso(3, 'explosivo') > 0);
+});
+teste('trava contra herói imortal: dano dos zumbis cresce sem parar depois de alguns minutos', () => {
+  assert.equal(furiaDaHorda(0), 1);
+  assert.equal(furiaDaHorda(AMEACA.furiaDepoisDe), 1);
+  assert.ok(furiaDaHorda(AMEACA.furiaDepoisDe + 5) > furiaDaHorda(AMEACA.furiaDepoisDe + 1));
+  assert.ok(furiaDaHorda(60) > 10);
 });
 console.log(`\n${ok} testes passaram.`);

@@ -54,6 +54,10 @@ function rodar(id, seed) {
     jogo.update(DT);
     passos++;
     maxZ = Math.max(maxZ, jogo.zumbis.length);
+    if (process.env.DEBUG && passos % (30 * 300) === 0) {
+      const h = jogo.hero;
+      console.log(`  [${fmtTempo(passos * DT)}] ${h.classe} vida ${Math.round(h.vida)}/${Math.round(h.vidaMax)} q ${jogo.stats.quarteiroes} ameaça ${jogo.nivelAmeaca} zumbis ${jogo.zumbis.filter(z => !z.morto).length} sala ${!!jogo.room} arma ${h.arma} corpo ${h.corpo} regen ${h.attr.get('regen').toFixed(2)} defesa ${h.attr.get('defesa').toFixed(2)} esquiva ${h.attr.get('esquiva').toFixed(2)} curaGolpe ${h.attr.get('curaPorAcerto').toFixed(2)} status ${[...h.estados.lista.keys()]} torcida ${jogo.torcidaN} pos ${h.x.toFixed(2)},${h.y.toFixed(2)} trecho ${jogo.trecho?.tipo} voto ${jogo.voto ? (jogo.voto.aberta ? 'aberto ' + jogo.voto.t.toFixed(1) : 'fechado') : '-'} decisao ${jogo.decisao?.id || '-'} porta ${jogo.indoPorta ? jogo.indoPorta.door.x + ',' + jogo.indoPorta.door.y : '-'} alvo ${jogo.rota.alvo.i},${jogo.rota.alvo.j} dir ${jogo.rota.dir} votoAbreT ${jogo.votoAbreT?.toFixed(1)} mira ${!!h.mira} foco ${(h.focoRota||0).toFixed(1)} fase ${jogo.fase}`);
+    }
     for (const e of jogo.drainEvents()) {
       contagem[e.type] = (contagem[e.type] || 0) + 1;
       if (e.type === 'heroi_morreu') res.push(e.relatorio);

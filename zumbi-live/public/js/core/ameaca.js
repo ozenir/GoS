@@ -16,7 +16,7 @@ export const AMEACA = {
   porMinuto: 1.2,
   porQuarteirao: 0.12,
   porNivelHeroi: 0.18,
-  maximo: 30,
+  maximo: 99,   // bem alto de propósito: com o tempo a ameaça sempre vence, por mais forte que o herói fique
 
   // Zumbis normais na rua ao mesmo tempo (o diretor vai repondo)
   naturaisBase: 14,
@@ -39,8 +39,17 @@ export const AMEACA = {
 
   // Zumbis dentro dos prédios: quantidade da loja × (base + nível × isto)
   predioBase: 0.8,
-  predioPorNivel: 0.12
+  predioPorNivel: 0.12,
+
+  // Trava contra herói imortal: depois de X minutos vivo, os zumbis que nascem batem
+  // cada vez mais forte (+furiaPorMinuto por minuto). Por mais forte ou curado que o herói esteja,
+  // um dia ele cai e a live troca de herói.
+  furiaDepoisDe: 3,
+  furiaPorMinuto: 0.2
 };
+
+// Multiplicador de dano dos zumbis pela trava acima
+export const furiaDaHorda = (minutos, A = AMEACA) => 1 + Math.max(0, minutos - A.furiaDepoisDe) * A.furiaPorMinuto;
 
 // extra = pontos ganhos de outros jeitos (ex.: caminhos perigosos, ver caminhos.js)
 export function pontosAmeaca(minutos, quarteiroes, nivelHeroi, A = AMEACA, extra = 0) {
