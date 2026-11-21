@@ -170,16 +170,19 @@ sndBtn.addEventListener('click', () => { som.unlock(); som.setOn(!som.on); atual
 som.unlock();
 setInterval(() => { $('snd-hint').hidden = !(live && som.on && !som.running); }, 1000);
 
+// distância (em casas) do herói até onde o som aconteceu: a câmera segue o herói (acústica em som.js)
+const longe = (e, g, x = e.x, y = e.y) => Number.isFinite(x) ? Math.hypot(x - g.hero.x, y - g.hero.y) : 0;
+
 function tocar(e, g) {
   switch (e.type) {
-    case 'tiro': if (e.heroi) som.tiro(e.arma); else som.tiroAliado(); break;
+    case 'tiro': if (e.heroi) som.tiro(e.arma); else som.tiroAliado(longe(e, g)); break;
     case 'chama': som.chama(); break;
-    case 'acerto': som.acerto(); break;
+    case 'acerto': som.acerto(longe(e, g)); break;
     case 'golpe': som.golpe(e.taco); break;
-    case 'morte_zumbi': som.morteZumbi(e.chefe); break;
-    case 'gemido': if (dist2(e.x, e.y, g.hero.x, g.hero.y) < 100) som.gemido(e.tipo); break;
+    case 'morte_zumbi': som.morteZumbi(e.chefe, longe(e, g)); break;
+    // (as vozes dos zumbis tocam sozinhas, de vez em quando: som.vozes no laço abaixo)
     case 'mordida': som.mordida(e.chefe); break;
-    case 'explosao': som.explosao(); break;
+    case 'explosao': som.explosao(e.raio, longe(e, g)); break;
     case 'cura': som.cura(); break;
     case 'municao': som.municao(); break;
     case 'colete_ganhou': som.colete(); break;
@@ -197,15 +200,15 @@ function tocar(e, g) {
     case 'virou': som.virou(); break;
     case 'chefe': som.chefe(e.tipo === 'rei'); break;
     case 'alarme': som.alarme(e.sala ? 4 : 6); break;
-    case 'latido': som.latido(); break;
+    case 'latido': som.latido(longe(e, g)); break;
     case 'vidro_pisou': som.vidro(); break;
     case 'helicoptero': som.helicoptero(); break;
     case 'heroi_morreu': som.morteHeroi(); break;
     case 'caiu': som.caiu(); break;
     case 'raio': som.zap(); break;
-    case 'lobo_pulou': som.rosnado(); break;
-    case 'grito': som.grito(); break;
-    case 'braco': som.esticar(); break;
+    case 'lobo_pulou': som.rosnado(longe(e, g)); break;
+    case 'grito': som.grito(longe(e, g)); break;
+    case 'braco': som.esticar(longe(e, g)); break;
     case 'horda_quadra': som.perigo(); break;
     case 'segundo_folego': som.onda(); break;
     case 'novos_inimigos': som.chefe(false); break;
@@ -251,7 +254,14 @@ function loop(agora) {
   const h = jogo.hero;
   const pct = h.vida / h.vidaMax;
   let perto = 0, chefe = 0;
-  for (const z of jogo.zumbis) if (!z.morto && dist2(z.x, z.y, h.x, h.y) < 36) { perto++; if (ZUMBIS[z.tipo].chefe) chefe = 1; }
+  const vistos = [];   // zumbis na tela (até ~11 casas): de vez em quando um deles geme, rosna ou engasga
+  for (const z of jogo.zumbis) {
+    if (z.morto) continue;
+    const d2 = dist2(z.x, z.y, h.x, h.y);
+    if (d2 < 36) { perto++; if (ZUMBIS[z.tipo].chefe) chefe = 1; }
+    if (d2 < 121 && !(z.nascendo > 0) && !z.dormindo) vistos.push({ d: Math.sqrt(d2), tipo: z.tipo });
+  }
+  som.vozes(dt, jogo.fase === 'jogo' ? vistos : []);
   som.musica(jogo.fase === 'jogo' ? clamp(perto / 18 + (1 - pct) * 0.4 + (jogo.noiteT > 0 ? 0.25 : 0) + chefe * 0.4, 0, 1) : 0, dt, jogo.fase === 'jogo' && pct < 0.5 ? clamp((0.5 - pct) / 0.5, 0.05, 1) : 0);
   if (jogo.fase === 'jogo' && pct < 0.3) { coracaoT -= dt; if (coracaoT <= 0) { coracaoT = pct < 0.15 ? 0.55 : 0.85; som.coracao(); } }
   // tique dos últimos segundos da votação
