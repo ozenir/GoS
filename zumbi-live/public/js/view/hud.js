@@ -185,7 +185,8 @@ export class Hud {
     if (h.municao != null) armaTxt += ` · ${h.municao}`;
     if (h.armaT > 0) armaTxt += ` · ${Math.ceil(h.armaT)}s`;
     if (h.corpo === 'taco') armaTxt += ` + 🏏${h.golpes}`;
-    if (h.rapidoT > 0) armaTxt += ` · ⚡${Math.ceil(h.rapidoT)}s`;
+    const rapido = h.attr.restante('tiro_rapido');
+    if (rapido > 0) armaTxt += ` · ⚡${Math.ceil(rapido)}s`;
     this.set('h-arma', armaTxt);
     const armaEl = $('h-arma'), lend = !!a.lendaria;
     if (armaEl.dataset.l !== String(lend)) { armaEl.classList.toggle('lend', lend); armaEl.dataset.l = String(lend); }
@@ -204,7 +205,8 @@ export class Hud {
     if (g.noiteT > 0) st.push(`<span class="chip mal">🌙 noite ${Math.ceil(g.noiteT)}s</span>`);
     if (g.room) st.push(`<span class="chip">${g.room.shop.emoji} ${g.room.shop.nome} · ${Math.max(0, Math.ceil(g.cfg.predioT - g.salaT))}s</span>`);
     if (h.invT > 0) st.push(`<span class="chip ok">✨ invencível ${Math.ceil(h.invT)}s</span>`);
-    if (h.lentoT > 0) st.push(`<span class="chip mal">🐌 lento ${Math.ceil(h.lentoT)}s</span>`);
+    const lento = h.attr.restante('lento');
+    if (lento > 0) st.push(`<span class="chip mal">🐌 lento ${Math.ceil(lento)}s</span>`);
     if (g.alarmeT > 0) st.push(`<span class="chip mal">🚨 alarme ${Math.ceil(g.alarmeT)}s</span>`);
     for (const al of g.aliados) st.push(`<span class="chip ok">${al.tipo === 'cachorro' ? '🐶' : '🧍'} ${esc(al.nome)} ${Math.ceil(al.t)}s</span>`);
     this.html('h-status', st.join(''));

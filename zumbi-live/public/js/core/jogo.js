@@ -8,6 +8,10 @@ import { FlowField } from './flow.js';
 import { ZUMBIS, CLASSES, ARMAS, CORPO, MELHORIAS, xpParaNivel } from './dados.js';
 import { EFEITOS, ladoDo } from './efeitos.js';
 import { Votacao, lerVoto, OPCOES } from './votacao.js';
+import {
+  atributosDaClasse, danoDoHeroi, intervaloTiro, intervaloCorpo, alcanceArma, velocidadeHeroi,
+  danoNoHeroi, valorCura, statsZumbi, danoDoZumbi, resistenciaDe, FOGO_DPS, danoExplosao, danoAliado, ALIADOS
+} from './dano.js';
 
 export const PADRAO = {
   votoDur: 12, relNum: 10, relDest: 12, protecao: 15, likesPor: 300, maxZ: 90,
@@ -67,14 +71,15 @@ export class Jogo {
     const start = this.city.nodePos(0, 0);
     this.hero = {
       x: start.x, y: start.y, classe, n: this.heroiN,
-      vida: C.vida, vidaMax: C.vida, regen: C.regen || 0,
+      vida: C.vida, vidaMax: C.vida,          // vidaMax é só leitura: quem manda é h.attr (dano.js)
       arma: C.arma, municao: C.municao ?? (ARMAS[C.arma].municao ?? null), armaT: 0,
       corpo: C.corpo || 'empurrao', golpes: C.corpo ? CORPO[C.corpo].golpes : 0,
-      colete: 0, tiroCd: 0, corpoCd: 0, rapidoT: 0, lentoT: 0, invT: 0,
-      multDano: 1, multCd: C.cdArma || 1, multVel: C.vel || 1,
+      colete: 0, tiroCd: 0, corpoCd: 0, invT: 0,
       nivel: 1, xp: 0, fx: DIRS[dir][0], fy: DIRS[dir][1], andando: false, mira: null, animT: 0,
       parado: 0, ultimaPos: { x: start.x, y: start.y }, vidaBaixa: false
     };
+    this.hero.attr = atributosDaClasse(C, this.hero);
+    this.sincronizarVida();
     this.rota = { i: 0, j: 0, dir, alvo: { i: DIRS[dir][0], j: DIRS[dir][1] } };
     this.zumbis = [];
     this.aliados = [];
@@ -218,6 +223,9 @@ export class Jogo {
     if (comNome >= 5) return null;
     return this.nomes[this.rng.int(0, Math.min(this.nomes.length, 15) - 1)].nick;
   }
+
+  // Nível de ameaça: quão fortes os zumbis nascem agora (dano.js → statsZumbi)
+  ameaca() { return this.dif; }
 
   tipoNatural() {
     const d = this.dif;
@@ -419,10 +427,11 @@ export class Jogo {
   atualizarHeroi(dt) {
     const h = this.hero;
     h.tiroCd -= dt; h.corpoCd -= dt;
-    h.rapidoT = Math.max(0, h.rapidoT - dt);
-    h.lentoT = Math.max(0, h.lentoT - dt);
     h.invT = Math.max(0, h.invT - dt);
-    if (h.regen && h.vida < h.vidaMax) h.vida = Math.min(h.vidaMax, h.vida + h.regen * dt);
+    for (const m of h.attr.update(dt)) this.emit('buff_acabou', { id: m.id, attr: m.attr });
+    this.sincronizarVida();
+    const regen = h.attr.get('regen');
+    if (regen > 0 && h.vida < h.vidaMax) h.vida = Math.min(h.vidaMax, h.vida + regen * dt);
     if (h.armaT > 0 && (h.armaT -= dt) <= 0) this.trocarArma(CLASSES[h.classe].arma === 'escopeta' ? 'pistola' : CLASSES[h.classe].arma, null);
     if (h.vidaBaixa && h.vida / h.vidaMax > 0.5) h.vidaBaixa = false;
 
@@ -478,14 +487,15 @@ export class Jogo {
     }
     const vm = Math.hypot(vx, vy);
     if (vm > 1) { vx /= vm; vy /= vm; }
-    let vel = this.cfg.velHeroi * h.multVel * (lutando ? 0.8 : 1) * (h.lentoT > 0 ? 0.5 : 1);
     // armadilhas de vidro
+    let noVidro = false;
     if (!this.room) for (const a of this.armadilhas) {
       if (a.tipo === 'vidro' && h.x > a.x0 && h.x < a.x1 && h.y > a.y0 && h.y < a.y1) {
-        if (!a.pisou) { a.pisou = true; h.lentoT = Math.max(h.lentoT, a.segundos); this.ferirHeroi(3, a.quem, 'cacos de vidro'); this.emit('vidro_pisou', { x: h.x, y: h.y }); }
-        vel *= 0.6;
+        if (!a.pisou) { a.pisou = true; this.deixarLento(a.segundos); this.ferirHeroi(3, a.quem, 'cacos de vidro'); this.emit('vidro_pisou', { x: h.x, y: h.y }); }
+        noVidro = true;
       }
     }
+    const vel = velocidadeHeroi(h, this.cfg.velHeroi, { lutando, noVidro });
     const antesX = h.x, antesY = h.y;
     this.mover(h, vx * vel * dt, vy * vel * dt, 0.22);
     const andou = Math.hypot(h.x - antesX, h.y - antesY);
@@ -565,7 +575,7 @@ export class Jogo {
         if (d < lim * lim && d < bd) { bd = d; alvoPerto = z; }
       }
       if (alvoPerto) {
-        h.corpoCd = corpo.cd;
+        h.corpoCd = intervaloCorpo(h, corpo);
         const ang = Math.atan2(alvoPerto.y - h.y, alvoPerto.x - h.x);
         for (const z of this.zumbis) {
           if (z.morto || z.nascendo > 0) continue;
@@ -573,7 +583,8 @@ export class Jogo {
           if (d > 1.05 + ZUMBIS[z.tipo].raio) continue;
           let da = Math.abs(Math.atan2(dy, dx) - ang); if (da > Math.PI) da = 2 * Math.PI - da;
           if (da > 1.1) continue;
-          this.ferirZumbi(z, corpo.dano * h.multDano * this.adrenalina(), null);
+          const r = danoDoHeroi(h, corpo.dano, 'corpo', z, this.rng);
+          this.ferirZumbi(z, r.dano, null, false, r.critico);
           if (!ZUMBIS[z.tipo].chefe && d > 0.01) { z.kx += dx / d * corpo.empurra * 4; z.ky += dy / d * corpo.empurra * 4; }
         }
         if (h.corpo === 'taco' && --h.golpes <= 0) { h.corpo = 'empurrao'; this.emit('arma_acabou', { nome: CORPO.taco.nome }); }
@@ -581,7 +592,8 @@ export class Jogo {
       }
     }
     // Arma de fogo
-    const alvo = this.escolherAlvo(arma.alcance);
+    const alcance = alcanceArma(h, arma);
+    const alvo = this.escolherAlvo(alcance);
     h.mira = alvo;
     if (!alvo) return false;
     h.fx = alvo.x - h.x; h.fy = alvo.y - h.y;
@@ -592,22 +604,22 @@ export class Jogo {
       for (const z of this.zumbis) {
         if (z.morto || z.nascendo > 0) continue;
         const dx = z.x - h.x, dy = z.y - h.y, d = Math.hypot(dx, dy);
-        if (d > arma.alcance + ZUMBIS[z.tipo].raio) continue;
+        if (d > alcance + ZUMBIS[z.tipo].raio) continue;
         let da = Math.abs(Math.atan2(dy, dx) - base); if (da > Math.PI) da = 2 * Math.PI - da;
         if (da > arma.cone) continue;
-        this.ferirZumbi(z, arma.dps * dt * h.multDano * this.adrenalina(), null, true);
+        this.ferirZumbi(z, danoDoHeroi(h, arma.dps * dt, 'chama', z).dano, null, true);
         z.fogo = 2; n++;
       }
       this.chamaT = (this.chamaT || 0) - dt;
-      if (this.chamaT <= 0) { this.chamaT = 0.05; this.emit('chama', { x: h.x, y: h.y, ang: base, alcance: arma.alcance }); }
+      if (this.chamaT <= 0) { this.chamaT = 0.05; this.emit('chama', { x: h.x, y: h.y, ang: base, alcance }); }
       return true;
     }
     if (h.tiroCd > 0) return true;
-    h.tiroCd = arma.cd * h.multCd * (h.rapidoT > 0 ? 0.5 : 1);
+    h.tiroCd = intervaloTiro(h, arma);
     for (let b = 0; b < arma.balas; b++) {
       const a = base + (this.rng.next() - 0.5) * 2 * arma.espalha;
       const ca = Math.cos(a), sa = Math.sin(a);
-      let hit = null, ht = arma.alcance;
+      let hit = null, ht = alcance;
       for (const z of this.zumbis) {
         if (z.morto || z.nascendo > 0) continue;
         const vx = z.x - h.x, vy = z.y - h.y;
@@ -618,7 +630,7 @@ export class Jogo {
       }
       const ex = h.x + ca * ht, ey = h.y + sa * ht;
       if (hit && !this.linhaLivre(h.x, h.y, ex, ey)) hit = null;
-      if (hit) this.ferirZumbi(hit, arma.dano * h.multDano * this.adrenalina(), null);
+      if (hit) { const r = danoDoHeroi(h, arma.dano, 'tiro', hit, this.rng); this.ferirZumbi(hit, r.dano, null, false, r.critico); }
       this.emit('tiro', { x: h.x, y: h.y, tx: ex, ty: ey, arma: h.arma, acertou: !!hit, heroi: true });
     }
     if (h.municao != null && --h.municao <= 0) {
@@ -628,7 +640,16 @@ export class Jogo {
     return true;
   }
 
-  adrenalina() { return this.hero.vida / this.hero.vidaMax < 0.25 ? 1.25 : 1; }
+  // vida máxima vem dos atributos; se ela cair, a vida atual acompanha
+  sincronizarVida() {
+    const h = this.hero, vm = h.attr.get('vidaMax');
+    if (vm !== h.vidaMax) { h.vidaMax = vm; if (h.vida > vm) h.vida = vm; }
+  }
+
+  deixarLento(seg) {
+    const h = this.hero;
+    h.attr.addMod({ id: 'lento', attr: 'velocidade', mult: 0.5, segundos: Math.max(seg, h.attr.restante('lento')), fonte: 'cacos de vidro' });
+  }
 
   escolherAlvo(alcance) {
     const h = this.hero;
@@ -662,8 +683,11 @@ export class Jogo {
 
   ferirHeroi(dano, quem, causa) {
     const h = this.hero;
-    if (this.fase !== 'jogo' || h.invT > 0) return;
-    if (h.colete > 0) { h.colete--; this.emit('colete', { x: h.x, y: h.y, resta: h.colete }); return; }
+    if (this.fase !== 'jogo') return;
+    const r = danoNoHeroi(h, dano);
+    if (r.bloqueado === 'invencivel') return;
+    if (r.bloqueado === 'colete') { h.colete--; this.emit('colete', { x: h.x, y: h.y, resta: h.colete }); return; }
+    dano = r.dano;
     h.vida -= dano;
     this.emit('dano_heroi', { dano, x: h.x, y: h.y });
     this.stats.matador = quem ? { nick: quem.nick, avatar: quem.avatar || '', causa } : { nick: null, causa };
@@ -678,7 +702,9 @@ export class Jogo {
       h.xp -= xpParaNivel(h.nivel);
       h.nivel++;
       const m = this.rng.pick(MELHORIAS);
-      m.aplicar(h);
+      h.attr.addMod({ ...m.mod, fonte: `nível ${h.nivel}` });
+      this.sincronizarVida();
+      if (m.cura) h.vida = Math.min(h.vidaMax, h.vida + m.cura);
       this.emit('nivel', { nivel: h.nivel, texto: m.texto });
     }
   }
@@ -686,9 +712,8 @@ export class Jogo {
   /* =================== Zumbis =================== */
   criarZumbi(tipo, x, y, quem, opts = {}) {
     const T = ZUMBIS[tipo];
-    const hpMul = 1 + (this.dif - 1) * 0.55;
     const z = {
-      id: proxId++, tipo, x, y, vida: T.vida * hpMul * (opts.vidaMult || 1), vidaMax: T.vida * hpMul * (opts.vidaMult || 1),
+      id: proxId++, tipo, x, y, ...statsZumbi(T, this.ameaca(), opts.vidaMult || 1),
       atkCd: 0.5 + this.rng.next(), velMult: 0.85 + this.rng.next() * 0.3, nascendo: opts.nascendo ?? 0.7,
       dono: quem || null, nome: opts.nome || null, kx: 0, ky: 0, fx: 0, fy: 1, animT: this.rng.next() * 10,
       flash: 0, fogo: 0, pavio: -1, dormindo: !!opts.dormindo, roupa: this.rng.int(0, 5), extra: opts.extra || null
@@ -715,7 +740,7 @@ export class Jogo {
       const T = ZUMBIS[z.tipo];
       z.flash = Math.max(0, z.flash - dt);
       if (z.nascendo > 0) { z.nascendo -= dt; continue; }
-      if (z.fogo > 0) { z.fogo -= dt; this.ferirZumbi(z, 10 * dt, null, true); if (z.morto) continue; }
+      if (z.fogo > 0) { z.fogo -= dt; this.ferirZumbi(z, FOGO_DPS * dt * (1 - resistenciaDe(z)), null, true); if (z.morto) continue; }
       // empurrão
       if (z.kx || z.ky) {
         this.mover(z, z.kx * dt, z.ky * dt, 0.2);
@@ -767,7 +792,7 @@ export class Jogo {
           if (dd < rr * rr && dd > 1e-6) { const q = Math.sqrt(dd); sx += ddx / q * (rr - q); sy += ddy / q * (rr - q); }
         }
       }
-      const vel = T.vel * z.velMult * (noite ? 1.12 : 1) * (vivo ? 1 : 0.25);
+      const vel = z.vel * z.velMult * (noite ? 1.12 : 1) * (vivo ? 1 : 0.25);
       const perto = d < T.alcance + 0.12;
       const avanco = perto ? 0 : vel * dt;
       this.mover(z, mx * avanco + sx * 0.5 * dt * 4, my * avanco + sy * 0.5 * dt * 4, Math.min(0.3, T.raio * 0.7));
@@ -778,7 +803,7 @@ export class Jogo {
       if (perto && z.atkCd <= 0 && vivo) {
         z.atkCd = T.cd;
         if (alvoAliado) { /* aliados não morrem: só seguram o zumbi */ }
-        else this.ferirHeroi(T.dano * (1 + (this.dif - 1) * 0.25), z.dono, z.dono ? `${T.nome.toLowerCase()} de ${z.dono.nick}` : 'a horda');
+        else this.ferirHeroi(danoDoZumbi(z), z.dono, z.dono ? `${T.nome.toLowerCase()} de ${z.dono.nick}` : 'a horda');
         this.emit('mordida', { x: z.x, y: z.y, chefe: !!T.chefe });
       }
       // gemido de vez em quando (o som decide se toca)
@@ -787,11 +812,12 @@ export class Jogo {
     if (this.zumbis.length > 40 || this.rng.next() < 0.05) this.zumbis = this.zumbis.filter(z => !z.morto);
   }
 
-  ferirZumbi(z, dano, quem, silencioso = false) {
+  // dano já calculado (dano.js). critico só serve pra mostrar na tela.
+  ferirZumbi(z, dano, quem, silencioso = false, critico = false) {
     if (z.morto) return;
     z.vida -= dano;
     z.dormindo = false;
-    if (!silencioso) { z.flash = 0.1; this.emit('acerto', { x: z.x, y: z.y, tipo: z.tipo }); }
+    if (!silencioso) { z.flash = 0.1; this.emit('acerto', { x: z.x, y: z.y, tipo: z.tipo, critico }); }
     if (z.vida <= 0) this.matarZumbi(z, quem);
   }
 
@@ -817,12 +843,12 @@ export class Jogo {
     this.emit('explosao', { x, y, raio });
     const h = this.hero;
     const dh = dist(x, y, h.x, h.y);
-    if (danoHeroi > 0 && dh < raio) this.ferirHeroi(danoHeroi * (1 - dh / raio * 0.5), quem, causa);
+    if (danoHeroi > 0 && dh < raio) this.ferirHeroi(danoExplosao(danoHeroi, dh, raio), quem, causa);
     for (const z of this.zumbis) {
       if (z.morto) continue;
       const d = dist(x, y, z.x, z.y);
       if (d < raio + ZUMBIS[z.tipo].raio) {
-        this.ferirZumbi(z, danoZumbi, null, true);
+        this.ferirZumbi(z, danoZumbi * (1 - resistenciaDe(z)), null, true);
         if (!z.morto && d > 0.01 && !ZUMBIS[z.tipo].chefe) { z.kx += (z.x - x) / d * 4; z.ky += (z.y - y) / d * 4; }
       }
     }
@@ -868,11 +894,11 @@ export class Jogo {
       if (a.andando) { a.fx = (a.x - antes.x) / andou; a.fy = (a.y - antes.y) / andou; }
       if (alvo && a.cd <= 0) {
         if (cachorro && Math.sqrt(bd) < 0.75 + ZUMBIS[alvo.tipo].raio) {
-          a.cd = 0.55; this.ferirZumbi(alvo, 22, null); this.emit('latido', { x: a.x, y: a.y });
+          a.cd = ALIADOS.cachorro.cd; this.ferirZumbi(alvo, danoAliado('cachorro', this.ameaca()) * (1 - resistenciaDe(alvo)), null); this.emit('latido', { x: a.x, y: a.y });
         } else if (!cachorro && this.linhaLivre(a.x, a.y, alvo.x, alvo.y)) {
-          a.cd = 0.55; a.fx = alvo.x - a.x; a.fy = alvo.y - a.y;
+          a.cd = ALIADOS.sobrevivente.cd; a.fx = alvo.x - a.x; a.fy = alvo.y - a.y;
           const m = Math.hypot(a.fx, a.fy) || 1; a.fx /= m; a.fy /= m;
-          this.ferirZumbi(alvo, 12, null);
+          this.ferirZumbi(alvo, danoAliado('sobrevivente', this.ameaca()) * (1 - resistenciaDe(alvo)), null);
           this.emit('tiro', { x: a.x, y: a.y, tx: alvo.x, ty: alvo.y, arma: 'pistola', acertou: true });
         }
       }
@@ -958,7 +984,7 @@ export class Jogo {
       // Arma média: escopeta (tiro) ou taco com pregos (corpo a corpo). Se já tem uma, dá a outra.
       const querTaco = h.arma === 'escopeta' ? true : h.corpo === 'taco' ? false : this.rng.chance(0.4);
       if (querTaco) { h.corpo = 'taco'; h.golpes = CORPO.taco.golpes; this.emit('arma', { id: 'taco', nome: CORPO.taco.nome, emoji: CORPO.taco.emoji, quem: quem?.nick || null }); }
-      else if (ARMAS[h.arma].lendaria) { h.rapidoT += 10; }
+      else if (ARMAS[h.arma].lendaria) h.attr.addMod({ id: 'tiro_rapido', attr: 'cadencia', mult: 2, segundos: 10, acumula: true, maxSegundos: 40, fonte: 'baú' });
       else this.trocarArma('escopeta', quem);
       this.emit('bau', { raridade, arma: querTaco ? 'taco' : 'escopeta', x: h.x, y: h.y, quem: quem?.nick || null });
     }
@@ -968,7 +994,7 @@ export class Jogo {
     const h = this.hero;
     if (this.fase !== 'jogo') return;
     const antes = h.vida;
-    h.vida = Math.min(h.vidaMax, h.vida + h.vidaMax * pct / 100);
+    h.vida = Math.min(h.vidaMax, h.vida + valorCura(h, pct));
     const salvou = antes / h.vidaMax < 0.2;
     this.emit('cura', { valor: pct, x: h.x, y: h.y, salvou, item });
     if (salvou) this.emit('aviso', { texto: `😮‍💨 SALVO NO ÚLTIMO SEGUNDO${quem ? ' por ' + nomeSeguro(quem.nick) : ''}!`, tipo: 'bom' });
@@ -976,7 +1002,7 @@ export class Jogo {
 
   darMunicao(seg, quem, item = false) {
     const h = this.hero;
-    h.rapidoT = Math.min(40, h.rapidoT + seg);
+    h.attr.addMod({ id: 'tiro_rapido', attr: 'cadencia', mult: 2, segundos: seg, acumula: true, maxSegundos: 40, fonte: 'munição' });
     const a = ARMAS[h.arma];
     if (h.municao != null && a.municao) h.municao = Math.min(a.municao * 2, h.municao + Math.ceil(a.municao * 0.5));
     this.emit('municao', { segundos: seg, item });
@@ -1018,7 +1044,7 @@ export class Jogo {
 
   armadilhaVidro(seg, quem) {
     const h = this.hero;
-    if (this.room) { h.lentoT = Math.max(h.lentoT, seg); this.emit('vidro_pisou', { x: h.x, y: h.y }); return; }
+    if (this.room) { this.deixarLento(seg); this.emit('vidro_pisou', { x: h.x, y: h.y }); return; }
     const p = this.pontoAFrente(4);
     const [dx] = DIRS[this.rota.dir];
     // cobre a rua de lado a lado, 2 casas de comprimento

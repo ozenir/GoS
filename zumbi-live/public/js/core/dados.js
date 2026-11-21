@@ -34,11 +34,12 @@ export const CORPO = {
   taco:     { nome: 'Taco com pregos', emoji: '🏏', dano: 40, cd: 0.55, empurra: 0.9, golpes: 60 }
 };
 
+// Melhorias ao subir de nível. "mod" é um modificador de atributo (ver dano.js); "cura" devolve vida na hora.
 export const MELHORIAS = [
-  { id: 'dano', texto: '+15% de dano', aplicar: h => { h.multDano *= 1.15; } },
-  { id: 'cadencia', texto: 'atira 10% mais rápido', aplicar: h => { h.multCd *= 0.9; } },
-  { id: 'vida', texto: '+15 de vida máxima', aplicar: h => { h.vidaMax += 15; h.vida = Math.min(h.vidaMax, h.vida + 15); } },
-  { id: 'vel', texto: '+8% de velocidade', aplicar: h => { h.multVel *= 1.08; } }
+  { id: 'dano', texto: '+15% de dano', mod: { attr: 'dano', mult: 1.15 } },
+  { id: 'cadencia', texto: 'atira 10% mais rápido', mod: { attr: 'cadencia', mult: 1.1 } },
+  { id: 'vida', texto: '+15 de vida máxima', mod: { attr: 'vidaMax', soma: 15 }, cura: 15 },
+  { id: 'vel', texto: '+8% de velocidade', mod: { attr: 'velocidade', mult: 1.08 } }
 ];
 
 // XP para passar do nível n para o n+1
