@@ -1,0 +1,277 @@
+// Painel por cima do jogo: vida, votação, avisos de presente, rankings, legenda e relatório da rodada.
+import { fmtTempo, clamp } from '../core/util.js';
+import { ARMAS, CORPO, CLASSES, xpParaNivel } from '../core/dados.js';
+import { EFEITOS, ladoDo } from '../core/efeitos.js';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const urlOk = u => /^https:\/\//.test(String(u || ''));
+const AVATAR_VAZIO = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#2a2238"/><circle cx="5" cy="4" r="2" fill="#6a5a88"/><rect x="2" y="7" width="6" height="3" rx="1.5" fill="#6a5a88"/></svg>');
+
+export class Hud {
+  constructor() {
+    this.cache = {};
+    this.legenda = [];
+    this.legIdx = 0;
+    this.legT = 0;
+    this.bannerT = 0;
+    this.introT = 0;
+    this.resultadoAte = 0;
+    this.toastsVivos = [];
+  }
+
+  set(id, valor) {
+    if (this.cache[id] === valor) return;
+    this.cache[id] = valor;
+    $(id).textContent = valor;
+  }
+  html(id, valor) {
+    if (this.cache[id] === valor) return;
+    this.cache[id] = valor;
+    $(id).innerHTML = valor;
+  }
+
+  setLegenda(presentes, seguir, compartilhar, likesPor) {
+    const itens = [];
+    for (const [, r] of Object.entries(presentes || {})) {
+      const ef = EFEITOS[r.efeito]; if (!ef) continue;
+      itens.push({ emoji: r.emoji || '🎁', nome: r.nome || '', texto: ef.texto(r), lado: ladoDo(r), moedas: r.moedas || 0 });
+    }
+    itens.sort((a, b) => a.moedas - b.moedas);
+    if (seguir && EFEITOS[seguir.efeito]) itens.push({ emoji: '➕', nome: 'Seguir', texto: EFEITOS[seguir.efeito].texto(seguir), lado: 'ajuda' });
+    if (compartilhar && EFEITOS[compartilhar.efeito]) itens.push({ emoji: '🔁', nome: 'Compartilhar', texto: EFEITOS[compartilhar.efeito].texto(compartilhar), lado: 'ajuda' });
+    if (likesPor > 0) itens.push({ emoji: '❤️', nome: 'Curtidas', texto: `${likesPor} = suprimento`, lado: 'ajuda' });
+    itens.push({ emoji: '💬', nome: 'Chat', texto: 'vote 1 2 3 4 no cruzamento', lado: 'ajuda' });
+    this.legenda = itens;
+    this.legIdx = 0; this.legT = 0;
+    this.mostrarLegenda();
+  }
+
+  mostrarLegenda() {
+    const el = $('h-legenda');
+    if (!this.legenda.length) { el.innerHTML = ''; return; }
+    const pagina = [];
+    for (let i = 0; i < 4; i++) pagina.push(this.legenda[(this.legIdx + i) % this.legenda.length]);
+    el.innerHTML = pagina.map(l => `<span class="leg ${l.lado}">${esc(l.emoji)} ${esc(l.texto)}</span>`).join('');
+  }
+
+  rank(r) {
+    for (const lado of ['ajuda', 'atrapalha']) {
+      const lista = (r && r[lado]) || [];
+      const html = lista.length
+        ? lista.map((p, i) => `<div class="rk-l">${urlOk(p.avatar) ? `<img src="${esc(p.avatar)}" alt="" referrerpolicy="no-referrer">` : '<i class="ph"></i>'}<span>${i === 0 ? (lado === 'ajuda' ? '👑 ' : '😈 ') : ''}${esc(p.nick)}</span><em>${p.coins}🪙</em></div>`).join('')
+        : `<div class="rk-vazio">${lado === 'ajuda' ? 'mande 🌹 pra ajudar' : 'mande 🎵 pra atrapalhar'}</div>`;
+      this.html('rk-' + lado, html);
+    }
+  }
+
+  toast(e) {
+    const box = $('h-toasts');
+    // mesma pessoa mandando o mesmo presente em seguida: soma no mesmo aviso (combo)
+    const chave = e.nick + '|' + (e.giftName || e.texto);
+    const u = this.ultimoToast;
+    if (u && u.chave === chave && performance.now() - u.t < 3500 && u.el.isConnected) {
+      u.qtd += e.qtd || 1; u.t = performance.now();
+      u.el.querySelector('.vezes').textContent = ` x${u.qtd}`;
+      u.el.style.animation = 'none'; void u.el.offsetWidth; u.el.style.animation = '';
+      clearTimeout(u.timer);
+      u.timer = setTimeout(() => { u.el.classList.add('out'); setTimeout(() => u.el.remove(), 460); }, 3800);
+      return;
+    }
+    const t = document.createElement('div');
+    t.className = 'toast ' + e.lado;
+    const img = urlOk(e.avatar) ? esc(e.avatar) : AVATAR_VAZIO;
+    const presente = urlOk(e.image) ? `<img class="gimg" src="${esc(e.image)}" alt="" referrerpolicy="no-referrer">` : esc(e.emoji);
+    const vezes = `<span class="vezes">${e.qtd > 1 ? ` x${e.qtd}` : ''}</span>`;
+    const espera = e.espera ? ` <small>(em ${e.espera}s)</small>` : '';
+    t.innerHTML = `<img class="tava" src="${img}" alt="" referrerpolicy="no-referrer"><span class="tt"><b>${esc(e.nick)}</b> ${presente}${vezes} <em>${esc(e.texto)}</em>${espera}</span>`;
+    box.prepend(t);
+    while (box.children.length > 2) box.lastChild.remove();
+    const timer = setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 460); }, 3800);
+    this.ultimoToast = { chave, el: t, qtd: e.qtd || 1, t: performance.now(), timer };
+  }
+
+  banner(texto, sub = '', tipo = '', dur = 2.6) {
+    const b = $('h-banner');
+    b.className = 'banner ' + tipo;
+    $('b-t').textContent = texto; $('b-s').textContent = sub;
+    b.hidden = false;
+    const bt = $('b-t'); bt.style.animation = 'none'; void bt.offsetWidth; bt.style.animation = '';
+    this.bannerT = dur;
+  }
+
+  evento(e, g) {
+    switch (e.type) {
+      case 'presente': this.toast(e); break;
+      case 'chefe':
+        if (e.tipo === 'rei') this.banner('👑 REI ZUMBI!', `despertado por ${e.nome}`, 'perigo', 3.2);
+        else if (e.tipo === 'exheroi') this.banner('🧟 O EX-HERÓI VOLTOU!', 'derrote ele pra pegar a arma de volta', 'perigo', 3);
+        else this.banner(`🎆 CHEFÃO DE ${e.nome.toUpperCase()}!`, 'a tela vai tremer...', 'perigo', 3);
+        break;
+      case 'morte_zumbi': if (e.chefe) this.banner('💥 CHEFÃO DERROTADO!', e.nome ? `adeus, ${e.nome}` : '', 'ouro', 2.4); break;
+      case 'bau': if (e.raridade === 'lendario') this.banner(`✨ ${ARMAS[e.arma]?.nome.toUpperCase() || 'ARMA LENDÁRIA'}!`, e.quem ? `baú lendário de ${e.quem}` : 'baú lendário', 'ouro', 2.8); break;
+      case 'nivel': this.banner(`⭐ NÍVEL ${e.nivel}`, e.texto, 'ouro', 1.8); break;
+      case 'helicoptero': this.banner('🚁 RESGATE AÉREO!', e.quem ? `chamado por ${e.quem}` : '', 'bom', 3); break;
+      case 'noite': this.banner('🌙 A NOITE CHEGOU', 'mais zumbis, menos visão', 'perigo', 2.4); break;
+      case 'alarme': if (!e.sala) this.banner('🚨 ALARME DE CARRO!', 'a horda está vindo', 'perigo', 2.2); break;
+      case 'aviso': this.banner(e.texto, '', e.tipo === 'perigo' ? 'perigo' : 'bom', 2.4); break;
+      case 'recorde': this.banner('🏆 NOVO RECORDE!', `${e.quarteiroes} quarteirões`, 'ouro', 2.6); break;
+      case 'entrou_predio': this.banner(`${e.emoji} ${e.nome.toUpperCase()}`, 'pegue o que der e saia pelos fundos', '', 2.2); break;
+      case 'vida_baixa': this.banner('⚠️ VIDA BAIXA!', 'mande 🌹 ou 🍩 pra salvar o herói', 'perigo', 2.2); break;
+      case 'decisao': this.resultadoAte = performance.now() + 2600; break;
+      case 'novo_heroi': this.intro(e, g); $('over').hidden = true; break;
+      case 'heroi_morreu': this.relatorio(e.relatorio, e.hall, g); break;
+      case 'arma': if (e.id === 'escopeta' && e.quem) this.banner('💥 ESCOPETA!', `presente de ${e.quem}`, 'bom', 1.8); if (e.id === 'taco') this.banner('🏏 TACO COM PREGOS!', e.quem ? `presente de ${e.quem}` : '', 'bom', 1.8); break;
+    }
+  }
+
+  intro(e, g) {
+    const C = CLASSES[e.classe];
+    $('i-n').textContent = `Sobrevivente #${e.n}`;
+    $('i-nome').textContent = `${C.emoji} ${C.nome}`;
+    const extras = [];
+    if (C.corpo) extras.push('taco com pregos');
+    if (C.arma === 'escopeta') extras.push('escopeta');
+    if (C.regen) extras.push('se cura sozinha');
+    if (C.vel > 1.1) extras.push('corre mais');
+    if (C.cdArma && C.cdArma < 1) extras.push('atira mais rápido');
+    if (C.vida > 100) extras.push(`${C.vida} de vida`);
+    $('i-arma').textContent = extras.length ? extras.join(' · ') : 'pistola e coragem';
+    $('i-aviso').hidden = !e.exHeroi;
+    $('i-aviso').textContent = e.exHeroi ? `⚠️ O sobrevivente #${e.n - 1} vai voltar como zumbi...` : '';
+    const el = $('intro');
+    el.hidden = false; el.classList.remove('out');
+    this.introT = 4.2;
+  }
+
+  relatorio(r, hall, g) {
+    this.relT = 0;
+    this.rel = r;
+    $('o-title').textContent = `${r.emoji} ${r.nome.toUpperCase()} #${r.n} CAIU!`;
+    $('o-why').textContent = r.matador?.causa ? `derrubado por ${r.matador.causa}` : 'derrubado pela horda';
+    $('o-rec').hidden = !r.novoRecorde;
+    $('o-q').textContent = r.quarteiroes; $('o-abates').textContent = r.abates; $('o-tempo').textContent = fmtTempo(r.tempo);
+    $('o-nivel').textContent = r.nivel; $('o-predios').textContent = r.predios; $('o-recorde').textContent = r.recorde;
+    const pessoa = (pre, p, vazio) => {
+      $(pre + '-img').src = urlOk(p?.avatar) ? p.avatar : AVATAR_VAZIO;
+      $(pre + '-img').referrerPolicy = 'no-referrer';
+      $(pre + '-n').textContent = p?.nick || vazio;
+      $(pre + '-c').textContent = p?.coins ? `${p.coins} moedas` : '';
+    };
+    pessoa('d-a', r.topAjuda, 'ninguém');
+    pessoa('d-t', r.topAtrapalha, 'ninguém');
+    pessoa('d-k', r.matador?.nick ? r.matador : null, 'a horda');
+    $('d-k-c').textContent = r.matador?.nick ? 'mandou o golpe final' : '';
+    $('hall').innerHTML = hall?.length ? `<h5>🏛️ Hall dos heróis</h5>` + hall.map((h, i) => `<div><span>${['🥇', '🥈', '🥉'][i]} ${esc(h.emoji)} ${esc(h.nome)} #${h.n}</span><b>${h.quarteiroes} quarteirões · ${fmtTempo(h.tempo)}</b></div>`).join('') : '';
+    $('over-card').classList.remove('dest');
+    $('over').hidden = false;
+    $('h-voto').hidden = true;
+  }
+
+  update(g, dt) {
+    const h = g.hero;
+    // vida
+    const pct = clamp(h.vida / h.vidaMax, 0, 1);
+    $('h-vfill').style.width = (pct * 100).toFixed(1) + '%';
+    const vb = $('h-vbar');
+    const cls = 'vbar' + (pct < 0.3 ? ' baixa' : pct < 0.6 ? ' media' : '');
+    if (vb.dataset.c !== cls) { vb.className = cls; vb.dataset.c = cls; }
+    this.set('h-vida', `${Math.ceil(Math.max(0, h.vida))}/${Math.round(h.vidaMax)}`);
+    this.set('h-colete', h.colete > 0 ? '🛡️'.repeat(Math.min(h.colete, 4)) + (h.colete > 4 ? `+${h.colete - 4}` : '') : '');
+    const C = CLASSES[h.classe];
+    this.set('h-heroi', `${C.emoji} ${C.nome} #${h.n}`);
+    const a = ARMAS[h.arma];
+    let armaTxt = `${a.emoji} ${a.nome}`;
+    if (h.municao != null) armaTxt += ` · ${h.municao}`;
+    if (h.armaT > 0) armaTxt += ` · ${Math.ceil(h.armaT)}s`;
+    if (h.corpo === 'taco') armaTxt += ` + 🏏${h.golpes}`;
+    if (h.rapidoT > 0) armaTxt += ` · ⚡${Math.ceil(h.rapidoT)}s`;
+    this.set('h-arma', armaTxt);
+    const armaEl = $('h-arma'), lend = !!a.lendaria;
+    if (armaEl.dataset.l !== String(lend)) { armaEl.classList.toggle('lend', lend); armaEl.dataset.l = String(lend); }
+    this.set('h-nv', String(h.nivel));
+    $('h-xp').style.width = (clamp(h.xp / xpParaNivel(h.nivel), 0, 1) * 100).toFixed(0) + '%';
+    this.set('h-q', String(g.stats.quarteiroes));
+    this.set('h-rec', String(Math.max(g.recorde, g.stats.quarteiroes)));
+    this.set('h-abates', String(g.stats.abates));
+    this.set('h-tempo', fmtTempo((g.fase === 'jogo' ? g.t : g.t - g.faseT) - g.stats.inicio));
+    $('h-likes').style.width = (g.cfg.likesPor > 0 ? clamp(g.likes / g.cfg.likesPor, 0, 1) * 100 : 0).toFixed(0) + '%';
+
+    // situação
+    const st = [];
+    if (g.protecao > 0 && g.fase === 'jogo') st.push(`<span class="chip ok">🛡️ proteção ${Math.ceil(g.protecao)}s</span>`);
+    if (g.fila.length && g.protecao > 0) st.push(`<span class="chip mal">😈 ${g.fila.length} na fila</span>`);
+    if (g.noiteT > 0) st.push(`<span class="chip mal">🌙 noite ${Math.ceil(g.noiteT)}s</span>`);
+    if (g.room) st.push(`<span class="chip">${g.room.shop.emoji} ${g.room.shop.nome} · ${Math.max(0, Math.ceil(g.cfg.predioT - g.salaT))}s</span>`);
+    if (h.invT > 0) st.push(`<span class="chip ok">✨ invencível ${Math.ceil(h.invT)}s</span>`);
+    if (h.lentoT > 0) st.push(`<span class="chip mal">🐌 lento ${Math.ceil(h.lentoT)}s</span>`);
+    if (g.alarmeT > 0) st.push(`<span class="chip mal">🚨 alarme ${Math.ceil(g.alarmeT)}s</span>`);
+    for (const al of g.aliados) st.push(`<span class="chip ok">${al.tipo === 'cachorro' ? '🐶' : '🧍'} ${esc(al.nome)} ${Math.ceil(al.t)}s</span>`);
+    this.html('h-status', st.join(''));
+
+    // pedido de ajuda com vida baixa
+    $('h-cta').hidden = !(g.fase === 'jogo' && pct < 0.3 && this.bannerT <= 0);
+
+    this.atualizarVoto(g);
+
+    // banner, intro, relatório
+    if (this.bannerT > 0 && (this.bannerT -= dt) <= 0) { const b = $('h-banner'); b.classList.add('out'); setTimeout(() => { if (this.bannerT <= 0) b.hidden = true; }, 500); }
+    if (this.introT > 0 && (this.introT -= dt) <= 0) { const el = $('intro'); el.classList.add('out'); setTimeout(() => { el.hidden = true; }, 420); }
+    if (g.fase === 'morto' && this.rel) {
+      this.relT += dt;
+      if (this.relT > g.cfg.relNum) $('over-card').classList.add('dest');
+      this.set('o-count', String(Math.max(1, Math.ceil(g.cfg.relNum + g.cfg.relDest - g.faseT))));
+    }
+
+    // legenda gira a cada 5 s
+    this.legT += dt;
+    if (this.legT > 5 && this.legenda.length > 4) {
+      this.legT = 0;
+      const el = $('h-legenda'); el.classList.add('fade');
+      setTimeout(() => { this.legIdx = (this.legIdx + 4) % this.legenda.length; this.mostrarLegenda(); el.classList.remove('fade'); }, 360);
+    }
+  }
+
+  atualizarVoto(g) {
+    const box = $('h-voto');
+    const v = g.voto;
+    const mostrar = g.fase === 'jogo' && !g.room && v && (v.aberta || performance.now() < this.resultadoAte || g.decisao);
+    if (!mostrar) { if (!box.hidden) box.hidden = true; this.cache.vkey = null; return; }
+    if (box.hidden) box.hidden = false;
+    const key = v.opcoes.map(o => o.id).join(',') + (v.aberta ? 'a' : 'f');
+    if (this.cache.vkey !== key) {
+      this.cache.vkey = key;
+      const ops = $('v-ops');
+      ops.style.setProperty('--n', v.opcoes.length);
+      ops.innerHTML = v.opcoes.map(o => `<div class="op" data-op="${o.id}"><i class="fill"></i><span class="num">${o.n}</span><span class="nome"><small>${o.id === 'entrar' ? esc(o.shop.emoji) : o.seta}</small> ${o.id === 'entrar' ? 'ENTRAR' : o.nome}</span><span class="cnt">0 votos</span></div>`).join('');
+      this.cache.vt = null;
+    }
+    const max = Math.max(1, ...v.opcoes.map(o => o.votos));
+    for (const o of v.opcoes) {
+      const el = document.querySelector(`.op[data-op="${o.id}"]`); if (!el) continue;
+      el.querySelector('.cnt').textContent = `${o.votos} voto${o.votos === 1 ? '' : 's'}`;
+      el.querySelector('.fill').style.height = (o.votos / max * 100).toFixed(0) + '%';
+      const lider = v.aberta && o.votos > 0 && o.votos === max;
+      el.classList.toggle('lider', lider);
+      el.classList.toggle('venceu', !v.aberta && v.resultado?.id === o.id);
+      el.classList.toggle('perdeu', !v.aberta && v.resultado?.id !== o.id);
+    }
+    const res = $('v-res'), tempo = $('v-tempo');
+    if (v.aberta) {
+      res.hidden = true; tempo.hidden = false;
+      const frac = clamp(v.restante / v.duracao, 0, 1);
+      $('v-barra').style.width = (frac * 100).toFixed(1) + '%';
+      tempo.classList.toggle('urg', v.restante < 3.5);
+      this.set('v-titulo', `🗳️ PRÓXIMO CRUZAMENTO · ${Math.ceil(v.restante)}s`);
+      this.set('v-sub', v.loja ? `${v.loja.emoji} ${v.loja.nome} aqui! comente o número` : 'comente o número');
+    } else {
+      tempo.hidden = true; res.hidden = false;
+      const r = v.resultado, op = v.opcoes.find(o => o.id === r.id);
+      const nome = op.id === 'entrar' ? `ENTRAR NA ${op.shop.nome.toUpperCase()}` : op.nome;
+      const txt = r.auto ? `🤖 ninguém votou · a IA escolheu <b>${esc(nome)}</b>` : `➜ <b>${esc(nome)}</b> com ${r.votos} voto${r.votos === 1 ? '' : 's'}${r.empate ? ' (desempate no sorteio)' : ''}`;
+      this.html('v-res', txt);
+      this.set('v-titulo', '🗳️ O CHAT DECIDIU');
+      this.set('v-sub', '');
+    }
+  }
+}

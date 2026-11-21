@@ -1,0 +1,461 @@
+// Sprites em pixel art gerados por código: pessoas, zumbis, cachorro, chão, itens, carros e prédios.
+// Cada personagem tem 4 quadros de caminhada, de frente e de costas; o lado esquerdo é o direito espelhado.
+import { canvas, fillPoly, line, disc, contorno, espelhar, tom } from './pixel.js';
+import { hash2 } from '../core/util.js';
+
+export const SPR_W = 18, SPR_H = 28;     // tamanho do quadro do personagem
+export const PE_X = 8, PE_Y = 24;        // onde fica o pé dentro do quadro
+const OX = 1, OY = 3;
+
+/* ===================== Pessoas e zumbis ===================== */
+const ROUPAS = {
+  policial: { camisa: '#2f4f9e', calca: '#1d2a4a', bota: '#151820', chapeu: { tipo: 'bone', cor: '#1d2a4a' }, detalhe: '#f2c94c', cabelo: '#3a2a1e', pele: '#e0ac7e' },
+  bombeiro: { camisa: '#d64a2b', calca: '#3b3330', bota: '#1b1716', chapeu: { tipo: 'capacete', cor: '#f2c230' }, faixas: '#f5f0a0', cabelo: '#6b3a1e', pele: '#c98a5e' },
+  entregador: { camisa: '#f2c230', calca: '#30405a', bota: '#22252e', chapeu: { tipo: 'bone', cor: '#d33b2c' }, mochila: '#d33b2c', cabelo: '#1e1a18', pele: '#8d5a3b' },
+  enfermeira: { camisa: '#5fc4b8', calca: '#4aa89d', bota: '#e8e8e8', chapeu: { tipo: 'touca', cor: '#eef6f5' }, cabelo: '#2a1c14', pele: '#f0c39b' },
+  mecanico: { camisa: '#3b6e8f', calca: '#3b6e8f', bota: '#2a2420', chapeu: { tipo: 'bone', cor: '#8f3b3b' }, detalhe: '#e8e8e8', cabelo: '#5a4030', pele: '#d29a6e' },
+  sobrevivente: { camisa: '#6f8f4f', calca: '#4b4b5b', bota: '#2a2420', chapeu: { tipo: 'bandana', cor: '#c0392b' }, cabelo: '#2a1c14', pele: '#c98a5e' }
+};
+const Z_PELE = ['#8fae74', '#7d9c6a', '#9bb07c', '#86a07e', '#a3b38a', '#7a9a80'];
+const Z_CAMISA = ['#6b5b4b', '#4b5b6b', '#7b4b4b', '#5b6b4b', '#6b6b7b', '#8b7b5b'];
+const Z_CALCA = ['#3b3b4b', '#4b3b2b', '#2b3b4b', '#3b4b3b', '#4b4b4b', '#2b2b3b'];
+
+function desenharPessoa(x, o, frame, costas) {
+  const r = (px, py, w, h, cor) => { x.fillStyle = cor; x.fillRect(OX + px, OY + py, w, h); };
+  const bob = frame === 1 || frame === 3 ? -1 : 0;
+  const larg = o.largura || 0;             // 1 = gordo, -1 = magro, 2 = inchado
+  const inclina = o.inclina || 0;          // corredor anda curvado pra frente
+  const camisa2 = tom(o.camisa, -0.25);
+  // Pernas
+  const pernaE = { x: 4, h: 5 }, pernaD = { x: 7, h: 5 };
+  if (frame === 1) { pernaE.x = 3; pernaD.h = 4; }
+  if (frame === 3) { pernaD.x = 8; pernaE.h = 4; }
+  for (const p of [pernaE, pernaD]) {
+    r(p.x, 14, 3, p.h, p === pernaE ? tom(o.calca, -0.15) : o.calca);
+    r(p.x, 14 + p.h, 3, 2, o.bota);
+    if (!costas) r(p.x + 2, 15 + p.h, 1, 1, o.bota);
+  }
+  if (o.rasgado) r(pernaD.x + 1, 16, 1, 1, o.pele);
+  // Tronco
+  const t0 = larg === 1 ? 2 : larg === -1 ? 4 : larg === 2 ? 1 : 3;
+  const tw = larg === 1 ? 10 : larg === -1 ? 6 : larg === 2 ? 12 : 8;
+  const th = larg >= 1 ? 7 : 6;
+  r(t0 + inclina, 8 + bob, tw, th, o.camisa);
+  r(t0 + inclina, 8 + bob, 1, th, camisa2);
+  if (larg === 2) { // inchado: bolhas
+    r(t0 + 2, 9 + bob, 2, 2, '#c9d86a'); r(t0 + 7, 11 + bob, 2, 2, '#e0a040'); r(t0 + 4, 13 + bob, 2, 1, '#c9d86a'); r(t0 + 9, 9 + bob, 1, 1, '#e0a040');
+  }
+  if (o.faixas) { r(t0 + inclina, 11 + bob, tw, 1, o.faixas); }
+  if (o.detalhe && !costas) r(t0 + tw - 3 + inclina, 9 + bob, 2, 2, o.detalhe);
+  if (o.mochila && costas) r(t0 + 1 + inclina, 8 + bob, tw - 2, 5, o.mochila);
+  if (o.rasgado) { r(t0 + 2 + inclina, 12 + bob, 2, 1, tom(o.pele, -0.2)); r(t0 + tw - 2 + inclina, 9 + bob, 1, 2, tom(o.pele, -0.2)); }
+  if (o.capa) { r(t0 - 1 + inclina, 8 + bob, 1, 9, o.capa); if (costas) r(t0 + inclina, 8 + bob, tw, 8, o.capa); }
+  // Braços
+  const bx0 = t0 - 1 + inclina, bx1 = t0 + tw + inclina;
+  if (o.zumbi) {
+    // braços esticados pra frente
+    r(bx1 - 1, 9 + bob, 4, 2, o.camisa); r(bx1 + 3, 9 + bob, 1, 2, o.pele);
+    r(bx0 + 2, 10 + bob, 3, 2, camisa2); r(bx0 + 5, 10 + bob, 1, 2, o.pele);
+    if (larg !== 2) r(bx0, 8 + bob, 1, 4, camisa2);
+  } else {
+    const sw = frame === 1 ? 1 : frame === 3 ? -1 : 0;
+    r(bx0, 8 + bob, 1, 5, camisa2); r(bx0, 13 + bob + sw, 1, 1, o.pele);
+    r(bx1, 8 + bob, 1, 5, o.camisa); r(bx1, 13 + bob - sw, 1, 1, o.pele);
+  }
+  // Cabeça
+  const hx = 4 + inclina + (o.cabecaX || 0), hy = 1 + bob;
+  r(hx, hy, 6, 7, o.pele);
+  if (costas) {
+    r(hx, hy, 6, 6, o.cabelo);
+  } else {
+    r(hx, hy, 6, 2, o.cabelo); r(hx, hy + 2, 1, 3, o.cabelo);
+    if (o.zumbi) { r(hx + 3, hy + 3, 1, 1, '#f0e060'); r(hx + 5, hy + 3, 1, 1, '#f0e060'); r(hx + 3, hy + 5, 3, 1, '#5a1e1e'); }
+    else { r(hx + 3, hy + 3, 1, 2, '#1a1420'); r(hx + 5, hy + 3, 1, 2, '#1a1420'); }
+  }
+  if (o.zumbi) { r(hx + 1, hy + 1, 1, 1, tom(o.pele, -0.3)); }
+  const ch = o.chapeu;
+  if (ch) {
+    if (ch.tipo === 'bone') { r(hx, hy - 1, 6, 2, ch.cor); if (!costas) r(hx + 5, hy + 1, 2, 1, ch.cor); }
+    else if (ch.tipo === 'capacete') { r(hx - 1, hy - 1, 8, 2, ch.cor); r(hx, hy - 2, 6, 1, ch.cor); r(hx - 1, hy + 1, 1, 1, ch.cor); r(hx + 6, hy + 1, 1, 1, ch.cor); }
+    else if (ch.tipo === 'touca') { r(hx, hy - 1, 6, 2, ch.cor); if (!costas) r(hx + 3, hy - 1, 1, 1, '#d33b2c'); }
+    else if (ch.tipo === 'bandana') { r(hx, hy, 6, 1, ch.cor); if (costas) r(hx - 1, hy + 1, 1, 2, ch.cor); }
+    else if (ch.tipo === 'coroa') { r(hx - 1, hy - 2, 8, 2, '#f2c94c'); r(hx - 1, hy - 4, 1, 2, '#f2c94c'); r(hx + 2, hy - 4, 2, 2, '#f2c94c'); r(hx + 6, hy - 4, 1, 2, '#f2c94c'); r(hx + 2, hy - 2, 2, 1, '#d33b2c'); }
+  }
+}
+
+function setDePessoa(o) {
+  const quadros = costas => [0, 1, 2, 3].map(f => {
+    const [c, x] = canvas(SPR_W, SPR_H);
+    desenharPessoa(x, o, f, costas);
+    return contorno(c);
+  });
+  const frente = quadros(false), costas = quadros(true);
+  return { frente, costas, frenteE: frente.map(espelhar), costasE: costas.map(espelhar) };
+}
+
+const cache = new Map();
+export function spriteHeroi(roupa, zumbi = false) {
+  const k = 'h' + roupa + zumbi;
+  if (!cache.has(k)) {
+    const base = ROUPAS[roupa] || ROUPAS.sobrevivente;
+    cache.set(k, setDePessoa(zumbi ? { ...base, pele: '#8fae74', zumbi: true, rasgado: true, camisa: tom(base.camisa, -0.3), calca: tom(base.calca, -0.2) } : base));
+  }
+  return cache.get(k);
+}
+
+export function spriteZumbi(tipo, roupa) {
+  const k = 'z' + tipo + roupa;
+  if (cache.has(k)) return cache.get(k);
+  const pele = Z_PELE[roupa % 6];
+  let o = { pele, cabelo: tom(pele, -0.45), camisa: Z_CAMISA[roupa % 6], calca: Z_CALCA[roupa % 6], bota: '#2a2420', zumbi: true, rasgado: true };
+  if (tipo === 'gordo') o = { ...o, largura: 1 };
+  if (tipo === 'corredor') o = { ...o, largura: -1, inclina: 1, camisa: '#8b3b3b', pele: '#a8b890' };
+  if (tipo === 'explosivo') o = { ...o, largura: 2, pele: '#b8c860', camisa: '#7a8a3a', cabelo: '#6a7a30' };
+  if (tipo === 'chefao') o = { ...o, largura: 1, pele: '#8a6a6a', camisa: '#4a2a2a', calca: '#2a1a1a', cabelo: '#2a1010' };
+  if (tipo === 'rei') o = { ...o, largura: 1, pele: '#7a8aa0', camisa: '#5a2a7a', calca: '#2a1a3a', capa: '#8a1e3a', chapeu: { tipo: 'coroa' } };
+  const s = setDePessoa(o);
+  cache.set(k, s);
+  return s;
+}
+
+export function spriteCachorro() {
+  if (cache.has('dog')) return cache.get('dog');
+  const quadros = [0, 1].map(f => {
+    const [c, x] = canvas(18, 14);
+    const r = (px, py, w, h, cor) => { x.fillStyle = cor; x.fillRect(px, py, w, h); };
+    r(3, 5, 10, 4, '#e08a3a'); r(5, 7, 6, 2, '#f5e6d0');           // corpo
+    r(11, 2, 5, 4, '#e08a3a'); r(14, 4, 2, 2, '#f5e6d0'); r(15, 4, 1, 1, '#1a1420'); r(13, 3, 1, 1, '#1a1420'); // cabeça
+    r(11, 0, 1, 2, '#c06a2a'); r(14, 0, 1, 2, '#c06a2a');           // orelhas
+    r(1, 4, 2, 1, '#e08a3a');                                       // rabo
+    const p = f ? [[4, 9], [7, 10], [10, 9], [12, 10]] : [[4, 10], [7, 9], [10, 10], [12, 9]];
+    for (const [px, py] of p) r(px, 9, 1, py - 8, '#c06a2a');
+    return contorno(c);
+  });
+  const s = { quadros, quadrosE: quadros.map(espelhar) };
+  cache.set('dog', s);
+  return s;
+}
+
+// Corpo caído (o sprite em pé, deitado)
+export function deitado(spr) {
+  const [c, x] = canvas(SPR_H, SPR_W);
+  x.translate(SPR_H / 2, SPR_W / 2); x.rotate(Math.PI / 2); x.drawImage(spr, -SPR_W / 2, -SPR_H / 2);
+  return c;
+}
+
+export function sombra(larg = 10) {
+  const k = 'sombra' + larg;
+  if (!cache.has(k)) {
+    const [c, x] = canvas(larg + 2, Math.ceil(larg / 2.5) + 2);
+    disc(x, (larg + 2) / 2, (Math.ceil(larg / 2.5) + 2) / 2, larg / 2, 'rgba(0,0,0,0.35)', 0.4);
+    cache.set(k, c);
+  }
+  return cache.get(k);
+}
+
+/* ===================== Chão ===================== */
+export const TW = 24, TH = 12;
+function losango(x, cor) {
+  for (let y = 0; y < TH; y++) {
+    const hw = y < TH / 2 ? (y + 1) * 2 : (TH - y) * 2;
+    x.fillStyle = cor; x.fillRect(TW / 2 - hw, y, hw * 2, 1);
+  }
+}
+function dentroLosango(px, py) {
+  const hw = py < TH / 2 ? (py + 1) * 2 : (TH - py) * 2;
+  return py >= 0 && py < TH && px >= TW / 2 - hw && px < TW / 2 + hw;
+}
+function salpicar(x, cores, n, semente) {
+  for (let i = 0; i < n; i++) {
+    const px = Math.floor(hash2(i, semente, 1) * TW), py = Math.floor(hash2(i, semente, 2) * TH);
+    if (!dentroLosango(px, py)) continue;
+    x.fillStyle = cores[i % cores.length]; x.fillRect(px, py, 1, 1);
+  }
+}
+
+// tipos: asfalto, faixa_u, faixa_v, zebra_u, zebra_v, calcada, beco, piso_*, terra
+export function tile(tipo, variante = 0) {
+  const k = 't' + tipo + variante;
+  if (cache.has(k)) return cache.get(k);
+  const [c, x] = canvas(TW, TH);
+  const v = variante;
+  if (tipo.startsWith('asfalto') || tipo.startsWith('faixa') || tipo.startsWith('zebra')) {
+    losango(x, '#3b3e46');
+    salpicar(x, ['#34373e', '#44474f', '#30333a'], 18, 10 + v);
+    if (v === 3) { x.fillStyle = '#2c2e34'; for (let i = 0; i < 6; i++) x.fillRect(6 + i * 2, 4 + (i % 2), 2, 1); } // rachadura
+    if (tipo === 'faixa_u') for (let i = 0; i < 3; i++) { x.fillStyle = '#d8c25a'; x.fillRect(8 + i * 2, 4 + i, 2, 1); }
+    if (tipo === 'faixa_v') for (let i = 0; i < 3; i++) { x.fillStyle = '#d8c25a'; x.fillRect(14 - i * 2, 4 + i, 2, 1); }
+    if (tipo === 'zebra_u') for (let k2 = 0; k2 < 3; k2++) for (let i = 0; i < 4; i++) { const px = 4 + k2 * 6 + i * 2 - 4, py = 2 + k2 * 2 + i - 1; if (dentroLosango(px + 1, py)) { x.fillStyle = '#c9c9c4'; x.fillRect(px, py + 2, 2, 1); } }
+    if (tipo === 'zebra_v') for (let k2 = 0; k2 < 3; k2++) for (let i = 0; i < 4; i++) { const px = 18 - k2 * 6 - i * 2 + 2, py = 2 + k2 * 2 + i - 1; if (dentroLosango(px, py)) { x.fillStyle = '#c9c9c4'; x.fillRect(px - 1, py + 2, 2, 1); } }
+  } else if (tipo === 'calcada') {
+    losango(x, '#8d8b85');
+    salpicar(x, ['#827f79', '#97958f'], 12, 30 + v);
+    x.fillStyle = '#76746e';
+    for (let i = 0; i < 6; i++) x.fillRect(12 + i * 2, i, 1, 1);
+    for (let i = 0; i < 6; i++) x.fillRect(11 - i * 2, i + 6, 1, 1);
+    if (v === 2) { x.fillStyle = '#4f6b38'; x.fillRect(10, 5, 2, 1); x.fillRect(11, 4, 1, 1); } // matinho
+  } else if (tipo === 'beco') {
+    losango(x, '#4a463f');
+    salpicar(x, ['#3f3b35', '#58534a', '#6a5a3a'], 16, 50 + v);
+  } else if (tipo === 'terra') {
+    losango(x, '#2a2620');
+  } else if (tipo.startsWith('piso_')) {
+    const estilo = tipo.slice(5);
+    if (estilo === 'azulejo') { losango(x, (v % 2) ? '#cfd8dc' : '#b8c6cc'); salpicar(x, ['#a9b8be'], 4, 60 + v); }
+    else if (estilo === 'concreto') { losango(x, '#7a7a78'); salpicar(x, ['#6e6e6c', '#868684', '#5a4a30'], 14, 70 + v); }
+    else { losango(x, (v % 2) ? '#a0805a' : '#94744f'); x.fillStyle = '#86683f'; for (let i = 0; i < 6; i++) x.fillRect(12 - i * 2, 6 + i, 2, 1); }
+  }
+  cache.set(k, c);
+  return c;
+}
+
+/* ===================== Itens ===================== */
+function caixaIso(x, cx, base, w, h, alt, topo, esq, dir) {
+  // caixinha isométrica pequena: w e h em pixels de "meia largura"
+  const T = [cx, base - h - alt], R = [cx + w, base - alt - h / 2 + 0], B = [cx, base - alt], L = [cx - w, base - alt - h / 2];
+  fillPoly(x, [[L[0], L[1]], [B[0], B[1]], [B[0], B[1] + alt], [L[0], L[1] + alt]], esq);
+  fillPoly(x, [[B[0], B[1]], [R[0], R[1]], [R[0], R[1] + alt], [B[0], B[1] + alt]], dir);
+  fillPoly(x, [T, R, B, L], topo);
+}
+
+export function spriteItem(kind) {
+  const k = 'i' + kind;
+  if (cache.has(k)) return cache.get(k);
+  const [c, x] = canvas(20, 20);
+  const r = (px, py, w, h, cor) => { x.fillStyle = cor; x.fillRect(px, py, w, h); };
+  if (kind === 'kit' || kind === 'cura_pequena') {
+    caixaIso(x, 10, 17, 7, 6, 6, '#f2f2f2', '#d8d8d8', '#bdbdbd');
+    r(9, 8, 3, 1, '#d33b2c'); r(10, 7, 1, 3, '#d33b2c'); r(4, 14, 2, 1, '#d33b2c'); r(15, 14, 2, 1, '#d33b2c');
+  } else if (kind === 'municao') {
+    caixaIso(x, 10, 17, 7, 6, 5, '#6b7a3a', '#55622d', '#434e22');
+    r(6, 6, 1, 3, '#e8c060'); r(8, 5, 1, 3, '#e8c060'); r(10, 6, 1, 3, '#e8c060'); r(12, 5, 1, 3, '#e8c060');
+  } else if (kind === 'colete') {
+    r(5, 6, 10, 10, '#2f4f6e'); r(8, 6, 4, 3, 'rgba(0,0,0,0)'); x.clearRect(8, 6, 4, 3); r(6, 9, 8, 1, '#5a7a9a'); r(6, 12, 8, 1, '#5a7a9a');
+  } else if (kind === 'suprimento') {
+    caixaIso(x, 10, 17, 8, 7, 6, '#a0784a', '#86623a', '#6e4f2e');
+    r(6, 9, 9, 1, '#5a3f22'); r(10, 6, 1, 8, '#5a3f22');
+  } else if (kind === 'bau_medio') {
+    caixaIso(x, 10, 18, 8, 7, 7, '#5a7ab8', '#3f5a96', '#2f4678');
+    r(9, 9, 3, 3, '#f2c94c'); r(4, 13, 1, 3, '#2a3550'); r(16, 13, 1, 3, '#2a3550');
+  } else if (kind === 'bau_lendario') {
+    caixaIso(x, 10, 18, 8, 7, 7, '#f2c94c', '#d8a830', '#b8861e');
+    r(9, 9, 3, 3, '#d33b2c'); r(10, 10, 1, 1, '#ffffff'); r(4, 13, 1, 3, '#8a5a10'); r(16, 13, 1, 3, '#8a5a10');
+  } else if (kind === 'arma') {
+    r(3, 9, 13, 3, '#3a3a40'); r(12, 12, 3, 4, '#5a3a22'); r(15, 9, 2, 2, '#3a3a40'); r(4, 10, 8, 1, '#6a6a70');
+  }
+  contorno(c);
+  cache.set(k, c);
+  return c;
+}
+
+/* ===================== Coisas da rua ===================== */
+const CORES_CARRO = ['#8a3b3b', '#3b5a8a', '#c9c0b0', '#3b6e4f', '#8a7a3b', '#4b4b55'];
+
+// Carro: comp = tamanho em casas ao longo de u (2) ou v (2). eixo 'u' ou 'v' na vista.
+export function spriteCarro(cor, eixo, virado) {
+  const k = 'car' + cor + eixo + virado;
+  if (cache.has(k)) return cache.get(k);
+  const du = eixo === 'u' ? 2 : 1, dv = eixo === 'u' ? 1 : 2;
+  const W = (du + dv) * 12 + 2, Hh = (du + dv) * 6 + 22;
+  const [c, x] = canvas(W, Hh);
+  const T = [dv * 12 + 1, 20];
+  const P = (u, v, z) => [T[0] + (u - v) * 12, T[1] + (u + v) * 6 - z];
+  const box = (u0, v0, u1, v1, z0, z1, top, l, r) => {
+    fillPoly(x, [P(u0, v1, z0), P(u1, v1, z0), P(u1, v1, z1), P(u0, v1, z1)], l);
+    fillPoly(x, [P(u1, v1, z0), P(u1, v0, z0), P(u1, v0, z1), P(u1, v1, z1)], r);
+    fillPoly(x, [P(u0, v0, z1), P(u1, v0, z1), P(u1, v1, z1), P(u0, v1, z1)], top);
+  };
+  const base = virado ? '#3a3632' : CORES_CARRO[cor % 6];
+  const m = 0.12;
+  box(m, m, du - m, dv - m, 1, 8, tom(base, 0.15), tom(base, -0.05), tom(base, -0.3));
+  const iu = eixo === 'u' ? 0.5 : 0.2, iv = eixo === 'u' ? 0.2 : 0.5;
+  box(m + iu, m + iv, du - m - (eixo === 'u' ? 0.35 : 0.2), dv - m - (eixo === 'u' ? 0.2 : 0.35), 8, 13, tom(base, 0.05), '#2a3440', '#1e2630');
+  // rodas
+  x.fillStyle = '#151515';
+  const rodas = eixo === 'u' ? [[0.45, dv - m], [du - 0.45, dv - m]] : [[du - m, 0.45], [du - m, dv - 0.45]];
+  for (const [u, v] of rodas) { const p = P(u, v, 1); x.fillRect(Math.round(p[0]) - 2, Math.round(p[1]) - 2, 4, 3); }
+  if (virado) { x.fillStyle = '#1e1a16'; for (let i = 0; i < 8; i++) x.fillRect(Math.floor(hash2(i, cor, 5) * W), 12 + Math.floor(hash2(i, cor, 6) * 14), 2, 1); }
+  contorno(c);
+  const s = { c, ox: T[0], oy: T[1] };
+  cache.set(k, s);
+  return s;
+}
+
+export function spriteProp(tipo) {
+  const k = 'p' + tipo;
+  if (cache.has(k)) return cache.get(k);
+  let c, x, ox, oy;
+  if (tipo === 'poste') {
+    [c, x] = canvas(10, 40); ox = 4; oy = 38;
+    x.fillStyle = '#3a3c42'; x.fillRect(4, 6, 2, 33); x.fillRect(4, 5, 5, 2); x.fillStyle = '#c9c070'; x.fillRect(7, 7, 2, 1);
+  } else if (tipo === 'barril') {
+    [c, x] = canvas(12, 14); ox = 6; oy = 12;
+    x.fillStyle = '#7a3a22'; x.fillRect(2, 2, 8, 10); x.fillStyle = '#5a2a18'; x.fillRect(2, 5, 8, 1); x.fillRect(2, 9, 8, 1); x.fillStyle = '#e8902a'; x.fillRect(3, 1, 6, 1);
+  } else if (tipo === 'lixo') {
+    [c, x] = canvas(14, 10); ox = 7; oy = 8;
+    disc(x, 5, 6, 4, '#262a2a', 0.7); disc(x, 9, 6, 3, '#1e2222', 0.8); x.fillStyle = '#3a4040'; x.fillRect(4, 3, 2, 1);
+  } else if (tipo === 'caixas') {
+    [c, x] = canvas(16, 16); ox = 8; oy = 13;
+    caixaIso(x, 8, 14, 6, 5, 5, '#a08050', '#86683f', '#6e5432'); caixaIso(x, 9, 9, 4, 3, 4, '#b08a58', '#94744a', '#7a5f3a');
+  } else if (tipo === 'barricada') {
+    [c, x] = canvas(16, 16); ox = 8; oy = 13;
+    caixaIso(x, 8, 14, 7, 6, 7, '#a08050', '#d84a3a', '#b83a2a');
+    x.fillStyle = '#f0f0f0'; x.fillRect(3, 9, 2, 2); x.fillRect(7, 11, 2, 2); x.fillRect(11, 9, 2, 2);
+  }
+  contorno(c);
+  const s = { c, ox, oy };
+  cache.set(k, s);
+  return s;
+}
+
+/* ===================== Prédios ===================== */
+const PALETAS = [
+  { parede: '#8a6a5a', topo: '#5a4a44', janela: '#2a3040' },
+  { parede: '#6a7a8a', topo: '#4a5560', janela: '#1e2632' },
+  { parede: '#a08a6a', topo: '#6a5a48', janela: '#2a2c34' },
+  { parede: '#7a5a6a', topo: '#4e3a46', janela: '#22202a' },
+  { parede: '#5a6a5a', topo: '#3e4a40', janela: '#1e2420' },
+  { parede: '#9a9a90', topo: '#66665e', janela: '#2a2e36' }
+];
+
+// Prédio visto de cima de lado. du, dv = tamanho na vista (casas). alt = altura em pixels.
+// porta: { face: 'u' | 'v', a: posição ao longo da face (casas) } ou null.
+export function spritePredio(b, du, dv, porta, rot) {
+  const k = 'b' + b.id + '|' + rot + '|' + (porta ? porta.face + porta.a : '');
+  if (cache.has(k)) return cache.get(k);
+  if (cache.size > 900) cache.clear();
+  const alt = b.altura;
+  const W = (du + dv) * 12 + 4, H = (du + dv) * 6 + alt + 8;
+  const [c, x] = canvas(W, H);
+  const T = [dv * 12 + 2, alt + 4];
+  const P = (u, v, z) => [T[0] + (u - v) * 12, T[1] + (u + v) * 6 - z];
+  const pal = PALETAS[b.paleta % PALETAS.length];
+  const shop = b.shop;
+  const parede = shop ? tom(shop.cor, -0.35) : pal.parede;
+  const esq = parede, dir = tom(parede, -0.28);
+  // faces
+  fillPoly(x, [P(0, dv, 0), P(du, dv, 0), P(du, dv, alt), P(0, dv, alt)], esq);
+  fillPoly(x, [P(du, dv, 0), P(du, 0, 0), P(du, 0, alt), P(du, dv, alt)], dir);
+  // telhado com mureta
+  fillPoly(x, [P(0, 0, alt), P(du, 0, alt), P(du, dv, alt), P(0, dv, alt)], tom(pal.topo, b.ruina ? -0.2 : 0));
+  fillPoly(x, [P(0.35, 0.35, alt), P(du - 0.35, 0.35, alt), P(du - 0.35, dv - 0.35, alt), P(0.35, dv - 0.35, alt)], tom(pal.topo, -0.18));
+  // caixa d'água / ar-condicionado
+  const hh = hash2(b.bi * 7 + b.sx, b.bj * 7 + b.sy, 77);
+  if (!shop) {
+    const u0 = 1.5 + hh * 2, v0 = 1.5 + (1 - hh) * 2;
+    fillPoly(x, [P(u0, v0 + 1.2, alt), P(u0 + 1.2, v0 + 1.2, alt), P(u0 + 1.2, v0 + 1.2, alt + 6), P(u0, v0 + 1.2, alt + 6)], '#7a7a80');
+    fillPoly(x, [P(u0 + 1.2, v0 + 1.2, alt), P(u0 + 1.2, v0, alt), P(u0 + 1.2, v0, alt + 6), P(u0 + 1.2, v0 + 1.2, alt + 6)], '#5a5a60');
+    fillPoly(x, [P(u0, v0, alt + 6), P(u0 + 1.2, v0, alt + 6), P(u0 + 1.2, v0 + 1.2, alt + 6), P(u0, v0 + 1.2, alt + 6)], '#9a9aa0');
+  }
+  // janelas
+  const janela = (face, a, z, cor) => {
+    for (let i = 0; i < 4; i++) {
+      const p = face === 'v' ? P(a + i / 12, dv, z) : P(du, a - i / 12 + 0.33, z);
+      x.fillStyle = cor; x.fillRect(Math.round(p[0]) + (face === 'v' ? 0 : 0), Math.round(p[1]) - 6, 1, 6);
+    }
+  };
+  const andarTerreo = 16;
+  for (const face of ['v', 'u']) {
+    const comp = face === 'v' ? du : dv;
+    for (let z = andarTerreo + 4; z < alt - 6; z += 12) {
+      for (let a = 0.7; a < comp - 0.5; a += 1.25) {
+        const r = hash2(Math.floor(a * 10) + z * 3, b.bi * 31 + b.bj * 17 + b.sx * 5 + b.sy + (face === 'u' ? 999 : 0), 91);
+        const cor = b.ruina && r < 0.4 ? '#141414' : r < 0.12 ? '#e8c86a' : r < 0.2 ? '#3a4a5a' : pal.janela;
+        janela(face, a, z, cor);
+      }
+    }
+  }
+  // térreo: lojas têm vitrine e toldo; prédios comuns, portinhas
+  for (const face of ['v', 'u']) {
+    const comp = face === 'v' ? du : dv;
+    if (shop) {
+      for (let a = 0.5; a < comp - 0.5; a += 0.5) janela(face, a, 4, a % 1 ? '#bfe0e8' : '#8fb8c8');
+      // toldo listrado
+      for (let a = 0; a < comp; a += 0.5) {
+        const p0 = face === 'v' ? P(a, dv, 15) : P(du, a, 15), p1 = face === 'v' ? P(a + 0.5, dv, 15) : P(du, a + 0.5, 15);
+        fillPoly(x, [p0, p1, [p1[0] + (face === 'v' ? -3 : 3), p1[1] + 4], [p0[0] + (face === 'v' ? -3 : 3), p0[1] + 4]], (a * 2) % 2 ? '#f2f2f2' : shop.cor);
+      }
+    } else {
+      const a = 1 + hh * (comp - 3);
+      janela(face, a, 4, '#3a2a20'); janela(face, a + 0.35, 4, '#3a2a20');
+    }
+  }
+  if (porta) {
+    const a = porta.a;
+    for (let i = -6; i < 6; i++) {
+      const p = porta.face === 'v' ? P(a + i / 12, dv, 0) : P(du, a - i / 12, 0);
+      x.fillStyle = i === -6 || i === 5 ? '#1a1410' : '#3a2416'; x.fillRect(Math.round(p[0]), Math.round(p[1]) - 13, 1, 13);
+    }
+  }
+  if (b.ruina) { // rachaduras e fuligem
+    x.fillStyle = 'rgba(10,10,10,0.5)';
+    for (let i = 0; i < 18; i++) { const p = P(hash2(i, 3, b.bi) * du, dv, hash2(i, 4, b.bj) * alt); x.fillRect(Math.round(p[0]), Math.round(p[1]), 2, 1); }
+  }
+  // placa no telhado
+  if (shop) {
+    const p0 = P(du * 0.25, dv * 0.5, alt), p1 = P(du * 0.75, dv * 0.5, alt);
+    x.fillStyle = '#2a2a2a'; x.fillRect(Math.round(p0[0]) + 4, Math.round(p0[1]) - 16, 2, 16); x.fillRect(Math.round(p1[0]) - 6, Math.round(p1[1]) - 16, 2, 16);
+  }
+  // arestas
+  line(x, ...P(0, dv, 0), ...P(0, dv, alt), tom(esq, 0.12));
+  line(x, ...P(du, dv, 0), ...P(du, dv, alt), tom(esq, 0.2));
+  const s = { c, ox: T[0], oy: T[1], placa: shop ? P(du * 0.5, dv * 0.5, alt) : null };
+  cache.set(k, s);
+  return s;
+}
+
+// Parede do fundo de uma sala (vista r=0): face 'v' = parede de cima (y=0), face 'u' = parede da esquerda (x=0)
+export function spriteParedeSala(w, h, estilo, saidaX) {
+  const k = 'sala' + w + h + estilo + saidaX;
+  if (cache.has(k)) return cache.get(k);
+  const alt = 46;
+  const W = (w + h) * 12 + 4, H = (w + h) * 6 + alt + 6;
+  const [c, x] = canvas(W, H);
+  const T = [h * 12 + 2, alt + 3];
+  const P = (u, v, z) => [T[0] + (u - v) * 12, T[1] + (u + v) * 6 - z];
+  const cor = estilo === 'azulejo' ? '#dfe8ea' : estilo === 'concreto' ? '#8a8a86' : '#c9b48a';
+  // parede de cima (ao longo de u, em v=0): mostra a face que olha pra +v
+  fillPoly(x, [P(0, 0, 0), P(w, 0, 0), P(w, 0, alt), P(0, 0, alt)], tom(cor, -0.1));
+  // parede da esquerda (ao longo de v, em u=0)
+  fillPoly(x, [P(0, h, 0), P(0, 0, 0), P(0, 0, alt), P(0, h, alt)], tom(cor, -0.3));
+  // rodapé
+  fillPoly(x, [P(0, 0, 0), P(w, 0, 0), P(w, 0, 3), P(0, 0, 3)], tom(cor, -0.45));
+  fillPoly(x, [P(0, h, 0), P(0, 0, 0), P(0, 0, 3), P(0, h, 3)], tom(cor, -0.5));
+  // janelas altas
+  for (let a = 1.5; a < w - 1; a += 3) for (let i = 0; i < 18; i++) { const p = P(a + i / 12, 0, 24); x.fillStyle = '#2a3442'; x.fillRect(Math.round(p[0]), Math.round(p[1]) - 10, 1, 10); }
+  // porta dos fundos (saída)
+  for (let i = -8; i < 8; i++) {
+    const p = P(saidaX + i / 12, 0, 0);
+    x.fillStyle = i === -8 || i === 7 ? '#14100c' : '#2e5a2e'; x.fillRect(Math.round(p[0]), Math.round(p[1]) - 20, 1, 20);
+  }
+  const s = { c, ox: T[0], oy: T[1], alt };
+  cache.set(k, s);
+  return s;
+}
+
+export function spriteMovel(tipo, w, h, v = 0) {
+  const k = 'm' + tipo + w + h + v;
+  if (cache.has(k)) return cache.get(k);
+  const alt = { prateleira: 18, bancada: 9, mesa: 8, maca: 7, balcao: 11 }[tipo] || 10;
+  const W = (w + h) * 12 + 4, H = (w + h) * 6 + alt + 6;
+  const [c, x] = canvas(W, H);
+  const T = [h * 12 + 2, alt + 3];
+  const P = (u, vv, z) => [T[0] + (u - vv) * 12, T[1] + (u + vv) * 6 - z];
+  const base = { prateleira: '#8a6a4a', bancada: '#6a4a2a', mesa: '#7a6a5a', maca: '#d8d8e0', balcao: '#5a5a6a' }[tipo] || '#7a6a5a';
+  const m = 0.08;
+  fillPoly(x, [P(m, h - m, 0), P(w - m, h - m, 0), P(w - m, h - m, alt), P(m, h - m, alt)], tom(base, -0.05));
+  fillPoly(x, [P(w - m, h - m, 0), P(w - m, m, 0), P(w - m, m, alt), P(w - m, h - m, alt)], tom(base, -0.3));
+  fillPoly(x, [P(m, m, alt), P(w - m, m, alt), P(w - m, h - m, alt), P(m, h - m, alt)], tom(base, 0.15));
+  if (tipo === 'prateleira') {
+    const cores = ['#d33b2c', '#3b8ad3', '#f2c94c', '#5fc46b', '#e8e8e8', '#c96bd3'];
+    for (const z of [4, 10, 16]) for (let i = 0; i < 10; i += 2) {
+      const p = P(m + i / 12 + 0.05, h - m, z);
+      x.fillStyle = cores[(i + z + v) % 6]; x.fillRect(Math.round(p[0]), Math.round(p[1]) - 3, 2, 3);
+    }
+  }
+  if (tipo === 'maca') { const p = P(0.3, 0.3, alt); x.fillStyle = '#f5f5f8'; x.fillRect(Math.round(p[0]) - 2, Math.round(p[1]), 6, 3); }
+  contorno(c);
+  const s = { c, ox: T[0], oy: T[1] };
+  cache.set(k, s);
+  return s;
+}
