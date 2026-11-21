@@ -10,10 +10,11 @@ const DT = 1 / 30;
 const passar = (j, seg) => { for (let i = 0; i < Math.round(seg / DT); i++) j.update(DT); };
 const presente = (j, efeito, nick = 'Ana', extra = {}) => j.handle({ type: 'presente', regra: { efeito, ...extra }, count: 1, id: 'id_' + nick, nick, coins: 1 });
 // Jogo sem zumbis por perto e sem proteção, pra testar só o que importa
+// (sem o segundo fôlego do começo, senão o golpe de 9999 não derruba o herói)
 const jogo = (classe = 'policial', cfg = {}) => {
   const j = new Jogo({ seed: 7, classe });
   j.configurar(cfg);
-  j.zumbis = []; j.spawnT = 999; j.hordaT = 999; j.protecao = 0;
+  j.zumbis = []; j.spawnT = 999; j.hordaT = 999; j.protecao = 0; j.hero.folegoCd = 1e9;
   return j;
 };
 const eventos = j => j.drainEvents().map(e => e.type);

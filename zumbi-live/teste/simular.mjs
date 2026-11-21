@@ -6,12 +6,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Jogo } from '../public/js/core/jogo.js';
+import { ESCALA_AMEACA } from '../public/js/core/dano.js';
+import { AMEACA } from '../public/js/core/ameaca.js';
 import { makeRng, fmtTempo } from '../public/js/core/util.js';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const config = JSON.parse(fs.readFileSync(path.join(DIR, '..', 'config.json'), 'utf8'));
 // Ajustes de teste sem mexer no config.json: AJUSTES='{"ameaca_por_minuto":1.2}' node teste/simular.mjs
 if (process.env.AJUSTES) Object.assign(config.jogo, JSON.parse(process.env.AJUSTES));
+// ESCALA='{"vida":0.3}' muda dano.js → ESCALA_AMEACA; AMEACA='{"cotaBase":20}' muda ameaca.js → AMEACA (só nesta simulação)
+if (process.env.ESCALA) Object.assign(ESCALA_AMEACA, JSON.parse(process.env.ESCALA));
+if (process.env.AMEACA) Object.assign(AMEACA, JSON.parse(process.env.AMEACA));
 const presentes = Object.entries(config.presentes.por_nome);
 
 const N = Number(process.argv[2]) || 20;
@@ -48,19 +53,36 @@ function rodar(id, seed) {
   jogo.configurar(config.jogo);
   const res = [], contagem = {};
   let maxZ = 0, passos = 0;
+  // vida mínima (% da máxima) em cada faixa de nível, por herói; e em que nível cada um caiu
+  const faixa = n => n < 5 ? '1-4' : n < 10 ? '5-9' : n < 15 ? '10-14' : n < 20 ? '15-19' : n < 25 ? '20-24' : '25+';
+  let minV = {}; const minVs = [], morreuNivel = {}, tempo10 = [];
+  let heroiAtual = jogo.hero, chegou10 = false, nasceu = jogo.t;
+  const limpas = [];
   const t0 = Date.now();
   while (res.length < N) {
     publico(jogo, rng, DT, c);
     jogo.update(DT);
     passos++;
     maxZ = Math.max(maxZ, jogo.zumbis.length);
+    if (jogo.hero !== heroiAtual) { minVs.push(minV); minV = {}; heroiAtual = jogo.hero; chegou10 = false; nasceu = jogo.t; }
+    // herói vivo há muito tempo: mostra o estado (pra achar travas)
+    if (jogo.t - nasceu > 40 * 60 && passos % (30 * 60) === 0) {
+      const h = jogo.hero;
+      console.log(`  [vivo há ${fmtTempo(jogo.t - nasceu)}] q ${jogo.stats.quarteiroes} nível ${h.nivel} ameaça ${jogo.nivelAmeaca} vida ${Math.round(h.vida)}/${Math.round(h.vidaMax)} zumbis ${jogo.zumbis.filter(z => !z.morto).length} sala ${!!jogo.room} arena ${!!jogo.arena} limpando ${JSON.stringify(jogo.limpando)} decisão ${jogo.decisao?.id || '-'} caído ${!!jogo.caido} suprema ${h.suprema} pos ${h.x.toFixed(1)},${h.y.toFixed(1)}`);
+    }
+    if (jogo.fase === 'jogo') {
+      const h = jogo.hero, f = faixa(h.nivel), v = jogo.caido ? 0 : h.vida / h.vidaMax;
+      minV[f] = Math.min(minV[f] ?? 1, v);
+      if (!chegou10 && h.nivel >= 10) { chegou10 = true; tempo10.push(jogo.t - jogo.stats.inicio); }
+    }
     if (process.env.DEBUG && passos % (30 * 300) === 0) {
       const h = jogo.hero;
       console.log(`  [${fmtTempo(passos * DT)}] ${h.classe} vida ${Math.round(h.vida)}/${Math.round(h.vidaMax)} q ${jogo.stats.quarteiroes} ameaça ${jogo.nivelAmeaca} zumbis ${jogo.zumbis.filter(z => !z.morto).length} sala ${!!jogo.room} arma ${h.arma} corpo ${h.corpo} regen ${h.attr.get('regen').toFixed(2)} defesa ${h.attr.get('defesa').toFixed(2)} esquiva ${h.attr.get('esquiva').toFixed(2)} curaGolpe ${h.attr.get('curaPorAcerto').toFixed(2)} status ${[...h.estados.lista.keys()]} torcida ${jogo.torcidaN} pos ${h.x.toFixed(2)},${h.y.toFixed(2)} trecho ${jogo.trecho?.tipo} voto ${jogo.voto ? (jogo.voto.aberta ? 'aberto ' + jogo.voto.t.toFixed(1) : 'fechado') : '-'} decisao ${jogo.decisao?.id || '-'} porta ${jogo.indoPorta ? jogo.indoPorta.door.x + ',' + jogo.indoPorta.door.y : '-'} alvo ${jogo.rota.alvo.i},${jogo.rota.alvo.j} dir ${jogo.rota.dir} votoAbreT ${jogo.votoAbreT?.toFixed(1)} mira ${!!h.mira} foco ${(h.focoRota||0).toFixed(1)} fase ${jogo.fase}`);
     }
     for (const e of jogo.drainEvents()) {
       contagem[e.type] = (contagem[e.type] || 0) + 1;
-      if (e.type === 'heroi_morreu') res.push(e.relatorio);
+      if (e.type === 'area_limpa') limpas.push(e.segundos);
+      if (e.type === 'heroi_morreu') { res.push(e.relatorio); const f = faixa(e.relatorio.nivel); morreuNivel[f] = (morreuNivel[f] || 0) + 1; }
     }
     if (passos > 30 * 60 * 60 * 3) { console.log('  (parei: 3 horas de jogo simulado)'); break; }
   }
@@ -73,6 +95,12 @@ function rodar(id, seed) {
   const cam = res.reduce((a, r) => (a.p += r.caminhos.perigoso, a.l += r.caminhos.livre, a.h += r.caminhos.historia, a), { p: 0, l: 0, h: 0 });
   const tot = Math.max(1, cam.p + cam.l + cam.h);
   console.log(`  caminhos: perigoso ${(cam.p / tot * 100).toFixed(0)}% · livre ${(cam.l / tot * 100).toFixed(0)}% · história ${(cam.h / tot * 100).toFixed(1)}% (${tot} cruzamentos)`);
+  const faixas = ['1-4', '5-9', '10-14', '15-19', '20-24', '25+'];
+  console.log('  caiu na faixa de nível:', faixas.map(f => `${f}: ${morreuNivel[f] || 0}`).join(' · '));
+  console.log('  vida mínima (mediana dos que passaram pela faixa):', faixas.map(f => { const v = minVs.map(m => m[f]).filter(x => x != null).sort((a, b) => a - b); return v.length ? `${f}: ${Math.round(v[Math.floor(v.length / 2)] * 100)}%` : null; }).filter(Boolean).join(' · '));
+  const t10 = tempo10.slice().sort((a, b) => a - b);
+  if (t10.length) console.log(`  chegaram no nível 10: ${t10.length}/${res.length} · tempo mediano ${fmtTempo(t10[Math.floor(t10.length / 2)])}`);
+  if (limpas.length) { const l = limpas.slice().sort((a, b) => a - b); console.log(`  limpar a área no cruzamento: ${l.length} vezes, mediana ${l[l.length >> 1]} s, 90% até ${l[Math.floor(l.length * 0.9)]} s · hordas gigantes ${contagem.horda_quadra || 0}`); }
   const porClasse = {};
   for (const r of res) (porClasse[r.nome] ||= []).push(r.tempo);
   console.log('  por personagem:', Object.entries(porClasse).map(([k, v]) => `${k} ${fmtTempo(v.reduce((a, b) => a + b, 0) / v.length)} (${v.length})`).join(' · '));
@@ -82,4 +110,6 @@ function rodar(id, seed) {
   return media('tempo');
 }
 
-for (const [k, s] of [['nada', 12345], ['chat', 4242], ['presentes', 777], ['ajuda', 31], ['atrapalha', 99]]) if (!so || so === k) rodar(k, s);
+// SEED=5 node teste/simular.mjs -> outra sequência de partidas (pra ver se o resultado se repete)
+const extra = Number(process.env.SEED) || 0;
+for (const [k, s] of [['nada', 12345], ['chat', 4242], ['presentes', 777], ['ajuda', 31], ['atrapalha', 99]]) if (!so || so === k) rodar(k, s + extra * 1000);

@@ -206,7 +206,8 @@ function tocar(e, g) {
     case 'lobo_pulou': som.rosnado(); break;
     case 'grito': som.grito(); break;
     case 'braco': som.esticar(); break;
-    case 'horda_nivel': som.perigo(); break;
+    case 'horda_quadra': som.perigo(); break;
+    case 'segundo_folego': som.onda(); break;
     case 'novos_inimigos': som.chefe(false); break;
     case 'onda': som.onda(); break;
     case 'arremesso': som.arremesso(); break;

@@ -13,11 +13,11 @@ for (const classe of Object.keys(CLASSES)) {
   for (let p = 0; p < MINUTOS * 60 * 30; p++) {
     j.update(DT);
     for (const e of j.drainEvents()) if (e.type === 'heroi_morreu') mortes.push(e.relatorio.tempo);
-    // herói vivo tem que continuar andando de cruzamento em cruzamento
+    // herói vivo tem que continuar andando de cruzamento em cruzamento (limpar a área antes de atravessar pode levar até ~1,5 min)
     if (j.fase === 'jogo') {
       if (j.stats.quarteiroes !== ultimoQ) { ultimoQ = j.stats.quarteiroes; semAndar = 0; }
       else if (!j.room && !j.arena) semAndar += DT;
-      assert.ok(semAndar < 120, `${classe}: herói ficou 2 minutos sem chegar a nenhum cruzamento (travou?)`);
+      assert.ok(semAndar < 180, `${classe}: herói ficou 3 minutos sem chegar a nenhum cruzamento (travou?)`);
       assert.ok(j.t - j.stats.inicio < VIDA_MAXIMA, `${classe}: herói passou de 10 minutos vivo sem interação (imortal?)`);
     } else { semAndar = 0; ultimoQ = -1; }
   }

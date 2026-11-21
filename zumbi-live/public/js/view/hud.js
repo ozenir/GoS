@@ -119,13 +119,15 @@ export class Hud {
       case 'bau': if (e.raridade === 'lendario') this.banner(`✨ ${ARMAS[e.arma]?.nome.toUpperCase() || 'ARMA LENDÁRIA'}!`, e.quem ? `baú lendário de ${e.quem}` : 'baú lendário', 'ouro', 2.8); break;
       case 'nivel': this.banner(`⭐ NÍVEL ${e.nivel}`, (e.pericias || []).join(' · '), 'ouro', 1.6); break;
       case 'passiva': this.banner(e.texto, '', 'bom', 1.8); break;
+      case 'segundo_folego': this.banner('💢 SEGUNDO FÔLEGO!', 'o herói empurra a horda e respira (só até o nível 10)', 'bom', 2); break;
       case 'helicoptero': this.banner('🚁 RESGATE AÉREO!', e.quem ? `chamado por ${e.quem}` : '', 'bom', 3); break;
       case 'noite': this.banner('🌙 A NOITE CHEGOU', 'mais zumbis, menos visão', 'perigo', 2.4); break;
       case 'alarme': if (!e.sala) this.banner('🚨 ALARME DE CARRO!', 'a horda está vindo', 'perigo', 2.2); break;
       case 'aviso': this.banner(e.texto, '', e.tipo === 'perigo' ? 'perigo' : 'bom', 2.4); break;
       case 'ameaca': this.banner(`☠️ AMEAÇA ${e.nivel}`, 'zumbis mais resistentes e hordas maiores', 'perigo', 1.8); break;
       case 'horda': this.banner('🧟 HORDA CHEGANDO!', `${e.qtd} zumbis`, 'perigo', 2); break;
-      case 'horda_nivel': this.banner(e.grande ? `☠️ HORDA GIGANTE DO NÍVEL ${e.nivel}!` : `🧟 HORDA DO NÍVEL ${e.nivel}!`, `${e.qtd} zumbis de uma vez`, 'perigo', 2.8); break;
+      case 'horda_quadra': this.banner(`☠️ HORDA GIGANTE!`, `${e.qtd} zumbis${e.ondas > 1 ? ` em ${e.ondas} ondas` : ''} · a cada 5 quarteirões`, 'perigo', 2.8); break;
+      case 'limpar_area': this.banner('🧟 LIMPE A ÁREA!', `faltam ${e.restam} zumbi${e.restam === 1 ? '' : 's'} pra atravessar`, 'perigo', 1.6); break;
       case 'entrou_praia': this.banner('🏖️ A PRAIA!', `uma horda está saindo do mar · sobreviva 1 minuto`, 'perigo', 3.2); break;
       case 'praia_vencida': this.banner('🏆 SOBREVIVEU À PRAIA!', 'escolham por onde sair', 'ouro', 2.8); break;
       case 'novos_inimigos': this.banner('🐺 NOVOS INIMIGOS!', 'lobos zumbis que saltam e braços longos que acertam de longe', 'perigo', 3.2); break;
@@ -427,8 +429,10 @@ export class Hud {
       const nome = op.id === 'entrar' ? (op.praca ? 'ARENA DA PRAÇA' : `ENTRAR NA ${op.shop.nome.toUpperCase()}`) : op.nome;
       const txt = r.auto ? `🤖 ninguém votou · a IA escolheu <b>${esc(nome)}</b>` : `➜ <b>${esc(nome)}</b> com ${r.votos} voto${r.votos === 1 ? '' : 's'}${r.empate ? ' (desempate no sorteio)' : ''}`;
       this.html('v-res', txt);
-      this.set('v-titulo', '🗳️ O CHAT DECIDIU');
-      this.set('v-sub', '');
+      // decidido, mas o herói só atravessa com a área limpa
+      const l = g.limpando;
+      this.set('v-titulo', l ? `🧟 LIMPE A ÁREA · faltam ${l.restam}` : '🗳️ O CHAT DECIDIU');
+      this.set('v-sub', l ? 'pra atravessar' : '');
     }
   }
 }

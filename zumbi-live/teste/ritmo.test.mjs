@@ -1,8 +1,8 @@
-// Testes do ritmo do jogo: começo calmo, hordas por nível, chefes, inimigos do nível 20, XP e fúria sem ajuda.
+// Testes do ritmo do jogo: começo puxado, limpar a área, horda a cada 5 quarteirões, chefes, inimigos do nível 20, XP e fúria sem ajuda.
 // Rodar:  node teste/ritmo.test.mjs
 import assert from 'node:assert/strict';
-import { Jogo } from '../public/js/core/jogo.js';
-import { AMEACA, multInicio, tamanhoHordaNivel, pesosTipos, NIVEL_INIMIGOS_NOVOS } from '../public/js/core/ameaca.js';
+import { Jogo, FOLEGO } from '../public/js/core/jogo.js';
+import { AMEACA, multInicio, forcaInicio, cotaQuadra, tamanhoHordaQuadra, pesosTipos, NIVEL_INIMIGOS_NOVOS } from '../public/js/core/ameaca.js';
 import { sortearCaminho } from '../public/js/core/caminhos.js';
 import { statsZumbi } from '../public/js/core/dano.js';
 import { ZUMBIS, xpParaNivel } from '../public/js/core/dados.js';
@@ -20,39 +20,103 @@ const jogo = (nivel = 1, classe = 'policial') => {
   return j;
 };
 
-teste('começo calmo: menos zumbis até o nível 5, um pouco menos até o 10, tudo a partir do 10', () => {
-  assert.ok(multInicio(1) < multInicio(5));
-  assert.ok(multInicio(5) < multInicio(10));
-  assert.equal(multInicio(10), 1);
-  assert.equal(multInicio(30), 1);
+teste('começo puxado: até o nível 10 vêm mais zumbis e mais fortes; do 10 em diante, o normal', () => {
+  for (const n of [1, 4, 5, 9]) { assert.ok(multInicio(n) > 1, `quantidade no nível ${n}`); assert.ok(forcaInicio(n) > 1, `força no nível ${n}`); }
+  assert.ok(forcaInicio(5) > forcaInicio(4), 'do 5 ao 9 é o mais difícil');
+  for (const n of [10, 30]) { assert.equal(multInicio(n), 1); assert.equal(forcaInicio(n), 1); }
+  const j = jogo(7), forte = j.criarZumbi('comum', j.hero.x + 5, j.hero.y).vida;
+  j.hero.nivel = 10; j.hero.suprema = 'imortal';
+  assert.ok(j.criarZumbi('comum', j.hero.x + 5, j.hero.y).vida < forte);
 });
 
 teste('XP: cada nível pede mais que o anterior', () => {
   for (let n = 1; n < 40; n++) assert.ok(xpParaNivel(n + 1) > xpParaNivel(n));
 });
 
-teste('horda do nível: a do 10 é bem maior que a do 5', () => {
-  assert.ok(tamanhoHordaNivel(10) > tamanhoHordaNivel(5) * 1.8);
-  assert.ok(tamanhoHordaNivel(15) > tamanhoHordaNivel(10));
+teste('cota da quadra e horda gigante crescem com a ameaça (com limite)', () => {
+  for (let n = 1; n < 60; n++) { assert.ok(cotaQuadra(n + 1) >= cotaQuadra(n)); assert.ok(tamanhoHordaQuadra(n + 1) >= tamanhoHordaQuadra(n)); }
+  assert.ok(tamanhoHordaQuadra(20) > tamanhoHordaQuadra(5) * 2.5, 'depois do nível 10 a horda fica gigante');
+  assert.equal(cotaQuadra(99), AMEACA.cotaMax);
+  assert.equal(tamanhoHordaQuadra(99), AMEACA.hordaQuadraMax);
 });
 
-teste('antes do nível 10 não tem horda periódica; do 10 em diante tem (depois da habilidade suprema)', () => {
-  for (const [nivel, espera, suprema] of [[4, false], [10, false], [10, true, 'imortal']]) {
-    const j = jogo(nivel);
-    if (suprema) j.hero.suprema = suprema;
-    let hordas = 0;
-    passar(j, AMEACA.hordaCadaSegundos + 5, ev => { for (const e of ev) if (e.type === 'horda') hordas++; j.hero.vida = j.hero.vidaMax; });
-    assert.equal(hordas > 0, espera, `nível ${nivel}${suprema ? ' com suprema' : ' sem suprema'}: ${hordas} hordas`);
+teste('cota da quadra: acabou, não nasce mais zumbi da rua até o próximo quarteirão', () => {
+  const j = jogo(3);
+  j.cotaRua = 4; j.spawnT = 0;
+  passar(j, 20, () => { j.hero.vida = j.hero.vidaMax; });
+  assert.equal(j.cotaRua, 0);
+  assert.ok(j.stats.abates + j.zumbis.filter(z => !z.morto).length <= 4 + 0, 'nasceram só os 4 da cota');
+  j.andouQuarteirao(1);
+  assert.equal(j.cotaRua, null, 'quarteirão novo, cota nova');
+});
+
+teste('sem horda por tempo: em 2 minutos parado sem andar, nenhuma horda chega sozinha', () => {
+  const j = jogo(15);
+  j.hero.suprema = 'imortal';
+  let hordas = 0;
+  passar(j, 120, ev => { for (const e of ev) if (e.type === 'horda' || e.type === 'horda_quadra') hordas++; j.hero.vida = j.hero.vidaMax; });
+  assert.equal(hordas, 0);
+});
+
+teste(`horda gigante a cada ${AMEACA.hordaCadaQuarteiroes} quarteirões`, () => {
+  const j = jogo(12);
+  j.hero.suprema = 'imortal';
+  const vistas = [];
+  for (let q = 1; q <= 15; q++) {
+    j.andouQuarteirao(1);
+    passar(j, 3, ev => { for (const e of ev) if (e.type === 'horda_quadra') vistas.push(j.stats.quarteiroes); j.hero.vida = j.hero.vidaMax; });
   }
+  assert.deepEqual(vistas, [5, 10, 15]);
 });
 
-teste('subir pro nível 5 traz a horda do nível', () => {
-  const j = jogo(4);
-  j.hero.xp = 0;
-  j.ganharXp(xpParaNivel(4));
-  let veio = null;
-  passar(j, 6, ev => { for (const e of ev) if (e.type === 'horda_nivel') veio = e; });
-  assert.ok(veio && veio.nivel === 5 && !veio.grande);
+teste('limpar a área: com a decisão tomada, o herói só atravessa o cruzamento quando os zumbis em volta morrem', () => {
+  const j = jogo(12);
+  j.cotaRua = 0; j.zumbis = [];
+  const no = j.city.nodePos(j.rota.alvo.i, j.rota.alvo.j);
+  j.hero.x = no.x; j.hero.y = no.y;
+  j.decisao = { id: 'frente', dir: j.rota.dir };
+  const z = j.criarZumbi('comum', no.x + 3, no.y + 3, null, { nascendo: 0 });
+  z.vel = 0; z.vida = z.vidaMax = 1e9;
+  const q0 = j.stats.quarteiroes;
+  let pediu = false;
+  passar(j, 4, ev => { for (const e of ev) if (e.type === 'limpar_area') pediu = true; j.hero.vida = j.hero.vidaMax; });
+  assert.equal(j.stats.quarteiroes, q0, 'não atravessou');
+  assert.ok(pediu && j.limpando?.restam === 1, 'avisou quantos faltam');
+  j.matarZumbi(z, null);
+  passar(j, 1, () => { j.hero.vida = j.hero.vidaMax; });
+  assert.equal(j.stats.quarteiroes, q0 + 1, 'atravessou depois de limpar');
+});
+
+teste('limpar a área: zumbi preso que nunca chega some depois de um tempo sem abate', () => {
+  const j = jogo(12);
+  j.cotaRua = 0; j.zumbis = [];
+  const no = j.city.nodePos(j.rota.alvo.i, j.rota.alvo.j);
+  j.hero.x = no.x; j.hero.y = no.y; j.hero.arma = null;
+  j.decisao = { id: 'frente', dir: j.rota.dir };
+  const z = j.criarZumbi('comum', no.x + 12, no.y, null, { nascendo: 0 });
+  z.vel = 0;
+  const q0 = j.stats.quarteiroes;
+  passar(j, AMEACA.limpandoSemAbate * 2 + 4, () => { j.hero.vida = j.hero.vidaMax; z.x = no.x + 12; z.y = no.y; });
+  assert.ok(z.morto && z.sumiu, 'sumiu');
+  assert.ok(j.stats.quarteiroes > q0, 'atravessou');
+});
+
+teste('segundo fôlego: antes do nível 10, com a vida quase no fim, empurra a horda e salva o herói (com recarga)', () => {
+  const j = jogo(6);
+  j.hero.invT = 0;
+  j.hero.attr.addMod({ id: 'sem-esquiva', attr: 'esquiva', mult: 0 });
+  const z = j.criarZumbi('comum', j.hero.x + 1, j.hero.y, null, { nascendo: 0 });
+  j.ferirHeroi(j.hero.vida + 50, null, 'teste', 'sangramento');
+  assert.ok(!j.caido && j.hero.vida > 0, 'não caiu');
+  assert.ok(j.hero.invT > 0 && z.estados.tem('atordoado'), 'invencível e zumbi atordoado');
+  assert.ok(j.drainEvents().some(e => e.type === 'segundo_folego'));
+  j.hero.invT = 0;
+  j.ferirHeroi(j.hero.vida + 50, null, 'teste', 'sangramento');
+  assert.ok(j.caido, 'logo em seguida (recarga) derruba');
+  const k = jogo(FOLEGO.ateNivel);
+  k.hero.invT = 0; k.hero.attr.addMod({ id: 'sem-esquiva', attr: 'esquiva', mult: 0 });
+  k.ferirHeroi(k.hero.vida + 50, null, 'teste', 'sangramento');
+  assert.ok(k.caido, `no nível ${FOLEGO.ateNivel} não tem mais`);
 });
 
 teste('chefe de rua só a partir do nível 10', () => {
@@ -122,7 +186,8 @@ teste('braço longo acerta de longe, com uns 30% de chance', () => {
 });
 
 teste('fúria da horda só conta o tempo SEM presente de ajuda (não é tempo limite)', () => {
-  const j = jogo(5);
+  const j = jogo(12);
+  j.hero.suprema = 'imortal';   // (do nível 10 em diante, sem o começo puxado)
   j.stats.inicio = j.t - 15 * 60;            // 15 minutos de run
   const normal = statsZumbi(ZUMBIS.comum, j.ameaca()).dano;
   j.ultimaAjudaT = j.t;                       // acabou de ganhar ajuda da live

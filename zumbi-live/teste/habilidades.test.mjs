@@ -182,14 +182,15 @@ teste('nível 10: as 3 cartas são as habilidades supremas, e passam na frente d
   assert.ok(j.escolha && !j.escolha.suprema && j.escolha.nivel === 8, 'depois volta pras cartas normais dos níveis que faltavam');
 });
 
-teste('enquanto o chat escolhe a suprema, o jogo não aperta (sem horda periódica, zumbis como no nível 9)', () => {
+teste('enquanto o chat escolhe a suprema, os zumbis continuam como no nível 9; com ela, voltam ao normal', () => {
   const j = jogo();
   j.hero.nivel = NIVEL_SUPREMA;
   assert.ok(j.esperandoSuprema());
-  const antes = j.multInicio();
+  const antes = j.multInicio(), forte = j.criarZumbi('comum', j.hero.x + 5, j.hero.y).vida;
   aplicarCarta(j, { tipo: 'suprema', id: 'imortal' });
   assert.ok(!j.esperandoSuprema());
-  assert.ok(j.multInicio() > antes);
+  assert.ok(j.multInicio() < antes, 'menos zumbis');
+  assert.ok(j.criarZumbi('comum', j.hero.x + 5, j.hero.y).vida < forte, 'zumbis mais fracos');
 });
 
 teste('ataque aéreo derruba um grupo de zumbis', () => {

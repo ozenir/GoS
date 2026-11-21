@@ -317,7 +317,7 @@ export const ARMAS_NOVAS = {
 };
 
 /* ---------------- Supremas (escolha especial do nível 10) ---------------- */
-// No nível 10 o jogo aperta (zumbis na quantidade cheia, hordas a cada 35 s e a horda grande do nível).
+// No nível 10 o jogo vira: daí em diante as hordas gigantes (a cada 5 quarteirões) crescem bem.
 // Nesse nível, em vez das cartas normais, o chat escolhe 1 destas 3. O herói só tem uma suprema.
 export const NIVEL_SUPREMA = 10;
 export const SUPREMAS = {

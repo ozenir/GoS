@@ -19,7 +19,7 @@ import { STATUS, Estados, sincronizarAtributos } from './status.js';
 import { AMBIENTE, efeitoDoAmbiente, faixaLivre, machuca } from './ambiente.js';
 import {
   AMEACA, furiaDaHorda, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos,
-  multInicio, tamanhoHordaNivel, NIVEL_INIMIGOS_NOVOS
+  multInicio, forcaInicio, cotaQuadra, tamanhoHordaQuadra, NIVEL_INIMIGOS_NOVOS
 } from './ameaca.js';
 import { CHANCES_PADRAO, PERIGOS, AMEACA_POR_PERIGO, ATRASO_PERIGO, sortearCaminho } from './caminhos.js';
 import { Historia, HISTORIA } from './historia.js';
@@ -43,12 +43,16 @@ const CHAVES = {
 const CHAVES_AMEACA = {
   ameaca_por_minuto: 'porMinuto', ameaca_por_quarteirao: 'porQuarteirao', ameaca_por_nivel_do_heroi: 'porNivelHeroi',
   horda_a_cada_segundos: 'hordaCadaSegundos', horda_base: 'hordaBase', horda_por_nivel: 'hordaPorNivel',
+  horda_a_cada_quarteiroes: 'hordaCadaQuarteiroes', zumbis_por_quarteirao: 'cotaBase', zumbis_por_quarteirao_por_nivel: 'cotaPorNivel',
   zumbis_na_rua_base: 'naturaisBase', zumbis_na_rua_por_nivel: 'naturaisPorNivel', ameaca_por_caminho_perigoso: 'porPerigo'
 };
 // Chances de cada tipo de caminho (caminhos.js)
 const CHAVES_CAMINHO = { caminho_perigoso_porcento: 'perigoso', caminho_livre_porcento: 'livre', caminho_historia_porcento: 'historia' };
 
 let proxId = 1;
+
+// Segundo fôlego do começo (ver segundoFolego)
+export const FOLEGO = { ateNivel: 10, limite: 0.2, cura: 0.2, invencivel: 3, raio: 4, empurra: 7, atordoa: 1.5, recarga: 50 };
 
 export class Jogo {
   constructor(opts = {}) {
@@ -110,7 +114,7 @@ export class Jogo {
       vida: C.vida, vidaMax: C.vida,          // vidaMax é só leitura: quem manda é h.attr (dano.js)
       arma: C.arma || null, municao: C.arma ? (C.municao ?? ARMAS[C.arma].municao ?? null) : null, armaQ: 0,   // armaQ: quarteirões que a arma lendária ainda dura
       corpo: C.corpo || 'empurrao', golpes: CORPO[C.corpo || 'empurrao'].golpes || 0,
-      pericias: { ...(C.pericias || {}) }, instintoCd: 0,
+      pericias: { ...(C.pericias || {}) }, instintoCd: 0, folegoCd: 0,
       colete: 0, tiroCd: 0, corpoCd: 0, invT: 0, invQ: 0,   // invT: invencível por segundos; invQ: por quarteirões (helicóptero)
       nivel: 1, xp: 0, fx: DIRS[dir][0], fy: DIRS[dir][1], andando: false, mira: null, animT: 0,
       parado: 0, ultimaPos: { x: start.x, y: start.y }, vidaBaixa: false,
@@ -160,6 +164,9 @@ export class Jogo {
     this.ameacaBonus = 0;
     this.trecho = null;
     this.hordaT = this.A.hordaCadaSegundos;
+    this.cotaRua = null;            // zumbis da rua que ainda nascem neste quarteirão (null = calcula na hora)
+    this.limpando = null;           // esperando no cruzamento a área ficar limpa
+    this.proxHordaQ = this.A.hordaCadaQuarteiroes;   // quarteirão da próxima horda gigante
     this.alarmeT = 0;
     this.alarmeCarro = null;
     this.heliT = 0;
@@ -171,7 +178,7 @@ export class Jogo {
     this.emit('novo_heroi', { n: this.heroiN, classe, nome: C.nome, emoji: C.emoji, exHeroi: !!this.ultimoHeroi, viewer: this.hero.viewer, exNome: this.ultimoHeroi?.viewer?.nick || null });
     // Presentes que ajudam e chegaram enquanto o herói anterior estava morto valem para o novo
     const pend = this.pendentesAjuda.splice(0);
-    for (const p of pend) this.agendar(2 + Math.random(), () => EFEITOS[p.regra.efeito].aplicar(this, p.regra, p.qtd, p.quem));
+    for (const p of pend) this.agendar(2 + this.rng.next(), () => EFEITOS[p.regra.efeito].aplicar(this, p.regra, p.qtd, p.quem));
   }
 
   morrer() {
@@ -390,11 +397,16 @@ export class Jogo {
     alvo = Math.min(alvo, this.cfg.maxZ * 0.7);
     let naturais = 0;
     for (const z of this.zumbis) if (!z.dono) naturais++;
+    // cota da quadra: cada quarteirão tem um tanto fixo de zumbis da rua; esperando no cruzamento, não nasce mais
+    if (this.cotaRua == null) this.cotaRua = cotaQuadra(nv, this.multInicio(), this.A);
+    if (this.limpando) { this.cotaRua = 0; this.limpando.restam = this.zumbisNaArea(); }   // (o painel mostra quantos faltam)
     this.spawnT -= dt;
-    if (this.spawnT <= 0 && naturais < alvo) {
-      this.spawnT = intervaloAparecer(nv, this.A) * (noite ? 0.7 : 1);
-      const grupo = Math.max(1, Math.round(tamanhoGrupo(nv, this.A) * this.multInicio()));
-      const p = this.pontoNaRua(h, 10, 15, 0.7);
+    if (this.spawnT <= 0 && naturais < alvo && this.cotaRua > 0) {
+      // na rua eles chegam em bandos (grupoRuaExtra a mais por grupo), com mais tempo entre um bando e outro
+      this.spawnT = intervaloAparecer(nv, this.A) * this.A.intervaloRuaMult * (noite ? 0.7 : 1);
+      const grupo = Math.min(this.cotaRua, Math.max(1, Math.round((tamanhoGrupo(nv, this.A) + this.A.grupoRuaExtra) * this.multInicio())));
+      this.cotaRua -= grupo;
+      const p = this.pontoNaRua(h, 8, 13, 0);   // de todos os lados (estilo Vampire Survivors), não só da frente
       if (p) for (let k = 0; k < grupo; k++) {
         const q = this.pontoPerto(p, 1.5) || p;
         this.criarZumbi(this.tipoNatural(), q.x, q.y, null, { nome: this.nomeDoChat() });
@@ -846,6 +858,67 @@ export class Jogo {
     } else this.emit('caminho', { tipo: 'livre' });
   }
 
+  // Zumbis que ainda faltam matar na área em volta do herói (os que estão dormindo não contam)
+  zumbisNaArea() {
+    const h = this.hero, R = this.A.areaRaio;
+    let n = 0;
+    for (const z of this.zumbis) if (!z.morto && !z.dormindo && dist2(z.x, z.y, h.x, h.y) < R * R) n++;
+    return n;
+  }
+
+  // Limpando a área: vai atrás do zumbi mais perto do cruzamento (sem se afastar muito dele) pra acabar logo.
+  // Quem atira chega só até uns 70% do alcance da arma; quem luta de perto vai até o zumbi.
+  cacarZumbi(no) {
+    const h = this.hero, R = this.A.areaRaio;
+    let melhor = null, md = Infinity;
+    for (const z of this.zumbis) {
+      if (z.morto || z.dormindo || z.nascendo > 0 || z.tipo === 'explosivo') continue;
+      const d = dist2(z.x, z.y, h.x, h.y);
+      if (d < md && d < R * R) { md = d; melhor = z; }
+    }
+    if (!melhor) return null;
+    const perto = h.arma ? ARMAS[h.arma].alcance * 0.7 : 1;
+    if (Math.sqrt(md) < perto) return { x: h.x, y: h.y, esperando: true };
+    // não se afasta mais que 9 casas do cruzamento: os outros vêm até ele
+    if (dist(melhor.x, melhor.y, no.x, no.y) > 9) return null;
+    return { x: melhor.x, y: melhor.y, cacando: true };
+  }
+
+  // O herói chegou no cruzamento com a decisão do chat: só atravessa quando a área estiver limpa.
+  // Enquanto espera, não nasce zumbi da rua (a cota acabou). Zumbi preso longe que não chega some depois de um
+  // tempo sem abate, e por segurança, passado limpandoMax segundos, ele atravessa de qualquer jeito.
+  areaLimpa(dt) {
+    const A = this.A;
+    if (A.areaRaio <= 0) return true;
+    const restam = this.zumbisNaArea();
+    if (!restam) {
+      if (this.limpando) this.emit('area_limpa', { segundos: Math.round(this.limpando.t) });
+      this.limpando = null;
+      return true;
+    }
+    const l = this.limpando ||= { t: 0, abates: this.stats.abates, semAbate: 0, restam };
+    if (l.t === 0) this.emit('limpar_area', { restam });
+    l.t += dt;
+    l.restam = restam;
+    if (this.stats.abates !== l.abates) { l.abates = this.stats.abates; l.semAbate = 0; l.travou = false; }
+    else l.semAbate += dt;
+    const h = this.hero;
+    if (l.semAbate > A.limpandoSemAbate) {
+      // os que estão longe e não chegam (presos atrás de alguma coisa) somem; chefe é trazido pra perto.
+      // Se de novo ninguém morrer, somem também os de perto (presos atrás de barricada ou parede).
+      l.semAbate = 0;
+      const longe = l.travou ? 0 : A.limpandoLonge;
+      l.travou = true;
+      for (const z of this.zumbis) {
+        if (z.morto || dist(z.x, z.y, h.x, h.y) < longe) continue;
+        if (ZUMBIS[z.tipo].chefe) { const p = this.pontoNaRua(h, 4, 6, 0); if (p) { z.x = p.x; z.y = p.y; } }
+        else { z.morto = true; z.sumiu = true; }
+      }
+    }
+    if (l.t > A.limpandoMax) { this.limpando = null; return true; }
+    return false;
+  }
+
   checarRecorde() {
     const q = this.stats.quarteiroes;
     if (q > this.recorde && this.recorde > 0 && !this.stats.avisouRecorde) {
@@ -886,10 +959,13 @@ export class Jogo {
     const falta = (alvo.x - h.x) * dx + (alvo.y - h.y) * dy;
     if (falta < 0.5) {
       if (dist(h.x, h.y, alvo.x, alvo.y) < 1.4) {
-        if (this.decisao) { this.aplicarDecisao(); return this.objetivoRota(0); }
+        // só atravessa com a área limpa: todos os zumbis em volta mortos
+        if (this.decisao && this.areaLimpa(dt)) { this.aplicarDecisao(); return this.objetivoRota(0); }
+        if (this.limpando) { const caca = this.cacarZumbi(alvo); if (caca) return caca; }
         return { x: alvo.x, y: alvo.y, esperando: true };
       }
-      // Passou do cruzamento (foi empurrado por zumbis): volta até ele
+      // Passou do cruzamento (foi empurrado por zumbis ou foi caçar os que faltam): volta até ele
+      if (this.limpando) { const caca = this.cacarZumbi(alvo); if (caca) return caca; }
       return { x: alvo.x, y: alvo.y };
     }
     // Segue o meio da rua, olhando um pouco à frente; se tem perigo no chão, desvia pela faixa livre
@@ -918,6 +994,7 @@ export class Jogo {
     const h = this.hero;
     h.tiroCd -= dt; h.corpoCd -= dt;
     h.invT = Math.max(0, h.invT - dt);
+    h.folegoCd = Math.max(0, (h.folegoCd || 0) - dt);
     for (const m of h.attr.update(dt)) this.emit('buff_acabou', { id: m.id, attr: m.attr });
     this.sincronizarVida();
     const regen = h.attr.get('regen');
@@ -1046,7 +1123,9 @@ export class Jogo {
       if (!this.room) {
         const alvo = this.city.nodePos(this.rota.alvo.i, this.rota.alvo.j);
         const [dx, dy] = DIRS[this.rota.dir];
-        if (h.travas >= 2) { h.x = alvo.x; h.y = alvo.y; h.travas = 0; }       // segunda vez: vai direto pro cruzamento
+        // rua sem saída: o cruzamento do alvo fica do outro lado da barricada; vai pro fim da rua (baú) e volta
+        if (h.travas >= 2 && this.rota.beco) { h.x = this.rota.beco.fim.x; h.y = this.rota.beco.fim.y; h.travas = 0; }
+        else if (h.travas >= 2) { h.x = alvo.x; h.y = alvo.y; h.travas = 0; }       // segunda vez: vai direto pro cruzamento
         else { h.x = dx ? h.x : alvo.x; h.y = dy ? h.y : alvo.y; }           // primeira vez: volta pro meio da rua
         h.ultimaPos = { x: h.x, y: h.y };
         this.itens = this.itens.filter(it => it !== item);
@@ -1064,7 +1143,8 @@ export class Jogo {
     const a = this.city.nodePos(r.i, r.j), b = this.city.nodePos(r.alvo.i, r.alvo.j);
     const cx = clamp(h.x, Math.min(a.x, b.x), Math.max(a.x, b.x)), cy = clamp(h.y, Math.min(a.y, b.y), Math.max(a.y, b.y));
     const d = Math.hypot(h.x - cx, h.y - cy);
-    if (d < 2.8) { h.foraT = 0; return false; }
+    // limpando a área: pode caçar zumbi pelas ruas do cruzamento, mas sem se afastar mais de 10 casas dele
+    if (d < 2.8 || (this.limpando && dist(h.x, h.y, b.x, b.y) < 10)) { h.foraT = 0; return false; }
     h.foraT = (h.foraT || 0) + dt;
     if (h.foraT > 1.5 && !h.avisouFora) { h.avisouFora = true; this.emit('voltando_rota'); }
     if (h.foraT <= 1.5) h.avisouFora = false;
@@ -1076,7 +1156,7 @@ export class Jogo {
   vigiarProgresso(dt) {
     const h = this.hero;
     h.focoRota = Math.max(0, (h.focoRota || 0) - dt);
-    if (this.room || this.arena) { h.semProgresso = 0; h.semCruzar = 0; return; }
+    if (this.room || this.arena || this.limpando) { h.semProgresso = 0; h.semCruzar = 0; return; }
     const r = this.rota, no = this.city.nodePos(r.alvo.i, r.alvo.j);
     const d = dist(h.x, h.y, no.x, no.y);
     const chave = r.alvo.i + ',' + r.alvo.j;
@@ -1318,11 +1398,32 @@ export class Jogo {
     if (r.bloqueado === 'colete') { h.colete--; this.emit('colete', { x: h.x, y: h.y, resta: h.colete }); return false; }
     dano = r.dano;
     h.vida -= dano;
+    // segundo fôlego (antes do nível 10): com a vida quase no fim, o herói empurra todo mundo e respira
+    if (h.vida / h.vidaMax < FOLEGO.limite && h.nivel < FOLEGO.ateNivel && !h.suprema && h.folegoCd <= 0) this.segundoFolego();
     if (!silencioso) this.emit('dano_heroi', { dano, x: h.x, y: h.y });
     this.stats.matador = quem ? { nick: quem.nick, avatar: quem.avatar || '', causa } : { nick: null, causa };
     if (!h.vidaBaixa && h.vida > 0 && h.vida / h.vidaMax < 0.3) { h.vidaBaixa = true; this.emit('vida_baixa'); }
     if (h.vida <= 0 && !supremaSegura(this, h)) this.cair();
     return true;
+  }
+
+  // Segundo fôlego: até o nível 10 (FOLEGO.ateNivel), quando a vida cai abaixo de 20% o herói solta um grito,
+  // empurra e atordoa os zumbis em volta, fica invencível por uns segundos e recupera um pouco de vida.
+  // Recarrega em FOLEGO.recarga segundos: segura o herói com vida baixa, mas dá pra morrer se apertar de novo.
+  segundoFolego() {
+    const h = this.hero, F = FOLEGO;
+    h.folegoCd = F.recarga;
+    h.vida = Math.max(h.vida, 1) + h.vidaMax * F.cura;
+    h.invT = Math.max(h.invT, F.invencivel);
+    for (const z of this.zumbis) {
+      if (z.morto || ZUMBIS[z.tipo].chefe) continue;
+      const d = dist(z.x, z.y, h.x, h.y);
+      if (d > F.raio || d < 0.01) continue;
+      z.kx += (z.x - h.x) / d * F.empurra; z.ky += (z.y - h.y) / d * F.empurra;
+      this.aplicarStatus(z, 'atordoado', { duracao: F.atordoa });
+      if (z.tipo === 'explosivo') z.pavio = -1;
+    }
+    this.emit('segundo_folego', { x: h.x, y: h.y, raio: F.raio });
   }
 
   ganharXp(x) {
@@ -1345,8 +1446,6 @@ export class Jogo {
       this.sincronizarVida();
       this.emit('nivel', { nivel: h.nivel, pericias: subiu });
       if (h.nivel === NIVEL_INIMIGOS_NOVOS) this.emit('novos_inimigos', {});
-      // a cada 5 níveis, uma horda anunciada (do nível 10 em diante, bem maior)
-      if (h.nivel % 5 === 0) this.agendar(4, () => this.hordaDoNivel(h.nivel));
       // cada nível vira uma escolha de habilidade do chat (A, B ou C)
       this.niveisPendentes++;
       this.filaNiveis.push(h.nivel);
@@ -1354,30 +1453,29 @@ export class Jogo {
     }
   }
 
-  // Começo calmo: quanto dos zumbis normais aparece no nível atual do herói (ameaca.js → multInicio)
-  // (enquanto o chat escolhe a habilidade suprema do nível 10, o jogo ainda não aperta)
+  // Começo puxado: quantos zumbis normais a mais aparecem no nível atual do herói (ameaca.js → multInicio)
+  // (enquanto o chat escolhe a habilidade suprema do nível 10, ainda vale o do nível 9)
   multInicio() { return multInicio(this.esperandoSuprema() ? NIVEL_SUPREMA - 1 : this.hero.nivel, this.A); }
   esperandoSuprema() { const h = this.hero; return h.nivel >= NIVEL_SUPREMA && !h.suprema; }
-  // Tamanho de horda dos caminhos perigosos, já com o começo calmo
+  // Tamanho de horda dos caminhos perigosos, já com o multiplicador do começo
   hordaDaRua(n) { return Math.max(3, Math.round(tamanhoHorda(n, this.A) * this.multInicio())); }
 
-  hordaDoNivel(nivel) {
-    if (this.fase !== 'jogo' || this.hero.nivel < nivel) return;
-    if (this.room || this.arena || this.caido) { this.agendar(4, () => this.hordaDoNivel(nivel)); return; }   // espera sair
-    // a horda grande do nível 10 espera o chat escolher a habilidade suprema
-    if ((this.escolha?.suprema || (nivel === NIVEL_SUPREMA && this.filaNiveis.includes(NIVEL_SUPREMA) && !this.hero.suprema))) { this.agendar(2, () => this.hordaDoNivel(nivel)); return; }
-    const qtd = tamanhoHordaNivel(nivel, this.A);
-    const grande = nivel >= this.A.medioAteNivel;
-    // horda grande (nível 20 em diante) chega em ondas, não toda de uma vez
-    const ondas = nivel >= 20 ? 3 : 1, por = Math.ceil(qtd / ondas);
-    for (let k = 0; k < ondas; k++) this.agendar(k * 9, () => {
+  // Horda gigante da quadra: a cada hordaCadaQuarteiroes quarteirões (ameaca.js). Chega anunciada, de frente
+  // e por trás, em ondas (8 s entre uma e outra), e precisa ser limpa pra atravessar o próximo cruzamento.
+  hordaDaQuadra() {
+    if (this.fase !== 'jogo') return;
+    if (this.room || this.arena || this.caido || this.rota.beco) { this.agendar(3, () => this.hordaDaQuadra()); return; }   // espera voltar pra rua
+    // a do nível 10 espera o chat escolher a habilidade suprema
+    if (this.escolha?.suprema || (this.esperandoSuprema() && this.filaNiveis.includes(NIVEL_SUPREMA))) { this.agendar(2, () => this.hordaDaQuadra()); return; }
+    const qtd = tamanhoHordaQuadra(this.nivelAmeaca, 1, this.A);
+    const ondas = Math.max(1, Math.ceil(qtd / this.A.hordaQuadraOndaCada)), por = Math.ceil(qtd / ondas);
+    for (let k = 0; k < ondas; k++) this.agendar(1.5 + k * 8, () => {
       if (this.fase !== 'jogo') return;
       this.soltarZumbis('horda', Math.ceil(por * 0.65), null, { horda: true, semEscala: true });
       this.soltarZumbisAtras(Math.floor(por * 0.35));
     });
-    // a horda periódica não chega junto com a do nível (as duas somadas eram parede: 88 zumbis no nível 20)
     this.hordaT = Math.max(this.hordaT, this.A.hordaCadaSegundos);
-    this.emit('horda_nivel', { nivel, qtd, grande });
+    this.emit('horda_quadra', { qtd, ondas, quarteirao: this.stats.quarteiroes });
   }
 
   // Toda vez que o herói completa quarteirões (cruzamento, saída de prédio, arena ou praia).
@@ -1387,6 +1485,15 @@ export class Jogo {
     const h = this.hero;
     h.semCruzar = 0;
     this.stats.quarteiroes += n;
+    // quarteirão novo: cota de zumbis da rua nova
+    this.cotaRua = null;
+    this.limpando = null;
+    // a cada 5 quarteirões, a horda gigante
+    const cada = this.A.hordaCadaQuarteiroes;
+    if (cada > 0 && this.stats.quarteiroes >= this.proxHordaQ) {
+      while (this.proxHordaQ <= this.stats.quarteiroes) this.proxHordaQ += cada;
+      this.agendar(2, () => this.hordaDaQuadra());
+    }
     const fim = h.estados.passarQuarteiroes(n);
     if (fim.length) { sincronizarAtributos(h.estados, h.attr); for (const id of fim) this.emit('buff_acabou', { id }); }
     if (h.armaQ > 0 && (h.armaQ -= n) <= 0) { h.armaQ = 0; this.trocarArma(this.armaPadrao(), null); }
@@ -1441,7 +1548,9 @@ export class Jogo {
   /* =================== Zumbis =================== */
   statsComFuria(T, vidaMult) {
     const f = furiaDaHorda((this.t - Math.max(this.stats.inicio, this.ultimaAjudaT ?? 0)) / 60, this.A);
-    return statsZumbi(T, this.ameaca(), vidaMult * (1 + (f - 1) * this.A.furiaVida), f);
+    // começo puxado (antes do nível 10): zumbis mais fortes
+    const ini = forcaInicio(this.esperandoSuprema() ? NIVEL_SUPREMA - 1 : this.hero.nivel, this.A);
+    return statsZumbi(T, this.ameaca(), vidaMult * (1 + (f - 1) * this.A.furiaVida) * ini, f * ini);
   }
 
   criarZumbi(tipo, x, y, quem, opts = {}) {
@@ -1582,7 +1691,9 @@ export class Jogo {
           if (dd < rr * rr && dd > 1e-6) { const q = Math.sqrt(dd); sx += ddx / q * (rr - q); sy += ddy / q * (rr - q); }
         }
       }
-      const vel = z.vel * z.velMult * z.estados.lentidao() * lentidaoChao * (noite ? 1.12 : 1) * (vivo ? 1 : 0.25);
+      // limpando a área: os que estão longe vêm correndo pro herói (senão a espera no cruzamento demora)
+      const chamado = this.limpando && d > 6 ? 1.7 : 1;
+      const vel = z.vel * z.velMult * z.estados.lentidao() * lentidaoChao * (noite ? 1.12 : 1) * (vivo ? 1 : 0.25) * chamado;
       const perto = d < T.alcance + 0.12;
       const avanco = perto ? 0 : vel * dt;
       this.mover(z, mx * avanco + sx * 0.5 * dt * 4, my * avanco + sy * 0.5 * dt * 4, Math.min(0.3, T.raio * 0.7));
@@ -1872,8 +1983,8 @@ export class Jogo {
   soltarZumbis(tipo, qtd, quem, opts = {}) {
     const h = this.hero;
     // Hordas mandadas pelo público crescem com a ameaça (o explosivo é sempre 1 por presente)
-    // (no começo calmo, até o nível 10, vêm um pouco menos: no mínimo 60%)
-    if (quem && tipo !== 'explosivo' && !opts.semEscala) qtd = Math.max(1, Math.round(qtd * multPresente(this.nivelAmeaca, this.A) * Math.max(0.6, this.multInicio())));
+    // (o multiplicador do começo vale entre 60% e 100%: presente nunca manda mais que o normal)
+    if (quem && tipo !== 'explosivo' && !opts.semEscala) qtd = Math.max(1, Math.round(qtd * multPresente(this.nivelAmeaca, this.A) * clamp(this.multInicio(), 0.6, 1)));
     const nome = opts.nomeados && quem ? nomeSeguro(quem.nick, 12) : null;
     const lugares = [];
     if (this.room) {

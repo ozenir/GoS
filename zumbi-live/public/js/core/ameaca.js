@@ -18,7 +18,7 @@ export const AMEACA = {
   porNivelHeroi: 0.45,
   maximo: 99,   // bem alto de propósito: com o tempo a ameaça sempre vence, por mais forte que o herói fique
 
-  // Zumbis normais na rua ao mesmo tempo (o diretor vai repondo)
+  // Zumbis normais na rua ao mesmo tempo (o diretor vai repondo, até acabar a cota do quarteirão)
   naturaisBase: 14,
   naturaisPorNivel: 2.5,
   // Segundos entre um aparecimento e outro
@@ -27,19 +27,40 @@ export const AMEACA = {
   // Quantos aparecem juntos em cada aparecimento: 1 + nível × isto (arredondado pra baixo)
   grupoPorNivel: 0.35,
   grupoMax: 6,
+  // Na rua os zumbis chegam em bandos, de todos os lados: grupo + grupoRuaExtra, intervalo × intervaloRuaMult
+  grupoRuaExtra: 3, intervaloRuaMult: 1.5,
 
-  // Começo calmo: até o herói chegar no nível 5, só 40% dos zumbis; até o nível 10, 80%.
-  // Vale pros zumbis da rua, grupos, hordas dos caminhos perigosos, prédios e ondas da arena.
-  // (Os mandados por presente não são afetados.)
-  calmoAteNivel: 5, calmoMult: 0.4,
-  medioAteNivel: 10, medioMult: 0.8,
+  // Cota da quadra: cada quarteirão tem um número fixo de zumbis da rua. Acabou a cota, não nasce mais
+  // ninguém na rua. O herói só atravessa o cruzamento depois de limpar a área (jogo.js → areaLimpa).
+  // cota = (base + (ameaça - 1) × porNivel) × multiplicador do começo (abaixo), até o máximo.
+  cotaBase: 24, cotaPorNivel: 2, cotaMax: 80,
+  // Área que precisa estar limpa pra atravessar (casas em volta do herói)
+  areaRaio: 18,
+  // Zumbi preso longe que não chega no herói: depois de tantos segundos sem abate, os que estão longe somem.
+  // E, por segurança, depois de limpandoMax segundos esperando, o herói atravessa de qualquer jeito.
+  limpandoSemAbate: 10, limpandoLonge: 7, limpandoMax: 90,
 
-  // Horda do nível: a cada 5 níveis do herói chega uma horda anunciada. Do nível 10 em diante ela é bem maior.
-  hordaNivelBase: 6, hordaNivelPorNivel: 1.2, hordaNivelGrande: 1.6,
+  // Começo puxado: antes do nível 10 o herói ainda não tem as habilidades no máximo, mas elas crescem muito
+  // rápido (cada nível de habilidade triplica). Pra ele sofrer de verdade até o 10 (vida baixa, sem morrer),
+  // os zumbis vêm em maior número (calmoMult/medioMult) e mais fortes (calmoForca/medioForca: vida e dano).
+  // Do nível 10 em diante volta a 1: com a habilidade suprema o herói vira a mesa e passa a aguentar as hordas.
+  // Quantidade vale pros zumbis da rua, grupos, cota da quadra, hordas dos caminhos perigosos, prédios e
+  // ondas da arena (os mandados por presente e a horda gigante não passam de 1).
+  calmoAteNivel: 5, calmoMult: 1.2, calmoForca: 1.5,
+  medioAteNivel: 10, medioMult: 1.3, medioForca: 2,
 
-  // Hordas que chegam sozinhas de tempos em tempos (só a partir do nível 10 do herói)
+  // Horda gigante da quadra (estilo Vampire Survivors): a cada 5 quarteirões andados chega uma horda
+  // enorme, anunciada, de frente e por trás, em ondas. É rara e precisa ser limpa pra seguir em frente.
+  // tamanho = base + (ameaça - 1) × porNivel, até o máximo. A primeira (quarteirão 5) é pequena; depois do
+  // nível 10, com as habilidades montadas, elas ficam gigantes.
+  hordaCadaQuarteiroes: 5,
+  hordaQuadraBase: 12, hordaQuadraPorNivel: 2.8, hordaQuadraMax: 110,
+  hordaQuadraOndaCada: 30,   // a cada tantos zumbis a horda chega numa onda a mais (8 s entre ondas)
+
+  // Hordas que chegam sozinhas por TEMPO (desligado: agora a horda grande vem por quarteirão, acima).
+  // Dá pra religar no config.json → horda_a_cada_segundos (só a partir do nível 10 do herói).
   hordaDesdeNivel: 10,
-  hordaCadaSegundos: 35,
+  hordaCadaSegundos: 0,
   hordaBase: 10,
   hordaPorNivel: 2,
   hordaMax: 40,
@@ -62,12 +83,17 @@ export const AMEACA = {
 // Multiplicador de dano dos zumbis pela trava acima. minutos = minutos SEM AJUDA da live.
 export const furiaDaHorda = (minutos, A = AMEACA) => 1 + Math.max(0, minutos - A.furiaDepoisDe) * A.furiaPorMinuto;
 
-// Quanto dos zumbis normais aparece no nível do herói (começo calmo)
+// Quanto dos zumbis normais aparece no nível do herói (começo)
 export const multInicio = (nivelHeroi, A = AMEACA) => nivelHeroi < A.calmoAteNivel ? A.calmoMult : nivelHeroi < A.medioAteNivel ? A.medioMult : 1;
+// Quanto mais fortes (vida e dano) os zumbis nascem no nível do herói (começo)
+export const forcaInicio = (nivelHeroi, A = AMEACA) => nivelHeroi < A.calmoAteNivel ? A.calmoForca : nivelHeroi < A.medioAteNivel ? A.medioForca : 1;
 
-// Tamanho da horda do nível (a cada 5 níveis do herói)
-export const tamanhoHordaNivel = (nivelHeroi, A = AMEACA) =>
-  Math.round((A.hordaNivelBase + nivelHeroi * A.hordaNivelPorNivel) * (nivelHeroi >= A.medioAteNivel ? A.hordaNivelGrande : 1));
+// Cota da quadra: quantos zumbis da rua nascem no quarteirão (n = ameaça, mult = multiplicador do começo)
+export const cotaQuadra = (n, mult = 1, A = AMEACA) => Math.min(A.cotaMax, Math.round((A.cotaBase + Math.max(0, n - 1) * A.cotaPorNivel) * mult));
+
+// Horda gigante a cada hordaCadaQuarteiroes quarteirões
+export const tamanhoHordaQuadra = (n, mult = 1, A = AMEACA) =>
+  Math.min(A.hordaQuadraMax, Math.round((A.hordaQuadraBase + Math.max(0, n - 1) * A.hordaQuadraPorNivel) * mult));
 
 // extra = pontos ganhos de outros jeitos (ex.: caminhos perigosos, ver caminhos.js)
 export function pontosAmeaca(minutos, quarteiroes, nivelHeroi, A = AMEACA, extra = 0) {

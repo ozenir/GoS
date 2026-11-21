@@ -124,6 +124,7 @@ export class Render {
       case 'arremesso': this.arremessos.push({ ...e, age: 0, life: e.t }); break;
       case 'raio': this.choques.push({ pts: e.pts, age: 0, life: 0.22 }); for (const p of e.pts.slice(1)) this.raios.push({ x: p[0], y: p[1], age: 0, life: 0.15, r: 22 }); break;
       case 'onda': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.45 }); this.tremer(3); break;
+      case 'segundo_folego': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.6 }); this.tremer(4); break;
       case 'habilidade': {
         const c = e.carta;
         this.texto(e.x, e.y, `${c.emoji} ${c.nome}${c.tipo === 'ativa' || c.tipo === 'passiva' ? ' ' + c.nivel : ''}`, c.tipo === 'combo' ? '#c58bff' : c.tipo === 'suprema' ? '#ff8a3d' : '#ffd23f', c.tipo === 'suprema' || c.tipo === 'combo' ? 1.6 : 1.2);
