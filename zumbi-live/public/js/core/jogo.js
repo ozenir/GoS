@@ -22,15 +22,17 @@ import { CHANCES_PADRAO, PERIGOS, AMEACA_POR_PERIGO, ATRASO_PERIGO, sortearCamin
 import { Historia, HISTORIA } from './historia.js';
 
 export const PADRAO = {
-  votoDur: 12, relNum: 10, relDest: 12, protecao: 15, likesPor: 300, maxZ: 90,
-  velHeroi: 1.5, noiteCada: 150, noiteDur: 35, predioT: 70, torcidaMax: TORCIDA.maxPessoas
+  votoDur: 10, relNum: 10, relDest: 12, protecao: 15, likesPor: 300, maxZ: 90,
+  velHeroi: 1.5, noiteCada: 150, noiteDur: 35, predioT: 70, torcidaMax: TORCIDA.maxPessoas,
+  atraso: 6,        // atraso da live (s): quanto tempo a tela do TikTok chega atrasada pra quem assiste
+  caidoDur: 12      // quanto tempo o herói fica caído esperando presente antes de morrer (0 = morre na hora)
 };
 const CHAVES = {
   segundos_de_votacao: 'votoDur', segundos_do_relatorio: 'relNum', segundos_dos_destaques: 'relDest',
   protecao_ao_nascer_segundos: 'protecao', curtidas_por_suprimento: 'likesPor', maximo_zumbis: 'maxZ',
   velocidade_do_heroi: 'velHeroi',
   noite_a_cada_segundos: 'noiteCada', noite_dura_segundos: 'noiteDur', segundos_dentro_do_predio: 'predioT',
-  torcida_maximo_pessoas: 'torcidaMax'
+  torcida_maximo_pessoas: 'torcidaMax', atraso_da_live_segundos: 'atraso', segundos_caido: 'caidoDur'
 };
 // Campos do config.json que mexem no nível de ameaça (ameaca.js)
 const CHAVES_AMEACA = {
@@ -60,6 +62,7 @@ export class Jogo {
     this.likes = 0;
     this.flow = new FlowField(26);
     this.flowHeroi = new FlowField(14);
+    this.flowRota = new FlowField(30);    // caminho de volta pra rota, quando o herói é empurrado pra outra rua
     this.ultimoHeroi = null;
     this.pendentesAjuda = [];
     this.fila = [];
@@ -105,8 +108,11 @@ export class Jogo {
       pericias: { ...(C.pericias || {}) }, instintoCd: 0,
       colete: 0, tiroCd: 0, corpoCd: 0, invT: 0,
       nivel: 1, xp: 0, fx: DIRS[dir][0], fy: DIRS[dir][1], andando: false, mira: null, animT: 0,
-      parado: 0, ultimaPos: { x: start.x, y: start.y }, vidaBaixa: false
+      parado: 0, ultimaPos: { x: start.x, y: start.y }, vidaBaixa: false,
+      mochila: []      // kits que chegaram com a vida alta: ele usa sozinho quando precisar
     };
+    this.caido = null;
+    this.levantadas = 0;
     this.hero.viewer = this.proximoNome || null;     // { nick, avatar, lado } de quem deu o nome
     this.proximoNome = null;
     this.hero.attr = atributosDaClasse(C, this.hero);
@@ -170,7 +176,7 @@ export class Jogo {
       n: h.n, classe: h.classe, nome: CLASSES[h.classe].nome, emoji: CLASSES[h.classe].emoji, curaGolpes: Math.round(this.curaGolpes || 0),
       quarteiroes: q, abates: this.stats.abates, tempo, nivel: h.nivel, predios: this.stats.predios, ameaca: this.nivelAmeaca,
       recorde: this.recorde, novoRecorde, matador: this.stats.matador,
-      caminhos: { ...this.stats.caminhos },
+      caminhos: { ...this.stats.caminhos }, levantadas: this.levantadas,
       topAjuda: topo(this.stats.ajudou), topAtrapalha: topo(this.stats.atrapalhou),
       viewer: h.viewer || null, proximoNome: this.proximoNome
     };
@@ -179,6 +185,81 @@ export class Jogo {
     this.hall.length = Math.min(this.hall.length, 3);
     this.ultimoHeroi = { n: h.n, classe: h.classe, arma: h.arma, viewer: h.viewer || null };
     this.emit('heroi_morreu', { relatorio: this.relatorio, hall: this.hall });
+  }
+
+  /* =================== Caído: espera os presentes atrasados da live =================== */
+  // Quando a vida zera, o herói não morre na hora: fica CAÍDO por cfg.caidoDur segundos.
+  // Motivo: quem assiste vê a tela uns segundos atrasada (cfg.atraso). Sem isso, quem manda uma Rosa
+  // ao ver o herói quase morrendo chega tarde demais e perde o presente.
+  //   presente de AJUDA     → levanta o herói (vida, invencível por 3 s, empurra os zumbis) e o presente vale normal
+  //   presente de ATRAPALHAR → golpe final: morre em 2,5 s (se ninguém ajudar antes) e quem mandou leva o crédito
+  //   kit guardado na mochila → levanta sozinho, sem precisar cair
+  cair() {
+    const h = this.hero;
+    h.vida = 0;
+    if (this.usarMochila(true)) return;
+    if (!(this.cfg.caidoDur > 0)) { this.morrer(); return; }
+    this.caido = { t: this.cfg.caidoDur, dur: this.cfg.caidoDur, finalizador: null };
+    h.andando = false; h.mira = null;
+    this.emit('caiu', { x: h.x, y: h.y, segundos: this.cfg.caidoDur });
+  }
+
+  atualizarCaido(dt) {
+    const c = this.caido;
+    c.t -= dt;
+    this.atualizarZonas(dt);
+    this.atualizarZumbis(dt);
+    this.atualizarItens(dt);
+    if (c.t <= 0) {
+      this.caido = null;
+      if (c.finalizador) this.stats.matador = { nick: c.finalizador.nick, avatar: c.finalizador.avatar || '', causa: 'golpe final' };
+      this.morrer();
+    }
+  }
+
+  // Cada vez que levanta, volta com menos vida (50%, 40%, 30%... no mínimo 20%)
+  levantar(quem) {
+    const h = this.hero;
+    if (!this.caido) return;
+    this.caido = null;
+    this.levantadas++;
+    const pct = Math.max(0.2, 0.5 - 0.1 * (this.levantadas - 1));
+    h.vida = h.vidaMax * pct;
+    h.invT = Math.max(h.invT, 3);
+    h.vidaBaixa = pct < 0.3;
+    h.parado = 0; h.ultimaPos = { x: h.x, y: h.y };
+    h.estados.limpar('negativo');
+    sincronizarAtributos(h.estados, h.attr);
+    // onda de choque: quem estava em volta é empurrado e fica tonto
+    for (const z of this.zumbis) {
+      if (z.morto) continue;
+      const dx = z.x - h.x, dy = z.y - h.y, d = Math.hypot(dx, dy);
+      if (d > 3.5) continue;
+      if (d > 0.01) { z.kx += dx / d * 7; z.ky += dy / d * 7; }
+      this.aplicarStatus(z, 'atordoado', { duracao: 1.5 });
+      if (z.pavio >= 0) z.pavio = -1;      // explosivo perto apaga o pavio
+    }
+    this.emit('levantou', { x: h.x, y: h.y, nick: quem?.nick || null, vez: this.levantadas });
+  }
+
+  // Mochila: kits de presente que chegaram com a vida alta ficam guardados (até 3)
+  guardarNaMochila(valor, quem) {
+    const h = this.hero;
+    if (h.mochila.length >= 3) return false;
+    h.mochila.push({ valor, quem });
+    this.emit('mochila', { qtd: h.mochila.length, nick: quem?.nick || null, x: h.x, y: h.y });
+    return true;
+  }
+
+  // Usa um kit da mochila. caindo = a vida acabou de zerar (o kit segura o herói de pé).
+  usarMochila(caindo = false) {
+    const h = this.hero;
+    if (!h.mochila.length) return false;
+    const k = h.mochila.shift();
+    if (caindo) h.invT = Math.max(h.invT, 1.5);
+    this.curar(k.valor + (caindo ? 10 : 0), k.quem, true);
+    this.emit('mochila_usou', { nick: k.quem?.nick || null, caindo, x: h.x, y: h.y, resta: h.mochila.length });
+    return true;
   }
 
   // Quem dá nome ao próximo herói: entre quem MAIS AJUDOU e quem MAIS ATRAPALHOU na rodada,
@@ -198,6 +279,7 @@ export class Jogo {
     this.faseT += dt;
     for (let i = this.agendados.length - 1; i >= 0; i--) {
       const a = this.agendados[i];
+      if (this.caido && !a.sempre) continue;      // caído: o que estava marcado espera ele levantar
       if ((a.t -= dt) <= 0) { this.agendados.splice(i, 1); if (this.fase === 'jogo' || a.sempre) a.fn(); }
     }
     if (this.fase === 'morto') {
@@ -206,6 +288,7 @@ export class Jogo {
       if (this.faseT >= this.cfg.relNum + this.cfg.relDest) this.novoHeroi();
       return;
     }
+    if (this.caido) { this.atualizarCaido(dt); return; }
     this.protecao = Math.max(0, this.protecao - dt);
     this.atualizarTorcida(dt);
     this.atualizarZonas(dt);
@@ -423,7 +506,7 @@ export class Jogo {
     else if (praca) ops.push({ id: 'entrar', praca });
     for (const o of ops) { Object.assign(o, OPCOES[o.id]); if (o.praca) { o.nome = 'ARENA'; o.seta = '⚔️'; } }
     ops.sort((a, b) => a.n - b.n);
-    this.voto = new Votacao(ops, this.cfg.votoDur);
+    this.voto = new Votacao(ops, this.cfg.votoDur, this.cfg.atraso);
     this.voto.loja = shop || (praca ? { nome: 'Praça: arena de chefe', emoji: '⚔️', tipo: 'praca' } : null);
     this.voto.bloqueadas = bloqueadas;
     this.voto.no = { ...N };
@@ -670,7 +753,16 @@ export class Jogo {
       this.faixa = faixaLivre(cx, cy, dx, dy, this.zonasAgora, Math.min(3.5, Math.max(0.5, falta)));
     }
     const lado = this.faixa || 0;
-    return dx ? { x: h.x + dx * passo, y: alvo.y + dx * lado } : { x: alvo.x - dy * lado, y: h.y + dy * passo };
+    // Ritmo: enquanto a votação não fecha, anda só o suficiente pra chegar no cruzamento junto com o fim
+    // dela (a votação dura mais por causa do atraso da live). Assim ele não fica parado esperando.
+    let ritmo = 1;
+    if (!this.decisao) {
+      const resta = this.voto ? (this.voto.aberta ? this.voto.t : 0) : Math.max(0, this.votoAbreT) + this.cfg.votoDur + this.cfg.atraso;
+      if (resta > 0.3) ritmo = clamp((falta - 0.5) / (resta * this.cfg.velHeroi), 0.45, 1);
+    }
+    const o = dx ? { x: h.x + dx * passo, y: alvo.y + dx * lado } : { x: alvo.x - dy * lado, y: h.y + dy * passo };
+    o.ritmo = ritmo;
+    return o;
   }
 
   /* =================== Herói =================== */
@@ -696,6 +788,7 @@ export class Jogo {
       if (h.instintoCd <= 0 && h.vida / h.vidaMax < P.limite) { h.instintoCd = P.recarga; this.aplicarStatus(h, 'instinto'); this.emit('passiva', { texto: '🧡 INSTINTO DE SOBREVIVÊNCIA' }); }
     }
     if (h.vidaBaixa && h.vida / h.vidaMax > 0.5) h.vidaBaixa = false;
+    if (h.mochila.length && h.vida / h.vidaMax < 0.35) this.usarMochila();
 
     // 1) Pra onde ir
     let obj;
@@ -723,6 +816,13 @@ export class Jogo {
       }
       const d = dist(h.x, h.y, obj.x, obj.y);
       dirObj = d < 1.2 ? { x: obj.x - h.x, y: obj.y - h.y } : this.flowHeroi.dir(h.x, h.y) || { x: obj.x - h.x, y: obj.y - h.y };
+    } else if (this.foraDaRota(dt)) {
+      // Foi empurrado pra uma rua transversal: volta contornando os prédios até o próximo cruzamento
+      const no = this.city.nodePos(this.rota.alvo.i, this.rota.alvo.j);
+      this.flowRotaT = (this.flowRotaT || 0) - dt;
+      if (this.flowRotaT <= 0) { this.flowRota.build(this.map, no.x, no.y); this.flowRotaT = 1; }
+      dirObj = this.flowRota.dir(h.x, h.y) || { x: no.x - h.x, y: no.y - h.y };
+      h.focoRota = Math.max(h.focoRota || 0, 1);
     } else dirObj = { x: obj.x - h.x, y: obj.y - h.y };
     const dObj = Math.hypot(dirObj.x, dirObj.y);
     if (!obj.esperando && dObj > 0.05) { vx = dirObj.x / dObj; vy = dirObj.y / dObj; }
@@ -745,7 +845,9 @@ export class Jogo {
       else if (vale) { vx *= 0.2; vy *= 0.2; }
     }
 
-    // Zumbis perto: recua deles; se tiver muitos na frente, para e luta
+    // Zumbis perto: recua deles; se tiver muitos na frente, para e luta.
+    // Forçando a rota (focoRota: muito tempo sem avançar), recua bem menos e abre caminho no empurrão.
+    const forcando = h.focoRota > 0 && !this.room && !this.arena;
     let rx = 0, ry = 0, naFrente = 0;
     for (const z of this.zumbis) {
       if (z.morto || z.nascendo > 0) continue;
@@ -757,11 +859,19 @@ export class Jogo {
         : (T.chefe ? 2.8 : z.tipo === 'explosivo' ? 2.6 : 1.7);
       if (!raio || d2 > raio * raio || d2 < 1e-6) continue;
       const d = Math.sqrt(d2);
-      const peso = (raio - d) / raio * (T.chefe ? 2.2 : z.tipo === 'explosivo' ? 2.6 : 1);
+      const peso = (raio - d) / raio * (T.chefe ? 2.2 : z.tipo === 'explosivo' ? 2.6 : 1) * (forcando && z.tipo !== 'explosivo' ? 0.3 : 1);
       rx += dx / d * peso; ry += dy / d * peso;
-      if (d < 1.7 && (vx * -dx + vy * -dy) / d > 0.3) naFrente++;
+      const naMinhaFrente = d < 1.7 && (vx * -dx + vy * -dy) / d > 0.3;
+      if (naMinhaFrente) naFrente++;
+      // abre caminho: empurra pro lado quem está bem na frente (chefe não sai do lugar)
+      if (forcando && naMinhaFrente && d < 1 && !T.chefe) {
+        // (dx, dy) aponta do zumbi pro herói; (-vy, vx) é o lado do caminho
+        const lado = (-dx * -vy + -dy * vx) >= 0 ? 1 : -1;
+        z.kx += (-vy * lado * 4 - dx / d) * 3 * dt;
+        z.ky += (vx * lado * 4 - dy / d) * 3 * dt;
+      }
     }
-    if (naFrente >= 4 && !obj.porta && !perto) { vx *= 0.25; vy *= 0.25; }
+    if (naFrente >= 4 && !obj.porta && !perto && !forcando) { vx *= 0.25; vy *= 0.25; }
     const rm = Math.hypot(rx, ry);
     if (rm > 0.01) {
       const k = Math.min(1.6, rm);
@@ -772,7 +882,7 @@ export class Jogo {
     if (vm > 1) { vx /= vm; vy /= vm; }
     // Perigos do chão (ambiente.js): machucam, causam status e deixam lento
     const amb = this.ambienteNoHeroi(dt);
-    const vel = velocidadeHeroi(h, this.cfg.velHeroi, { lutando: lutando && !perto }) * h.estados.lentidao() * amb.lentidao;
+    const vel = velocidadeHeroi(h, this.cfg.velHeroi, { lutando: lutando && !perto }) * h.estados.lentidao() * amb.lentidao * (obj.ritmo || 1);
     const antesX = h.x, antesY = h.y;
     this.mover(h, vx * vel * dt, vy * vel * dt, 0.22);
     const andou = Math.hypot(h.x - antesX, h.y - antesY);
@@ -795,6 +905,21 @@ export class Jogo {
         this.emit('destravou', { vez: h.travas });
       } else this.sairPredio();
     }
+  }
+
+  // O herói está fora do "corredor" da rua atual (entre o último cruzamento e o próximo) há mais de 1,5 s?
+  // Acontece quando, no meio do cruzamento, ele recua de um chefe ou corre atrás de item pela rua do lado.
+  foraDaRota(dt) {
+    const h = this.hero, r = this.rota;
+    if (this.arena || this.indoPorta || this.indoPraca || r.beco) { h.foraT = 0; return false; }
+    const a = this.city.nodePos(r.i, r.j), b = this.city.nodePos(r.alvo.i, r.alvo.j);
+    const cx = clamp(h.x, Math.min(a.x, b.x), Math.max(a.x, b.x)), cy = clamp(h.y, Math.min(a.y, b.y), Math.max(a.y, b.y));
+    const d = Math.hypot(h.x - cx, h.y - cy);
+    if (d < 2.8) { h.foraT = 0; return false; }
+    h.foraT = (h.foraT || 0) + dt;
+    if (h.foraT > 1.5 && !h.avisouFora) { h.avisouFora = true; this.emit('voltando_rota'); }
+    if (h.foraT <= 1.5) h.avisouFora = false;
+    return h.foraT > 1.5;
   }
 
   // Se o herói passa muito tempo sem chegar mais perto do próximo cruzamento, ele prioriza o caminho
@@ -1028,7 +1153,7 @@ export class Jogo {
   // Devolve true se o dano entrou.
   ferirHeroi(dano, quem, causa, tipo = 'mordida', silencioso = false) {
     const h = this.hero;
-    if (this.fase !== 'jogo') return false;
+    if (this.fase !== 'jogo' || this.caido) return false;
     const r = danoNoHeroi(h, dano, tipo, this.rng);
     if (r.bloqueado === 'invencivel') return false;
     if (r.bloqueado === 'esquiva') { this.emit('esquiva', { x: h.x, y: h.y }); return false; }
@@ -1038,7 +1163,7 @@ export class Jogo {
     if (!silencioso) this.emit('dano_heroi', { dano, x: h.x, y: h.y });
     this.stats.matador = quem ? { nick: quem.nick, avatar: quem.avatar || '', causa } : { nick: null, causa };
     if (!h.vidaBaixa && h.vida > 0 && h.vida / h.vidaMax < 0.3) { h.vidaBaixa = true; this.emit('vida_baixa'); }
-    if (h.vida <= 0) this.morrer();
+    if (h.vida <= 0) this.cair();
     return true;
   }
 
@@ -1325,7 +1450,7 @@ export class Jogo {
         continue;
       }
       it.vida -= dt;
-      if (this.fase !== 'jogo') continue;
+      if (this.fase !== 'jogo' || this.caido) continue;
       const d2 = dist2(h.x, h.y, it.x, it.y);
       // ímã: item perto vem sozinho até o herói (não fica preso atrás de zumbi ou carro)
       if (d2 < 2.2 * 2.2 && d2 > 0.01) {
@@ -1399,11 +1524,52 @@ export class Jogo {
     const a = h.arma ? ARMAS[h.arma] : null;
     if (a && h.municao != null && a.municao) h.municao = Math.min(a.municao * 2, h.municao + Math.ceil(a.municao * 0.5));
     this.emit('municao', { segundos: seg, item });
+    // Sem arma de fogo, munição não serve pra nada: vira fúria (mais dano e velocidade)
+    if (!a && !item) {
+      const f = Math.min(15, Math.round(seg * 0.6) + 3);
+      this.aplicarStatus(h, 'furia', { duracao: f, acumulaTempo: true, maxDuracao: 20 });
+      this.adaptado(`sem arma de fogo → 😤 fúria ${f}s`);
+    }
   }
 
   darColete(golpes) {
-    this.hero.colete = Math.min(12, this.hero.colete + golpes);
-    this.emit('colete_ganhou', { golpes: this.hero.colete });
+    const h = this.hero;
+    // Colete cheio: o que não cabe vira blindado (menos dano por uns segundos)
+    const sobra = Math.max(0, h.colete + golpes - 12);
+    h.colete = Math.min(12, h.colete + golpes);
+    this.emit('colete_ganhou', { golpes: h.colete });
+    if (sobra > 0) {
+      const seg = Math.min(15, 2 + sobra * 1.5);
+      this.aplicarStatus(h, 'blindado', { duracao: seg, acumulaTempo: true, maxDuracao: 20 });
+      this.adaptado(`colete cheio → 🛡️ blindado ${Math.round(seg)}s`);
+    }
+  }
+
+  /* ----- Presentes inteligentes: o presente sempre serve pra alguma coisa, chegue quando chegar ----- */
+  // Mensagem em cima do herói dizendo no que o presente virou
+  adaptado(texto) { const h = this.hero; this.emit('adaptado', { texto, x: h.x, y: h.y }); }
+
+  // Cura de presente: o que passar da vida cheia vira blindado
+  curarPresente(pct, quem) {
+    const h = this.hero;
+    if (this.fase !== 'jogo') return;
+    const falta = h.vidaMax - h.vida, sobra = valorCura(h, pct) - falta;
+    if (falta > 0.5) this.curar(pct, quem);
+    if (sobra > h.vidaMax * 0.05) {
+      const seg = clamp(sobra / h.vidaMax * 40, 2, 12);
+      this.aplicarStatus(h, 'blindado', { duracao: seg, acumulaTempo: true, maxDuracao: 20 });
+      this.adaptado(`vida cheia → 🛡️ blindado ${Math.round(seg)}s`);
+    }
+  }
+
+  // Kit de presente: precisando, cura na hora (no herói, sem esperar cair do céu);
+  // com a vida alta, vai pra mochila e ele usa sozinho quando a vida cair (ou quando a vida zerar)
+  kitPresente(valor, qtd, quem) {
+    for (let i = 0; i < qtd; i++) {
+      const h = this.hero;
+      if (h.vida / h.vidaMax < 0.6) this.curar(valor, quem, true);
+      else if (!this.guardarNaMochila(valor, quem)) this.curarPresente(valor, quem);
+    }
   }
 
   /* =================== Coisas ruins mandadas pelo público =================== */
@@ -1616,10 +1782,21 @@ export class Jogo {
     }
     const espera = lado === 'atrapalha' && this.fase === 'jogo' && this.protecao > 0 ? Math.ceil(this.protecao) : 0;
     this.emit('presente', { nick: quem.nick, avatar: quem.avatar || '', emoji: emoji || regra.emoji || '🎁', image: image || '', texto: ef.aviso(regra, qtd), lado, coins, qtd, giftName, espera });
+    // Resposta na hora, em cima do herói, com o nome de quem mandou (mesmo que o efeito vá pra fila)
+    if (this.fase === 'jogo') this.emit('presente_heroi', { nick: quem.nick, emoji: emoji || regra.emoji || '🎁', lado, x: this.hero.x, y: this.hero.y });
     if (lado === 'ajuda') {
-      if (this.fase === 'jogo') ef.aplicar(this, regra, qtd, quem);
-      else if (this.pendentesAjuda.length < 10) this.pendentesAjuda.push({ regra, qtd, quem });
+      if (this.fase === 'jogo') {
+        // caído: qualquer presente de ajuda (ou seguir) levanta; compartilhar e curtidas não (são de graça e sem limite)
+        if (this.caido && (coins > 0 || giftName === 'seguiu')) this.levantar(quem);
+        ef.aplicar(this, regra, qtd, quem);
+      } else if (this.pendentesAjuda.length < 10) this.pendentesAjuda.push({ regra, qtd, quem });
     } else {
+      // caído: presente de atrapalhar é o golpe final (ainda dá 2,5 s pra alguém salvar)
+      if (this.caido && !this.caido.finalizador) {
+        this.caido.finalizador = quem;
+        this.caido.t = Math.min(this.caido.t, 2.5);
+        this.emit('golpe_final', { nick: quem.nick });
+      }
       if (this.fila.length < 40) this.fila.push({ regra, qtd, quem, coins: coins * qtd });
     }
   }

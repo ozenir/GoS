@@ -3,7 +3,9 @@
   "porta": 8081,
   "chave_euler": "",
   "jogo": {
-    "segundos_de_votacao": 12,
+    "segundos_de_votacao": 10,
+    "atraso_da_live_segundos": 6,
+    "segundos_caido": 12,
     "segundos_do_relatorio": 10,
     "segundos_dos_destaques": 12,
     "protecao_ao_nascer_segundos": 15,

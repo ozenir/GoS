@@ -115,6 +115,15 @@ export class Render {
       }
       case 'dano_heroi': this.sangue(e.x, e.y, 4, ['#a8282a', '#7a1a1c']); this.tremer(2); this.piscar('#ff2a2a', 0.18); break;
       case 'colete': this.texto(e.x, e.y, '🛡️ bloqueou', '#9fd0ff'); break;
+      case 'presente_heroi': this.texto(e.x, e.y, `${e.emoji} ${e.nick}`, e.lado === 'ajuda' ? '#ffd23f' : '#ff8ae0', 1.15); break;
+      case 'adaptado': this.texto(e.x, e.y, e.texto, '#9fe8ff', 1); break;
+      case 'mochila': this.texto(e.x, e.y, '💼 +kit na mochila', '#9dffb0', 1); break;
+      case 'caiu': this.tremer(8); this.piscar('#ff2a2a', 0.5); break;
+      case 'golpe_final': this.tremer(5); this.piscar('#a020ff', 0.35); break;
+      case 'levantou':
+        this.piscar('#ffffff', 0.6);
+        for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; this.particula({ x: e.x, y: e.y, z: 0.2, vx: Math.cos(a) * 6, vy: Math.sin(a) * 6, vz: 0.6, life: 0.5, cor: i % 2 ? '#ffd23f' : '#ffffff', tam: 2 }); }
+        break;
       case 'cura': this.texto(e.x, e.y, `+${Math.round(e.valor)}% ❤️`, '#7dff9a', 1.2); for (let i = 0; i < 10; i++) this.particula({ x: e.x + (Math.random() - 0.5), y: e.y + (Math.random() - 0.5), z: 0.3, vz: 1.5 + Math.random(), g: -0.5, life: 0.9, cor: i % 2 ? '#7dff9a' : '#ffffff', tam: 2 }); break;
       case 'bau': {
         const lend = e.raridade === 'lendario';
@@ -560,6 +569,7 @@ export class Render {
     disc(ctx, ax, ay, 8 + pul, '#ffd23f', 0.45);
     disc(ctx, ax, ay, 6, 'rgba(26,20,32,0.9)', 0.45);
     ctx.globalAlpha = 1;
+    if (g.caido) { this.heroiCaido(g, spr, ax, ay); return; }
     const [sx, sy] = this.pessoa(spr, h.x, h.y, 1, g.fase === 'jogo' ? 1 : 0.6);
     this.heroiSpr = [sx, sy, spr];
     if (h.invT > 0 && Math.floor(this.t * 10) % 2) { ctx.globalAlpha = 0.55; ctx.drawImage(this.branco(spr), sx - S.PE_X, sy - S.PE_Y); ctx.globalAlpha = 1; }
@@ -585,6 +595,23 @@ export class Render {
     if (h.estados.tem('lento') && Math.random() < 0.3) this.particula({ x: h.x, y: h.y, z: 0.1, vz: 0.5, life: 0.3, cor: '#d8f4ff', tam: 1 });
     this.heroiTela = [sx, sy];
     if (h.viewer && g.fase === 'jogo') this.nomes.push({ x: sx, y: sy - 30, txt: h.viewer.nick, cor: '#ffd23f' });
+  }
+
+  // Herói caído: deitado no chão, com um anel vermelho pulsando (ou roxo, no golpe final)
+  heroiCaido(g, spr, sx, sy) {
+    const ctx = this.ctx, final = !!g.caido.finalizador;
+    const pul = Math.sin(this.t * (final ? 14 : 7)) * 0.5 + 0.5;
+    ctx.globalAlpha = 0.35 + 0.35 * pul;
+    disc(ctx, sx, sy, 12 + pul * 3, final ? '#c050ff' : '#ff3a2a', 0.45);
+    ctx.globalAlpha = 1;
+    ctx.save();
+    ctx.translate(sx + 7, sy - 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.drawImage(spr, -S.PE_X, -S.PE_Y);
+    ctx.restore();
+    this.heroiSpr = null;
+    this.heroiTela = [sx, sy];
+    if (Math.random() < 0.08) this.particula({ x: g.hero.x + (Math.random() - 0.5) * 0.6, y: g.hero.y + (Math.random() - 0.5) * 0.6, z: 0.05, vz: 0.2, life: 0.6, cor: '#a8282a', tam: 1 });
   }
 
   // O herói aparece por cima de prédios e zumbis, meio transparente, pra nunca sumir da tela
@@ -720,7 +747,7 @@ export class Render {
     ctx.drawImage(this.escuro, 0, 0);
     // vinheta vermelha de vida baixa
     const pct = g.hero.vida / g.hero.vidaMax;
-    if (g.fase === 'jogo' && pct < 0.3) {
+    if (g.fase === 'jogo' && (pct < 0.3 || g.caido)) {
       const p = 0.5 + 0.5 * Math.sin(this.t * (pct < 0.15 ? 9 : 5));
       const gr = ctx.createRadialGradient(W / 2, H / 2, H * 0.25, W / 2, H / 2, H * 0.62);
       gr.addColorStop(0, 'rgba(200,0,0,0)'); gr.addColorStop(1, `rgba(200,0,0,${0.25 + 0.25 * p})`);

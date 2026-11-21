@@ -35,16 +35,25 @@ export function lerVoto(texto) {
   return null;
 }
 
+// Atraso da live: quem assiste pelo TikTok vê a tela alguns segundos atrasada (atraso).
+// Por isso a votação fica aberta "duracao + atraso" segundos, mas a contagem na tela termina
+// "atraso" segundos antes: assim, quando o espectador vê o 0, a votação está fechando de verdade.
+// Nesses últimos segundos a tela mostra "contando votos da live" e os votos que chegam ainda valem.
 export class Votacao {
-  constructor(opcoes, duracao) {
+  constructor(opcoes, duracao, atraso = 0) {
     this.opcoes = opcoes.map(o => ({ ...o, votos: 0 }));   // [{ id: 'esquerda', ... }]
-    this.duracao = duracao;
-    this.t = duracao;
+    this.atraso = Math.max(0, atraso);
+    this.duracao = duracao;                  // o que aparece na contagem
+    this.t = duracao + this.atraso;          // quanto tempo fica aberta de verdade
     this.votantes = new Map(); // id -> opção
     this.aberta = true;
     this.resultado = null;
   }
   get restante() { return Math.max(0, this.t); }
+  // O que a contagem mostra (chega a 0 quando o espectador atrasado ainda está vendo a contagem acabar)
+  get restanteNaTela() { return Math.max(0, this.t - this.atraso); }
+  // Contagem já zerou na tela, mas ainda chegam votos de quem assiste com atraso
+  get contandoAtrasados() { return this.aberta && this.t > 0 && this.t <= this.atraso; }
   get total() { return this.votantes.size; }
 
   votar(id, opId) {

@@ -116,7 +116,9 @@ export const PRESENTES_PADRAO = {
 export const SEGUIR_PADRAO = {"efeito": "aliado", "segundos": 20};
 export const COMPARTILHAR_PADRAO = {"efeito": "caixa_municao"};
 export const JOGO_PADRAO = {
-  "segundos_de_votacao": 12,
+  "segundos_de_votacao": 10,
+  "atraso_da_live_segundos": 6,
+  "segundos_caido": 12,
   "segundos_do_relatorio": 10,
   "segundos_dos_destaques": 12,
   "protecao_ao_nascer_segundos": 15,

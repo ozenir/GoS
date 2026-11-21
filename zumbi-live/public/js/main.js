@@ -193,6 +193,11 @@ function tocar(e, g) {
     case 'vidro_pisou': som.vidro(); break;
     case 'helicoptero': som.helicoptero(); break;
     case 'heroi_morreu': som.morteHeroi(); break;
+    case 'caiu': som.caiu(); break;
+    case 'levantou': som.levantou(); break;
+    case 'golpe_final': som.golpeFinal(); break;
+    case 'mochila': som.item(); break;
+    case 'mochila_usou': som.cura(); break;
     case 'novo_heroi': som.novoHeroi(); break;
     case 'recorde': som.recorde(); break;
     case 'noite': som.noite(); break;
@@ -232,7 +237,9 @@ function loop(agora) {
   if (jogo.fase === 'jogo' && pct < 0.3) { coracaoT -= dt; if (coracaoT <= 0) { coracaoT = pct < 0.15 ? 0.55 : 0.85; som.coracao(); } }
   // tique dos últimos segundos da votação
   const v = jogo.voto;
-  if (v && v.aberta && !jogo.room) { const s = Math.ceil(v.restante); if (s !== ultimoSeg && s <= 3 && s > 0) som.tique(true); ultimoSeg = s; } else ultimoSeg = -1;
+  // (segue a contagem da tela, que desconta o atraso da live; no herói caído, toca a cada segundo)
+  const cd = jogo.caido ? jogo.caido.t - (jogo.caido.finalizador ? 0 : jogo.cfg.atraso) : v && v.aberta && !jogo.room ? (v.restanteNaTela ?? v.restante) : null;
+  if (cd != null) { const s = Math.ceil(cd); if (s !== ultimoSeg && s <= (jogo.caido ? 10 : 3) && s > 0) som.tique(true); ultimoSeg = s; } else ultimoSeg = -1;
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);

@@ -2,6 +2,11 @@
 // lado: 'ajuda' (salva o herói) ou 'atrapalha' (complica a vida dele).
 // texto: frase curta da legenda. aviso: frase do aviso na tela quando alguém manda.
 // qtd = quantas vezes a pessoa mandou de uma vez (combo).
+//
+// Presentes inteligentes (por causa do atraso da live, o presente pode chegar numa hora diferente
+// da que a pessoa viu): cura com vida cheia vira blindado, kit com vida alta vai pra mochila
+// (usado sozinho quando a vida cair), munição sem arma de fogo vira fúria, colete cheio vira blindado.
+// Se o herói estiver CAÍDO, qualquer presente de ajuda levanta ele (jogo.js → levantar).
 
 const n = (v, padrao) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : padrao);
 
@@ -10,13 +15,13 @@ export const EFEITOS = {
     lado: 'ajuda',
     texto: r => `cura +${n(r.valor, 10)}%`,
     aviso: (r, q) => `curou +${Math.min(60, n(r.valor, 10) * q)}%`,
-    aplicar: (g, r, q, quem) => g.curar(Math.min(60, n(r.valor, 10) * q), quem)
+    aplicar: (g, r, q, quem) => g.curarPresente(Math.min(60, n(r.valor, 10) * q), quem)
   },
   kit: {
     lado: 'ajuda',
     texto: r => `kit médico +${n(r.valor, 25)}%`,
     aviso: (r, q) => q > 1 ? `${q} kits médicos` : 'kit médico',
-    aplicar: (g, r, q, quem) => { for (let i = 0; i < Math.min(q, 4); i++) g.soltarItem('kit', { valor: n(r.valor, 25) }, quem, i); }
+    aplicar: (g, r, q, quem) => g.kitPresente(n(r.valor, 25), Math.min(q, 4), quem)
   },
   municao: {
     lado: 'ajuda',

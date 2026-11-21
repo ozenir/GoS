@@ -44,8 +44,10 @@ export class Hud {
     if (seguir && EFEITOS[seguir.efeito]) itens.push({ emoji: '➕', nome: 'Seguir', texto: EFEITOS[seguir.efeito].texto(seguir), lado: 'ajuda' });
     if (compartilhar && EFEITOS[compartilhar.efeito]) itens.push({ emoji: '🔁', nome: 'Compartilhar', texto: EFEITOS[compartilhar.efeito].texto(compartilhar), lado: 'ajuda' });
     if (likesPor > 0) itens.push({ emoji: '❤️', nome: 'Curtidas', texto: `${likesPor} = suprimento`, lado: 'ajuda' });
-    itens.push({ emoji: '💬', nome: 'Chat', texto: 'vote 1 2 3 4 no cruzamento', lado: 'ajuda' });
+    itens.push({ emoji: '💬', nome: 'Chat', texto: 'vote 1 2 3 4 5 no cruzamento', lado: 'ajuda' });
     this.legenda = itens;
+    // presente de ajuda mais barato: é o que o painel de "caído" pede
+    this.ajudaBarata = itens.find(l => l.lado === 'ajuda' && l.moedas > 0) || null;
     this.legIdx = 0; this.legT = 0;
     this.mostrarLegenda();
   }
@@ -136,6 +138,9 @@ export class Hud {
       case 'historia': this.mostrarHistoria(e); break;
       case 'recorde': this.banner('🏆 NOVO RECORDE!', `${e.quarteiroes} quarteirões`, 'ouro', 2.6); break;
       case 'entrou_predio': this.banner(`${e.emoji} ${e.nome.toUpperCase()}`, 'pegue o que der e saia pelos fundos', '', 2.2); break;
+      case 'levantou': this.banner(`🙌 ${e.nick ? e.nick.toUpperCase() : 'ALGUÉM'} LEVANTOU O HERÓI!`, e.vez > 1 ? `de pé pela ${e.vez}ª vez` : 'de volta à luta', 'bom', 2.6); break;
+      case 'mochila': this.banner('💼 KIT NA MOCHILA', `${e.nick ? 'de ' + e.nick + ' · ' : ''}ele usa quando precisar`, 'bom', 1.8); break;
+      case 'mochila_usou': if (e.caindo) this.banner('💼 A MOCHILA SALVOU!', e.nick ? `kit de ${e.nick}` : '', 'bom', 2.4); break;
       case 'vida_baixa': this.banner('⚠️ VIDA BAIXA!', 'mande 🌹 ou 🍩 pra salvar o herói', 'perigo', 2.2); break;
       case 'decisao': this.resultadoAte = performance.now() + 2600; break;
       case 'novo_heroi': this.intro(e, g); $('over').hidden = true; this.histT = 0; $('h-hist').hidden = true; break;
@@ -178,7 +183,7 @@ export class Hud {
     this.rel = r;
     $('o-title').textContent = `${r.emoji} ${(r.viewer?.nick || r.nome).toUpperCase()} #${r.n} CAIU!`;
     $('o-prox').textContent = r.proximoNome ? `${r.proximoNome.lado === 'ajuda' ? '🛡️' : '😈'} ${r.proximoNome.nick}` : 'sobrevivente';
-    $('o-why').textContent = (r.matador?.causa ? `derrubado por ${r.matador.causa}` : 'derrubado pela horda') + ` · ameaça ${r.ameaca}`;
+    $('o-why').textContent = (r.matador?.causa ? `derrubado por ${r.matador.causa}` : 'derrubado pela horda') + ` · ameaça ${r.ameaca}` + (r.levantadas ? ` · levantou ${r.levantadas}x` : '');
     $('o-rec').hidden = !r.novoRecorde;
     $('o-q').textContent = r.quarteiroes; $('o-abates').textContent = r.abates; $('o-tempo').textContent = fmtTempo(r.tempo);
     $('o-nivel').textContent = r.nivel; $('o-predios').textContent = r.predios; $('o-recorde').textContent = r.recorde;
@@ -240,6 +245,7 @@ export class Hud {
     if (g.room) st.push(`<span class="chip">${g.room.shop.emoji} ${g.room.shop.nome} · ${Math.max(0, Math.ceil(g.cfg.predioT - g.salaT))}s</span>`);
     if (g.torcidaN > 0 && g.fase === 'jogo') st.push(`<span class="chip ok" title="Quem comentou nos últimos 30 s dá força ao herói">📣 torcida ${g.torcidaN} · +${Math.round(g.torcidaN * 3)}% dano</span>`);
     if (g.trecho?.livre && !g.room && g.fase === 'jogo') st.push(`<span class="chip ok">${g.trecho.tipo === 'historia' ? '📜 rua da pista' : '🍃 rua tranquila'}</span>`);
+    if (h.mochila?.length) st.push(`<span class="chip ok" title="Kits guardados: ele usa sozinho quando a vida cair">💼 mochila ${h.mochila.length}</span>`);
     if (h.invT > 0) st.push(`<span class="chip ok">✨ invencível ${Math.ceil(h.invT)}s</span>`);
     // status do herói (status.js): verde = bom, vermelho = ruim
     if (g.fase === 'jogo') for (const s of h.estados.ativos()) st.push(`<span class="chip ${s.lado === 'positivo' ? 'ok' : 'mal'}">${s.emoji} ${esc(s.nome.toLowerCase())}${s.pilhas > 1 ? ' x' + s.pilhas : ''} ${Math.ceil(s.t)}s</span>`);
@@ -248,7 +254,8 @@ export class Hud {
     this.html('h-status', st.join(''));
 
     // pedido de ajuda com vida baixa
-    $('h-cta').hidden = !(g.fase === 'jogo' && pct < 0.3 && this.bannerT <= 0);
+    $('h-cta').hidden = !(g.fase === 'jogo' && !g.caido && pct < 0.3 && this.bannerT <= 0);
+    this.atualizarCaido(g);
 
     this.atualizarVoto(g);
 
@@ -271,10 +278,27 @@ export class Hud {
     }
   }
 
+  // Painel de herói caído. A contagem desconta o atraso da live: quem assiste vê o 0 quando acaba de verdade.
+  atualizarCaido(g) {
+    const box = $('h-caido'), c = g.caido;
+    if (!c || g.fase !== 'jogo') { if (!box.hidden) box.hidden = true; return; }
+    if (box.hidden) box.hidden = false;
+    const final = !!c.finalizador;
+    box.classList.toggle('final', final);
+    const naTela = c.t - (final ? 0 : g.cfg.atraso);
+    const cd = $('c-cd');
+    if (naTela > 0) { this.set('c-cd', String(Math.ceil(naTela))); cd.classList.remove('espera'); }
+    else { this.set('c-cd', '⏳ chegando presentes da live...'); cd.classList.add('espera'); }
+    const a = this.ajudaBarata;
+    this.set('c-tit', final ? `😈 GOLPE FINAL DE ${c.finalizador.nick.toUpperCase()}!` : '💀 HERÓI CAÍDO!');
+    this.set('c-txt', final ? 'SÓ UM PRESENTE DE AJUDA SALVA AGORA!' : `mande ${a ? a.emoji + ' ' + (a.nome || '') : 'um presente de ajuda'} pra levantar ele`.replace(/\s+/g, ' '));
+    this.set('c-sub', final ? '' : 'qualquer presente de ajuda ou seguir levanta · presente de atrapalhar = golpe final');
+  }
+
   atualizarVoto(g) {
     const box = $('h-voto');
     const v = g.voto;
-    const mostrar = g.fase === 'jogo' && !g.room && v && (v.aberta || performance.now() < this.resultadoAte || g.decisao);
+    const mostrar = g.fase === 'jogo' && !g.caido && !g.room && v && (v.aberta || performance.now() < this.resultadoAte || g.decisao);
     if (!mostrar) { if (!box.hidden) box.hidden = true; this.cache.vkey = null; return; }
     if (box.hidden) box.hidden = false;
     const bloq = v.bloqueadas || [];
@@ -306,11 +330,18 @@ export class Hud {
     const res = $('v-res'), tempo = $('v-tempo');
     if (v.aberta) {
       res.hidden = true; tempo.hidden = false;
-      const frac = clamp(v.restante / v.duracao, 0, 1);
+      // a contagem termina "atraso" segundos antes de fechar: é o tempo dos votos de quem assiste atrasado chegarem
+      const resta = v.restanteNaTela ?? v.restante;
+      const frac = clamp(resta / v.duracao, 0, 1);
       $('v-barra').style.width = (frac * 100).toFixed(1) + '%';
-      tempo.classList.toggle('urg', v.restante < 3.5);
-      this.set('v-titulo', `🗳️ PRÓXIMO CRUZAMENTO · ${Math.ceil(v.restante)}s`);
-      this.set('v-sub', v.loja ? `${v.loja.emoji} ${v.loja.nome} aqui!` : 'comente o número');
+      tempo.classList.toggle('urg', resta < 3.5);
+      if (v.contandoAtrasados) {
+        this.set('v-titulo', '⏳ CONTANDO VOTOS DA LIVE...');
+        this.set('v-sub', 'ainda dá tempo de votar');
+      } else {
+        this.set('v-titulo', `🗳️ PRÓXIMO CRUZAMENTO · ${Math.ceil(resta)}s`);
+        this.set('v-sub', v.loja ? `${v.loja.emoji} ${v.loja.nome} aqui!` : 'comente o número');
+      }
     } else {
       tempo.hidden = true; res.hidden = false;
       const r = v.resultado, op = v.opcoes.find(o => o.id === r.id);

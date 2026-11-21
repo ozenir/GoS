@@ -129,6 +129,9 @@ export class Som {
     if (!this.running) return;
     for (let i = 0; i < 40; i++) this.noise(0.05, Math.max(0.02, 0.25 * Math.sin(i / 40 * Math.PI)), 'lowpass', 500, i * 0.1);
   }
+  caiu() { this.osc('sawtooth', 220, 55, 0.7, 0.2); this.noise(0.5, 0.25, 'lowpass', 400, 0, 0.7, 80); }
+  levantou() { [262, 392, 523, 784].forEach((f, i) => this.osc('square', f, f, 0.14, 0.1, i * 0.06)); this.noise(0.3, 0.2, 'lowpass', 900, 0, 0.6, 200); }
+  golpeFinal() { this.osc('sawtooth', 160, 40, 0.6, 0.22); this.osc('square', 80, 40, 0.5, 0.12, 0.1); }
   coracao() { this.osc('sine', 70, 50, 0.12, 0.35); this.osc('sine', 70, 50, 0.12, 0.25, 0.18); }
   morteHeroi() { [392, 349, 311, 262].forEach((f, i) => this.osc('triangle', f, f * 0.98, 0.5, 0.16, i * 0.32)); this.noise(1.5, 0.2, 'lowpass', 300); }
   novoHeroi() { [262, 330, 392, 523].forEach((f, i) => this.osc('triangle', f, f, 0.25, 0.12, i * 0.1)); }

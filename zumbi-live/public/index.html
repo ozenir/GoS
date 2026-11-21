@@ -125,6 +125,14 @@ body.foco .app{padding-block:8px}
 .banner.out{animation:out .5s ease-in forwards}
 @keyframes bannerIn{from{transform:scale(2.2);opacity:0}to{transform:none;opacity:1}}
 
+.caido{position:absolute;left:4cqw;right:4cqw;top:50cqw;display:flex;flex-direction:column;align-items:center;gap:.8cqw;padding:2.4cqw 3cqw;border-radius:4cqw;background:rgba(40,6,10,.82);border:.6cqw solid #ff4a3a;box-shadow:0 0 6cqw rgba(255,30,30,.55);text-align:center;pointer-events:none;animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
+.caido b{font-size:6.6cqw;color:#ff6a5a;text-shadow:0 .5cqw 0 rgba(0,0,0,.6)}
+.caido .cd{font-size:13cqw;font-weight:700;line-height:1;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 0 3cqw rgba(255,60,60,.9);animation:pisca .5s infinite alternate}
+.caido .cd.espera{font-size:6cqw;animation:none;color:#ffd23f}
+.caido .ct{font-size:4cqw;font-weight:700;color:#9dffb0}
+.caido small{font-size:3.1cqw;color:#ffb0a8}
+.caido.final{border-color:#c050ff;box-shadow:0 0 6cqw rgba(190,60,255,.6)}
+.caido.final b{color:#e0a0ff}
 .cta{position:absolute;left:50%;top:126cqw;transform:translateX(-50%);padding:1.2cqw 3.4cqw;border-radius:99px;background:#b8281e;color:#fff;font-size:3.6cqw;font-weight:700;white-space:nowrap;box-shadow:0 0 3cqw rgba(255,40,40,.6);animation:pulsa .8s infinite alternate}
 @keyframes pulsa{to{transform:translateX(-50%) scale(1.07)}}
 
@@ -204,7 +212,7 @@ body.foco .app{padding-block:8px}
 @keyframes histIn{from{transform:translateY(4cqw) rotate(-2deg);opacity:0}to{transform:none;opacity:1}}
 .snd-hint{position:absolute;left:50%;top:140cqw;transform:translateX(-50%);font:600 3cqw var(--font-display);background:#2a2238;color:#fff;padding:1cqw 3cqw;border-radius:99px;white-space:nowrap}
 .sem-rede{position:absolute;right:3cqw;bottom:46cqw;font:600 2.6cqw var(--font-display);background:rgba(184,40,30,.9);color:#fff;padding:.8cqw 2.4cqw;border-radius:99px}
-@media (prefers-reduced-motion: reduce){.toast,.toast.out,.over-card,.intro,.intro.out,.chip.fx,.banner .bt,.cta{animation:none}}
+@media (prefers-reduced-motion: reduce){.toast,.toast.out,.over-card,.intro,.intro.out,.chip.fx,.banner .bt,.cta,.caido,.caido .cd{animation:none}}
 </style>
 </head>
 <body>
@@ -243,6 +251,7 @@ body.foco .app{padding-block:8px}
         </div>
 
         <div class="cta" id="h-cta" hidden>🌹 Mande uma Rosa pra curar!</div>
+        <div class="caido" id="h-caido" hidden><b id="c-tit">💀 HERÓI CAÍDO!</b><span class="cd" id="c-cd">8</span><span class="ct" id="c-txt"></span><small id="c-sub"></small></div>
         <div class="banner" id="h-banner" hidden><div class="bt" id="b-t"></div><div class="bs" id="b-s"></div></div>
 
         <div class="bottom">
