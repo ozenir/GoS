@@ -164,24 +164,40 @@ export class Som {
     const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 380; f.connect(g);
     [55, 55.4, 82.4].forEach(fr => { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = fr; o.connect(f); o.start(); });
     const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = 0.08; lg.gain.value = 140; lfo.connect(lg); lg.connect(f.frequency); lfo.start();
+    // camada de aflição (vida abaixo da metade): acordes dissonantes com tremolo, como cordas nervosas
+    this.aflitoG = ac.createGain(); this.aflitoG.gain.value = 0; this.aflitoG.connect(this.mus);
+    const trem = ac.createGain(); trem.gain.value = 0.6; trem.connect(this.aflitoG);
+    const tl = ac.createOscillator(), tlg = ac.createGain(); tl.frequency.value = 9; tlg.gain.value = 0.4; tl.connect(tlg); tlg.connect(trem.gain); tl.start();
+    const fa = ac.createBiquadFilter(); fa.type = 'bandpass'; fa.frequency.value = 700; fa.Q.value = 0.9; fa.connect(trem);
+    // lá, si bemol (segunda menor) e mi bemol (trítono): o intervalo mais "errado" da música
+    [110, 116.54, 155.56, 233.08].forEach((fr, i) => { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = fr; o.detune.value = (i % 2 ? 7 : -7); o.connect(fa); o.start(); });
     this.tensao = 0;
+    this.aflicao = 0;
     this.passo = 0;
     this.proxPulso = 0;
   }
-  // chamado a cada quadro com 0..1 de perigo
-  musica(perigo, dt) {
+  // chamado a cada quadro com 0..1 de perigo; vidaBaixa vai de 0 (metade da vida ou mais) a 1 (quase morto)
+  musica(perigo, dt, vidaBaixa = 0) {
     if (!this.running) return;
-    this.tensao += (perigo - this.tensao) * Math.min(1, dt * 0.8);
+    this.aflicao += (vidaBaixa - this.aflicao) * Math.min(1, dt * 1.5);
+    // com a vida abaixo da metade a música nunca fica calma
+    const alvo = vidaBaixa > 0 ? Math.max(perigo, 0.6 + vidaBaixa * 0.4) : perigo;
+    this.tensao += (alvo - this.tensao) * Math.min(1, dt * 0.8);
+    this.aflitoG.gain.setTargetAtTime(this.aflicao > 0.01 ? 0.045 + this.aflicao * 0.09 : 0, this.ac.currentTime, 0.25);
     this.proxPulso -= dt;
     if (this.proxPulso <= 0) {
-      const bpm = 70 + this.tensao * 70;
+      const bpm = 70 + this.tensao * 70 + this.aflicao * 30;
       this.proxPulso = 60 / bpm / 2;
       this.passo++;
-      const t = this.ac.currentTime;
       if (this.passo % 2 === 0) this.osc('sine', 60, 38, 0.25, 0.25 + this.tensao * 0.25, 0, this.mus);
       if (this.tensao > 0.35 && this.passo % 2 === 1) this.noise(0.04, 0.06 * this.tensao, 'highpass', 6000, 0);
-      if (this.passo % 16 === 8) this.osc('triangle', this.tensao > 0.6 ? 233 : 196, null, 0.8, 0.05, 0, this.mus);
-      void t;
+      if (this.passo % 16 === 8) this.osc('triangle', this.aflicao > 0.05 ? 207.65 : this.tensao > 0.6 ? 233 : 196, null, 0.8, 0.05, 0, this.mus);
+      // aflito: duas notas agudas que se chocam (semitom), estilo filme de terror
+      if (this.aflicao > 0.05 && this.passo % 8 === 4) {
+        const v = 0.025 + this.aflicao * 0.035;
+        this.osc('sawtooth', 880, 870, 0.35, v, 0, this.mus);
+        this.osc('sawtooth', 932.3, 922, 0.35, v, 0.02, this.mus);
+      }
     }
   }
 }

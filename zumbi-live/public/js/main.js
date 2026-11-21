@@ -251,7 +251,7 @@ function loop(agora) {
   const pct = h.vida / h.vidaMax;
   let perto = 0, chefe = 0;
   for (const z of jogo.zumbis) if (!z.morto && dist2(z.x, z.y, h.x, h.y) < 36) { perto++; if (ZUMBIS[z.tipo].chefe) chefe = 1; }
-  som.musica(jogo.fase === 'jogo' ? clamp(perto / 18 + (1 - pct) * 0.4 + (jogo.noiteT > 0 ? 0.25 : 0) + chefe * 0.4, 0, 1) : 0, dt);
+  som.musica(jogo.fase === 'jogo' ? clamp(perto / 18 + (1 - pct) * 0.4 + (jogo.noiteT > 0 ? 0.25 : 0) + chefe * 0.4, 0, 1) : 0, dt, jogo.fase === 'jogo' && pct < 0.5 ? clamp((0.5 - pct) / 0.5, 0.05, 1) : 0);
   if (jogo.fase === 'jogo' && pct < 0.3) { coracaoT -= dt; if (coracaoT <= 0) { coracaoT = pct < 0.15 ? 0.55 : 0.85; som.coracao(); } }
   // tique dos últimos segundos da votação
   const v = jogo.voto;
