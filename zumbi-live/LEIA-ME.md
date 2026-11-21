@@ -94,7 +94,7 @@ Facas e cacos de vidro fazem sangrar, a chave e o taco atordoam, o machado quebr
 |---|---|
 | 1 a 4 | **começo calmo**: só 40% dos zumbis normais na rua (grupos menores, hordas dos caminhos menores). Nenhuma horda periódica. Chefe só na arena |
 | 5 | 🧟 **horda do nível 5** chega de uma vez. Daqui até o 10, 80% dos zumbis |
-| 10 | ☠️ **horda gigante do nível 10** (nunca vista até ali). A partir daqui: todos os zumbis, hordas periódicas (a cada 35 s), chefe de rua e ex-herói na rua |
+| 10 | 🔥 **habilidade suprema** (escolha especial do chat) e depois ☠️ **horda gigante do nível 10** (nunca vista até ali). A partir daqui: todos os zumbis, hordas periódicas (a cada 35 s), chefe de rua e ex-herói na rua |
 | 15, 20, 25... | uma horda anunciada a cada 5 níveis, cada vez maior |
 | 20 | 🐺 **novos inimigos**: **lobo zumbi** (corre e **salta** no herói: o salto **paralisa** e tem **50% de deixar sangrando**) e **braço longo** (estica o braço e acerta **de longe**, até ~3 casas, com **30% de chance**) |
 | 30 | 🏖️ **a praia**: cada cruzamento tem **25%** de chance de dar na praia. Lá, uma horda maior **sai de dentro do mar** e o herói precisa **sobreviver 1 minuto**; depois vem um baú, um kit e a votação de **por onde sair** (esquerda, frente ou direita), e ele volta pra cidade em outro ponto |
@@ -191,6 +191,14 @@ Quando falta alguma categoria, a carta é completada com outra. Cada habilidade 
 | 💚 Regeneração | +0,45 de vida por segundo |
 | 🦇 Vampirismo | golpe de perto cura |
 | 💨 Reflexos | +4% de chance de desviar |
+
+**🔥 Habilidade SUPREMA (nível 10).** O nível 10 é onde o jogo aperta (todos os zumbis, hordas a cada 35 s, a horda gigante do nível). Por isso, ao chegar no 10, a escolha é especial: as 3 cartas são **habilidades supremas**, bem mais fortes que as normais, e o herói fica com uma delas até o fim. Essa escolha **passa na frente** das escolhas de níveis anteriores que ainda estiverem na fila, e **enquanto o chat escolhe o jogo ainda não aperta**: as hordas periódicas e a horda gigante do nível 10 só começam depois. Ao ganhar a suprema o herói também recupera 30% da vida.
+
+| Suprema | O que faz |
+|---|---|
+| ✈️ Ataque aéreo | a cada 11 s caem 6 bombas nos maiores grupos de zumbis (75 de dano cada, não machucam o herói) |
+| ☀️ Aura de fogo | anel de fogo em volta do herói: 26 de dano por segundo em quem chega perto e deixa os zumbis lentos |
+| ❤️‍🔥 Coração de ferro | +15% de defesa e +1,2 de vida por segundo; quando ia cair (ou a vida fica abaixo de 25%), explode uma onda que empurra e atordoa, cura 45% e fica 3 s invencível (uma vez a cada 40 s) |
 
 **Armas novas** (aparecem na carta B quando fazem sentido): 💥 **Escopeta** no lugar da pistola, de vez (recarrega sozinha), e 🏏 **Taco com pregos** no lugar do empurrão, sem quebrar. Subir de nível também cura 8% da vida.
 
@@ -376,7 +384,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.4.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.5.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.

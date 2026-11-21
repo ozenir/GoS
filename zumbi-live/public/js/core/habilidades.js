@@ -6,6 +6,8 @@
 //    passiva  melhora um atributo do herói (vida, defesa, velocidade...)
 //    treino   +1 de perícia no ataque principal (mais dano, cadência e crítico)
 //    arma     troca a arma (escopeta) ou o golpe de perto (taco) de vez
+//    suprema  só no nível 10 (quando a horda aperta): as 3 cartas são habilidades
+//             SUPREMAS, bem mais fortes, pra dar conta das hordas que começam ali
 //
 //  As 3 cartas tentam ser sempre: A = aprimorar algo que o herói já tem,
 //  B = algo novo (habilidade ou arma), C = uma passiva nova.
@@ -183,6 +185,86 @@ export const ARMAS_NOVAS = {
   taco: { nome: 'Taco com pregos', emoji: '🏏', desc: () => 'golpe de perto forte que não quebra mais', pode: h => h.corpo === 'empurrao' && !h.corpoFixo }
 };
 
+/* ---------------- Supremas (escolha especial do nível 10) ---------------- */
+// No nível 10 o jogo aperta (zumbis na quantidade cheia, hordas a cada 35 s e a horda grande do nível).
+// Nesse nível, em vez das cartas normais, o chat escolhe 1 destas 3. O herói só tem uma suprema.
+export const NIVEL_SUPREMA = 10;
+export const SUPREMAS = {
+  bombardeio: {
+    nome: 'Ataque aéreo', emoji: '✈️', cd: 11, bombas: 6, dano: 75, raio: 1.9,
+    desc: () => 'a cada 11s caem 6 bombas nos maiores grupos de zumbis (75 de dano cada)',
+    usar(g, h) {
+      const vivos = alvos(g).filter(z => dist2(z.x, z.y, h.x, h.y) < 49);
+      if (vivos.length < 4) return false;
+      const ja = [];
+      for (let k = 0; k < this.bombas; k++) {
+        // centro do maior grupo que ainda não levou bomba (longe das bombas já marcadas)
+        let melhor = null, mq = 0;
+        for (const z of vivos) {
+          if (ja.some(p => dist2(p[0], p[1], z.x, z.y) < 1.6 * 1.6)) continue;
+          let q = 0;
+          for (const o of vivos) if (dist2(z.x, z.y, o.x, o.y) < this.raio * this.raio) q++;
+          if (ZUMBIS[z.tipo].chefe) q += 3;
+          if (q > mq) { mq = q; melhor = z; }
+        }
+        if (!melhor) break;
+        ja.push([melhor.x, melhor.y]);
+      }
+      g.emit('aviso', { texto: '✈️ ATAQUE AÉREO!', tipo: 'bom' });
+      ja.forEach(([x, y], k) => g.agendar(0.35 + k * 0.14, () => explosaoAmiga(g, x, y, this.raio, this.dano, 'explosao', 5)));
+      return true;
+    }
+  },
+  aura: {
+    nome: 'Aura de fogo', emoji: '☀️', continua: true, raio: 2.3, dano: 13, intervalo: 0.5,
+    desc: () => 'queima tudo que chega perto: 26 de dano por segundo em volta do herói e deixa os zumbis lentos',
+    atualizar(g, h, dt) {
+      h.auraT = (h.auraT ?? 0) - dt;
+      if (h.auraT > 0) return;
+      h.auraT = this.intervalo;
+      for (const z of alvos(g)) {
+        const r = this.raio + ZUMBIS[z.tipo].raio;
+        if (dist2(z.x, z.y, h.x, h.y) > r * r) continue;
+        ferir(g, z, this.dano, 'fogo');
+        if (!z.morto) g.aplicarStatus(z, 'lento', { duracao: 1 });
+      }
+    }
+  },
+  imortal: {
+    nome: 'Coração de ferro', emoji: '❤️‍🔥', cd: 40, defesa: 0.15, regen: 1.2, cura: 45, raio: 3,
+    desc: () => '+15% de defesa e regenera; quase caindo, explode uma onda, cura 45% e fica 3s invencível (a cada 40s)',
+    mods: () => [{ attr: 'defesa', soma: 0.15 }, { attr: 'regen', soma: 1.2 }],
+    // chamado quando a vida fica baixa (ou o golpe ia derrubar). Devolve true se salvou.
+    salvar(g, h) {
+      if ((h.supremaT ?? 0) > 0) return false;
+      h.supremaT = this.cd;
+      h.vida = Math.max(h.vida, 1);
+      h.invT = Math.max(h.invT, 3);
+      g.emit('onda', { x: h.x, y: h.y, raio: this.raio });
+      for (const z of alvos(g)) {
+        const d = dist(z.x, z.y, h.x, h.y) || 0.01;
+        if (d > this.raio) continue;
+        ferir(g, z, 40, 'impacto');
+        if (z.morto) continue;
+        g.aplicarStatus(z, 'atordoado', { duracao: 1.2 });
+        if (!ZUMBIS[z.tipo].chefe) { z.kx += (z.x - h.x) / d * 9; z.ky += (z.y - h.y) / d * 9; }
+      }
+      h.vida = Math.min(h.vidaMax, h.vida + h.vidaMax * this.cura / 100);
+      g.emit('cura', { valor: this.cura, x: h.x, y: h.y, salvou: false, item: false });
+      g.emit('aviso', { texto: '❤️‍🔥 CORAÇÃO DE FERRO! O herói se levantou na marra!', tipo: 'bom' });
+      return true;
+    }
+  }
+};
+function cartaSuprema(id) {
+  const S = SUPREMAS[id];
+  return { tipo: 'suprema', id, nivel: 1, nome: S.nome, emoji: S.emoji, desc: S.desc(), cat: 'suprema' };
+}
+// As 3 cartas do nível 10
+export function cartasSupremas() {
+  return Object.keys(SUPREMAS).map((id, k) => ({ ...cartaSuprema(id), letra: 'ABC'[k] }));
+}
+
 export const TREINO_MAX = 5;
 // Categoria de perícia do ataque principal do herói
 export function categoriaPrincipal(h) {
@@ -234,6 +316,7 @@ export function escolhaDaIA(h, cartas, rng) {
     if (c.tipo === 'ativa') p = c.cat === 'nova' ? (nAtivas < 2 ? 2.2 : 1.1) : 1.6;
     if (c.tipo === 'arma') p = 1.5;
     if (c.tipo === 'treino') p = 1;
+    if (c.tipo === 'suprema') p = c.id === 'imortal' && vidaPct < 0.4 ? 2 : 1;
     if (c.tipo === 'passiva' && vidaPct < 0.5 && ['vitalidade', 'couro', 'regen'].includes(c.id)) p = 2;
     return [c.letra, p];
   }));
@@ -260,6 +343,13 @@ export function aplicarCarta(g, carta) {
     h.pericias[carta.id] = (h.pericias[carta.id] ?? 2) + 1;
     aplicarPericias(h, CLASSES[h.classe]);
     g.sincronizarVida();
+  } else if (carta.tipo === 'suprema') {
+    const S = SUPREMAS[carta.id];
+    h.suprema = carta.id;
+    h.supremaT = 1;   // ataque aéreo já sai logo
+    h.vida = Math.min(h.vidaMax, h.vida + h.vidaMax * 0.3);   // chega com fôlego pra horda grande
+    for (const [k, m] of (S.mods ? S.mods() : []).entries()) h.attr.addMod({ ...m, id: `sup:${carta.id}:${k}`, fonte: S.nome });
+    g.sincronizarVida();
   } else if (carta.tipo === 'arma') {
     if (carta.id === 'escopeta') { h.armaFixa = 'escopeta'; g.trocarArma('escopeta', null); }
     if (carta.id === 'taco') { h.corpoFixo = 'taco'; h.corpo = 'taco'; h.golpes = Infinity; }
@@ -269,6 +359,7 @@ export function aplicarCarta(g, carta) {
 /* ---------------- Rodar as habilidades ativas ---------------- */
 export function atualizarHabilidades(g, dt) {
   const h = g.hero;
+  atualizarSuprema(g, h, dt);
   if (!h.habs) return;
   h.habT = h.habT || {};
   for (const [id, n] of Object.entries(h.habs)) {
@@ -280,11 +371,27 @@ export function atualizarHabilidades(g, dt) {
   }
 }
 
+function atualizarSuprema(g, h, dt) {
+  const S = h.suprema && SUPREMAS[h.suprema];
+  if (!S) return;
+  if (S.continua) { S.atualizar(g, h, dt); return; }
+  h.supremaT = (h.supremaT ?? 0) - dt;
+  if (S.usar) { if (h.supremaT <= 0) h.supremaT = S.usar(g, h) ? S.cd : 0.5; return; }
+  if (S.salvar && h.vida / h.vidaMax < 0.25) S.salvar(g, h);
+}
+
+// Golpe que ia derrubar o herói: o Coração de ferro segura (se estiver pronto)
+export function supremaSegura(g, h) {
+  const S = h.suprema && SUPREMAS[h.suprema];
+  return !!(S && S.salvar && S.salvar(g, h));
+}
+
 // Lista pra mostrar na tela: [{ emoji, nome, nivel, tipo }]
 export function habilidadesDoHeroi(h) {
   const l = [];
   for (const [id, n] of Object.entries(h.habs || {})) l.push({ emoji: ATIVAS[id].emoji, nome: ATIVAS[id].nome, nivel: n, tipo: 'ativa', pronta: (h.habT?.[id] ?? 0) <= 0.2 });
   for (const [id, n] of Object.entries(h.passivas || {})) l.push({ emoji: PASSIVAS[id].emoji, nome: PASSIVAS[id].nome, nivel: n, tipo: 'passiva' });
   if (h.treino) l.push({ emoji: '🎓', nome: 'Treino', nivel: h.treino, tipo: 'passiva' });
+  if (h.suprema) { const S = SUPREMAS[h.suprema]; l.unshift({ emoji: S.emoji, nome: S.nome, nivel: 1, tipo: 'suprema', pronta: S.continua || (h.supremaT ?? 0) <= 0.2 }); }
   return l;
 }

@@ -2,7 +2,7 @@
 // Rodar:  node teste/habilidades.test.mjs
 import assert from 'node:assert/strict';
 import { Jogo } from '../public/js/core/jogo.js';
-import { ATIVAS, PASSIVAS, MAX_ATIVAS, sortearCartas, aplicarCarta, atualizarHabilidades, escolhaDaIA } from '../public/js/core/habilidades.js';
+import { ATIVAS, PASSIVAS, SUPREMAS, NIVEL_SUPREMA, MAX_ATIVAS, sortearCartas, aplicarCarta, atualizarHabilidades, escolhaDaIA } from '../public/js/core/habilidades.js';
 import { lerEscolha, lerVoto } from '../public/js/core/votacao.js';
 import { makeRng } from '../public/js/core/util.js';
 import { xpParaNivel } from '../public/js/core/dados.js';
@@ -160,6 +160,75 @@ teste('escolha da IA sempre é uma das cartas', () => {
 teste('toda passiva e ativa tem nome, emoji e descrição em todos os níveis', () => {
   for (const A of Object.values(ATIVAS)) for (let n = 1; n <= A.max; n++) assert.ok(A.nome && A.emoji && A.desc(n));
   for (const P of Object.values(PASSIVAS)) for (let n = 1; n <= P.max; n++) assert.ok(P.nome && P.emoji && P.desc(n) && P.mod(n).attr);
+});
+
+/* ---------------- Habilidade suprema do nível 10 ---------------- */
+// sobe o herói até o nível n de uma vez (todas as escolhas ficam na fila)
+const subirAte = (j, n) => { let x = 0; for (let k = j.hero.nivel; k < n; k++) x += xpParaNivel(k); j.ganharXp(x); };
+
+teste('nível 10: as 3 cartas são as habilidades supremas, e passam na frente da fila', () => {
+  const j = jogo();
+  j.configurar({ segundos_escolha_habilidade: 3, atraso_da_live_segundos: 0 });
+  j.hero.nivel = 7;
+  subirAte(j, NIVEL_SUPREMA);   // níveis 8, 9 e 10 de uma vez
+  passar(j, 1);
+  assert.ok(j.escolha && j.escolha.suprema, 'a primeira escolha já é a suprema');
+  assert.equal(j.escolha.nivel, NIVEL_SUPREMA);
+  assert.deepEqual(j.escolha.cartas.map(c => c.tipo), ['suprema', 'suprema', 'suprema']);
+  assert.deepEqual(j.escolha.cartas.map(c => c.letra), ['A', 'B', 'C']);
+  passar(j, 4.5);
+  assert.ok(j.hero.suprema, 'herói ganhou a suprema');
+  passar(j, 4);
+  assert.ok(j.escolha && !j.escolha.suprema && j.escolha.nivel === 8, 'depois volta pras cartas normais dos níveis que faltavam');
+});
+
+teste('enquanto o chat escolhe a suprema, o jogo não aperta (sem horda periódica, zumbis como no nível 9)', () => {
+  const j = jogo();
+  j.hero.nivel = NIVEL_SUPREMA;
+  assert.ok(j.esperandoSuprema());
+  const antes = j.multInicio();
+  aplicarCarta(j, { tipo: 'suprema', id: 'imortal' });
+  assert.ok(!j.esperandoSuprema());
+  assert.ok(j.multInicio() > antes);
+});
+
+teste('ataque aéreo derruba um grupo de zumbis', () => {
+  const j = jogo();
+  aplicarCarta(j, { tipo: 'suprema', id: 'bombardeio' });
+  const zs = [];
+  for (let k = 0; k < 6; k++) zs.push(zumbi(j, 2 + (k % 3) * 0.3, 2 + Math.floor(k / 3) * 0.3));
+  passar(j, 3);
+  assert.ok(zs.filter(z => z.morto).length >= 5, 'quase todo o grupo caiu');
+});
+
+teste('aura de fogo machuca quem está perto e deixa lento, e não quem está longe', () => {
+  const j = jogo();
+  aplicarCarta(j, { tipo: 'suprema', id: 'aura' });
+  const perto = zumbi(j, 1.2, 0, 'gordo'), longe = zumbi(j, 6, 0, 'gordo');
+  perto.vel = 0; longe.vel = 0;
+  const vp = perto.vida, vl = longe.vida;
+  for (let i = 0; i < 30; i++) atualizarHabilidades(j, DT);
+  assert.ok(perto.vida < vp);
+  assert.ok(perto.estados.lista.has('lento'));
+  assert.equal(longe.vida, vl);
+});
+
+teste('coração de ferro segura o golpe que ia derrubar (uma vez a cada 40 s)', () => {
+  const j = jogo();
+  aplicarCarta(j, { tipo: 'suprema', id: 'imortal' });
+  const h = j.hero;
+  h.invT = 0; h.supremaT = 0; h.colete = 0; h.attr.addMod({ id: 'sem-esquiva', attr: 'esquiva', mult: 0 });
+  h.vida = 5;
+  j.ferirHeroi(500, null, 'teste', 'sangramento');
+  assert.ok(!j.caido && h.vida > h.vidaMax * 0.3, 'levantou com vida');
+  assert.ok(h.invT > 0, 'fica invencível um pouco');
+  h.invT = 0; h.vida = 5;
+  j.ferirHeroi(500, null, 'teste', 'sangramento');
+  assert.ok(j.caido, 'a segunda vez logo em seguida derruba');
+});
+
+teste('toda suprema tem nome, emoji e descrição', () => {
+  for (const S of Object.values(SUPREMAS)) assert.ok(S.nome && S.emoji && S.desc());
 });
 
 console.log(`\n${ok} testes passaram.`);

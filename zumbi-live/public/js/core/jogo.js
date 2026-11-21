@@ -9,7 +9,7 @@ import { FlowField } from './flow.js';
 import { ZUMBIS, CLASSES, ARMAS, CORPO, xpParaNivel } from './dados.js';
 import { EFEITOS, ladoDo } from './efeitos.js';
 import { Votacao, lerVoto, lerEscolha, OPCOES } from './votacao.js';
-import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi } from './habilidades.js';
+import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasSupremas, supremaSegura, NIVEL_SUPREMA } from './habilidades.js';
 import {
   atributosDaClasse, danoDoHeroi, intervaloTiro, intervaloCorpo, alcanceArma, velocidadeHeroi,
   danoNoHeroi, valorCura, statsZumbi, danoDoZumbi, danoNoZumbi, chanceDoStatus, danoExplosao, danoAliado, ALIADOS,
@@ -122,6 +122,7 @@ export class Jogo {
     this.figT = 25;
     this.escolha = null;          // escolha de habilidade aberta (votação A/B/C)
     this.niveisPendentes = 0;     // níveis que ainda vão virar escolha
+    this.filaNiveis = [];         // quais níveis são (a suprema do nível 10 passa na frente)
     this.escolhaEspera = 0;
     this.escolhaRes = null;       // última escolha (pra mostrar o resultado)
     this.caido = null;
@@ -180,7 +181,7 @@ export class Jogo {
     this.faseT = 0;
     h.vida = 0;
     this.voto = null;
-    this.escolha = null; this.niveisPendentes = 0;
+    this.escolha = null; this.niveisPendentes = 0; this.filaNiveis = [];
     const tempo = this.t - this.stats.inicio;
     const q = this.stats.quarteiroes;
     const novoRecorde = q > this.recorde;
@@ -373,7 +374,7 @@ export class Jogo {
       this.trecho.livre = false;
     }
     // Horda que chega sozinha de tempos em tempos (cresce com a ameaça)
-    if (this.protecao <= 0 && this.A.hordaCadaSegundos > 0 && h.nivel >= this.A.hordaDesdeNivel) {
+    if (this.protecao <= 0 && this.A.hordaCadaSegundos > 0 && h.nivel >= this.A.hordaDesdeNivel && !this.esperandoSuprema()) {
       this.hordaT -= dt;
       if (this.hordaT <= 0) {
         this.hordaT = this.A.hordaCadaSegundos;
@@ -1313,7 +1314,7 @@ export class Jogo {
     if (!silencioso) this.emit('dano_heroi', { dano, x: h.x, y: h.y });
     this.stats.matador = quem ? { nick: quem.nick, avatar: quem.avatar || '', causa } : { nick: null, causa };
     if (!h.vidaBaixa && h.vida > 0 && h.vida / h.vidaMax < 0.3) { h.vidaBaixa = true; this.emit('vida_baixa'); }
-    if (h.vida <= 0) this.cair();
+    if (h.vida <= 0 && !supremaSegura(this, h)) this.cair();
     return true;
   }
 
@@ -1340,18 +1341,23 @@ export class Jogo {
       if (h.nivel % 5 === 0) this.agendar(4, () => this.hordaDoNivel(h.nivel));
       // cada nível vira uma escolha de habilidade do chat (A, B ou C)
       this.niveisPendentes++;
+      this.filaNiveis.push(h.nivel);
       if (!this.escolha && this.escolhaEspera <= 0) this.escolhaEspera = 0.6;
     }
   }
 
   // Começo calmo: quanto dos zumbis normais aparece no nível atual do herói (ameaca.js → multInicio)
-  multInicio() { return multInicio(this.hero.nivel, this.A); }
+  // (enquanto o chat escolhe a habilidade suprema do nível 10, o jogo ainda não aperta)
+  multInicio() { return multInicio(this.esperandoSuprema() ? NIVEL_SUPREMA - 1 : this.hero.nivel, this.A); }
+  esperandoSuprema() { const h = this.hero; return h.nivel >= NIVEL_SUPREMA && !h.suprema; }
   // Tamanho de horda dos caminhos perigosos, já com o começo calmo
   hordaDaRua(n) { return Math.max(3, Math.round(tamanhoHorda(n, this.A) * this.multInicio())); }
 
   hordaDoNivel(nivel) {
     if (this.fase !== 'jogo' || this.hero.nivel < nivel) return;
     if (this.room || this.arena || this.caido) { this.agendar(4, () => this.hordaDoNivel(nivel)); return; }   // espera sair
+    // a horda grande do nível 10 espera o chat escolher a habilidade suprema
+    if ((this.escolha?.suprema || (nivel === NIVEL_SUPREMA && this.filaNiveis.includes(NIVEL_SUPREMA) && !this.hero.suprema))) { this.agendar(2, () => this.hordaDoNivel(nivel)); return; }
     const qtd = tamanhoHordaNivel(nivel, this.A);
     const grande = nivel >= this.A.medioAteNivel;
     this.soltarZumbis('horda', Math.ceil(qtd * 0.65), null, { horda: true, semEscala: true });
@@ -1382,12 +1388,18 @@ export class Jogo {
   // Se subir vários níveis de uma vez, as escolhas vêm uma depois da outra.
   abrirEscolha() {
     const h = this.hero;
-    const cartas = sortearCartas(h, this.rng);
     this.niveisPendentes--;
+    // nível 10: escolha especial entre as 3 habilidades supremas. Ela passa na frente das escolhas
+    // de níveis anteriores que ainda estão na fila (senão chegaria tarde, com a horda já em cima).
+    let k = this.filaNiveis.indexOf(NIVEL_SUPREMA);
+    const suprema = k >= 0 && !h.suprema;
+    if (!suprema) k = 0;
+    const nivel = this.filaNiveis.splice(k, 1)[0] ?? h.nivel;
+    const cartas = suprema ? cartasSupremas() : sortearCartas(h, this.rng);
     if (!cartas.length) return;
     const voto = new Votacao(cartas.map(c => ({ id: c.letra.toLowerCase(), n: c.letra })), this.cfg.escolhaDur, this.cfg.atraso);
-    this.escolha = { voto, cartas, nivel: h.nivel - this.niveisPendentes };
-    this.emit('escolha_abriu', { nivel: this.escolha.nivel, cartas });
+    this.escolha = { voto, cartas, nivel, suprema };
+    this.emit('escolha_abriu', { nivel, cartas, suprema });
   }
 
   atualizarEscolha(dt) {

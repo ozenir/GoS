@@ -36,12 +36,13 @@ teste('horda do nível: a do 10 é bem maior que a do 5', () => {
   assert.ok(tamanhoHordaNivel(15) > tamanhoHordaNivel(10));
 });
 
-teste('antes do nível 10 não tem horda periódica; do 10 em diante tem', () => {
-  for (const [nivel, espera] of [[4, false], [10, true]]) {
+teste('antes do nível 10 não tem horda periódica; do 10 em diante tem (depois da habilidade suprema)', () => {
+  for (const [nivel, espera, suprema] of [[4, false], [10, false], [10, true, 'imortal']]) {
     const j = jogo(nivel);
+    if (suprema) j.hero.suprema = suprema;
     let hordas = 0;
     passar(j, AMEACA.hordaCadaSegundos + 5, ev => { for (const e of ev) if (e.type === 'horda') hordas++; j.hero.vida = j.hero.vidaMax; });
-    assert.equal(hordas > 0, espera, `nível ${nivel}: ${hordas} hordas`);
+    assert.equal(hordas > 0, espera, `nível ${nivel}${suprema ? ' com suprema' : ' sem suprema'}: ${hordas} hordas`);
   }
 });
 

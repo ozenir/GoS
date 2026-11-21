@@ -125,7 +125,7 @@ export class Render {
       case 'onda': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.45 }); this.tremer(3); break;
       case 'habilidade': {
         const c = e.carta;
-        this.texto(e.x, e.y, `${c.emoji} ${c.nome}${c.tipo === 'ativa' || c.tipo === 'passiva' ? ' ' + c.nivel : ''}`, '#ffd23f', 1.2);
+        this.texto(e.x, e.y, `${c.emoji} ${c.nome}${c.tipo === 'ativa' || c.tipo === 'passiva' ? ' ' + c.nivel : ''}`, c.tipo === 'suprema' ? '#ff8a3d' : '#ffd23f', c.tipo === 'suprema' ? 1.6 : 1.2);
         for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; this.particula({ x: e.x, y: e.y, z: 0.6, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3, vz: 1.5, life: 0.6, cor: i % 2 ? '#ffd23f' : '#fff3a0', tam: 2 }); }
         break;
       }
@@ -863,6 +863,19 @@ export class Render {
       ctx.globalAlpha = 1;
     }
     if (g.fase !== 'jogo' || g.caido || !h.habs) return;
+    // habilidade suprema Aura de fogo: anel quente pulsando em volta do herói
+    if (h.suprema === 'aura') {
+      const r = 2.3 * (0.92 + Math.sin(this.t * 5) * 0.08);
+      ctx.globalAlpha = 0.45 + Math.sin(this.t * 9) * 0.15;
+      let ant = null;
+      for (let i = 0; i <= 28; i++) {
+        const a = i / 28 * Math.PI * 2 + this.t * 0.6, p = this.tela(h.x + Math.cos(a) * r, h.y + Math.sin(a) * r, 1);
+        if (ant) line(ctx, ant[0], ant[1], p[0], p[1], i % 2 ? '#ff8a3d' : '#ffd23f', 1);
+        ant = p;
+      }
+      ctx.globalAlpha = 1;
+      if (Math.random() < 0.35) { const a = Math.random() * Math.PI * 2, d = 0.6 + Math.random() * 1.6; this.particula({ x: h.x + Math.cos(a) * d, y: h.y + Math.sin(a) * d, z: 0.1, vx: 0, vy: 0, vz: 1.2, life: 0.4, cor: Math.random() < 0.5 ? '#ff8a3d' : '#ffd23f', tam: 1 }); }
+    }
     const nL = h.habs.laminas;
     if (nL) {
       const q = 1 + Math.ceil(nL / 2), giro = this.t * 22;

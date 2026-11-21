@@ -251,7 +251,7 @@ export class Hud {
       const antes = new Set((this.cache.habs || '').split(','));
       this.cache.habs = hk;
       $('h-habs').innerHTML = habs.length
-        ? habs.map(x => `<span class="hb ${x.tipo}${antes.has(x.emoji + x.nivel) ? '' : ' novo'}" title="${esc(x.nome)}">${esc(x.emoji)}<i>${x.nivel}</i></span>`).join('')
+        ? habs.map(x => `<span class="hb ${x.tipo}${antes.has(x.emoji + x.nivel) ? '' : ' novo'}" title="${esc(x.nome)}">${esc(x.emoji)}${x.tipo === 'suprema' ? '' : `<i>${x.nivel}</i>`}</span>`).join('')
         : '<span class="hb-vazio">⭐ cada nível: o chat escolhe uma habilidade</span>';
     }
     $('h-xp').style.width = (clamp(h.xp / xpParaNivel(h.nivel), 0, 1) * 100).toFixed(0) + '%';
@@ -323,7 +323,7 @@ export class Hud {
     const key = cartas.map(c => c.tipo + c.id + c.nivel).join(',') + (e ? 'a' : 'f');
     if (this.cache.ekey !== key) {
       this.cache.ekey = key;
-      const tag = c => c.cat === 'nova' ? (c.tipo === 'arma' ? 'ARMA NOVA' : 'NOVA') : c.cat === 'passiva' ? 'PASSIVA' : (c.tipo === 'treino' ? 'APRIMORAR' : `NÍVEL ${c.nivel}`);
+      const tag = c => c.cat === 'suprema' ? 'SUPREMA' : c.cat === 'nova' ? (c.tipo === 'arma' ? 'ARMA NOVA' : 'NOVA') : c.cat === 'passiva' ? 'PASSIVA' : (c.tipo === 'treino' ? 'APRIMORAR' : `NÍVEL ${c.nivel}`);
       $('e-ops').innerHTML = cartas.map(c => `<div class="ec" data-l="${c.letra}"><i class="fill"></i><span class="le">${c.letra}</span><span class="ic">${esc(c.emoji)}</span><span class="tag ${c.cat}">${tag(c)}</span><b>${esc(c.nome)}</b><p>${esc(c.desc)}</p><span class="cnt">0 votos</span></div>`).join('');
     }
     const vt = e ? e.voto : res.voto;
@@ -345,7 +345,7 @@ export class Hud {
       $('e-barra').style.width = (clamp(resta / v.duracao, 0, 1) * 100).toFixed(1) + '%';
       $('e-tempo').classList.toggle('urg', resta < 3.5);
       if (v.contandoAtrasados) { this.set('e-titulo', '⏳ CONTANDO VOTOS DA LIVE...'); this.set('e-sub', 'ainda dá tempo: A, B ou C'); }
-      else { this.set('e-titulo', `⭐ NÍVEL ${e.nivel} · ESCOLHAM!`); this.set('e-sub', `digite A, B ou C · ${Math.ceil(resta)}s`); }
+      else { this.set('e-titulo', e.suprema ? `🔥 NÍVEL ${e.nivel} · HABILIDADE SUPREMA!` : `⭐ NÍVEL ${e.nivel} · ESCOLHAM!`); this.set('e-sub', `digite A, B ou C · ${Math.ceil(resta)}s`); }
     } else {
       for (const el of document.querySelectorAll('.ec')) {
         const venceu = el.dataset.l === res.carta.letra;
