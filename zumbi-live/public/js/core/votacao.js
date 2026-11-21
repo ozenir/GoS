@@ -39,6 +39,12 @@ export function lerVoto(texto) {
 // Por isso a votação fica aberta "duracao + atraso" segundos, mas a contagem na tela termina
 // "atraso" segundos antes: assim, quando o espectador vê o 0, a votação está fechando de verdade.
 // Nesses últimos segundos a tela mostra "contando votos da live" e os votos que chegam ainda valem.
+// Escolha de habilidade ao subir de nível: o comentário tem que ser só a letra (A, B ou C)
+export function lerEscolha(texto) {
+  const t = normalizar(texto).replace(/[!?.,;:]+/g, '').trim();
+  return t === 'a' || t === 'b' || t === 'c' ? t : null;
+}
+
 export class Votacao {
   constructor(opcoes, duracao, atraso = 0) {
     this.opcoes = opcoes.map(o => ({ ...o, votos: 0 }));   // [{ id: 'esquerda', ... }]

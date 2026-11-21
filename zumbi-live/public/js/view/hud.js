@@ -5,6 +5,7 @@ import { STATUS } from '../core/status.js';
 import { BAIRROS } from '../core/city.js';
 import { EFEITOS, ladoDo } from '../core/efeitos.js';
 import { progressoAmeaca } from '../core/ameaca.js';
+import { habilidadesDoHeroi } from '../core/habilidades.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -91,7 +92,7 @@ export class Hud {
     const espera = e.espera ? ` <small>(em ${e.espera}s)</small>` : '';
     t.innerHTML = `<img class="tava" src="${img}" alt="" referrerpolicy="no-referrer"><span class="tt"><b>${esc(e.nick)}</b> ${presente}${vezes} <em>${esc(e.texto)}</em>${espera}</span>`;
     box.prepend(t);
-    while (box.children.length > 2) box.lastChild.remove();
+    while (box.children.length > 3) box.lastChild.remove();
     const timer = setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 460); }, 3800);
     this.ultimoToast = { chave, el: t, qtd: e.qtd || 1, t: performance.now(), timer };
   }
@@ -116,7 +117,7 @@ export class Hud {
         break;
       case 'morte_zumbi': if (e.chefe) this.banner('💥 CHEFÃO DERROTADO!', e.nome ? `adeus, ${e.nome}` : '', 'ouro', 2.4); break;
       case 'bau': if (e.raridade === 'lendario') this.banner(`✨ ${ARMAS[e.arma]?.nome.toUpperCase() || 'ARMA LENDÁRIA'}!`, e.quem ? `baú lendário de ${e.quem}` : 'baú lendário', 'ouro', 2.8); break;
-      case 'nivel': this.banner(`⭐ NÍVEL ${e.nivel}`, [e.texto, ...(e.pericias || [])].join(' · '), 'ouro', 1.8); break;
+      case 'nivel': this.banner(`⭐ NÍVEL ${e.nivel}`, (e.pericias || []).join(' · '), 'ouro', 1.6); break;
       case 'passiva': this.banner(e.texto, '', 'bom', 1.8); break;
       case 'helicoptero': this.banner('🚁 RESGATE AÉREO!', e.quem ? `chamado por ${e.quem}` : '', 'bom', 3); break;
       case 'noite': this.banner('🌙 A NOITE CHEGOU', 'mais zumbis, menos visão', 'perigo', 2.4); break;
@@ -183,7 +184,8 @@ export class Hud {
     this.rel = r;
     $('o-title').textContent = `${r.emoji} ${(r.viewer?.nick || r.nome).toUpperCase()} #${r.n} CAIU!`;
     $('o-prox').textContent = r.proximoNome ? `${r.proximoNome.lado === 'ajuda' ? '🛡️' : '😈'} ${r.proximoNome.nick}` : 'sobrevivente';
-    $('o-why').textContent = (r.matador?.causa ? `derrubado por ${r.matador.causa}` : 'derrubado pela horda') + ` · ameaça ${r.ameaca}` + (r.levantadas ? ` · levantou ${r.levantadas}x` : '');
+    $('o-why').textContent = (r.matador?.causa ? `derrubado por ${r.matador.causa}` : 'derrubado pela horda') + ` · ameaça ${r.ameaca}` + (r.levantadas ? ` · levantou ${r.levantadas}x` : '')
+      + (r.habs?.length ? ` · ${r.habs.map(x => x.emoji + x.nivel).join(' ')}` : '');
     $('o-rec').hidden = !r.novoRecorde;
     $('o-q').textContent = r.quarteiroes; $('o-abates').textContent = r.abates; $('o-tempo').textContent = fmtTempo(r.tempo);
     $('o-nivel').textContent = r.nivel; $('o-predios').textContent = r.predios; $('o-recorde').textContent = r.recorde;
@@ -212,20 +214,33 @@ export class Hud {
     const cls = 'vbar' + (pct < 0.3 ? ' baixa' : pct < 0.6 ? ' media' : '');
     if (vb.dataset.c !== cls) { vb.className = cls; vb.dataset.c = cls; }
     this.set('h-vida', `${Math.ceil(Math.max(0, h.vida))}/${Math.round(h.vidaMax)}`);
-    this.set('h-colete', h.colete > 0 ? '🛡️'.repeat(Math.min(h.colete, 4)) + (h.colete > 4 ? `+${h.colete - 4}` : '') : '');
+    this.set('h-colete', h.colete > 0 ? `🛡️${h.colete}` : '');
     const C = CLASSES[h.classe];
-    this.set('h-heroi', `${C.emoji} ${h.viewer ? h.viewer.nick : C.nome} #${h.n}`);
+    this.set('h-emoji', C.emoji);
+    this.set('h-heroi', `${h.viewer ? h.viewer.nick : C.nome} #${h.n}`);
     const a = h.arma ? ARMAS[h.arma] : null;
     const cp = CORPO[h.corpo];
     let armaTxt = a ? `${a.emoji} ${a.nome}` : `${cp.emoji} ${cp.nome}`;
     if (a && h.municao != null) armaTxt += ` · ${h.municao}`;
     if (a && h.armaT > 0) armaTxt += ` · ${Math.ceil(h.armaT)}s`;
-    if (a && h.corpo !== 'empurrao') armaTxt += ` + ${cp.emoji}${cp.golpes ? h.golpes : ''}`;
-    else if (!a && cp.golpes) armaTxt += ` · ${h.golpes}`;
+    const golpes = cp.golpes && Number.isFinite(h.golpes) ? h.golpes : '';
+    if (a && h.corpo !== 'empurrao') armaTxt += ` + ${cp.emoji}${golpes}`;
+    else if (!a && golpes !== '') armaTxt += ` · ${golpes}`;
     this.set('h-arma', armaTxt);
     const armaEl = $('h-arma'), lend = !!a?.lendaria;
     if (armaEl.dataset.l !== String(lend)) { armaEl.classList.toggle('lend', lend); armaEl.dataset.l = String(lend); }
+    if (this.cache['h-nv'] !== String(h.nivel)) { const el = $('h-nv'); el.classList.remove('up'); void el.offsetWidth; el.classList.add('up'); }
     this.set('h-nv', String(h.nivel));
+    // habilidades do herói (ativas com borda dourada, passivas simples)
+    const habs = habilidadesDoHeroi(h);
+    const hk = habs.map(x => x.emoji + x.nivel).join(',');
+    if (this.cache.habs !== hk) {
+      const antes = new Set((this.cache.habs || '').split(','));
+      this.cache.habs = hk;
+      $('h-habs').innerHTML = habs.length
+        ? habs.map(x => `<span class="hb ${x.tipo}${antes.has(x.emoji + x.nivel) ? '' : ' novo'}" title="${esc(x.nome)}">${esc(x.emoji)}<i>${x.nivel}</i></span>`).join('')
+        : '<span class="hb-vazio">⭐ cada nível: o chat escolhe uma habilidade</span>';
+    }
     $('h-xp').style.width = (clamp(h.xp / xpParaNivel(h.nivel), 0, 1) * 100).toFixed(0) + '%';
     this.set('h-q', String(g.stats.quarteiroes));
     this.set('h-rec', String(Math.max(g.recorde, g.stats.quarteiroes)));
@@ -258,6 +273,7 @@ export class Hud {
     this.atualizarCaido(g);
 
     this.atualizarVoto(g);
+    this.atualizarEscolha(g);
 
     // banner, intro, relatório
     if (this.bannerT > 0 && (this.bannerT -= dt) <= 0) { const b = $('h-banner'); b.classList.add('out'); setTimeout(() => { if (this.bannerT <= 0) b.hidden = true; }, 500); }
@@ -275,6 +291,53 @@ export class Hud {
       this.legT = 0;
       const el = $('h-legenda'); el.classList.add('fade');
       setTimeout(() => { this.legIdx = (this.legIdx + 4) % this.legenda.length; this.mostrarLegenda(); el.classList.remove('fade'); }, 360);
+    }
+  }
+
+  // Escolha de habilidade ao subir de nível (embaixo, no lugar da legenda e dos rankings).
+  // A contagem desconta o atraso da live, igual à votação da direção.
+  atualizarEscolha(g) {
+    const box = $('h-escolha'), e = g.escolha;
+    const res = !e && g.escolhaRes && g.t < g.escolhaRes.ate ? g.escolhaRes : null;
+    const ativo = g.fase === 'jogo' && !!(e || res);
+    if (this.cache.eAtivo !== ativo) { this.cache.eAtivo = ativo; $('h-bottom').classList.toggle('escolhendo', ativo); box.hidden = !ativo; }
+    if (!ativo) { this.cache.ekey = null; return; }
+    if (e) this.eCartas = e.cartas;
+    const cartas = this.eCartas || [];
+    const key = cartas.map(c => c.tipo + c.id + c.nivel).join(',') + (e ? 'a' : 'f');
+    if (this.cache.ekey !== key) {
+      this.cache.ekey = key;
+      const tag = c => c.cat === 'nova' ? (c.tipo === 'arma' ? 'ARMA NOVA' : 'NOVA') : c.cat === 'passiva' ? 'PASSIVA' : (c.tipo === 'treino' ? 'APRIMORAR' : `NÍVEL ${c.nivel}`);
+      $('e-ops').innerHTML = cartas.map(c => `<div class="ec" data-l="${c.letra}"><i class="fill"></i><span class="le">${c.letra}</span><span class="ic">${esc(c.emoji)}</span><span class="tag ${c.cat}">${tag(c)}</span><b>${esc(c.nome)}</b><p>${esc(c.desc)}</p><span class="cnt">0 votos</span></div>`).join('');
+    }
+    const vt = e ? e.voto : res.voto;
+    if (vt) {
+      const max = Math.max(1, ...vt.opcoes.map(o => o.votos));
+      for (const o of vt.opcoes) {
+        const el = document.querySelector(`.ec[data-l="${o.n}"]`); if (!el) continue;
+        el.querySelector('.cnt').textContent = `${o.votos} voto${o.votos === 1 ? '' : 's'}`;
+        el.querySelector('.fill').style.height = (e ? o.votos / max * 100 : 0).toFixed(0) + '%';
+      }
+    }
+    if (e) {
+      const v = e.voto, max = Math.max(1, ...v.opcoes.map(o => o.votos));
+      for (const o of v.opcoes) {
+        const el = document.querySelector(`.ec[data-l="${o.n}"]`); if (!el) continue;
+        el.classList.toggle('lider', o.votos > 0 && o.votos === max);
+      }
+      const resta = v.restanteNaTela;
+      $('e-barra').style.width = (clamp(resta / v.duracao, 0, 1) * 100).toFixed(1) + '%';
+      $('e-tempo').classList.toggle('urg', resta < 3.5);
+      if (v.contandoAtrasados) { this.set('e-titulo', '⏳ CONTANDO VOTOS DA LIVE...'); this.set('e-sub', 'ainda dá tempo: A, B ou C'); }
+      else { this.set('e-titulo', `⭐ NÍVEL ${e.nivel} · ESCOLHAM!`); this.set('e-sub', `digite A, B ou C · ${Math.ceil(resta)}s`); }
+    } else {
+      for (const el of document.querySelectorAll('.ec')) {
+        const venceu = el.dataset.l === res.carta.letra;
+        el.classList.toggle('venceu', venceu); el.classList.toggle('perdeu', !venceu); el.classList.remove('lider');
+      }
+      $('e-barra').style.width = '0%';
+      this.set('e-titulo', res.auto ? '🤖 NINGUÉM VOTOU · A IA ESCOLHEU' : `✅ O CHAT ESCOLHEU (${res.votos} voto${res.votos === 1 ? '' : 's'})`);
+      this.set('e-sub', `${res.carta.emoji} ${res.carta.nome}`);
     }
   }
 

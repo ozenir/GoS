@@ -92,13 +92,7 @@ export const CORPO = {
 };
 for (const c of Object.values(CORPO)) c.corpo = true;
 
-// Melhorias ao subir de nível. "mod" é um modificador de atributo (ver dano.js); "cura" devolve vida na hora.
-export const MELHORIAS = [
-  { id: 'dano', texto: '+15% de dano', mod: { attr: 'dano', mult: 1.15 } },
-  { id: 'cadencia', texto: 'atira 10% mais rápido', mod: { attr: 'cadencia', mult: 1.1 } },
-  { id: 'vida', texto: '+15 de vida máxima', mod: { attr: 'vidaMax', soma: 15 }, cura: 15 },
-  { id: 'vel', texto: '+8% de velocidade', mod: { attr: 'velocidade', mult: 1.08 } }
-];
+// O que o herói ganha ao subir de nível é escolhido pelo chat: ver habilidades.js
 
 // XP para passar do nível n para o n+1
 export const xpParaNivel = n => 8 + n * 6;

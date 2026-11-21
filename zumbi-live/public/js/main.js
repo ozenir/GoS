@@ -127,7 +127,7 @@ document.querySelectorAll('[data-evento]').forEach(b => b.addEventListener('clic
 $('b-matar').addEventListener('click', () => { if (jogo.fase === 'jogo') jogo.ferirHeroi(9999, { nick: 'você (teste)' }, 'o botão de teste'); });
 window.addEventListener('keydown', e => {
   if (e.target.closest('input')) return;
-  if (['1', '2', '3', '4'].includes(e.key)) chatTeste(e.key, 'você ' + Math.floor(Math.random() * 1000));
+  if (['1', '2', '3', '4', '5', 'a', 'b', 'c'].includes(e.key.toLowerCase())) chatTeste(e.key.toLowerCase(), 'você ' + Math.floor(Math.random() * 1000));
 });
 
 /* ---------- modo "só o jogo": esconde os botões de teste ---------- */
@@ -142,7 +142,7 @@ simEl.checked = !isLocal && !live;
   setTimeout(() => {
     if (simEl.checked && !document.hidden) {
       const r = Math.random();
-      if (r < 0.55) chatTeste(pick(['1', '2', '3', '4', '1', '2']), pick(NOMES));
+      if (r < 0.55) chatTeste(jogo.escolha && Math.random() < 0.5 ? pick(['a', 'b', 'c']) : pick(['1', '2', '3', '4', '1', '2']), pick(NOMES));
       else if (r < 0.85) {
         const lista = Object.entries(catalogo);
         const pesos = lista.map(([, x]) => 1 / Math.pow(Math.max(1, x.moedas || 1), 0.6));
@@ -194,6 +194,11 @@ function tocar(e, g) {
     case 'helicoptero': som.helicoptero(); break;
     case 'heroi_morreu': som.morteHeroi(); break;
     case 'caiu': som.caiu(); break;
+    case 'raio': som.zap(); break;
+    case 'onda': som.onda(); break;
+    case 'arremesso': som.arremesso(); break;
+    case 'habilidade': som.habilidade(); break;
+    case 'escolha_abriu': som.escolha(); break;
     case 'levantou': som.levantou(); break;
     case 'golpe_final': som.golpeFinal(); break;
     case 'mochila': som.item(); break;

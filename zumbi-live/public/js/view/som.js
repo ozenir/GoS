@@ -129,6 +129,11 @@ export class Som {
     if (!this.running) return;
     for (let i = 0; i < 40; i++) this.noise(0.05, Math.max(0.02, 0.25 * Math.sin(i / 40 * Math.PI)), 'lowpass', 500, i * 0.1);
   }
+  zap() { if (this.pode('zap', 0.1)) { this.noise(0.15, 0.25, 'highpass', 3000); this.osc('sawtooth', 900, 200, 0.15, 0.08); } }
+  onda() { this.osc('sine', 140, 40, 0.35, 0.35); this.noise(0.3, 0.2, 'lowpass', 600, 0, 0.7, 100); }
+  arremesso() { if (this.pode('arr', 0.2)) this.noise(0.2, 0.08, 'bandpass', 1200, 0, 1, 400); }
+  habilidade() { [523, 659, 784, 1047].forEach((f, i) => this.osc('triangle', f, f, 0.18, 0.11, i * 0.07)); }
+  escolha() { [392, 523].forEach((f, i) => this.osc('square', f, f, 0.12, 0.07, i * 0.1)); }
   caiu() { this.osc('sawtooth', 220, 55, 0.7, 0.2); this.noise(0.5, 0.25, 'lowpass', 400, 0, 0.7, 80); }
   levantou() { [262, 392, 523, 784].forEach((f, i) => this.osc('square', f, f, 0.14, 0.1, i * 0.06)); this.noise(0.3, 0.2, 'lowpass', 900, 0, 0.6, 200); }
   golpeFinal() { this.osc('sawtooth', 160, 40, 0.6, 0.22); this.osc('square', 80, 40, 0.5, 0.12, 0.1); }

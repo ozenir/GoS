@@ -15,7 +15,7 @@ export const AMEACA = {
   // Pontos de ameaça. O nível é 1 + pontos (arredondado pra baixo).
   porMinuto: 1.2,
   porQuarteirao: 0.12,
-  porNivelHeroi: 0.18,
+  porNivelHeroi: 0.45,
   maximo: 99,   // bem alto de propósito: com o tempo a ameaça sempre vence, por mais forte que o herói fique
 
   // Zumbis normais na rua ao mesmo tempo (o diretor vai repondo)

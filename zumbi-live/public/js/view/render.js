@@ -9,7 +9,7 @@ import { fillPoly, line, disc, canvas as novoCanvas } from './pixel.js';
 import * as S from './sprites.js';
 
 export const W = 216, H = 384;
-const AX = 114, AY = 214;           // onde fica o ponto da câmera na tela
+const AX = 114, AY = 226;           // onde fica o ponto da câmera na tela (um pouco abaixo do centro: o HUD de cima fica livre)
 const ROT = [(x, y) => [x, y], (x, y) => [y, -x], (x, y) => [-x, -y], (x, y) => [-y, x]];
 const ROTI = [(u, v) => [u, v], (u, v) => [-v, u], (u, v) => [-u, -v], (u, v) => [v, -u]];
 
@@ -22,6 +22,7 @@ export class Render {
     this.r = 0; this.cam = { x: 0, y: 0 }; this.camAlvo = null;
     this.fade = 0; this.shake = 0; this.flash = null; this.t = 0;
     this.parts = []; this.decals = []; this.tracers = []; this.explosoes = []; this.textos = []; this.raios = [];
+    this.arremessos = []; this.choques = []; this.ondas = [];   // efeitos das habilidades
     [this.escuro, this.ex] = novoCanvas(W, H);
     this.brancos = new WeakMap();
     this.vistos = new Set();
@@ -65,7 +66,7 @@ export class Render {
   evento(e, g) {
     switch (e.type) {
       case 'tiro': {
-        this.tracers.push({ x0: e.x, y0: e.y, x1: e.tx, y1: e.ty, age: 0, life: e.arma === 'metralhadora' ? 0.05 : 0.07, heroi: e.heroi });
+        this.tracers.push({ x0: e.x, y0: e.y, x1: e.tx, y1: e.ty, age: 0, life: e.arma === 'metralhadora' ? 0.05 : 0.07, heroi: e.heroi, z0: e.drone ? 21 : 11, drone: e.drone });
         if (e.heroi) this.raios.push({ x: e.x, y: e.y, age: 0, life: 0.06, r: 26 });
         if (e.acertou) this.sangue(e.tx, e.ty, 3);
         break;
@@ -110,11 +111,20 @@ export class Render {
         }
         for (let i = 0; i < 8; i++) this.particula({ x: e.x + (Math.random() - 0.5), y: e.y + (Math.random() - 0.5), z: 0.5, vz: 0.8 + Math.random(), g: -0.5, life: 1.2 + Math.random(), cor: 'rgba(60,60,60,0.6)', tam: 4, fumaca: true });
         this.raios.push({ x: e.x, y: e.y, age: 0, life: 0.5, r: 90 });
-        this.tremer(e.aereo ? 3 : 6);
+        this.tremer(e.aereo || e.amiga ? 3 : 6);
         break;
       }
       case 'dano_heroi': this.sangue(e.x, e.y, 4, ['#a8282a', '#7a1a1c']); this.tremer(2); this.piscar('#ff2a2a', 0.18); break;
       case 'colete': this.texto(e.x, e.y, '🛡️ bloqueou', '#9fd0ff'); break;
+      case 'arremesso': this.arremessos.push({ ...e, age: 0, life: e.t }); break;
+      case 'raio': this.choques.push({ pts: e.pts, age: 0, life: 0.22 }); for (const p of e.pts.slice(1)) this.raios.push({ x: p[0], y: p[1], age: 0, life: 0.15, r: 22 }); break;
+      case 'onda': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.45 }); this.tremer(3); break;
+      case 'habilidade': {
+        const c = e.carta;
+        this.texto(e.x, e.y, `${c.emoji} ${c.nome}${c.tipo === 'ativa' || c.tipo === 'passiva' ? ' ' + c.nivel : ''}`, '#ffd23f', 1.2);
+        for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; this.particula({ x: e.x, y: e.y, z: 0.6, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3, vz: 1.5, life: 0.6, cor: i % 2 ? '#ffd23f' : '#fff3a0', tam: 2 }); }
+        break;
+      }
       case 'presente_heroi': this.texto(e.x, e.y, `${e.emoji} ${e.nick}`, e.lado === 'ajuda' ? '#ffd23f' : '#ff8ae0', 1.15); break;
       case 'adaptado': this.texto(e.x, e.y, e.texto, '#9fe8ff', 1); break;
       case 'mochila': this.texto(e.x, e.y, '💼 +kit na mochila', '#9dffb0', 1); break;
@@ -185,6 +195,7 @@ export class Render {
     this.objetos(g);
     this.fantasmaHeroi(g);
     this.desenharParticulas();
+    this.desenharHabilidades(g);
     this.desenharTracers();
     this.luz(g);
     this.desenharHeli(g, dt);
@@ -678,6 +689,10 @@ export class Render {
     this.tracers = this.tracers.filter(t => t.age < t.life);
     for (const e of this.explosoes) e.age += dt;
     this.explosoes = this.explosoes.filter(e => e.age < e.life);
+    for (const l of [this.arremessos, this.choques, this.ondas]) for (const a of l) a.age += dt;
+    this.arremessos = this.arremessos.filter(a => a.age < a.life);
+    this.choques = this.choques.filter(a => a.age < a.life);
+    this.ondas = this.ondas.filter(a => a.age < a.life);
     for (const r of this.raios) r.age += dt;
     this.raios = this.raios.filter(r => r.age < r.life);
     for (const t of this.textos) t.age += dt;
@@ -706,11 +721,73 @@ export class Render {
     }
   }
 
+  // Habilidades (habilidades.js): granada e molotov voando, raio em cadeia, onda de choque, lâminas e drone
+  desenharHabilidades(g) {
+    const ctx = this.ctx, h = g.hero;
+    for (const a of this.arremessos) {
+      const k = Math.min(1, a.age / a.life);
+      const [sx, sy] = this.tela(a.x0 + (a.x1 - a.x0) * k, a.y0 + (a.y1 - a.y0) * k, 10 + Math.sin(k * Math.PI) * 28);
+      if (a.tipo === 'molotov') {
+        ctx.fillStyle = '#3a7a3a'; ctx.fillRect(sx - 1, sy - 2, 2, 4);
+        ctx.fillStyle = Math.random() < 0.5 ? '#ffd23f' : '#ff8a2a'; ctx.fillRect(sx - 1, sy - 4, 2, 2);
+      } else { disc(ctx, sx, sy, 2, '#3e4a2a', 1); ctx.fillStyle = '#c8c8c8'; ctx.fillRect(sx, sy - 3, 1, 1); }
+    }
+    for (const r of this.choques) {
+      ctx.globalAlpha = 1 - r.age / r.life;
+      for (let i = 0; i < r.pts.length - 1; i++) {
+        const [x0, y0] = this.tela(r.pts[i][0], r.pts[i][1], i ? 8 : 12), [x1, y1] = this.tela(r.pts[i + 1][0], r.pts[i + 1][1], 8);
+        // raio em zigue-zague: 4 pedaços com desvio aleatório
+        let px = x0, py = y0;
+        for (let s = 1; s <= 4; s++) {
+          const nx = x0 + (x1 - x0) * s / 4 + (s < 4 ? (Math.random() - 0.5) * 6 : 0), ny = y0 + (y1 - y0) * s / 4 + (s < 4 ? (Math.random() - 0.5) * 6 : 0);
+          line(ctx, px, py, nx, ny, '#9fe8ff', 2); line(ctx, px, py, nx, ny, '#ffffff', 1);
+          px = nx; py = ny;
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+    for (const o of this.ondas) {
+      const k = o.age / o.life, r = o.raio * (0.25 + 0.75 * k);
+      ctx.globalAlpha = 1 - k;
+      let ant = null;
+      for (let i = 0; i <= 24; i++) {
+        const a = i / 24 * Math.PI * 2, p = this.tela(o.x + Math.cos(a) * r, o.y + Math.sin(a) * r, 2);
+        if (ant) line(ctx, ant[0], ant[1], p[0], p[1], '#cfe8ff', 2);
+        ant = p;
+      }
+      ctx.globalAlpha = 1;
+    }
+    if (g.fase !== 'jogo' || g.caido || !h.habs) return;
+    const nL = h.habs.laminas;
+    if (nL) {
+      const q = 1 + Math.ceil(nL / 2), giro = this.t * 22;
+      for (let k = 0; k < q; k++) {
+        const a = (h.laminaAng || 0) + k * Math.PI * 2 / q;
+        const [sx, sy] = this.tela(h.x + Math.cos(a) * 1.25, h.y + Math.sin(a) * 1.25, 7);
+        const cx = Math.cos(giro) * 3, cy = Math.sin(giro) * 3;
+        line(ctx, sx - cx, sy - cy, sx + cx, sy + cy, '#d8dde6', 1);
+        line(ctx, sx + cy, sy - cx, sx - cy, sy + cx, '#d8dde6', 1);
+        ctx.fillStyle = '#6a6a72'; ctx.fillRect(sx, sy, 1, 1);
+      }
+    }
+    if (h.habs.drone) {
+      const a = g.t * 1.6, wx = h.x + Math.cos(a) * 0.8, wy = h.y + Math.sin(a) * 0.8;
+      const [gx, gy] = this.tela(wx, wy);
+      ctx.globalAlpha = 0.35; disc(ctx, gx, gy, 3, '#000', 0.5); ctx.globalAlpha = 1;
+      const [sx, sy] = this.tela(wx, wy, 21 + Math.sin(this.t * 6));
+      ctx.fillStyle = '#2a2f38'; ctx.fillRect(sx - 3, sy - 1, 6, 3);
+      ctx.fillStyle = '#5a6270'; ctx.fillRect(sx - 2, sy - 2, 4, 1);
+      const pa = Math.floor(this.t * 30) % 2;
+      ctx.fillStyle = '#c8d0dc'; ctx.fillRect(sx - 6 + pa, sy - 3, 3, 1); ctx.fillRect(sx + 3 + pa, sy - 3, 3, 1);
+      ctx.fillStyle = Math.floor(this.t * 3) % 2 ? '#ff3a2a' : '#5a1a1a'; ctx.fillRect(sx, sy + 1, 1, 1);
+    }
+  }
+
   desenharTracers() {
     const ctx = this.ctx;
     for (const t of this.tracers) {
-      const [x0, y0] = this.tela(t.x0, t.y0, 11), [x1, y1] = this.tela(t.x1, t.y1, 9);
-      line(ctx, x0, y0, x1, y1, t.heroi ? '#fff3a0' : '#ffe0a0');
+      const [x0, y0] = this.tela(t.x0, t.y0, t.z0 || 11), [x1, y1] = this.tela(t.x1, t.y1, 9);
+      line(ctx, x0, y0, x1, y1, t.drone ? '#9fe8ff' : t.heroi ? '#fff3a0' : '#ffe0a0');
       if (t.age < 0.03) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x0 - 1, y0 - 1, 3, 3); }
     }
   }

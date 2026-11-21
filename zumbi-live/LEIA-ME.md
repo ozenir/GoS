@@ -43,7 +43,7 @@ Dê dois cliques em **`1-testar-sem-live.bat`**. O jogo abre no navegador com um
 
 ## Como o jogo funciona
 
-**O herói.** Anda sozinho pelo meio da rua, luta, pega os itens que caem e foge do que é perigoso demais. A cada zumbi derrotado ganha experiência; ao subir de nível ganha uma melhoria (dano, cadência, vida ou velocidade) e as **perícias** dele sobem. Ele só muda quando morre. Cada novo sobrevivente é sorteado entre 5 personagens, cada um com o seu jeito de lutar:
+**O herói.** Anda sozinho pelo meio da rua, luta, pega os itens que caem e foge do que é perigoso demais. A cada zumbi derrotado ganha experiência; ao subir de nível as **perícias** dele sobem e **o chat escolhe uma habilidade nova** (veja "Habilidades", logo abaixo). Ele só muda quando morre. Cada novo sobrevivente é sorteado entre 5 personagens, cada um com o seu jeito de lutar:
 
 | Personagem | Ataque | Perícia que sobe com o nível | Ponto forte | Ponto fraco |
 |---|---|---|---|---|
@@ -140,6 +140,37 @@ Facas e cacos de vidro fazem sangrar, a chave e o taco atordoam, o machado quebr
 
 **O nível de ameaça (☠️).** Começa em 1 e sobe com o tempo vivo, com os quarteirões andados, com cada caminho perigoso e com o nível do herói. Assim, quanto mais forte o herói fica, mais fortes os zumbis ficam. A cada nível os zumbis nascem com mais vida, dano, velocidade e **resistência** (ignoram parte do dano; ver também as fraquezas de cada zumbi acima), aparecem mais zumbis na rua e as **hordas ficam maiores**: a horda que chega sozinha de tempos em tempos e também as mandadas por presentes. De tempos em tempos vem uma **noite** (escuro, mais zumbis). Quando a vida está muito baixa, o jogo alivia um pouco os zumbis normais (os mandados pelo público nunca são aliviados).
 
+**Habilidades (a cada nível, o chat escolhe).** Quando o herói sobe de nível, aparece embaixo da tela uma escolha com 3 cartas. O chat vota comentando só a letra: **A**, **B** ou **C** (os números continuam sendo da direção, então as duas votações podem rolar ao mesmo tempo). A contagem tem a mesma janela de votos atrasados da live. Se ninguém votar, a IA escolhe. Se subir vários níveis de uma vez, as escolhas vêm uma depois da outra.
+
+- **A = aprimorar** algo que o herói já tem (sobe o nível de uma habilidade ou passiva, ou um **treino** de +1 de perícia no ataque principal)
+- **B = algo novo**: uma habilidade ativa nova (no máximo 3 ao mesmo tempo) ou uma arma nova
+- **C = uma passiva nova**
+
+Quando falta alguma categoria, a carta é completada com outra. Cada habilidade e passiva vai até o nível 5.
+
+| Habilidade ativa | O que faz (dispara sozinha) |
+|---|---|
+| 💣 Granada | joga no maior grupo de zumbis, explode (não machuca o herói) |
+| ⚡ Raio em cadeia | pula de zumbi em zumbi e pode atordoar |
+| 🌀 Lâminas giratórias | lâminas girando em volta do herói, fazem sangrar |
+| 🍾 Coquetel molotov | fogo no chão onde tem mais zumbi (o fogo dele não queima o herói) |
+| 🛸 Drone atirador | um drone voando em volta atira sozinho |
+| 💫 Onda de choque | quando fica cercado, empurra e atordoa todo mundo em volta |
+
+| Passiva | O que faz (por nível) |
+|---|---|
+| ❤️ Vitalidade | +12% de vida máxima |
+| 🛡️ Couro grosso | +5% de defesa |
+| 👟 Pernas rápidas | +7% de velocidade |
+| 🎯 Olho de águia | +6% de crítico |
+| 🔁 Mãos rápidas | ataca 10% mais rápido |
+| 💪 Força | +10% de dano em tudo (as habilidades também) |
+| 💚 Regeneração | +0,45 de vida por segundo |
+| 🦇 Vampirismo | golpe de perto cura |
+| 💨 Reflexos | +4% de chance de desviar |
+
+**Armas novas** (aparecem na carta B quando fazem sentido): 💥 **Escopeta** no lugar da pistola, de vez (recarrega sozinha), e 🏏 **Taco com pregos** no lugar do empurrão, sem quebrar. Subir de nível também cura 8% da vida.
+
 **A torcida (📣).** Comentar também ajuda: cada pessoa diferente que comentou nos últimos 30 segundos dá +3% de dano e um pouco de regeneração ao herói (até 10 pessoas).
 
 **O atraso da live (e por que nada se perde).** Quem assiste pelo TikTok vê a tela uns segundos **atrasada** (`atraso_da_live_segundos`, 6 por padrão). O jogo foi feito pensando nisso:
@@ -188,7 +219,7 @@ Tudo que **ajuda** acontece na hora (e se adapta à situação, veja "O atraso d
 
 | Ação | O que acontece |
 |---|---|
-| 💬 Comentar | vota no cruzamento. O nome de quem comenta ou entra na live pode aparecer num zumbi |
+| 💬 Comentar | vota no cruzamento (1 a 5) e na habilidade (A, B ou C). O nome de quem comenta ou entra na live pode aparecer num zumbi |
 | ➕ Seguir | um sobrevivente com o nome da pessoa ajuda por 20 s |
 | 🔁 Compartilhar | cai uma caixa de munição |
 | ❤️ Curtidas | a cada 300 curtidas cai um suprimento de avião (cura ou munição) |
@@ -203,12 +234,11 @@ Tudo que **ajuda** acontece na hora (e se adapta à situação, veja "O atraso d
 
 ## O que aparece na tela
 
-- **Em cima:** barra de vida, sobrevivente e número, arma (com munição ou tempo), nível, quarteirões, recorde, zumbis derrotados, tempo vivo e a barrinha de curtidas. Embaixo disso, os efeitos ativos (proteção, noite, prédio, cachorro...).
-- **A votação**, com o tempo correndo, os votos de cada opção e quem está na frente em amarelo; ruas bloqueadas riscadas. No fim, "contando votos da live" e depois o resultado.
-- **Herói caído:** painel grande com a contagem e o presente que levanta ele (fica roxo no golpe final).
-- **Os avisos de presente**, com a foto de quem mandou: verdes para quem ajuda, vermelhos para quem atrapalha.
-- **Avisos grandes** no meio: chefão chegando, baú lendário, nível, noite, alarme, vida baixa, novo recorde.
-- **Embaixo:** a legenda de presentes (muda a cada 5 segundos) e os dois rankings da live: **🛡️ quem mais ajudou** e **😈 quem mais atrapalhou**.
+A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fica no meio, um pouco abaixo do centro):
+
+- **Em cima:** o cartão do herói (personagem, nível, nome, arma, barra de vida com colete, barrinha de experiência e as **habilidades** que ele já tem, com o nível de cada uma). Embaixo, uma linha com quarteirões, recorde, zumbis derrotados, ameaça, tempo vivo e curtidas; depois os efeitos ativos (proteção, noite, prédio, cachorro...). Por último, **a votação da direção**, com o tempo correndo, os votos e quem está na frente em amarelo; ruas bloqueadas riscadas; no fim, "contando votos da live" e o resultado. Com o herói caído, o painel de **herói caído** aparece no lugar da votação.
+- **No meio:** só o jogo. Os avisos (chefão, horda, nível, noite, alarme, recorde) são curtos e ficam logo abaixo da votação, acima do herói.
+- **Embaixo:** os avisos de presente (com a foto de quem mandou: verde ajuda, vermelho atrapalha), a legenda de presentes (muda a cada 5 segundos) e os rankings **🛡️ quem mais ajudou** e **😈 quem mais atrapalhou**. Quando o herói sobe de nível, a **escolha de habilidade** (A, B, C) aparece no lugar da legenda e dos rankings até o resultado.
 - **No fim da rodada:** primeiro os números (quarteirões, zumbis, tempo, nível, prédios, recorde), depois os destaques (quem mais ajudou, quem mais atrapalhou, quem derrubou o herói) e o **Hall dos heróis** com os 3 que mais andaram.
 
 ## Ajustes no `config.json`
@@ -220,6 +250,7 @@ Tudo que **ajuda** acontece na hora (e se adapta à situação, veja "O atraso d
 | `segundos_de_votacao` | tempo da contagem de cada votação | 10 |
 | `atraso_da_live_segundos` | atraso da tela do TikTok para quem assiste: a votação fica aberta esse tempo a mais e a contagem do herói caído desconta ele. Se o seu atraso for maior, aumente. 0 desliga | 6 |
 | `segundos_caido` | quanto tempo o herói fica caído esperando um presente antes de morrer. Deixe pelo menos o atraso + 5. 0 = morre na hora | 12 |
+| `segundos_escolha_habilidade` | tempo da contagem da escolha de habilidade (A, B, C) ao subir de nível (mais o atraso da live) | 12 |
 | `segundos_do_relatorio` / `segundos_dos_destaques` | tempo de cada parte do relatório | 10 / 12 |
 | `protecao_ao_nascer_segundos` | segundos sem nada que atrapalhe no começo de cada herói | 15 |
 | `curtidas_por_suprimento` | curtidas para cair um suprimento (0 desliga) | 300 |
@@ -261,11 +292,13 @@ Tudo que **ajuda** acontece na hora (e se adapta à situação, veja "O atraso d
 
 | Cenário | Quanto o herói dura em média |
 |---|---|
-| Sem nenhuma interação | **2 min 15 s**, contando os 12 s caído (cada personagem entre 2 min e 2 min 33 s) |
-| Só chat (6 pessoas comentando e votando, curtidas) | 3 min 39 s |
-| Chat + presentes misturados (8 por minuto) | 2 min 40 s (a maioria cai no **golpe final** de quem atrapalha) |
-| Chat + só presentes que ajudam (4 por minuto) | **5 min 42 s** |
-| Chat + só presentes que atrapalham (4 por minuto) | 1 min 35 s |
+| Sem nenhuma interação | **2 min 07 s**, contando os 12 s caído (cada personagem entre 1 min 54 s e 2 min 35 s) |
+| Só chat (6 pessoas comentando e votando, curtidas) | 3 min 12 s |
+| Chat + presentes misturados (8 por minuto) | 2 min 17 s (a maioria cai no **golpe final** de quem atrapalha) |
+| Chat + só presentes que ajudam (4 por minuto) | **4 min 28 s** |
+| Chat + só presentes que atrapalham (4 por minuto) | 1 min 36 s |
+
+Como as habilidades deixam o herói bem mais forte a cada nível, a ameaça também sobe com o nível do herói (`ameaca_por_nivel_do_heroi`, 0.45): quanto mais forte ele fica, mais forte vem a horda.
 
 **Trava contra herói imortal:** depois de 3 minutos vivo, os zumbis que nascem batem 20% mais forte a cada minuto. Por mais forte ou curado que o herói fique, um dia ele cai e a live troca de herói. O herói também nunca fica parado: se passar do cruzamento, volta; se for empurrado pra outra rua, volta contornando os prédios; se ficar muito tempo sem avançar, abre caminho pela horda; se travar, é levado até o cruzamento.
 
@@ -288,9 +321,10 @@ Cada assunto tem o seu arquivo em `public/js/core/`:
 | `city.js` | a cidade: bairros, ruas, bloqueios, ruas sem saída, praças e lojas |
 | `room.js` | o lado de dentro dos prédios (tamanho, móveis, loot e perigos de cada tipo) |
 | `votacao.js` | as opções, as palavras do chat e a janela de votos atrasados |
+| `habilidades.js` | **as habilidades do roguelike**: ativas, passivas, armas novas, treino, como as 3 cartas são sorteadas e o que a IA escolhe. Habilidade nova = acrescentar em `ATIVAS` ou `PASSIVAS` (instruções no começo do arquivo) |
 | `jogo.js` | o resto: herói, zumbis, arena, herói caído, mochila e presentes inteligentes |
 
-**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
+**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
 
 **Para testar o equilíbrio sem live:** `node teste/simular.mjs` roda dezenas de partidas em segundos em 5 cenários (sem interação, só chat, presentes misturados, só presentes que ajudam, só presentes que atrapalham) e mostra quanto cada herói durou. Para testar números sem mexer no `config.json`: `AJUSTES='{"horda_base":8}' node teste/simular.mjs 20 nada`.
 

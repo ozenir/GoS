@@ -5,9 +5,10 @@ import { clamp, dist, dist2, makeRng, DIRS, turnLeft, turnRight, nomeSeguro } fr
 import { City, SHOPS, BAIRROS, P as PERIODO } from './city.js';
 import { Room } from './room.js';
 import { FlowField } from './flow.js';
-import { ZUMBIS, CLASSES, ARMAS, CORPO, MELHORIAS, xpParaNivel } from './dados.js';
+import { ZUMBIS, CLASSES, ARMAS, CORPO, xpParaNivel } from './dados.js';
 import { EFEITOS, ladoDo } from './efeitos.js';
-import { Votacao, lerVoto, OPCOES } from './votacao.js';
+import { Votacao, lerVoto, lerEscolha, OPCOES } from './votacao.js';
+import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi } from './habilidades.js';
 import {
   atributosDaClasse, danoDoHeroi, intervaloTiro, intervaloCorpo, alcanceArma, velocidadeHeroi,
   danoNoHeroi, valorCura, statsZumbi, danoDoZumbi, danoNoZumbi, chanceDoStatus, danoExplosao, danoAliado, ALIADOS,
@@ -25,6 +26,7 @@ export const PADRAO = {
   votoDur: 10, relNum: 10, relDest: 12, protecao: 15, likesPor: 300, maxZ: 90,
   velHeroi: 1.5, noiteCada: 150, noiteDur: 35, predioT: 70, torcidaMax: TORCIDA.maxPessoas,
   atraso: 6,        // atraso da live (s): quanto tempo a tela do TikTok chega atrasada pra quem assiste
+  escolhaDur: 12,   // tempo da contagem da escolha de habilidade (A, B, C) ao subir de nível
   caidoDur: 12      // quanto tempo o herói fica caído esperando presente antes de morrer (0 = morre na hora)
 };
 const CHAVES = {
@@ -32,7 +34,8 @@ const CHAVES = {
   protecao_ao_nascer_segundos: 'protecao', curtidas_por_suprimento: 'likesPor', maximo_zumbis: 'maxZ',
   velocidade_do_heroi: 'velHeroi',
   noite_a_cada_segundos: 'noiteCada', noite_dura_segundos: 'noiteDur', segundos_dentro_do_predio: 'predioT',
-  torcida_maximo_pessoas: 'torcidaMax', atraso_da_live_segundos: 'atraso', segundos_caido: 'caidoDur'
+  torcida_maximo_pessoas: 'torcidaMax', atraso_da_live_segundos: 'atraso', segundos_caido: 'caidoDur',
+  segundos_escolha_habilidade: 'escolhaDur'
 };
 // Campos do config.json que mexem no nível de ameaça (ameaca.js)
 const CHAVES_AMEACA = {
@@ -109,8 +112,13 @@ export class Jogo {
       colete: 0, tiroCd: 0, corpoCd: 0, invT: 0,
       nivel: 1, xp: 0, fx: DIRS[dir][0], fy: DIRS[dir][1], andando: false, mira: null, animT: 0,
       parado: 0, ultimaPos: { x: start.x, y: start.y }, vidaBaixa: false,
-      mochila: []      // kits que chegaram com a vida alta: ele usa sozinho quando precisar
+      mochila: [],     // kits que chegaram com a vida alta: ele usa sozinho quando precisar
+      habs: {}, passivas: {}, treino: 0, habT: {}   // habilidades escolhidas pelo chat (habilidades.js)
     };
+    this.escolha = null;          // escolha de habilidade aberta (votação A/B/C)
+    this.niveisPendentes = 0;     // níveis que ainda vão virar escolha
+    this.escolhaEspera = 0;
+    this.escolhaRes = null;       // última escolha (pra mostrar o resultado)
     this.caido = null;
     this.levantadas = 0;
     this.hero.viewer = this.proximoNome || null;     // { nick, avatar, lado } de quem deu o nome
@@ -166,6 +174,7 @@ export class Jogo {
     this.faseT = 0;
     h.vida = 0;
     this.voto = null;
+    this.escolha = null; this.niveisPendentes = 0;
     const tempo = this.t - this.stats.inicio;
     const q = this.stats.quarteiroes;
     const novoRecorde = q > this.recorde;
@@ -176,7 +185,7 @@ export class Jogo {
       n: h.n, classe: h.classe, nome: CLASSES[h.classe].nome, emoji: CLASSES[h.classe].emoji, curaGolpes: Math.round(this.curaGolpes || 0),
       quarteiroes: q, abates: this.stats.abates, tempo, nivel: h.nivel, predios: this.stats.predios, ameaca: this.nivelAmeaca,
       recorde: this.recorde, novoRecorde, matador: this.stats.matador,
-      caminhos: { ...this.stats.caminhos }, levantadas: this.levantadas,
+      caminhos: { ...this.stats.caminhos }, levantadas: this.levantadas, habs: habilidadesDoHeroi(h),
       topAjuda: topo(this.stats.ajudou), topAtrapalha: topo(this.stats.atrapalhou),
       viewer: h.viewer || null, proximoNome: this.proximoNome
     };
@@ -297,6 +306,7 @@ export class Jogo {
     this.diretor(dt);
     this.processarFila(dt);
     this.atualizarHeroi(dt);
+    if (this.fase === 'jogo' && !this.caido) { this.atualizarEscolha(dt); atualizarHabilidades(this, dt); }
     this.atualizarAliados(dt);
     this.atualizarZumbis(dt);
     this.atualizarItens(dt);
@@ -750,7 +760,7 @@ export class Jogo {
     if (this.faixaT <= 0) {
       this.faixaT = 0.3;
       const cx = dx ? h.x : alvo.x, cy = dx ? alvo.y : h.y;
-      this.faixa = faixaLivre(cx, cy, dx, dy, this.zonasAgora, Math.min(3.5, Math.max(0.5, falta)));
+      this.faixa = faixaLivre(cx, cy, dx, dy, this.zonasHeroi || this.zonasAgora, Math.min(3.5, Math.max(0.5, falta)));
     }
     const lado = this.faixa || 0;
     // Ritmo: enquanto a votação não fecha, anda só o suficiente pra chegar no cruzamento junto com o fim
@@ -1105,8 +1115,8 @@ export class Jogo {
     return novo;
   }
 
-  armaPadrao() { const C = CLASSES[this.hero.classe]; return C.arma === 'escopeta' ? 'pistola' : (C.arma || null); }
-  corpoPadrao() { return CLASSES[this.hero.classe].corpo || 'empurrao'; }
+  armaPadrao() { const h = this.hero, C = CLASSES[h.classe]; if (h.armaFixa) return h.armaFixa; return C.arma === 'escopeta' ? 'pistola' : (C.arma || null); }
+  corpoPadrao() { return this.hero.corpoFixo || CLASSES[this.hero.classe].corpo || 'empurrao'; }
 
   // vida máxima vem dos atributos; se ela cair, a vida atual acompanha
   sincronizarVida() {
@@ -1173,8 +1183,6 @@ export class Jogo {
     while (h.xp >= xpParaNivel(h.nivel)) {
       h.xp -= xpParaNivel(h.nivel);
       h.nivel++;
-      const m = this.rng.pick(MELHORIAS);
-      h.attr.addMod({ ...m.mod, fonte: `nível ${h.nivel}` });
       // Perícias do personagem sobem a cada nível (dados.js → CLASSES[...].crescimento)
       const C = CLASSES[h.classe];
       const subiu = [];
@@ -1185,9 +1193,45 @@ export class Jogo {
       }
       aplicarPericias(h, C);
       this.sincronizarVida();
-      if (m.cura) h.vida = Math.min(h.vidaMax, h.vida + m.cura);
-      this.emit('nivel', { nivel: h.nivel, texto: m.texto, pericias: subiu });
+      h.vida = Math.min(h.vidaMax, h.vida + h.vidaMax * 0.08);   // subir de nível cura um pouco
+      this.emit('nivel', { nivel: h.nivel, pericias: subiu });
+      // cada nível vira uma escolha de habilidade do chat (A, B ou C)
+      this.niveisPendentes++;
+      if (!this.escolha && this.escolhaEspera <= 0) this.escolhaEspera = 0.6;
     }
+  }
+
+  /* =================== Escolha de habilidade (roguelike) =================== */
+  // A cada nível o chat escolhe 1 de 3 cartas (habilidades.js). Mesma janela de votos atrasados da votação.
+  // Se subir vários níveis de uma vez, as escolhas vêm uma depois da outra.
+  abrirEscolha() {
+    const h = this.hero;
+    const cartas = sortearCartas(h, this.rng);
+    this.niveisPendentes--;
+    if (!cartas.length) return;
+    const voto = new Votacao(cartas.map(c => ({ id: c.letra.toLowerCase(), n: c.letra })), this.cfg.escolhaDur, this.cfg.atraso);
+    this.escolha = { voto, cartas, nivel: h.nivel - this.niveisPendentes };
+    this.emit('escolha_abriu', { nivel: this.escolha.nivel, cartas });
+  }
+
+  atualizarEscolha(dt) {
+    if (!this.escolha) {
+      if (this.niveisPendentes > 0 && (this.escolhaEspera -= dt) <= 0) this.abrirEscolha();
+      return;
+    }
+    const e = this.escolha;
+    e.voto.update(dt);
+    if (e.voto.t > 0) return;
+    const h = this.hero;
+    const res = e.voto.fechar(() => escolhaDaIA(h, e.cartas, this.rng).toLowerCase(), this.rng);
+    const carta = e.cartas.find(c => c.letra.toLowerCase() === res.id);
+    aplicarCarta(this, carta);
+    const quem = [];
+    for (const [id, v] of e.voto.votantes) if (v === res.id && quem.length < 3) quem.push(this.nickDe(id));
+    this.escolhaRes = { carta, votos: res.votos, total: e.voto.total, auto: res.auto, empate: !!res.empate, quem, ate: this.t + 3.5, voto: e.voto };
+    this.emit('habilidade', { carta, votos: res.votos, auto: res.auto, quem, x: h.x, y: h.y });
+    this.escolha = null;
+    this.escolhaEspera = 3.5;
   }
 
   /* =================== Zumbis =================== */
@@ -1629,11 +1673,13 @@ export class Jogo {
     const h = this.hero;
     const fixas = this.room ? (this.room.zonas || []) : this.city.zonasEm(h.x - 26, h.y - 26, h.x + 26, h.y + 26);
     this.zonasAgora = this.zonas.length ? fixas.concat(this.zonas) : fixas;
+    // fogo das habilidades do herói (molotov) não machuca ele: o herói só "vê" os outros perigos
+    this.zonasHeroi = this.zonas.some(z => z.doHeroi) ? this.zonasAgora.filter(z => !z.doHeroi) : this.zonasAgora;
   }
 
   ambienteNoHeroi(dt) {
     const h = this.hero;
-    const r = efeitoDoAmbiente(h, this.zonasAgora, dt, this.t, this.rng);
+    const r = efeitoDoAmbiente(h, this.zonasHeroi || this.zonasAgora, dt, this.t, this.rng);
     for (const z of r.entrou) {
       if (z.lentoAoEntrar) { this.deixarLento(z.lentoAoEntrar); this.aplicarStatus(h, 'sangramento', { pilhas: 2, fonte: z.quem }); this.emit('vidro_pisou', { x: h.x, y: h.y }); }
       if (machuca(z.tipo)) this.emit('ambiente', { tipo: z.tipo, x: h.x, y: h.y });
@@ -1741,6 +1787,10 @@ export class Jogo {
         const op = lerVoto(m.texto);
         if (op && this.voto && this.voto.aberta && this.fase === 'jogo') {
           if (this.voto.votar(m.id, op)) this.emit('voto', { nick: nomeSeguro(m.nick), op });
+        }
+        const letra = lerEscolha(m.texto);
+        if (letra && this.escolha?.voto.aberta && this.fase === 'jogo') {
+          if (this.escolha.voto.votar(m.id, letra)) this.emit('voto', { nick: nomeSeguro(m.nick), op: letra, habilidade: true });
         }
         break;
       }
