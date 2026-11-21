@@ -13,13 +13,13 @@
 
 export const AMEACA = {
   // Pontos de ameaça. O nível é 1 + pontos (arredondado pra baixo).
-  porMinuto: 0.9,
-  porQuarteirao: 0.25,
-  porNivelHeroi: 0.5,
+  porMinuto: 1.2,
+  porQuarteirao: 0.12,
+  porNivelHeroi: 0.18,
   maximo: 30,
 
   // Zumbis normais na rua ao mesmo tempo (o diretor vai repondo)
-  naturaisBase: 5,
+  naturaisBase: 14,
   naturaisPorNivel: 2.5,
   // Segundos entre um aparecimento e outro
   intervaloBase: 1.6,
@@ -29,8 +29,8 @@ export const AMEACA = {
   grupoMax: 6,
 
   // Hordas que chegam sozinhas de tempos em tempos
-  hordaCadaSegundos: 40,
-  hordaBase: 5,
+  hordaCadaSegundos: 24,
+  hordaBase: 10,
   hordaPorNivel: 2,
   hordaMax: 30,
 

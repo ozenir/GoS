@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {
   Atributos, atributosDaClasse, danoDoHeroi, danoNoHeroi, intervaloTiro, intervaloCorpo, alcanceArma,
-  velocidadeHeroi, valorCura, statsZumbi, danoExplosao, danoAliado, ESCALA_AMEACA
+  velocidadeHeroi, valorCura, statsZumbi, danoExplosao, danoAliado, ESCALA_AMEACA, TORCIDA, aplicarTorcida
 } from '../public/js/core/dano.js';
 import { CLASSES, ARMAS, CORPO, ZUMBIS } from '../public/js/core/dados.js';
 
@@ -156,6 +156,21 @@ teste('explosão perde metade do dano na borda e zera fora', () => {
 teste('aliados ficam mais fortes com a ameaça', () => {
   assert.equal(danoAliado('cachorro', 1), 22);
   assert.ok(danoAliado('cachorro', 3) > 22);
+});
+
+console.log('Torcida');
+teste('cada pessoa dá dano e regeneração, até o limite', () => {
+  const h = heroi('policial');
+  assert.equal(aplicarTorcida(h, 4), 4);
+  perto(h.attr.get('dano'), 1 + 4 * TORCIDA.danoPorPessoa);
+  perto(h.attr.get('regen'), 4 * TORCIDA.regenPorPessoa);
+  assert.equal(aplicarTorcida(h, 50), TORCIDA.maxPessoas);
+  perto(h.attr.get('dano'), 1 + TORCIDA.maxPessoas * TORCIDA.danoPorPessoa);
+});
+teste('sem ninguém comentando, a torcida some', () => {
+  const h = heroi('policial');
+  aplicarTorcida(h, 5); aplicarTorcida(h, 0);
+  assert.equal(h.attr.get('dano'), 1); assert.equal(h.attr.get('regen'), 0);
 });
 
 console.log(`\n${ok} testes passaram.`);

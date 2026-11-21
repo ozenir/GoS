@@ -228,6 +228,7 @@ export class Hud {
     if (g.fila.length && g.protecao > 0) st.push(`<span class="chip mal">😈 ${g.fila.length} na fila</span>`);
     if (g.noiteT > 0) st.push(`<span class="chip mal">🌙 noite ${Math.ceil(g.noiteT)}s</span>`);
     if (g.room) st.push(`<span class="chip">${g.room.shop.emoji} ${g.room.shop.nome} · ${Math.max(0, Math.ceil(g.cfg.predioT - g.salaT))}s</span>`);
+    if (g.torcidaN > 0 && g.fase === 'jogo') st.push(`<span class="chip ok" title="Quem comentou nos últimos 30 s dá força ao herói">📣 torcida ${g.torcidaN} · +${Math.round(g.torcidaN * 3)}% dano</span>`);
     if (g.trecho?.livre && !g.room && g.fase === 'jogo') st.push(`<span class="chip ok">${g.trecho.tipo === 'historia' ? '📜 rua da pista' : '🍃 rua tranquila'}</span>`);
     if (h.invT > 0) st.push(`<span class="chip ok">✨ invencível ${Math.ceil(h.invT)}s</span>`);
     const lento = h.attr.restante('lento');
@@ -291,7 +292,7 @@ export class Hud {
       $('v-barra').style.width = (frac * 100).toFixed(1) + '%';
       tempo.classList.toggle('urg', v.restante < 3.5);
       this.set('v-titulo', `🗳️ PRÓXIMO CRUZAMENTO · ${Math.ceil(v.restante)}s`);
-      this.set('v-sub', v.loja ? `${v.loja.emoji} ${v.loja.nome} aqui! comente o número` : 'comente o número');
+      this.set('v-sub', v.loja ? `${v.loja.emoji} ${v.loja.nome} aqui!` : 'comente o número');
     } else {
       tempo.hidden = true; res.hidden = false;
       const r = v.resultado, op = v.opcoes.find(o => o.id === r.id);

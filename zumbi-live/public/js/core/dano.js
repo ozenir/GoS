@@ -142,6 +142,22 @@ export function danoNoHeroi(h, bruto) {
 // Quanto uma cura (em % da vida máxima) devolve de vida
 export const valorCura = (h, pct) => h.attr.get('vidaMax') * pct / 100 * h.attr.get('cura');
 
+// Torcida: cada pessoa diferente que comentou nos últimos segundos dá um pouco de força ao herói.
+// É o jeito de o chat de graça ajudar (e de a live sem ninguém comentando ser mais curta).
+export const TORCIDA = {
+  janelaSegundos: 30,     // conta quem comentou nesse tempo
+  maxPessoas: 10,         // acima disso não aumenta mais
+  danoPorPessoa: 0.03,    // +3% de dano por pessoa (até +30%)
+  regenPorPessoa: 0.12    // +0,12 de vida por segundo por pessoa (até +1,2/s)
+};
+export function aplicarTorcida(h, pessoas, T = TORCIDA) {
+  const k = Math.min(T.maxPessoas, Math.max(0, pessoas));
+  if (k === 0) { h.attr.removeMod('torcida_dano'); h.attr.removeMod('torcida_regen'); return 0; }
+  h.attr.addMod({ id: 'torcida_dano', attr: 'dano', mult: 1 + k * T.danoPorPessoa, fonte: 'torcida' });
+  h.attr.addMod({ id: 'torcida_regen', attr: 'regen', soma: k * T.regenPorPessoa, fonte: 'torcida' });
+  return k;
+}
+
 /* ---------------- Zumbis ---------------- */
 // Resistência = fração do dano recebido que o zumbi ignora (0 a 0,6).
 export const resistenciaDe = z => (z && z.resistencia) || 0;

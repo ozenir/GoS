@@ -10,7 +10,8 @@ import { EFEITOS, ladoDo } from './efeitos.js';
 import { Votacao, lerVoto, OPCOES } from './votacao.js';
 import {
   atributosDaClasse, danoDoHeroi, intervaloTiro, intervaloCorpo, alcanceArma, velocidadeHeroi,
-  danoNoHeroi, valorCura, statsZumbi, danoDoZumbi, resistenciaDe, FOGO_DPS, danoExplosao, danoAliado, ALIADOS
+  danoNoHeroi, valorCura, statsZumbi, danoDoZumbi, resistenciaDe, FOGO_DPS, danoExplosao, danoAliado, ALIADOS,
+  TORCIDA, aplicarTorcida
 } from './dano.js';
 import {
   AMEACA, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos
@@ -20,18 +21,20 @@ import { Historia, HISTORIA } from './historia.js';
 
 export const PADRAO = {
   votoDur: 12, relNum: 10, relDest: 12, protecao: 15, likesPor: 300, maxZ: 90,
-  velHeroi: 1.5, noiteCada: 150, noiteDur: 35, predioT: 70
+  velHeroi: 1.5, noiteCada: 150, noiteDur: 35, predioT: 70, torcidaMax: TORCIDA.maxPessoas
 };
 const CHAVES = {
   segundos_de_votacao: 'votoDur', segundos_do_relatorio: 'relNum', segundos_dos_destaques: 'relDest',
   protecao_ao_nascer_segundos: 'protecao', curtidas_por_suprimento: 'likesPor', maximo_zumbis: 'maxZ',
   velocidade_do_heroi: 'velHeroi',
-  noite_a_cada_segundos: 'noiteCada', noite_dura_segundos: 'noiteDur', segundos_dentro_do_predio: 'predioT'
+  noite_a_cada_segundos: 'noiteCada', noite_dura_segundos: 'noiteDur', segundos_dentro_do_predio: 'predioT',
+  torcida_maximo_pessoas: 'torcidaMax'
 };
 // Campos do config.json que mexem no nível de ameaça (ameaca.js)
 const CHAVES_AMEACA = {
   ameaca_por_minuto: 'porMinuto', ameaca_por_quarteirao: 'porQuarteirao', ameaca_por_nivel_do_heroi: 'porNivelHeroi',
-  horda_a_cada_segundos: 'hordaCadaSegundos', horda_base: 'hordaBase', horda_por_nivel: 'hordaPorNivel'
+  horda_a_cada_segundos: 'hordaCadaSegundos', horda_base: 'hordaBase', horda_por_nivel: 'hordaPorNivel',
+  zumbis_na_rua_base: 'naturaisBase', zumbis_na_rua_por_nivel: 'naturaisPorNivel', ameaca_por_caminho_perigoso: 'porPerigo'
 };
 // Chances de cada tipo de caminho (caminhos.js)
 const CHAVES_CAMINHO = { caminho_perigoso_porcento: 'perigoso', caminho_livre_porcento: 'livre', caminho_historia_porcento: 'historia' };
@@ -57,6 +60,9 @@ export class Jogo {
     this.ultimoHeroi = null;
     this.pendentesAjuda = [];
     this.fila = [];
+    this.torcida = new Map();   // quem comentou -> quando
+    this.torcidaN = 0;
+    this.torcidaT = 0;
     this.novoHeroi();
   }
 
@@ -175,6 +181,7 @@ export class Jogo {
       return;
     }
     this.protecao = Math.max(0, this.protecao - dt);
+    this.atualizarTorcida(dt);
     this.noiteT = Math.max(0, this.noiteT - dt);
     this.heliT = Math.max(0, this.heliT - dt);
     this.diretor(dt);
@@ -427,7 +434,7 @@ export class Jogo {
     this.stats.caminhos[s.tipo]++;
     if (s.tipo === 'perigoso') {
       const P = PERIGOS[s.perigo];
-      this.ameacaBonus += AMEACA_POR_PERIGO;
+      this.ameacaBonus += this.A.porPerigo ?? AMEACA_POR_PERIGO;
       this.agendar(ATRASO_PERIGO, () => { if (!this.room) P.aplicar(this, this.nivelAmeaca); });
       this.emit('caminho', { tipo: 'perigoso', perigo: s.perigo, nome: P.nome, emoji: P.emoji, texto: P.texto });
     } else if (s.tipo === 'historia') {
@@ -1211,6 +1218,7 @@ export class Jogo {
     switch (m.type) {
       case 'chat': {
         this.lembrarNome(m.id, m.nick);
+        this.torcida.set(m.id, this.t);
         const op = lerVoto(m.texto);
         if (op && this.voto && this.voto.aberta && this.fase === 'jogo') {
           if (this.voto.votar(m.id, op)) this.emit('voto', { nick: nomeSeguro(m.nick), op });
@@ -1261,6 +1269,17 @@ export class Jogo {
     } else {
       if (this.fila.length < 40) this.fila.push({ regra, qtd, quem, coins: coins * qtd });
     }
+  }
+
+  // Torcida (dano.js → TORCIDA): recalcula uma vez por segundo
+  atualizarTorcida(dt) {
+    this.torcidaT -= dt;
+    if (this.torcidaT > 0) return;
+    this.torcidaT = 1;
+    const limite = this.t - TORCIDA.janelaSegundos;
+    for (const [id, t] of this.torcida) if (t < limite) this.torcida.delete(id);
+    const n = aplicarTorcida(this.hero, this.torcida.size, { ...TORCIDA, maxPessoas: this.cfg.torcidaMax });
+    if (n !== this.torcidaN) { const subiu = n > this.torcidaN; this.torcidaN = n; this.emit('torcida', { pessoas: n, subiu }); }
   }
 
   lembrarNome(id, nick) {

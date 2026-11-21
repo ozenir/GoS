@@ -69,7 +69,21 @@ Dê dois cliques em **`1-testar-sem-live.bat`**. O jogo abre no navegador com um
 | 🚓 Delegacia | alto | baú com arma, colete e munição |
 | 🏥 Hospital | muito alto | kits, baú com arma e chance de baú lendário |
 
-**A dificuldade sobe com o tempo.** Mais zumbis e mais fortes a cada quarteirão e a cada minuto, e de tempos em tempos vem uma **noite** (escuro, mais zumbis). Sem presentes, um herói dura uns 7 a 8 minutos. Quando a vida está muito baixa, o jogo alivia um pouco os zumbis naturais (os mandados pelo público nunca são aliviados).
+**Os caminhos.** Toda vez que o herói vira num cruzamento (pelo voto ou pela IA), o jogo sorteia o que tem nessa rua:
+
+| Caminho | Chance | O que acontece |
+|---|---|---|
+| ☠️ Perigoso | 80% | aparece um perigo e a ameaça sobe um pouco: ⚠️ emboscada (zumbis dos dois lados), 🧟 rua lotada, 🏃 corredores, 💣 explosivos, 🌑 rua escura ou 👹 chefe de rua |
+| 🍃 Livre | 18% | nenhum zumbi novo até o próximo cruzamento: hora de respirar |
+| 📜 História | 2% | rua livre com um papel brilhando no chão: um fragmento da história |
+
+**A história.** São 12 fragmentos em 3 capítulos ("Os Diários de Porto Sereno"), encontrados um por vez, na ordem. O progresso continua de um herói para o outro e de uma live para a outra. Para escrever ou mudar a história, mexa só no arquivo `public/js/core/historia.js` (as instruções estão no começo dele).
+
+**O nível de ameaça (☠️).** Começa em 1 e sobe com o tempo vivo, com os quarteirões andados, com cada caminho perigoso e com o nível do herói. Assim, quanto mais forte o herói fica, mais fortes os zumbis ficam. A cada nível os zumbis nascem com mais vida, dano, velocidade e **resistência** (ignoram parte do dano), aparecem mais zumbis na rua e as **hordas ficam maiores**: a horda que chega sozinha de tempos em tempos e também as mandadas por presentes. De tempos em tempos vem uma **noite** (escuro, mais zumbis). Quando a vida está muito baixa, o jogo alivia um pouco os zumbis normais (os mandados pelo público nunca são aliviados).
+
+**A torcida (📣).** Comentar também ajuda: cada pessoa diferente que comentou nos últimos 30 segundos dá +3% de dano e um pouco de regeneração ao herói (até 10 pessoas).
+
+**Quanto dura.** Sem ninguém interagindo, o herói cai em uns **2 minutos**. Com chat e presentes que ajudam, dura bem mais. Esse é o estímulo pra live participar. (Números medidos no simulador estão em "Equilíbrio", mais abaixo.)
 
 ## Presentes
 
@@ -131,7 +145,11 @@ Tudo que **ajuda** acontece na hora. Tudo que **atrapalha** entra numa fila: sai
 | `curtidas_por_suprimento` | curtidas para cair um suprimento (0 desliga) | 300 |
 | `maximo_zumbis` | limite de zumbis ao mesmo tempo (os do público passam um pouco disso) | 90 |
 | `velocidade_do_heroi` | casas por segundo | 1.5 |
-| `dificuldade_por_quarteirao` / `dificuldade_por_minuto` | quanto o jogo fica mais difícil. Maior = heróis morrem mais rápido | 0.1 / 0.17 |
+| `ameaca_por_minuto` / `ameaca_por_quarteirao` / `ameaca_por_caminho_perigoso` / `ameaca_por_nivel_do_heroi` | quanto cada coisa faz a ameaça subir (1 = um nível inteiro). Maior = heróis morrem mais rápido | ver config |
+| `zumbis_na_rua_base` / `zumbis_na_rua_por_nivel` | zumbis normais na rua ao mesmo tempo, no nível 1 e a mais por nível | ver config |
+| `horda_a_cada_segundos` / `horda_base` / `horda_por_nivel` | a horda que chega sozinha: de quanto em quanto tempo, tamanho no nível 1 e a mais por nível | ver config |
+| `caminho_perigoso_porcento` / `caminho_livre_porcento` / `caminho_historia_porcento` | chance de cada tipo de caminho | 80 / 18 / 2 |
+| `torcida_maximo_pessoas` | quantas pessoas da torcida contam no máximo (0 desliga a torcida) | 10 |
 | `noite_a_cada_segundos` / `noite_dura_segundos` | ciclo da noite (0 desliga) | 150 / 35 |
 | `segundos_dentro_do_predio` | quanto tempo até o alarme mandar ele sair | 70 |
 
@@ -159,7 +177,34 @@ Tudo que **ajuda** acontece na hora. Tudo que **atrapalha** entra numa fila: sai
 
 `emoji`, `nome` e `moedas` servem para a legenda e para os botões de teste. `seguir` e `compartilhar` usam os mesmos efeitos. Depois de mudar o `config.json`, feche a janela preta e abra de novo.
 
-**Para testar o equilíbrio sem live:** `node teste/simular.mjs` roda dezenas de partidas em segundos e mostra quanto tempo cada herói durou, com e sem público.
+## Equilíbrio (medido no simulador)
+
+| Cenário | Quanto o herói dura em média |
+|---|---|
+| Sem nenhuma interação | **2 min 05 s** (metade cai até 2 min 01 s) |
+| Só chat (6 pessoas comentando e votando, curtidas) | 2 min 41 s (+29%) |
+| Chat + presentes misturados (8 por minuto) | 3 min 04 s (+47%) |
+| Chat + só presentes que ajudam (4 por minuto) | 3 min 14 s (+55%) |
+| Chat + só presentes que atrapalham (4 por minuto) | 2 min 18 s |
+
+O que mais mexe nisso é `ameaca_por_minuto` (maior = partidas mais curtas) e o tamanho/frequência das hordas. Subir a ameaça devagar e começar com mais pressão faz a ajuda do público render mais; subir rápido deixa tudo mais curto, com ou sem ajuda.
+
+## Para quem mexe no código
+
+Cada assunto tem o seu arquivo em `public/js/core/`:
+
+| Arquivo | O que tem |
+|---|---|
+| `dano.js` | **todas as contas de combate**: atributos do herói (vida, dano, cadência, velocidade, defesa, crítico, alcance, cura, regeneração), dano de armas, corpo a corpo, fogo, zumbis, explosões, aliados e torcida. Buff novo = um modificador (`h.attr.addMod(...)`); as instruções estão no começo do arquivo |
+| `ameaca.js` | quando a ameaça sobe e quantos zumbis vêm (hordas, grupos, prédios) |
+| `caminhos.js` | as chances dos caminhos e os tipos de perigo |
+| `historia.js` | a história (só texto) |
+| `dados.js` | tabelas de zumbis, classes, armas e melhorias de nível |
+| `efeitos.js` | o que cada presente faz |
+
+**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/ameaca.test.mjs` e `node teste/caminhos.test.mjs`.
+
+**Para testar o equilíbrio sem live:** `node teste/simular.mjs` roda dezenas de partidas em segundos em 5 cenários (sem interação, só chat, presentes misturados, só presentes que ajudam, só presentes que atrapalham) e mostra quanto cada herói durou. Para testar números sem mexer no `config.json`: `AJUSTES='{"horda_base":8}' node teste/simular.mjs 20 nada`.
 
 ---
 

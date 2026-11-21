@@ -13,7 +13,7 @@ import { tamanhoHorda } from './ameaca.js';
 export const CHANCES_PADRAO = { perigoso: 80, livre: 18, historia: 2 };
 
 // Quanto um caminho perigoso aumenta a ameaça (em pontos; 1 ponto = 1 nível)
-export const AMEACA_POR_PERIGO = 0.3;
+export const AMEACA_POR_PERIGO = 0.18;
 
 // Segundos depois de virar a esquina até o perigo aparecer (dá tempo de ler o aviso)
 export const ATRASO_PERIGO = 2.5;
