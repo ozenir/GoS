@@ -2,7 +2,7 @@
 // Os navegadores só liberam o áudio depois de um clique; na janela do jogo (atalho 3) ele toca sozinho.
 //
 // Dois caminhos de som:
-//   fx     avisos da tela (voto, nível, baú, presente...): limpos, sem acústica
+//   tela   avisos da tela (voto, nível, baú, presente...): identidade "16 bits ouvido de longe" (ver naTela)
 //   mundo  o que acontece na rua (tiro, explosão, zumbi...): passa pela "acústica" abaixo
 //
 // Acústica (física do som, com a câmera no alto como num helicóptero):
@@ -40,6 +40,14 @@ export class Som {
       const altura = this.ac.createBiquadFilter(); altura.type = 'lowpass'; altura.frequency.value = 3800; altura.Q.value = 0.5;
       const grave = this.ac.createBiquadFilter(); grave.type = 'lowshelf'; grave.frequency.value = 180; grave.gain.value = 4;
       this.mundo.connect(altura); altura.connect(grave); grave.connect(this.fx);
+      // tela (avisos) → sem o brilho de cima → fx, com o eco curto dos consoles de 16 bits (repete 0,19 s depois, mais abafado)
+      this.tela = this.ac.createGain();
+      const telaLp = this.ac.createBiquadFilter(); telaLp.type = 'lowpass'; telaLp.frequency.value = 3200; telaLp.Q.value = 0.6;
+      const eco = this.ac.createDelay(1); eco.delayTime.value = 0.19;
+      const ecoLp = this.ac.createBiquadFilter(); ecoLp.type = 'lowpass'; ecoLp.frequency.value = 1500;
+      const ecoG = this.ac.createGain(); ecoG.gain.value = 0.3;
+      this.tela.connect(telaLp); telaLp.connect(this.fx);
+      telaLp.connect(eco); eco.connect(ecoLp); ecoLp.connect(ecoG); ecoG.connect(this.fx); ecoG.connect(eco);
       this.mus = this.ac.createGain(); this.mus.connect(this.master);
       const n = this.ac.sampleRate * 1.5;
       this.ruido = this.ac.createBuffer(1, n, this.ac.sampleRate);
@@ -119,11 +127,33 @@ export class Som {
   chama() { if (this.pode('chama', 0.09)) this.noMundo(0, 0.3, () => this.noise(0.14, 0.18, 'lowpass', 900, 0, 0.5, 400)); }
   acerto(d = 2) { if (this.pode('acerto', 0.04)) this.noMundo(d, 0.2, () => this.noise(0.06, 0.18, 'lowpass', 500)); }
   golpe(taco) { this.noMundo(0.5, 0.3, () => { this.noise(0.1, taco ? 0.4 : 0.25, 'lowpass', taco ? 700 : 400); this.osc('sine', 160, 60, 0.1, 0.25); }); }
-  morteZumbi(chefe, d = 3) {
-    if (chefe) { this.noMundo(d, 1.4, () => { this.osc('sawtooth', 120, 30, 1.2, 0.3); this.noise(0.9, 0.4, 'lowpass', 400, 0, 0.7, 60); }); return; }
-    if (!this.pode('morte', 0.06)) return;
-    this.noMundo(d, 0.4, () => { this.osc('sawtooth', 160 + Math.random() * 60, 50, 0.25, 0.12); this.noise(0.15, 0.15, 'lowpass', 700); });
+  // Zumbi morrendo: o último suspiro. 3 jeitos (sorteados): 0 = gemido que desce e termina num sopro,
+  // 1 = puxa o ar (engasgo) e solta um gemido curto, 2 = estertor (a garganta chiando) que vai sumindo.
+  // Muitos morrendo juntos (horda): cada um mais baixo, e no máximo uns 8 por segundo.
+  morteZumbi(chefe, d = 3, tipo = 'comum') {
+    if (!this.pode(chefe ? 'morteChefe' : 'morte', chefe ? 0.3 : 0.12)) return;
+    const agora = performance.now();
+    this.mortesRecentes = (this.mortesRecentes || []).filter(t => agora - t < 600); this.mortesRecentes.push(agora);
+    const k = 1 / Math.sqrt(this.mortesRecentes.length);
+    const f = (VOZ_BASE[tipo] || 110) * (0.9 + Math.random() * 0.2) * (chefe ? 0.85 : 1);
+    const vol = (chefe ? 0.2 : 0.13) * k, longo = chefe ? 1.6 : 1;
+    this.noMundo(d, 2.5 * longo, () => {
+      const qual = Math.floor(Math.random() * 3);
+      if (qual === 0) {
+        this.voz(f, f * 0.5, 0.9 * longo, vol, [[420, 4, 1.5], [900, 5, 0.6]], 0, 0.25, 0.03);
+        this.noise(0.7 * longo, vol * 0.45, 'bandpass', 800, 0.5 * longo, 1.2, 300, 0.08);       // o ar saindo
+      } else if (qual === 1) {
+        this.noise(0.28, vol * 0.5, 'bandpass', 1300, 0, 2.5, 2200, 0.12);                        // puxa o ar
+        this.voz(f * 1.1, f * 0.6, 0.6 * longo, vol, [[520, 4, 1.4], [1100, 5, 0.6]], 0.26, 0.4);
+        this.noise(0.5 * longo, vol * 0.35, 'bandpass', 700, 0.7, 1.2, 250, 0.06);
+      } else {
+        this.voz(f * 0.8, f * 0.55, 1.1 * longo, vol * 0.9, [[380, 4, 1.4], [820, 5, 0.7]], 0, 0.95);   // estertor
+        this.noise(0.9 * longo, vol * 0.3, 'bandpass', 600, 0.2, 1.5, 220, 0.15);
+      }
+      if (chefe) this.nota('sine', 80, 0.15, 0.6, 0.25 * k, 0.004, 300, 38);   // o corpo grande caindo
+    });
   }
+
   mordida(chefe) { if (this.pode('mordida', 0.15)) this.noMundo(0.6, 0.3, () => { this.noise(0.12, chefe ? 0.45 : 0.3, 'lowpass', chefe ? 350 : 800); this.osc('sine', chefe ? 90 : 150, 50, 0.12, 0.3); }); }
   // Explosão ouvida do alto e de longe: quase só grave. Uma pancada funda (a onda de pressão), um estrondo
   // que vai sumindo devagar, um pouco de médio só quando é perto (a acústica corta de longe) e o eco nos prédios.
@@ -221,54 +251,91 @@ export class Som {
     this.vozZumbi(qual, z.tipo, z.d);
   }
 
-  /* ---------- avisos da tela ---------- */
-  cura() { [523, 659, 784].forEach((f, i) => this.osc('triangle', f, f, 0.25, 0.14, i * 0.06)); }
-  municao() { this.noise(0.05, 0.2, 'highpass', 3000); this.noise(0.05, 0.2, 'highpass', 3000, 0.09); this.osc('square', 900, 900, 0.04, 0.05, 0.14); }
-  colete() { this.osc('triangle', 300, 600, 0.15, 0.15); }
-  bloqueio() { this.osc('square', 1200, 800, 0.08, 0.08); this.noise(0.08, 0.15, 'highpass', 2500); }
-  bau(lendario) {
-    this.noise(0.15, 0.2, 'lowpass', 900);
-    const notas = lendario ? [523, 659, 784, 1047, 1319, 1568] : [392, 523, 659, 784];
-    notas.forEach((f, i) => this.osc(lendario ? 'square' : 'triangle', f, f, 0.3, lendario ? 0.09 : 0.12, 0.12 + i * 0.08));
-    if (lendario) for (let i = 0; i < 10; i++) this.osc('sine', 2000 + Math.random() * 2000, null, 0.12, 0.04, 0.5 + i * 0.05);
+  /* ---------- avisos da tela (identidade "16 bits ouvido de longe") ---------- */
+  // Tudo que avisa quem assiste (presente, voto, nível, baú...) usa os mesmos poucos instrumentos, como num
+  // videogame de 16 bits: sino, marimba, metal grave e tambor. Ataque suave, sem o brilho de cima e com o
+  // eco curto do caminho "tela" (o eco dos consoles de 16 bits). Coisa boa sobe e soa em sino; coisa ruim é
+  // grave, em metal e tambor.
+  naTela(fn) {
+    if (!this.running) return;
+    const antes = this.alvo; this.alvo = this.tela;
+    try { fn(); } finally { this.alvo = antes; }
   }
-  item() { this.osc('triangle', 660, 990, 0.1, 0.1); }
-  nivel() { [392, 494, 587, 784].forEach((f, i) => this.osc('square', f, f, 0.16, 0.08, i * 0.07)); }
+  // uma nota com filtro próprio: ataque em segundos, corte = até onde vão os agudos
+  nota(tipo, f, quando, dur, vol, ataque = 0.006, corte = 2600, f1 = null) {
+    const ac = this.ac, t = ac.currentTime + quando;
+    const o = ac.createOscillator(); o.type = tipo; o.frequency.setValueAtTime(f, t);
+    if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = corte; lp.Q.value = 0.5;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + ataque); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(lp); lp.connect(g); g.connect(this.alvo || this.fx); o.start(t); o.stop(t + dur + 0.05);
+  }
+  // sino (glockenspiel de 16 bits): fundamental + harmônicos que somem mais rápido
+  sino(f, quando = 0, dur = 0.7, vol = 0.1) {
+    this.nota('triangle', f, quando, dur, vol, 0.006, 2400);
+    this.nota('sine', f * 2, quando, dur * 0.5, vol * 0.35, 0.004, 3200);
+    this.nota('sine', f * 3.01, quando, dur * 0.25, vol * 0.12, 0.003, 3200);
+  }
+  // marimba: batida de madeira, curta
+  madeira(f, quando = 0, vol = 0.08) { this.nota('sine', f, quando, 0.22, vol, 0.003, 2000); this.nota('sine', f * 3.98, quando, 0.05, vol * 0.25, 0.002, 2600); }
+  // metal grave (trompa ao longe): duas ondas quadradas um pouco desafinadas, bem abafadas, entrando devagar
+  metal(f, quando = 0, dur = 0.6, vol = 0.07) { this.nota('square', f, quando, dur, vol, 0.05, 700); this.nota('square', f * 1.006, quando, dur, vol * 0.7, 0.07, 600); }
+  // tambor ao longe (taiko)
+  tambor(quando = 0, vol = 0.3) { this.nota('sine', 95, quando, 0.45, vol, 0.004, 400, 42); this.noise(0.25, vol * 0.4, 'lowpass', 320, quando, 0.7, 90); }
+
+  cura() { this.naTela(() => [523, 659, 784].forEach((f, i) => this.sino(f, i * 0.09, 0.9, 0.07))); }
+  municao() { this.naTela(() => { this.noise(0.04, 0.16, 'bandpass', 2200, 0, 2); this.noise(0.05, 0.2, 'bandpass', 1600, 0.11, 2); this.madeira(659, 0.2, 0.05); }); }   // pente encaixando: clique-claque
+  colete() { this.naTela(() => { this.noise(0.22, 0.1, 'bandpass', 1100, 0, 1.5, 700, 0.04); this.nota('sine', 110, 0.18, 0.2, 0.18, 0.004, 400, 70); this.sino(523, 0.25, 0.5, 0.05); }); }   // velcro + tapinha
+  bloqueio() { this.naTela(() => { this.sino(1175, 0, 0.35, 0.06); this.noise(0.06, 0.1, 'bandpass', 1800, 0, 2); }); }   // o golpe bateu no colete: "tim"
+  bau(lendario) {
+    this.naTela(() => {
+      this.noise(0.35, 0.12, 'bandpass', 380, 0, 3, 700, 0.06);   // tampa rangendo
+      const notas = lendario ? [523, 659, 784, 1047, 1319, 1568] : [392, 523, 659, 784];
+      notas.forEach((f, i) => this.sino(f, 0.2 + i * 0.09, 0.8, lendario ? 0.07 : 0.08));
+      if (lendario) for (let i = 0; i < 8; i++) this.sino(1568 + Math.random() * 800, 0.75 + i * 0.07, 0.4, 0.025);
+    });
+  }
+  item() { this.naTela(() => { this.sino(784, 0, 0.35, 0.06); this.sino(1175, 0.06, 0.4, 0.05); }); }
+  nivel() { this.naTela(() => { [392, 494, 587, 784].forEach((f, i) => this.sino(f, i * 0.08, 0.9, 0.07)); this.nota('triangle', 196, 0, 1.2, 0.06, 0.08, 800); }); }
   presente(lado) {
     if (!this.pode('presente', 0.12)) return;
-    if (lado === 'ajuda') [784, 1047].forEach((f, i) => this.osc('triangle', f, f, 0.18, 0.12, i * 0.07));
-    else [311, 233].forEach((f, i) => this.osc('square', f, f, 0.2, 0.07, i * 0.09));
+    this.naTela(() => {
+      if (lado === 'ajuda') { this.sino(659, 0, 0.6, 0.08); this.sino(988, 0.08, 0.7, 0.07); }
+      else { this.metal(117, 0, 0.55, 0.06); this.metal(123.5, 0.02, 0.55, 0.05); this.tambor(0, 0.18); }
+    });
   }
-  voto() { if (this.pode('voto', 0.05)) this.osc('sine', 1200, 1400, 0.05, 0.05); }
-  tique(urgente) { this.osc('square', urgente ? 1000 : 700, null, 0.04, urgente ? 0.08 : 0.04); }
-  decisao() { [523, 784].forEach((f, i) => this.osc('triangle', f, f, 0.2, 0.12, i * 0.08)); }
-  virou() { this.noise(0.18, 0.08, 'bandpass', 1500, 0, 1, 500); }
+  voto() { if (this.pode('voto', 0.05)) this.naTela(() => this.madeira(880 + Math.random() * 60, 0, 0.035)); }
+  tique(urgente) { this.naTela(() => this.madeira(urgente ? 1047 : 784, 0, urgente ? 0.09 : 0.05)); }
+  decisao() { this.naTela(() => { this.madeira(523, 0, 0.09); this.madeira(784, 0.1, 0.09); this.sino(784, 0.1, 0.6, 0.04); }); }
+  virou() { this.noMundo(0, 0.3, () => this.noise(0.22, 0.05, 'bandpass', 500, 0, 1.2, 1000, 0.08)); }
   chefe(rei) {
-    this.osc('sawtooth', rei ? 45 : 60, rei ? 30 : 40, 2.2, 0.35);
-    this.noise(1.6, 0.35, 'lowpass', 300, 0, 0.8, 60);
-    [0, 0.5, 1].forEach(q => this.osc('square', rei ? 98 : 131, rei ? 92 : 123, 0.4, 0.15, q + 0.2));
+    this.naTela(() => {
+      this.metal(rei ? 73 : 98, 0, 2, 0.09); this.metal(rei ? 69 : 92.5, 0.6, 1.6, 0.07);   // trompa ao longe
+      [0, 0.45, 0.9].forEach(q => this.tambor(q, 0.32));
+      this.noise(1.6, 0.18, 'lowpass', 260, 0, 0.8, 60, 0.2);
+    });
   }
   alarme(seg = 6) {
     if (!this.running) return;
-    for (let i = 0; i < seg * 2.5; i++) this.osc('square', i % 2 ? 660 : 880, null, 0.36, 0.05, i * 0.4);
+    this.noMundo(5, seg * 1 + 1, () => { for (let i = 0; i < seg * 2.5; i++) this.osc('square', i % 2 ? 660 : 880, null, 0.36, 0.04, i * 0.4); });
   }
-
-  zap() { if (this.pode('zap', 0.1)) { this.noise(0.15, 0.25, 'highpass', 3000); this.osc('sawtooth', 900, 200, 0.15, 0.08); } }
-  arremesso() { if (this.pode('arr', 0.2)) this.noise(0.2, 0.08, 'bandpass', 1200, 0, 1, 400); }
-  habilidade() { [523, 659, 784, 1047].forEach((f, i) => this.osc('triangle', f, f, 0.18, 0.11, i * 0.07)); }
-  escolha() { [392, 523].forEach((f, i) => this.osc('square', f, f, 0.12, 0.07, i * 0.1)); }
-  caiu() { this.osc('sawtooth', 220, 55, 0.7, 0.2); this.noise(0.5, 0.25, 'lowpass', 400, 0, 0.7, 80); }
-  levantou() { [262, 392, 523, 784].forEach((f, i) => this.osc('square', f, f, 0.14, 0.1, i * 0.06)); this.noise(0.3, 0.2, 'lowpass', 900, 0, 0.6, 200); }
-  golpeFinal() { this.osc('sawtooth', 160, 40, 0.6, 0.22); this.osc('square', 80, 40, 0.5, 0.12, 0.1); }
-  coracao() { this.osc('sine', 70, 50, 0.12, 0.35); this.osc('sine', 70, 50, 0.12, 0.25, 0.18); }
-  morteHeroi() { [392, 349, 311, 262].forEach((f, i) => this.osc('triangle', f, f * 0.98, 0.5, 0.16, i * 0.32)); this.noise(1.5, 0.2, 'lowpass', 300); }
-  novoHeroi() { [262, 330, 392, 523].forEach((f, i) => this.osc('triangle', f, f, 0.25, 0.12, i * 0.1)); }
-  recorde() { [523, 659, 784, 1047, 784, 1047].forEach((f, i) => this.osc('square', f, f, 0.15, 0.08, i * 0.1)); }
-  historia() { [392, 494, 587, 740, 587].forEach((f, i) => this.osc('sine', f, f, 0.6, 0.07, i * 0.18)); this.osc('triangle', 98, 98, 1.6, 0.08); }
-  perigo() { this.osc('sawtooth', 110, 55, 0.5, 0.18); this.noise(0.4, 0.2, 'lowpass', 500, 0, 0.7, 120); }
-  livre() { [523, 659].forEach((f, i) => this.osc('sine', f, f, 0.4, 0.07, i * 0.12)); }
-
-    noite() { this.osc('sine', 110, 55, 2.5, 0.2); this.osc('sine', 165, 82, 2.5, 0.12); }
+  zap() { if (this.pode('zap', 0.1)) this.noMundo(2, 0.3, () => { this.noise(0.15, 0.25, 'highpass', 3000); this.osc('sawtooth', 900, 200, 0.15, 0.08); }); }
+  // jogar granada/molotov: só o "fffu" do braço, entrando suave (sem estalo, pra não parecer tiro)
+  arremesso() { if (this.pode('arr', 0.2)) this.noMundo(0, 0.4, () => this.noise(0.26, 0.12, 'bandpass', 380, 0, 1.4, 950, 0.1)); }
+  habilidade() { this.naTela(() => [523, 659, 784, 1047].forEach((f, i) => this.sino(f, i * 0.07, 0.8, 0.07))); }
+  escolha() { this.naTela(() => { this.sino(392, 0, 0.6, 0.06); this.sino(523, 0.12, 0.7, 0.06); }); }
+  caiu() { this.naTela(() => { this.tambor(0, 0.35); this.metal(110, 0.05, 0.9, 0.07); this.nota('square', 110, 0.05, 0.9, 0.06, 0.03, 600, 55); }); }
+  levantou() { this.naTela(() => { [262, 392, 523, 784].forEach((f, i) => this.sino(f, i * 0.07, 0.8, 0.07)); this.noise(0.4, 0.08, 'bandpass', 600, 0, 1, 1400, 0.1); }); }
+  golpeFinal() { this.naTela(() => { this.metal(82, 0, 0.9, 0.09); this.metal(87, 0.02, 0.9, 0.08); this.tambor(0, 0.4); this.tambor(0.25, 0.3); }); }
+  coracao() { this.naTela(() => { this.nota('sine', 70, 0, 0.14, 0.35, 0.004, 300, 50); this.nota('sine', 70, 0.18, 0.14, 0.25, 0.004, 300, 50); }); }
+  morteHeroi() { this.naTela(() => { [392, 349, 311, 262].forEach((f, i) => this.sino(f, i * 0.34, 1.2, 0.08)); this.nota('triangle', 131, 0, 2.2, 0.06, 0.3, 500); }); }
+  novoHeroi() { this.naTela(() => [262, 330, 392, 523].forEach((f, i) => this.sino(f, i * 0.1, 0.9, 0.07))); }
+  recorde() { this.naTela(() => { [523, 659, 784, 1047, 784, 1047].forEach((f, i) => this.sino(f, i * 0.11, 0.7, 0.07)); this.tambor(0, 0.2); this.tambor(0.33, 0.2); }); }
+  historia() { this.naTela(() => { [392, 494, 587, 740, 587].forEach((f, i) => this.sino(f, i * 0.2, 1.2, 0.05)); this.nota('triangle', 98, 0, 2, 0.06, 0.3, 500); }); }
+  perigo() { this.naTela(() => { this.tambor(0, 0.3); this.metal(110, 0.02, 0.7, 0.07); this.metal(116.5, 0.04, 0.7, 0.05); }); }
+  livre() { this.naTela(() => { this.sino(523, 0, 0.7, 0.05); this.sino(659, 0.13, 0.8, 0.05); }); }
+  noite() { this.naTela(() => { this.nota('triangle', 110, 0, 2.6, 0.12, 0.4, 500, 82); this.nota('triangle', 165, 0.1, 2.6, 0.07, 0.5, 500, 123); }); }
 
   /* ---------- música ambiente: um zumbido grave e um pulso que acelera com o perigo ---------- */
   iniciarMusica() {

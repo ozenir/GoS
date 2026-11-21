@@ -179,7 +179,7 @@ function tocar(e, g) {
     case 'chama': som.chama(); break;
     case 'acerto': som.acerto(longe(e, g)); break;
     case 'golpe': som.golpe(e.taco); break;
-    case 'morte_zumbi': som.morteZumbi(e.chefe, longe(e, g)); break;
+    case 'morte_zumbi': som.morteZumbi(e.chefe, longe(e, g), e.tipo); break;
     // (as vozes dos zumbis tocam sozinhas, de vez em quando: som.vozes no laço abaixo)
     case 'mordida': som.mordida(e.chefe); break;
     case 'explosao': som.explosao(e.raio, longe(e, g)); break;
