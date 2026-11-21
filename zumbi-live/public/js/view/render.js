@@ -125,7 +125,16 @@ export class Render {
       case 'entrou_predio': case 'saiu_predio': this.fade = 1.4; this.decals = []; this.parts = []; break;
       case 'novo_heroi': this.fade = 1.6; this.decals = []; this.parts = []; this.camAlvo = null; break;
       case 'vidro_pisou': for (let i = 0; i < 8; i++) this.particula({ x: e.x, y: e.y, z: 0.2, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, vz: 2, life: 0.5, cor: '#d8f4ff', tam: 1 }); break;
-      case 'golpe': this.raios.push({ x: e.x, y: e.y, age: 0, life: 0.05, r: 14 }); break;
+      case 'golpe': {
+        this.raios.push({ x: e.x, y: e.y, age: 0, life: 0.05, r: 14 });
+        this.golpeT = 0.15;
+        // rastro do golpe (arco branco na frente do herói)
+        if (e.acertos) for (let i = -2; i <= 2; i++) {
+          const a = e.ang + i * 0.35;
+          this.particula({ x: e.x + Math.cos(a) * 0.8, y: e.y + Math.sin(a) * 0.8, z: 0.8, life: 0.12, g: 0, cor: e.arma === 'machado' ? '#ffe0c0' : '#ffffff', tam: 2 });
+        }
+        break;
+      }
       case 'pavio': this.texto(e.x, e.y, '💣', '#fff'); break;
     }
   }
@@ -145,6 +154,7 @@ export class Render {
     this.cam.x += (alvo.x - this.cam.x) * k; this.cam.y += (alvo.y - this.cam.y) * k;
     this.camAlvo = alvo;
     this.shake = Math.max(0, this.shake - dt * 18);
+    this.golpeT = Math.max(0, (this.golpeT || 0) - dt);
     this.sx = this.shake ? Math.round((Math.random() - 0.5) * this.shake) : 0;
     this.sy = this.shake ? Math.round((Math.random() - 0.5) * this.shake) : 0;
 
@@ -465,11 +475,21 @@ export class Render {
     // arma
     const [dx, dy] = this.dirTela(h.fx, h.fy);
     const m = Math.hypot(dx, dy) || 1, ux = dx / m, uy = dy / m;
-    const armas = { pistola: [5, '#2a2a30'], escopeta: [8, '#5a3a22'], metralhadora: [9, '#1a1a1e'], lanca: [8, '#b83a2a'] };
-    const [len, cor] = armas[h.arma] || armas.pistola;
     const hx = sx + Math.round(ux * 3), hy = sy - 11;
-    line(ctx, hx, hy, hx + ux * len, hy + uy * len, cor, h.arma === 'pistola' ? 1 : 2);
-    if (h.corpo === 'taco') line(ctx, sx - 4, sy - 16, sx - 2, sy - 6, '#8a5a32', 1);
+    if (h.arma) {
+      const armas = { pistola: [5, '#2a2a30'], escopeta: [8, '#5a3a22'], metralhadora: [9, '#1a1a1e'], lanca: [8, '#b83a2a'] };
+      const [len, cor] = armas[h.arma] || armas.pistola;
+      line(ctx, hx, hy, hx + ux * len, hy + uy * len, cor, h.arma === 'pistola' ? 1 : 2);
+      if (h.corpo !== 'empurrao') line(ctx, sx - 4, sy - 16, sx - 2, sy - 6, h.corpo === 'chave' ? '#8a8a92' : '#8a5a32', 1);
+    } else {
+      // arma de perto na mão; balança logo depois de um golpe
+      const giro = this.golpeT > 0 ? (1 - this.golpeT / 0.15) * 1.6 - 0.8 : 0;
+      const a0 = Math.atan2(uy, ux) + giro, cx = Math.cos(a0), cy = Math.sin(a0);
+      if (h.corpo === 'faca') line(ctx, hx, hy, hx + cx * 4, hy + cy * 4, '#d8dde6', 1);
+      else if (h.corpo === 'machado') { line(ctx, hx, hy, hx + cx * 7, hy + cy * 7, '#7a4a28', 1); ctx.fillStyle = '#b8bec8'; ctx.fillRect(Math.round(hx + cx * 6) - 1, Math.round(hy + cy * 6) - 2, 3, 4); }
+      else if (h.corpo === 'chave') line(ctx, hx, hy, hx + cx * 6, hy + cy * 6, '#8a8a92', 2);
+      else if (h.corpo === 'taco') line(ctx, hx, hy, hx + cx * 7, hy + cy * 7, '#8a5a32', 2);
+    }
     if (h.colete > 0) { ctx.fillStyle = '#5a9ad8'; for (let i = 0; i < Math.min(h.colete, 6); i++) ctx.fillRect(sx - 6 + i * 2, sy - 29, 1, 2); }
     if (h.estados.tem('lento') && Math.random() < 0.3) this.particula({ x: h.x, y: h.y, z: 0.1, vz: 0.5, life: 0.3, cor: '#d8f4ff', tam: 1 });
     this.heroiTela = [sx, sy];

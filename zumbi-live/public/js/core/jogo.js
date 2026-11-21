@@ -11,7 +11,7 @@ import { Votacao, lerVoto, OPCOES } from './votacao.js';
 import {
   atributosDaClasse, danoDoHeroi, intervaloTiro, intervaloCorpo, alcanceArma, velocidadeHeroi,
   danoNoHeroi, valorCura, statsZumbi, danoDoZumbi, danoNoZumbi, chanceDoStatus, danoExplosao, danoAliado, ALIADOS,
-  TORCIDA, aplicarTorcida
+  TORCIDA, aplicarTorcida, aplicarPericias, PERICIAS
 } from './dano.js';
 import { STATUS, Estados, sincronizarAtributos } from './status.js';
 import {
@@ -48,6 +48,7 @@ export class Jogo {
     this.A = { ...AMEACA };
     this.chances = { ...CHANCES_PADRAO };
     this.historia = new Historia(opts.historiaVista);
+    this.classeFixa = opts.classe && CLASSES[opts.classe] ? opts.classe : null;   // só para testes
     this.rng = makeRng(opts.seed ?? (Date.now() & 0xffffffff));
     this.events = [];
     this.t = 0;
@@ -88,7 +89,7 @@ export class Jogo {
   novoHeroi() {
     this.heroiN++;
     const ids = Object.keys(CLASSES).filter(c => c !== this.hero?.classe);
-    const classe = this.rng.pick(ids);
+    const classe = this.classeFixa || this.rng.pick(ids);
     const C = CLASSES[classe];
     this.city = new City(this.rng.int(1, 1e9));
     this.map = this.city;
@@ -98,8 +99,9 @@ export class Jogo {
     this.hero = {
       x: start.x, y: start.y, classe, n: this.heroiN,
       vida: C.vida, vidaMax: C.vida,          // vidaMax é só leitura: quem manda é h.attr (dano.js)
-      arma: C.arma, municao: C.municao ?? (ARMAS[C.arma].municao ?? null), armaT: 0,
-      corpo: C.corpo || 'empurrao', golpes: C.corpo ? CORPO[C.corpo].golpes : 0,
+      arma: C.arma || null, municao: C.arma ? (C.municao ?? ARMAS[C.arma].municao ?? null) : null, armaT: 0,
+      corpo: C.corpo || 'empurrao', golpes: CORPO[C.corpo || 'empurrao'].golpes || 0,
+      pericias: { ...(C.pericias || {}) }, instintoCd: 0,
       colete: 0, tiroCd: 0, corpoCd: 0, invT: 0,
       nivel: 1, xp: 0, fx: DIRS[dir][0], fy: DIRS[dir][1], andando: false, mira: null, animT: 0,
       parado: 0, ultimaPos: { x: start.x, y: start.y }, vidaBaixa: false
@@ -108,6 +110,7 @@ export class Jogo {
     this.proximoNome = null;
     this.hero.attr = atributosDaClasse(C, this.hero);
     this.hero.estados = new Estados();
+    aplicarPericias(this.hero, C);
     this.sincronizarVida();
     this.rota = { i: 0, j: 0, dir, alvo: { i: DIRS[dir][0], j: DIRS[dir][1] } };
     this.zumbis = [];
@@ -138,6 +141,7 @@ export class Jogo {
     this.flowT = 0;
     this.exHeroiT = this.ultimoHeroi ? 45 : -1;
     this.relatorio = null;
+    this.curaGolpes = 0;
     this.emit('novo_heroi', { n: this.heroiN, classe, nome: C.nome, emoji: C.emoji, exHeroi: !!this.ultimoHeroi, viewer: this.hero.viewer, exNome: this.ultimoHeroi?.viewer?.nick || null });
     // Presentes que ajudam e chegaram enquanto o herói anterior estava morto valem para o novo
     const pend = this.pendentesAjuda.splice(0);
@@ -158,7 +162,7 @@ export class Jogo {
     const topo = m => [...m.values()].sort((a, b) => b.coins - a.coins || a.primeiro - b.primeiro)[0] || null;
     this.proximoNome = this.escolherPadrinho(topo(this.stats.ajudou), topo(this.stats.atrapalhou));
     this.relatorio = {
-      n: h.n, classe: h.classe, nome: CLASSES[h.classe].nome, emoji: CLASSES[h.classe].emoji,
+      n: h.n, classe: h.classe, nome: CLASSES[h.classe].nome, emoji: CLASSES[h.classe].emoji, curaGolpes: Math.round(this.curaGolpes || 0),
       quarteiroes: q, abates: this.stats.abates, tempo, nivel: h.nivel, predios: this.stats.predios, ameaca: this.nivelAmeaca,
       recorde: this.recorde, novoRecorde, matador: this.stats.matador,
       caminhos: { ...this.stats.caminhos },
@@ -512,6 +516,12 @@ export class Jogo {
     if (st.cura > 0) h.vida = Math.min(h.vidaMax, h.vida + st.cura * h.attr.get('cura'));
     if (st.acabaram.length) sincronizarAtributos(h.estados, h.attr);
     if (h.armaT > 0 && (h.armaT -= dt) <= 0) this.trocarArma(this.armaPadrao(), null);
+    // Passiva "instinto" (bombeira): com pouca vida, ganha o status instinto (defesa e cura)
+    const P = CLASSES[h.classe].passiva;
+    if (P?.id === 'instinto') {
+      h.instintoCd -= dt;
+      if (h.instintoCd <= 0 && h.vida / h.vidaMax < P.limite) { h.instintoCd = P.recarga; this.aplicarStatus(h, 'instinto'); this.emit('passiva', { texto: '🧡 INSTINTO DE SOBREVIVÊNCIA' }); }
+    }
     if (h.vidaBaixa && h.vida / h.vidaMax > 0.5) h.vidaBaixa = false;
 
     // 1) Pra onde ir
@@ -544,6 +554,13 @@ export class Jogo {
     const dObj = Math.hypot(dirObj.x, dirObj.y);
     if (!obj.esperando && dObj > 0.05) { vx = dirObj.x / dObj; vy = dirObj.y / dObj; }
     else if (obj.esperando && dObj > 0.15) { vx = dirObj.x / dObj * 0.6; vy = dirObj.y / dObj * 0.6; }
+    // Sem arma de fogo: vai pra cima do zumbi mirado até ficar no alcance do golpe
+    const perto = !h.arma;
+    if (perto && h.mira && !obj.porta && !obj.saida) {
+      const m = h.mira, dz = dist(h.x, h.y, m.x, m.y), alc = CORPO[h.corpo].alcance * 0.75 + ZUMBIS[m.tipo].raio;
+      if (dz > alc && dz > 0.01) { vx = vx * 0.1 + (m.x - h.x) / dz * 0.9; vy = vy * 0.1 + (m.y - h.y) / dz * 0.9; }
+      else { vx *= 0.2; vy *= 0.2; }
+    }
 
     // Zumbis perto: recua deles; se tiver muitos na frente, para e luta
     let rx = 0, ry = 0, naFrente = 0;
@@ -551,14 +568,17 @@ export class Jogo {
       if (z.morto || z.nascendo > 0) continue;
       const dx = h.x - z.x, dy = h.y - z.y, d2 = dx * dx + dy * dy;
       const T = ZUMBIS[z.tipo];
-      const raio = T.chefe ? 2.8 : z.tipo === 'explosivo' ? 2.6 : 1.7;
-      if (d2 > raio * raio || d2 < 1e-6) continue;
+      // Quem luta de perto só recua de explosivo, de chefe (com pouca vida) e quando fica cercado
+      const raio = perto
+        ? (z.tipo === 'explosivo' ? 2.8 : T.chefe ? (h.vida / h.vidaMax < 0.4 ? 2.6 : 0) : 0.7)
+        : (T.chefe ? 2.8 : z.tipo === 'explosivo' ? 2.6 : 1.7);
+      if (!raio || d2 > raio * raio || d2 < 1e-6) continue;
       const d = Math.sqrt(d2);
       const peso = (raio - d) / raio * (T.chefe ? 2.2 : z.tipo === 'explosivo' ? 2.6 : 1);
       rx += dx / d * peso; ry += dy / d * peso;
       if (d < 1.7 && (vx * -dx + vy * -dy) / d > 0.3) naFrente++;
     }
-    if (naFrente >= 4 && !obj.porta) { vx *= 0.25; vy *= 0.25; }
+    if (naFrente >= 4 && !obj.porta && !perto) { vx *= 0.25; vy *= 0.25; }
     const rm = Math.hypot(rx, ry);
     if (rm > 0.01) {
       const k = Math.min(1.6, rm);
@@ -580,7 +600,7 @@ export class Jogo {
         noVidro = true;
       }
     }
-    const vel = velocidadeHeroi(h, this.cfg.velHeroi, { lutando, noVidro }) * h.estados.lentidao();
+    const vel = velocidadeHeroi(h, this.cfg.velHeroi, { lutando: lutando && !perto, noVidro }) * h.estados.lentidao();
     const antesX = h.x, antesY = h.y;
     this.mover(h, vx * vel * dt, vy * vel * dt, 0.22);
     const andou = Math.hypot(h.x - antesX, h.y - antesY);
@@ -653,7 +673,7 @@ export class Jogo {
     const arma = h.arma ? ARMAS[h.arma] : null;
     if (!arma) {
       // Sem arma de fogo: mira no zumbi mais perto pra ir até ele (luta de perto)
-      const alvo = this.escolherAlvo(CORPO[h.corpo].alcance + 4);
+      const alvo = this.escolherAlvo(CORPO[h.corpo].alcance + 4, true);
       h.mira = alvo;
       if (alvo) { const fm = Math.hypot(alvo.x - h.x, alvo.y - h.y) || 1; h.fx = (alvo.x - h.x) / fm; h.fy = (alvo.y - h.y) / fm; }
       return !!alvo;
@@ -699,7 +719,11 @@ export class Jogo {
       if (hit) {
         const r = danoDoHeroi(h, arma, hit, this.rng);
         this.ferirZumbi(hit, r.dano, null, false, r.critico, r.efetividade);
-        if (!hit.morto) this.statusDeAtaque(h, arma, hit);
+        if (!hit.morto) {
+          this.statusDeAtaque(h, arma, hit);
+          // Passiva "tiro certeiro" (policial): crítico com arma de fogo marca o zumbi
+          if (r.critico && CLASSES[h.classe].passiva?.id === 'tiro_certeiro' && arma.categoria === 'armas_fogo') this.aplicarStatus(hit, 'marcado');
+        }
       }
       this.emit('tiro', { x: h.x, y: h.y, tx: ex, ty: ey, arma: h.arma, acertou: !!hit, heroi: true });
     }
@@ -777,11 +801,12 @@ export class Jogo {
 
   deixarLento(seg) { this.aplicarStatus(this.hero, 'lento', { duracao: seg }); }
 
-  escolherAlvo(alcance) {
+  // perto = true: luta de perto (não mira em explosivo, que explode na cara)
+  escolherAlvo(alcance, perto = false) {
     const h = this.hero;
     const cand = [];
     for (const z of this.zumbis) {
-      if (z.morto || z.nascendo > 0) continue;
+      if (z.morto || z.nascendo > 0 || (perto && z.tipo === 'explosivo')) continue;
       const d = dist(h.x, h.y, z.x, z.y);
       if (d > alcance + ZUMBIS[z.tipo].raio) continue;
       let s = d;
@@ -835,9 +860,18 @@ export class Jogo {
       h.nivel++;
       const m = this.rng.pick(MELHORIAS);
       h.attr.addMod({ ...m.mod, fonte: `nível ${h.nivel}` });
+      // Perícias do personagem sobem a cada nível (dados.js → CLASSES[...].crescimento)
+      const C = CLASSES[h.classe];
+      const subiu = [];
+      for (const [cat, inc] of Object.entries(C.crescimento || {})) {
+        const antes = Math.floor(h.pericias[cat] ?? 0);
+        h.pericias[cat] = (h.pericias[cat] ?? 0) + inc;
+        if (Math.floor(h.pericias[cat]) > antes) subiu.push(`${PERICIAS[cat].emoji} ${PERICIAS[cat].nome} ${Math.floor(h.pericias[cat])}`);
+      }
+      aplicarPericias(h, C);
       this.sincronizarVida();
       if (m.cura) h.vida = Math.min(h.vidaMax, h.vida + m.cura);
-      this.emit('nivel', { nivel: h.nivel, texto: m.texto });
+      this.emit('nivel', { nivel: h.nivel, texto: m.texto, pericias: subiu });
     }
   }
 
@@ -1132,7 +1166,14 @@ export class Jogo {
       this.emit('bau', { raridade, arma, x: h.x, y: h.y, quem: quem?.nick || null });
     } else {
       // Arma média: escopeta (tiro) ou taco com pregos (corpo a corpo). Se já tem uma, dá a outra.
-      const querTaco = h.arma === 'escopeta' ? true : h.corpo === 'taco' ? false : this.rng.chance(0.4);
+      // Quem luta de perto ganha "arma afiada" (fúria + foco) ou, às vezes, uma escopeta
+      if (CLASSES[h.classe].estilo === 'perto' && (h.arma || this.rng.chance(0.65))) {
+        this.aplicarStatus(h, 'furia', { duracao: 14 }); this.aplicarStatus(h, 'foco', { duracao: 14 });
+        this.emit('bau', { raridade, arma: 'afiada', x: h.x, y: h.y, quem: quem?.nick || null });
+        this.emit('arma', { id: 'afiada', nome: 'Arma afiada', emoji: '✨', quem: quem?.nick || null });
+        return;
+      }
+      const querTaco = h.arma === 'escopeta' ? true : h.corpo !== 'empurrao' ? false : this.rng.chance(0.4);
       if (querTaco) { h.corpo = 'taco'; h.golpes = CORPO.taco.golpes; this.emit('arma', { id: 'taco', nome: CORPO.taco.nome, emoji: CORPO.taco.emoji, quem: quem?.nick || null }); }
       else if (h.arma && ARMAS[h.arma].lendaria) this.aplicarStatus(h, 'acelerado', { duracao: 10, acumulaTempo: true, maxDuracao: 40 });
       else this.trocarArma('escopeta', quem);

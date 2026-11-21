@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   Atributos, atributosDaClasse, danoDoHeroi, danoNoHeroi, intervaloTiro, intervaloCorpo, alcanceArma,
   velocidadeHeroi, valorCura, statsZumbi, danoExplosao, danoAliado, ESCALA_AMEACA, TORCIDA, aplicarTorcida,
-  danoNoZumbi, afinidade, efetividade, chanceDoStatus, multPericia, PERICIA_PADRAO, EFEITO_PERICIA
+  danoNoZumbi, afinidade, efetividade, chanceDoStatus, multPericia, PERICIA_PADRAO, EFEITO_PERICIA, aplicarPericias
 } from '../public/js/core/dano.js';
 import { Estados } from '../public/js/core/status.js';
 import { CLASSES, ARMAS, CORPO, ZUMBIS } from '../public/js/core/dados.js';
@@ -76,11 +76,27 @@ teste('atributo desconhecido dá erro (evita erro de digitação silencioso)', (
 });
 
 console.log('Herói');
-teste('classes: vida, velocidade, cadência e regeneração', () => {
+teste('personagens: vida, velocidade e atributos do kit', () => {
   assert.equal(heroi('bombeiro').attr.get('vidaMax'), 130);
+  perto(heroi('bombeiro').attr.get('defesa'), 0.15);
+  perto(heroi('bombeiro').attr.get('resFogo'), 0.5);
   perto(heroi('entregador').attr.get('velocidade'), 1.22);
-  perto(heroi('policial').attr.get('cadencia'), 1 / 0.75);
-  perto(heroi('enfermeira').attr.get('regen'), 0.7);
+  perto(heroi('entregador').attr.get('esquiva'), 0.1);
+  perto(heroi('policial').attr.get('defesa'), 0.1);
+  perto(heroi('enfermeira').attr.get('defesa'), -0.15);
+  perto(heroi('enfermeira').attr.get('curaPorAcerto'), 1);
+  perto(heroi('mecanico').attr.get('resExplosao'), 0.5);
+});
+teste('perícias mexem nos atributos: agilidade dá esquiva e velocidade; facas dão cura por golpe', () => {
+  const e = heroi('entregador');
+  e.pericias = { agilidade: 6 };
+  aplicarPericias(e, CLASSES.entregador);
+  perto(e.attr.get('esquiva'), 0.1 + 4 * 0.015);
+  perto(e.attr.get('velocidade'), 1.22 * (1 + 4 * 0.02));
+  const n = heroi('enfermeira');
+  n.pericias = { facas: 8, agilidade: 2 };
+  aplicarPericias(n, CLASSES.enfermeira);
+  perto(n.attr.get('curaPorAcerto'), 1 + 4 * 0.25);
 });
 teste('adrenalina: +25% de dano só abaixo de 25% de vida', () => {
   const h = heroi('mecanico');
@@ -123,7 +139,7 @@ teste('alcance e velocidade', () => {
   perto(velocidadeHeroi(h, 1.5, { lutando: true, noVidro: true }), 1.5 * 0.98 * 0.8 * 0.6);
 });
 teste('dano recebido: invencível, colete, defesa', () => {
-  const h = heroi();
+  const h = heroi('entregador');   // sem armadura inicial
   h.invT = 1; assert.equal(danoNoHeroi(h, 50).bloqueado, 'invencivel'); h.invT = 0;
   h.colete = 2; assert.equal(danoNoHeroi(h, 50).bloqueado, 'colete');
   assert.equal(danoNoHeroi(h, 50, 'sangramento').bloqueado, null, 'sangramento atravessa o colete'); h.colete = 0;
@@ -205,7 +221,7 @@ teste('herói: esquiva, resistência a explosão e defesa negativa', () => {
   const h = heroi();
   h.attr.addMod({ attr: 'esquiva', soma: 1 });
   assert.equal(danoNoHeroi(h, 10, 'mordida', rngFixo(0.1)).bloqueado, 'esquiva');
-  const h2 = heroi();
+  const h2 = heroi('entregador');   // sem armadura inicial
   h2.attr.addMod({ attr: 'resExplosao', soma: 0.5 });
   perto(danoNoHeroi(h2, 20, 'explosao').dano, 10);
   perto(danoNoHeroi(h2, 20, 'mordida').dano, 20);

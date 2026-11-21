@@ -88,6 +88,10 @@ export const EFEITO_PERICIA = {
   chanceStatus: 0.03,  // +3% de chance de causar o efeito da arma por ponto acima de 2
   critico: 0.01        // +1% de crítico por ponto acima de 2
 };
+// Atributos que crescem junto com uma perícia (para todos os personagens), por ponto acima de 2
+export const PERICIA_ATRIBUTOS = {
+  agilidade: [{ attr: 'esquiva', soma: 0.015 }, { attr: 'velocidade', mult: 0.02 }]
+};
 export const periciaDe = (h, cat) => (h.pericias && h.pericias[cat] != null ? h.pericias[cat] : PERICIA_PADRAO);
 export const multPericia = p => 1 + (p - PERICIA_PADRAO) * EFEITO_PERICIA.dano;
 export const cadenciaPericia = p => Math.max(0.5, 1 + (p - PERICIA_PADRAO) * EFEITO_PERICIA.cadencia);
@@ -160,8 +164,7 @@ export function atributosDaClasse(C, heroi) {
   const a = new Atributos({
     vidaMax: C.vida,
     velocidade: C.vel || 1,
-    cadencia: C.cdArma ? 1 / C.cdArma : 1,
-    regen: C.regen || 0
+    ...(C.attr || {})
   }, heroi);
   // Adrenalina: com menos de 25% de vida, +25% de dano
   a.addMod({ id: 'adrenalina', attr: 'dano', mult: 1.25, cond: h => h.vida / h.vidaMax < 0.25, fonte: 'adrenalina' });
@@ -240,6 +243,18 @@ export function aplicarTorcida(h, pessoas, T = TORCIDA) {
   h.attr.addMod({ id: 'torcida_dano', attr: 'dano', mult: 1 + k * T.danoPorPessoa, fonte: 'torcida' });
   h.attr.addMod({ id: 'torcida_regen', attr: 'regen', soma: k * T.regenPorPessoa, fonte: 'torcida' });
   return k;
+}
+
+// Recalcula os atributos que dependem das perícias (chame depois de mudar h.pericias).
+// C = classe do herói (para os bônus próprios dela em C.porPericia).
+export function aplicarPericias(h, C) {
+  const regras = [];
+  for (const [cat, lista] of Object.entries(PERICIA_ATRIBUTOS)) lista.forEach((e, i) => regras.push({ id: `pericia:${cat}:${i}`, pericia: cat, ...e, desde: PERICIA_PADRAO }));
+  (C?.porPericia || []).forEach((e, i) => regras.push({ id: `classe:${e.pericia}:${i}`, ...e }));
+  for (const r of regras) {
+    const n = Math.max(0, periciaDe(h, r.pericia) - (r.desde ?? PERICIA_PADRAO));
+    h.attr.addMod({ id: r.id, attr: r.attr, soma: r.soma ? r.soma * n : 0, mult: r.mult ? 1 + r.mult * n : 1, fonte: `perícia ${r.pericia}` });
+  }
 }
 
 /* ---------------- Zumbis ---------------- */

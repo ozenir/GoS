@@ -112,7 +112,8 @@ export class Hud {
         break;
       case 'morte_zumbi': if (e.chefe) this.banner('💥 CHEFÃO DERROTADO!', e.nome ? `adeus, ${e.nome}` : '', 'ouro', 2.4); break;
       case 'bau': if (e.raridade === 'lendario') this.banner(`✨ ${ARMAS[e.arma]?.nome.toUpperCase() || 'ARMA LENDÁRIA'}!`, e.quem ? `baú lendário de ${e.quem}` : 'baú lendário', 'ouro', 2.8); break;
-      case 'nivel': this.banner(`⭐ NÍVEL ${e.nivel}`, e.texto, 'ouro', 1.8); break;
+      case 'nivel': this.banner(`⭐ NÍVEL ${e.nivel}`, [e.texto, ...(e.pericias || [])].join(' · '), 'ouro', 1.8); break;
+      case 'passiva': this.banner(e.texto, '', 'bom', 1.8); break;
       case 'helicoptero': this.banner('🚁 RESGATE AÉREO!', e.quem ? `chamado por ${e.quem}` : '', 'bom', 3); break;
       case 'noite': this.banner('🌙 A NOITE CHEGOU', 'mais zumbis, menos visão', 'perigo', 2.4); break;
       case 'alarme': if (!e.sala) this.banner('🚨 ALARME DE CARRO!', 'a horda está vindo', 'perigo', 2.2); break;
@@ -152,14 +153,9 @@ export class Hud {
     const C = CLASSES[e.classe];
     $('i-n').textContent = e.viewer ? `Sobrevivente #${e.n} · ${C.nome}` : `Sobrevivente #${e.n}`;
     $('i-nome').textContent = `${C.emoji} ${e.viewer ? e.viewer.nick : C.nome}`;
-    const extras = [];
-    if (C.corpo) extras.push('taco com pregos');
-    if (C.arma === 'escopeta') extras.push('escopeta');
-    if (C.regen) extras.push('se cura sozinha');
-    if (C.vel > 1.1) extras.push('corre mais');
-    if (C.cdArma && C.cdArma < 1) extras.push('atira mais rápido');
-    if (C.vida > 100) extras.push(`${C.vida} de vida`);
-    $('i-arma').textContent = extras.length ? extras.join(' · ') : 'pistola e coragem';
+    const kit = [C.arma ? `${ARMAS[C.arma].emoji} ${ARMAS[C.arma].nome}` : null, C.corpo && C.corpo !== 'empurrao' ? `${CORPO[C.corpo].emoji} ${CORPO[C.corpo].nome}` : null].filter(Boolean).join(' + ');
+    $('i-arma').textContent = `${kit} · ${C.descricao}`;
+    $('i-passiva').textContent = C.passiva ? `✨ ${C.passiva.texto}` : '';
     $('i-aviso').hidden = !e.exHeroi;
     $('i-aviso').textContent = e.exHeroi ? `⚠️ ${e.exNome || 'O sobrevivente #' + (e.n - 1)} vai voltar como zumbi...` : '';
     $('i-padrinho').hidden = !e.viewer;

@@ -44,7 +44,7 @@ function publico(jogo, rng, dt, c) {
 function rodar(id, seed) {
   const c = CENARIOS[id];
   const rng = makeRng(seed);
-  const jogo = new Jogo({ seed });
+  const jogo = new Jogo({ seed, classe: process.env.CLASSE || null });
   jogo.configurar(config.jogo);
   const res = [], contagem = {};
   let maxZ = 0, passos = 0;
@@ -69,6 +69,9 @@ function rodar(id, seed) {
   const cam = res.reduce((a, r) => (a.p += r.caminhos.perigoso, a.l += r.caminhos.livre, a.h += r.caminhos.historia, a), { p: 0, l: 0, h: 0 });
   const tot = Math.max(1, cam.p + cam.l + cam.h);
   console.log(`  caminhos: perigoso ${(cam.p / tot * 100).toFixed(0)}% · livre ${(cam.l / tot * 100).toFixed(0)}% · história ${(cam.h / tot * 100).toFixed(1)}% (${tot} cruzamentos)`);
+  const porClasse = {};
+  for (const r of res) (porClasse[r.nome] ||= []).push(r.tempo);
+  console.log('  por personagem:', Object.entries(porClasse).map(([k, v]) => `${k} ${fmtTempo(v.reduce((a, b) => a + b, 0) / v.length)} (${v.length})`).join(' · '));
   const causas = {};
   for (const r of res) { const k = (r.matador?.causa || '?').replace(/ de .*/, ''); causas[k] = (causas[k] || 0) + 1; }
   console.log('  derrubado por:', Object.entries(causas).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(' · '));
