@@ -67,12 +67,18 @@ function aplicarEstado(m) {
   hud.setLegenda(catalogo, regraSeguir, regraCompartilhar, jogo.cfg.likesPor);
   montarBotoes();
 }
+let versaoPrograma = null;
 function conectar() {
   if (!isLocal) { setConn('off', 'Sem programa: só os botões de teste funcionam'); return; }
   try { ws = new WebSocket(`ws://${location.host}/ws`); } catch { setConn('off', 'Sem conexão com o programa'); return; }
   ws.onmessage = e => {
     let m; try { m = JSON.parse(e.data); } catch { return; }
-    if (m.type === 'estado') { aplicarEstado(m); hud.rank(m.rank); mostrarStatus(m); }
+    if (m.type === 'estado') {
+      // o programa foi atualizado com esta janela aberta: recarrega pra pegar a versão nova do jogo
+      if (versaoPrograma && m.versao && m.versao !== versaoPrograma) { location.reload(); return; }
+      versaoPrograma = m.versao || versaoPrograma;
+      aplicarEstado(m); hud.rank(m.rank); mostrarStatus(m);
+    }
     else if (m.type === 'status') mostrarStatus(m);
     else {
       if (m.rank) hud.rank(m.rank);

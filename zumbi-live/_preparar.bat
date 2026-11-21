@@ -28,4 +28,10 @@ if not exist "%~dp0node_modules\tiktok-live-connector" (
     exit /b 1
   )
 )
+rem Se o programa antigo ainda estiver aberto (porta 8081), fecha ele.
+rem Sem isso o novo nao consegue abrir e o antigo continua rodando no lugar.
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":8081" ^| findstr "LISTENING"') do (
+  echo  Fechando o programa antigo que ainda estava aberto...
+  taskkill /PID %%p /F >nul 2>&1
+)
 exit /b 0

@@ -7,6 +7,7 @@ import * as proto from 'tiktok-live-proto/v3';
 import { pessoa, textoDoComentario, curtidasDe } from '../leitura.js';
 import { Jogo } from '../public/js/core/jogo.js';
 import { xpParaNivel } from '../public/js/core/dados.js';
+import { lerVoto, lerEscolha } from '../public/js/core/votacao.js';
 
 let ok = 0;
 const teste = (nome, fn) => { fn(); ok++; console.log('  ✔', nome); };
@@ -83,6 +84,18 @@ teste('o próprio dono da live também vota (não é ignorado)', () => {
   for (let i = 0; i < 60; i++) j.update(1 / 30);
   j.handle(paraOJogo(comentario('esquerda', dono)));
   assert.equal(j.voto.total, 1);
+});
+
+teste('jeitos comuns de votar na direção: 2️⃣, #3, 22, "vai 2", "bora no 3"', () => {
+  for (const [t, op] of [['2', 'frente'], ['2️⃣', 'frente'], ['#3', 'direita'], ['22', 'frente'], ['vai 2', 'frente'], ['bora no 3 galera', 'direita'], ['ESQUERDA!!', 'esquerda'], ['5', 'voltar']]) {
+    assert.equal(lerVoto(t), op, t);
+  }
+  for (const t of ['oi gente', 'tenho 2 gatos e 3 cachorros', 'kkkk']) assert.equal(lerVoto(t), null, t);
+});
+
+teste('jeitos comuns de escolher habilidade: a, A!, aaa, a), letra b, opção c, 🅰️', () => {
+  for (const [t, l] of [['a', 'a'], ['A!', 'a'], ['aaa', 'a'], ['a)', 'a'], ['letra b', 'b'], ['opção c', 'c'], ['hab a', 'a'], ['🅰️', 'a'], ['🅱️', 'b']]) assert.equal(lerEscolha(t), l, t);
+  for (const t of ['a gente vai', 'b2', 'abc']) assert.equal(lerEscolha(t), null, t);
 });
 
 console.log(`\n${ok} testes passaram.`);

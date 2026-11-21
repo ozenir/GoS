@@ -16,6 +16,8 @@ import { pessoa, textoDoComentario, curtidasDe } from './leitura.js';
 import { lerVoto, lerEscolha, OPCOES } from './public/js/core/votacao.js';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
+let VERSAO = '?';
+try { VERSAO = JSON.parse(fs.readFileSync(path.join(DIR, 'package.json'), 'utf8')).version; } catch { /* ignora */ }
 const PUBLIC = path.join(DIR, 'public');
 const hora = () => new Date().toLocaleTimeString('pt-BR');
 const log = (...a) => console.log(`[${hora()}]`, ...a);
@@ -64,7 +66,7 @@ function setStatus(st, detalhe = '') {
 }
 wss.on('connection', c => {
   c.send(JSON.stringify({
-    type: 'estado', ...status, rank: topRank(),
+    type: 'estado', ...status, rank: topRank(), versao: VERSAO,
     jogo: config.jogo || {}, som: config.som || {},
     presentes: config.presentes?.por_nome || {},
     seguir: config.seguir || null, compartilhar: config.compartilhar || null
@@ -320,14 +322,15 @@ function ligarNaLive() {
 
 server.on('error', e => {
   if (e.code === 'EADDRINUSE') {
-    console.error(`❌ A porta ${PORTA} já está em uso. Feche a outra janela do programa ou mude "porta" no config.json.`);
+    console.error(`❌ A porta ${PORTA} já está em uso: o programa ANTIGO ainda está aberto e continua rodando no lugar deste.`);
+    console.error('   Feche a outra janela preta (ou reinicie o computador) e abra de novo.');
     process.exit(1);
   }
   throw e;
 });
 server.listen(PORTA, '127.0.0.1', () => {
   console.log('');
-  console.log('🧟  Herói contra Hordas ligado!');
+  console.log(`🧟  Herói contra Hordas ligado!  (versão ${VERSAO})`);
   console.log(`    Pra testar no navegador:   http://localhost:${PORTA}`);
   console.log(`    Pra colocar na live:       http://localhost:${PORTA}/#live`);
   console.log('    Deixe esta janela aberta durante toda a live. Para desligar: Ctrl + C.');

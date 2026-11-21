@@ -9,6 +9,13 @@ $zip     = Join-Path $env:TEMP 'zumbi-live.zip'
 $tmp     = Join-Path $env:TEMP 'zumbi-live-extrair'
 
 Write-Host ''
+# Fecha o programa antigo se ainda estiver aberto (porta 8081). Sem isso o novo nao abre e o velho continua rodando.
+try {
+  Get-NetTCPConnection -LocalPort 8081 -State Listen -ErrorAction Stop | ForEach-Object {
+    Write-Host ' Fechando o programa antigo que estava aberto...' -ForegroundColor Yellow
+    Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue
+  }
+} catch { }
 Write-Host ' Baixando o Heroi contra Hordas...' -ForegroundColor Green
 Invoke-WebRequest 'https://github.com/ozenir/GoS/archive/refs/heads/claude/kind-bohr-lyn3jc.zip' -OutFile $zip -UseBasicParsing
 if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }

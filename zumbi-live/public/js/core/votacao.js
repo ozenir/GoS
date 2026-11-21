@@ -18,10 +18,17 @@ const PALAVRAS = {
   voltar: ['5', 'v', 'voltar', 'volta', 'volte', 'tras', 'atras', 'pra tras', 'para tras', 're', '⬇', '⬇️', '↙', '👇']
 };
 
+// Tira o que atrapalha a leitura: emoji de número (2️⃣ vira 2), #, parênteses, pontuação
+const limpar = texto => normalizar(String(texto || '').replace(/🅰/g, 'a').replace(/🅱/g, 'b')).replace(/[\uFE0F\u20E3]/g, '').replace(/[!?.,;:#()\[\]*"'“”]+/g, ' ').replace(/\s+/g, ' ').trim();
+const POR_NUMERO = { 1: 'esquerda', 2: 'frente', 3: 'direita', 4: 'entrar', 5: 'voltar' };
+
 // Lê um comentário e devolve a opção (ou null se não for voto)
 export function lerVoto(texto) {
-  const t = normalizar(texto).replace(/[!?.,;:]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const t = limpar(texto);
   if (!t) return null;
+  // "2", "22", "222" (gente que repete o número)
+  const rep = t.match(/^([1-5])\1*$/);
+  if (rep) return POR_NUMERO[rep[1]];
   const primeira = t.split(' ')[0];
   for (const [op, lista] of Object.entries(PALAVRAS)) {
     if (lista.includes(t) || lista.includes(primeira)) return op;
@@ -31,6 +38,9 @@ export function lerVoto(texto) {
     for (const [op, lista] of Object.entries(PALAVRAS)) {
       if (lista.some(p => p.length >= 4 && t.includes(p))) return op;
     }
+    // "vai 2", "bora no 3": um número de 1 a 5 sozinho no meio da frase (se só tiver um número diferente)
+    const nums = new Set(t.split(' ').filter(x => /^[1-5]$/.test(x)));
+    if (nums.size === 1) return POR_NUMERO[[...nums][0]];
   }
   return null;
 }
@@ -40,9 +50,13 @@ export function lerVoto(texto) {
 // "atraso" segundos antes: assim, quando o espectador vê o 0, a votação está fechando de verdade.
 // Nesses últimos segundos a tela mostra "contando votos da live" e os votos que chegam ainda valem.
 // Escolha de habilidade ao subir de nível: o comentário tem que ser só a letra (A, B ou C)
+// Aceita: "a", "A!", "aaa", "a)", "letra a", "opção b", "hab c"
 export function lerEscolha(texto) {
-  const t = normalizar(texto).replace(/[!?.,;:]+/g, '').trim();
-  return t === 'a' || t === 'b' || t === 'c' ? t : null;
+  const t = limpar(texto);
+  let m = t.match(/^([abc])\1*$/);
+  if (m) return m[1];
+  m = t.match(/^(?:letra|opcao|hab|habilidade|carta)\s+([abc])$/);
+  return m ? m[1] : null;
 }
 
 export class Votacao {
