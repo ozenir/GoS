@@ -109,7 +109,7 @@ for (const c of Object.values(CORPO)) c.corpo = true;
 // XP para passar do nível n para o n+1: cada nível pede mais que o anterior
 // (nível 1→2: 8 · 5→6: 31 · 10→11: 80 · 20→21: 245 · 30→31: 500). Zumbi dá mais XP quanto maior a ameaça.
 // Vida máxima por nível do herói: +10% da vida do personagem a cada nível até o 20 (nível 10 = +90%,
-// nível 20 = +190%) e +3% por nível depois. E subir de nível recupera a vida toda.
+// nível 20 = +190%) e +3% por nível depois. Subir de nível não cura (a vida atual fica como estava).
 export const VIDA_POR_NIVEL = 0.1, VIDA_POR_NIVEL_DEPOIS_DO_20 = 0.03;
 export const multVidaNivel = n => 1 + VIDA_POR_NIVEL * Math.min(n - 1, 19) + VIDA_POR_NIVEL_DEPOIS_DO_20 * Math.max(0, n - 20);
 

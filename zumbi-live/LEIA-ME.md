@@ -213,7 +213,7 @@ Quando falta alguma categoria, a carta é completada com outra. Cada habilidade 
 
 **Armas novas** (aparecem na carta B quando fazem sentido): 💥 **Escopeta** no lugar da pistola, de vez (recarrega sozinha), e 🏏 **Taco com pregos** no lugar do empurrão, sem quebrar. 
 
-**Subir de nível recupera a vida toda** e a **vida máxima cresce com o nível**: +10% da vida do personagem a cada nível até o 20 e +3% por nível depois (o Policial vai de 100 no nível 1 para 190 no 10, 290 no 20 e 320 no 30). Isso multiplica com a Vitalidade.
+**Subir de nível não cura** (a vida atual fica como estava), mas a **vida máxima cresce com o nível**: +10% da vida do personagem a cada nível até o 20 e +3% por nível depois (o Policial vai de 100 no nível 1 para 190 no 10, 290 no 20 e 320 no 30). Isso multiplica com a Vitalidade.
 
 **Limites dos atributos:** defesa até 60%, chance de desviar até 45% e velocidade até 2,2×, somando tudo (personagem, perícias, passivas, presentes). Sem isso, defesa + esquiva + velocidade deixavam o herói intocável.
 
@@ -340,11 +340,11 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 
 | Cenário | Quanto o herói dura em média | Nível médio |
 |---|---|---|
-| Sem nenhuma interação | **5 min 52 s** (o mais longo 8 min 24 s) | 14 |
-| Só chat (6 pessoas comentando e votando, curtidas) | 7 min 10 s | 18 |
-| Chat + presentes misturados (8 por minuto) | **12 min 18 s** (a maioria cai no **golpe final** de quem atrapalha; o mais longo 19 min) | 37 |
-| Chat + só presentes que ajudam (4 por minuto) | 12 min 8 s (o mais longo 23 min) | 30 |
-| Chat + só presentes que atrapalham (4 por minuto) | 6 min 36 s | 20 |
+| Sem nenhuma interação | **3 min 58 s** (o mais longo 5 min 36 s) | 9 |
+| Só chat (6 pessoas comentando e votando, curtidas) | 6 min 55 s | 17 |
+| Chat + presentes misturados (8 por minuto) | **10 min 33 s** (a maioria cai no **golpe final** de quem atrapalha; o mais longo 25 min) | 32 |
+| Chat + só presentes que ajudam (4 por minuto) | 12 min 25 s (o mais longo 20 min) | 31 |
+| Chat + só presentes que atrapalham (4 por minuto) | 6 min 7 s | 20 |
 
 Os primeiros níveis vêm rápido (a primeira escolha de habilidade sai no primeiro minuto) e depois cada nível pede mais. O nível 10 aparece em lives com chat; o 20 (lobos e braços longos), em lives que ajudam bastante; o 30 (praia) é conquista de live muito engajada.
 
@@ -399,7 +399,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.6.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.6.1)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.

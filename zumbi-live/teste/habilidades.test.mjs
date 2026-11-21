@@ -293,12 +293,12 @@ teste('lâminas vampíricas e fogo da fênix curam o herói', () => {
   }
 });
 
-teste('subir de nível recupera a vida toda e aumenta a vida máxima', () => {
+teste('subir de nível aumenta a vida máxima, mas não cura', () => {
   const j = jogo();
   const h = j.hero, v1 = h.vidaMax;
   h.vida = 5;
   j.ganharXp(xpParaNivel(1));
-  assert.equal(h.vida, h.vidaMax);
+  assert.equal(h.vida, 5, 'a vida atual não muda');
   assert.ok(h.vidaMax > v1 * 1.05);
   let x = 0; for (let k = 2; k < 10; k++) x += xpParaNivel(k);
   j.ganharXp(x);

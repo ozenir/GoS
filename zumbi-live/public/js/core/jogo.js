@@ -1340,11 +1340,9 @@ export class Jogo {
         if (Math.floor(h.pericias[cat]) > antes) subiu.push(`${PERICIAS[cat].emoji} ${PERICIAS[cat].nome} ${Math.floor(h.pericias[cat])}`);
       }
       aplicarPericias(h, C);
-      // a vida máxima cresce com o nível, e subir de nível recupera a vida toda
+      // a vida máxima cresce com o nível (subir de nível NÃO cura: a vida atual fica como estava)
       h.attr.addMod({ id: 'nivel:vida', attr: 'vidaMax', mult: multVidaNivel(h.nivel), fonte: 'nível' });
       this.sincronizarVida();
-      h.vida = h.vidaMax;
-      h.vidaBaixa = false;
       this.emit('nivel', { nivel: h.nivel, pericias: subiu });
       if (h.nivel === NIVEL_INIMIGOS_NOVOS) this.emit('novos_inimigos', {});
       // a cada 5 níveis, uma horda anunciada (do nível 10 em diante, bem maior)
