@@ -516,12 +516,12 @@ export function spriteFonte() {
 export function spriteMovel(tipo, w, h, v = 0) {
   const k = 'm' + tipo + w + h + v;
   if (cache.has(k)) return cache.get(k);
-  const alt = { prateleira: 18, bancada: 9, mesa: 8, maca: 7, balcao: 11 }[tipo] || 10;
+  const alt = { prateleira: 18, bancada: 9, mesa: 8, maca: 7, balcao: 11, sofa: 7, maquina: 16 }[tipo] || 10;
   const W = (w + h) * 12 + 4, H = (w + h) * 6 + alt + 6;
   const [c, x] = canvas(W, H);
   const T = [h * 12 + 2, alt + 3];
   const P = (u, vv, z) => [T[0] + (u - vv) * 12, T[1] + (u + vv) * 6 - z];
-  const base = { prateleira: '#8a6a4a', bancada: '#6a4a2a', mesa: '#7a6a5a', maca: '#d8d8e0', balcao: '#5a5a6a' }[tipo] || '#7a6a5a';
+  const base = { prateleira: '#8a6a4a', bancada: '#6a4a2a', mesa: '#7a6a5a', maca: '#d8d8e0', balcao: '#5a5a6a', sofa: ['#7a4a5a', '#4a5a7a', '#5a6a4a', '#8a6a3a'][v % 4], maquina: '#6a6a72' }[tipo] || '#7a6a5a';
   const m = 0.08;
   fillPoly(x, [P(m, h - m, 0), P(w - m, h - m, 0), P(w - m, h - m, alt), P(m, h - m, alt)], tom(base, -0.05));
   fillPoly(x, [P(w - m, h - m, 0), P(w - m, m, 0), P(w - m, m, alt), P(w - m, h - m, alt)], tom(base, -0.3));
@@ -533,6 +533,11 @@ export function spriteMovel(tipo, w, h, v = 0) {
       x.fillStyle = cores[(i + z + v) % 6]; x.fillRect(Math.round(p[0]), Math.round(p[1]) - 3, 2, 3);
     }
   }
+  if (tipo === 'maquina') { // faixas amarelas e preta + luz
+    for (let i = 0; i < 10; i += 2) { const p = P(m + i / 12, h - m, 4); x.fillStyle = (i / 2) % 2 ? '#1a1a1a' : '#f2c230'; x.fillRect(Math.round(p[0]), Math.round(p[1]) - 3, 2, 3); }
+    const q = P(w * 0.5, h * 0.5, alt); x.fillStyle = v % 2 ? '#ff4a3a' : '#6aff7a'; x.fillRect(Math.round(q[0]) - 1, Math.round(q[1]) - 2, 2, 2);
+  }
+  if (tipo === 'sofa') { const p = P(0.2, h - m, alt); x.fillStyle = tom(base, 0.25); x.fillRect(Math.round(p[0]), Math.round(p[1]) - 3, 10, 3); }
   if (tipo === 'maca') { const p = P(0.3, 0.3, alt); x.fillStyle = '#f5f5f8'; x.fillRect(Math.round(p[0]) - 2, Math.round(p[1]), 6, 3); }
   contorno(c);
   const s = { c, ox: T[0], oy: T[1] };
