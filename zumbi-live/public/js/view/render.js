@@ -452,6 +452,7 @@ export class Render {
     if (h.colete > 0) { ctx.fillStyle = '#5a9ad8'; for (let i = 0; i < Math.min(h.colete, 6); i++) ctx.fillRect(sx - 6 + i * 2, sy - 29, 1, 2); }
     if (h.attr.restante('lento') > 0 && Math.random() < 0.3) this.particula({ x: h.x, y: h.y, z: 0.1, vz: 0.5, life: 0.3, cor: '#d8f4ff', tam: 1 });
     this.heroiTela = [sx, sy];
+    if (h.viewer && g.fase === 'jogo') this.nomes.push({ x: sx, y: sy - 30, txt: h.viewer.nick, cor: '#ffd23f' });
   }
 
   // O herói aparece por cima de prédios e zumbis, meio transparente, pra nunca sumir da tela

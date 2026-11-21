@@ -150,6 +150,7 @@ body.foco .app{padding-block:8px}
 .intro b{font-size:8cqw;line-height:1.05;white-space:nowrap}
 .intro span{font-size:3.2cqw;opacity:.85}
 .intro .aviso{color:#ff9a90;font-weight:600}
+.intro .padrinho{color:#ffd23f;font-weight:600}
 .intro.out{animation:introOut .4s ease-in forwards}
 @keyframes introIn{from{transform:translateX(-50%) scale(.6);opacity:0}to{transform:translateX(-50%);opacity:1}}
 @keyframes introOut{to{transform:translateX(-50%) translateY(-3cqw);opacity:0}}
@@ -250,7 +251,7 @@ body.foco .app{padding-block:8px}
 
         <div class="hist" id="h-hist" hidden><small id="hs-cap"></small><b id="hs-tit"></b><p id="hs-txt"></p><em id="hs-ass"></em><div class="barra"><i id="hs-bar"></i></div></div>
 
-        <div class="intro card" id="intro" hidden><small id="i-n">Sobrevivente #1</small><b id="i-nome">👮 Policial</b><span id="i-arma"></span><span class="aviso" id="i-aviso" hidden></span></div>
+        <div class="intro card" id="intro" hidden><small id="i-n">Sobrevivente #1</small><b id="i-nome">👮 Policial</b><span id="i-arma"></span><span class="padrinho" id="i-padrinho" hidden></span><span class="aviso" id="i-aviso" hidden></span></div>
 
         <div class="over" id="over" hidden>
           <div class="over-card card" id="over-card">
@@ -278,7 +279,7 @@ body.foco .app{padding-block:8px}
                 <div class="hall" id="hall"></div>
               </div>
             </div>
-            <div class="o-next">Próximo sobrevivente em <b id="o-count">20</b></div>
+            <div class="o-next">Próximo: <b id="o-prox">sobrevivente</b> em <b id="o-count">20</b></div>
           </div>
         </div>
       </div>

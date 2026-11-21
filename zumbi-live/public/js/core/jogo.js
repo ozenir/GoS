@@ -103,6 +103,8 @@ export class Jogo {
       nivel: 1, xp: 0, fx: DIRS[dir][0], fy: DIRS[dir][1], andando: false, mira: null, animT: 0,
       parado: 0, ultimaPos: { x: start.x, y: start.y }, vidaBaixa: false
     };
+    this.hero.viewer = this.proximoNome || null;     // { nick, avatar, lado } de quem deu o nome
+    this.proximoNome = null;
     this.hero.attr = atributosDaClasse(C, this.hero);
     this.sincronizarVida();
     this.rota = { i: 0, j: 0, dir, alvo: { i: DIRS[dir][0], j: DIRS[dir][1] } };
@@ -134,7 +136,7 @@ export class Jogo {
     this.flowT = 0;
     this.exHeroiT = this.ultimoHeroi ? 45 : -1;
     this.relatorio = null;
-    this.emit('novo_heroi', { n: this.heroiN, classe, nome: C.nome, emoji: C.emoji, exHeroi: !!this.ultimoHeroi });
+    this.emit('novo_heroi', { n: this.heroiN, classe, nome: C.nome, emoji: C.emoji, exHeroi: !!this.ultimoHeroi, viewer: this.hero.viewer, exNome: this.ultimoHeroi?.viewer?.nick || null });
     // Presentes que ajudam e chegaram enquanto o herói anterior estava morto valem para o novo
     const pend = this.pendentesAjuda.splice(0);
     for (const p of pend) this.agendar(2 + Math.random(), () => EFEITOS[p.regra.efeito].aplicar(this, p.regra, p.qtd, p.quem));
@@ -151,19 +153,32 @@ export class Jogo {
     const q = this.stats.quarteiroes;
     const novoRecorde = q > this.recorde;
     if (novoRecorde) this.recorde = q;
-    const topo = m => [...m.values()].sort((a, b) => b.coins - a.coins)[0] || null;
+    const topo = m => [...m.values()].sort((a, b) => b.coins - a.coins || a.primeiro - b.primeiro)[0] || null;
+    this.proximoNome = this.escolherPadrinho(topo(this.stats.ajudou), topo(this.stats.atrapalhou));
     this.relatorio = {
       n: h.n, classe: h.classe, nome: CLASSES[h.classe].nome, emoji: CLASSES[h.classe].emoji,
       quarteiroes: q, abates: this.stats.abates, tempo, nivel: h.nivel, predios: this.stats.predios, ameaca: this.nivelAmeaca,
       recorde: this.recorde, novoRecorde, matador: this.stats.matador,
       caminhos: { ...this.stats.caminhos },
-      topAjuda: topo(this.stats.ajudou), topAtrapalha: topo(this.stats.atrapalhou)
+      topAjuda: topo(this.stats.ajudou), topAtrapalha: topo(this.stats.atrapalhou),
+      viewer: h.viewer || null, proximoNome: this.proximoNome
     };
-    this.hall.push({ n: h.n, nome: CLASSES[h.classe].nome, emoji: CLASSES[h.classe].emoji, quarteiroes: q, tempo });
+    this.hall.push({ n: h.n, nome: h.viewer?.nick || CLASSES[h.classe].nome, emoji: CLASSES[h.classe].emoji, quarteiroes: q, tempo });
     this.hall.sort((a, b) => b.quarteiroes - a.quarteiroes || b.tempo - a.tempo);
     this.hall.length = Math.min(this.hall.length, 3);
-    this.ultimoHeroi = { n: h.n, classe: h.classe, arma: h.arma };
+    this.ultimoHeroi = { n: h.n, classe: h.classe, arma: h.arma, viewer: h.viewer || null };
     this.emit('heroi_morreu', { relatorio: this.relatorio, hall: this.hall });
+  }
+
+  // Quem dá nome ao próximo herói: entre quem MAIS AJUDOU e quem MAIS ATRAPALHOU na rodada,
+  // vale quem doou primeiro. Se só um dos lados teve doação, é esse. Se ninguém doou, o herói fica sem nome.
+  escolherPadrinho(ajuda, atrapalha) {
+    const c = [];
+    if (ajuda) c.push({ ...ajuda, lado: 'ajuda' });
+    if (atrapalha) c.push({ ...atrapalha, lado: 'atrapalha' });
+    if (!c.length) return null;
+    c.sort((a, b) => a.primeiro - b.primeiro);
+    return { nick: c[0].nick, avatar: c[0].avatar || '', lado: c[0].lado };
   }
 
   /* =================== Laço principal =================== */
@@ -206,7 +221,7 @@ export class Jogo {
     }
     if (this.exHeroiT > 0 && (this.exHeroiT -= dt) <= 0) {
       if (this.room) this.exHeroiT = 5;   // espera sair do prédio
-      else this.chefe('exheroi', { nick: `Ex-herói #${this.ultimoHeroi.n}`, id: '__exheroi' }, 0);
+      else this.chefe('exheroi', { nick: this.ultimoHeroi.viewer ? `${this.ultimoHeroi.viewer.nick} zumbi` : `Ex-herói #${this.ultimoHeroi.n}`, id: '__exheroi' }, 0);
     }
 
     if (this.room) { this.atualizarSala(dt); return; }
@@ -1258,7 +1273,7 @@ export class Jogo {
     quem = { ...quem, nick: nomeSeguro(quem.nick, 18) };
     if (coins > 0 && quem.id !== '__curtidas') {
       const m = lado === 'ajuda' ? this.stats.ajudou : this.stats.atrapalhou;
-      const r = m.get(quem.id) || { nick: quem.nick, avatar: quem.avatar || '', coins: 0 };
+      const r = m.get(quem.id) || { nick: quem.nick, avatar: quem.avatar || '', coins: 0, primeiro: this.t };
       r.coins += coins * qtd; m.set(quem.id, r);
     }
     const espera = lado === 'atrapalha' && this.fase === 'jogo' && this.protecao > 0 ? Math.ceil(this.protecao) : 0;

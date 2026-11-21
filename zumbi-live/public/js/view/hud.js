@@ -149,8 +149,8 @@ export class Hud {
 
   intro(e, g) {
     const C = CLASSES[e.classe];
-    $('i-n').textContent = `Sobrevivente #${e.n}`;
-    $('i-nome').textContent = `${C.emoji} ${C.nome}`;
+    $('i-n').textContent = e.viewer ? `Sobrevivente #${e.n} · ${C.nome}` : `Sobrevivente #${e.n}`;
+    $('i-nome').textContent = `${C.emoji} ${e.viewer ? e.viewer.nick : C.nome}`;
     const extras = [];
     if (C.corpo) extras.push('taco com pregos');
     if (C.arma === 'escopeta') extras.push('escopeta');
@@ -160,7 +160,9 @@ export class Hud {
     if (C.vida > 100) extras.push(`${C.vida} de vida`);
     $('i-arma').textContent = extras.length ? extras.join(' · ') : 'pistola e coragem';
     $('i-aviso').hidden = !e.exHeroi;
-    $('i-aviso').textContent = e.exHeroi ? `⚠️ O sobrevivente #${e.n - 1} vai voltar como zumbi...` : '';
+    $('i-aviso').textContent = e.exHeroi ? `⚠️ ${e.exNome || 'O sobrevivente #' + (e.n - 1)} vai voltar como zumbi...` : '';
+    $('i-padrinho').hidden = !e.viewer;
+    if (e.viewer) $('i-padrinho').textContent = e.viewer.lado === 'ajuda' ? '🛡️ nome de quem mais ajudou na rodada passada' : '😈 nome de quem mais atrapalhou na rodada passada';
     const el = $('intro');
     el.hidden = false; el.classList.remove('out');
     this.introT = 4.2;
@@ -169,7 +171,8 @@ export class Hud {
   relatorio(r, hall, g) {
     this.relT = 0;
     this.rel = r;
-    $('o-title').textContent = `${r.emoji} ${r.nome.toUpperCase()} #${r.n} CAIU!`;
+    $('o-title').textContent = `${r.emoji} ${(r.viewer?.nick || r.nome).toUpperCase()} #${r.n} CAIU!`;
+    $('o-prox').textContent = r.proximoNome ? `${r.proximoNome.lado === 'ajuda' ? '🛡️' : '😈'} ${r.proximoNome.nick}` : 'sobrevivente';
     $('o-why').textContent = (r.matador?.causa ? `derrubado por ${r.matador.causa}` : 'derrubado pela horda') + ` · ameaça ${r.ameaca}`;
     $('o-rec').hidden = !r.novoRecorde;
     $('o-q').textContent = r.quarteiroes; $('o-abates').textContent = r.abates; $('o-tempo').textContent = fmtTempo(r.tempo);
@@ -201,7 +204,7 @@ export class Hud {
     this.set('h-vida', `${Math.ceil(Math.max(0, h.vida))}/${Math.round(h.vidaMax)}`);
     this.set('h-colete', h.colete > 0 ? '🛡️'.repeat(Math.min(h.colete, 4)) + (h.colete > 4 ? `+${h.colete - 4}` : '') : '');
     const C = CLASSES[h.classe];
-    this.set('h-heroi', `${C.emoji} ${C.nome} #${h.n}`);
+    this.set('h-heroi', `${C.emoji} ${h.viewer ? h.viewer.nick : C.nome} #${h.n}`);
     const a = ARMAS[h.arma];
     let armaTxt = `${a.emoji} ${a.nome}`;
     if (h.municao != null) armaTxt += ` · ${h.municao}`;
