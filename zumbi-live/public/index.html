@@ -43,9 +43,11 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .conn[data-s="on"]{--dot:#4fd17a;color:var(--fg)}
 .conn[data-s="wait"]{--dot:#f2c14e}
 .conn[data-s="err"]{--dot:#ff6b6b;color:var(--fg)}
-body.live .controls{display:none}
+body.live .controls,body.foco .controls{display:none}
 body.live .app{padding:0}
 body.live .frame{border-radius:0;box-shadow:none}
+body.foco .app{padding-block:8px}
+.sair-foco{position:absolute;right:2.5cqw;bottom:46cqw;font:600 2.8cqw var(--font-display);background:rgba(16,13,24,.8);color:#fff;border:.35cqw solid rgba(255,255,255,.25);padding:1cqw 2.6cqw;border-radius:99px;cursor:pointer;z-index:5}
 
 /* ===== HUD do jogo. Medidas em cqw (1cqw = 1% da largura da tela do jogo; a altura toda é 177,8cqw). ===== */
 .hud{position:absolute;inset:0;pointer-events:none;font-family:var(--font-display);color:var(--fg);line-height:1.2}
@@ -270,6 +272,7 @@ body.live .frame{border-radius:0;box-shadow:none}
       </div>
       <div class="snd-hint" id="snd-hint" hidden>🔇 Clique na tela para ativar o som</div>
       <div class="sem-rede" id="sem-rede" hidden>sem conexão com a live</div>
+      <button class="sair-foco" id="b-sair-foco" hidden>⚙️ botões</button>
     </div>
   </div>
 
@@ -288,6 +291,7 @@ body.live .frame{border-radius:0;box-shadow:none}
     <div class="grupo">
       <button class="btn" id="b-matar">💀 Derrubar herói</button>
       <button class="btn" id="b-som">🔊 Som ligado</button>
+      <button class="btn" id="b-foco">📺 Só o jogo</button>
       <label class="sim" for="sim-toggle"><input type="checkbox" id="sim-toggle"> Simular público</label>
       <span class="conn" id="conn" data-s="off">Procurando o programa...</span>
     </div>

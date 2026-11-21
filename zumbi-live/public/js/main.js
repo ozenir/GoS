@@ -130,6 +130,11 @@ window.addEventListener('keydown', e => {
   if (['1', '2', '3', '4'].includes(e.key)) chatTeste(e.key, 'você ' + Math.floor(Math.random() * 1000));
 });
 
+/* ---------- modo "só o jogo": esconde os botões de teste ---------- */
+function foco(on) { document.body.classList.toggle('foco', on); $('b-sair-foco').hidden = !on || live; requestAnimationFrame(fit); }
+$('b-foco').addEventListener('click', () => foco(true));
+$('b-sair-foco').addEventListener('click', () => foco(false));
+
 /* ---------- público simulado (prévia sem programa) ---------- */
 const simEl = $('sim-toggle');
 simEl.checked = !isLocal && !live;
