@@ -39,13 +39,25 @@ export const STATUS = {
 
 // Status ativos de uma entidade (herói ou zumbi)
 export class Estados {
-  constructor() { this.lista = new Map(); }   // id -> { id, t, pilhas, fonte }
+  constructor() { this.lista = new Map(); }   // id -> { id, t, q?, pilhas, fonte }
 
   // opts: duracao (segundos; padrão do status), pilhas (quantas somar), acumulaTempo (soma em vez de renovar), maxDuracao
+  //   ou, pros BÔNUS: quarteiroes (dura os próximos N quarteirões andados, não segundos), acumula, maxQuarteiroes
   // Devolve true se o status é novo.
   aplicar(id, opts = {}) {
     const S = STATUS[id];
     if (!S) throw new Error(`Status desconhecido: ${id}`);
+    if (opts.quarteiroes != null) {
+      const n = opts.quarteiroes, atual = this.lista.get(id);
+      if (atual) {
+        atual.q = opts.acumula ? Math.min(opts.maxQuarteiroes ?? Infinity, (atual.q || 0) + n) : Math.max(atual.q || 0, n);
+        atual.t = Infinity;
+        if (opts.fonte) atual.fonte = opts.fonte;
+        return false;
+      }
+      this.lista.set(id, { id, t: Infinity, q: n, pilhas: 1, fonte: opts.fonte || null });
+      return true;
+    }
     const dur = opts.duracao ?? S.duracao;
     const atual = this.lista.get(id);
     if (atual) {
@@ -56,6 +68,14 @@ export class Estados {
     }
     this.lista.set(id, { id, t: dur, pilhas: Math.min(S.maxPilhas || 1, opts.pilhas || 1), fonte: opts.fonte || null });
     return true;
+  }
+
+  // O herói andou n quarteirões: os bônus contados em quarteirões diminuem. Devolve os que acabaram.
+  passarQuarteiroes(n = 1) {
+    const acabaram = [];
+    for (const s of this.lista.values()) if (s.q != null && (s.q -= n) <= 0) acabaram.push(s.id);
+    for (const id of acabaram) this.lista.delete(id);
+    return acabaram;
   }
 
   tem(id) { return this.lista.has(id); }

@@ -3,12 +3,18 @@
 // texto: frase curta da legenda. aviso: frase do aviso na tela quando alguém manda.
 // qtd = quantas vezes a pessoa mandou de uma vez (combo).
 //
+// Os BÔNUS (tiro rápido, fúria, blindado, cachorro, sobrevivente, arma lendária, invencível do helicóptero)
+// duram QUARTEIRÕES andados, não segundos: "tiro rápido nos próximos 3 quarteirões".
+//
 // Presentes inteligentes (por causa do atraso da live, o presente pode chegar numa hora diferente
 // da que a pessoa viu): cura com vida cheia vira blindado, kit com vida alta vai pra mochila
 // (usado sozinho quando a vida cair), munição sem arma de fogo vira fúria, colete cheio vira blindado.
 // Se o herói estiver CAÍDO, qualquer presente de ajuda levanta ele (jogo.js → levantar).
 
 const n = (v, padrao) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : padrao);
+// Bônus duram QUARTEIRÕES (não segundos). Config antigo com "segundos" ainda funciona: vira ~1 quarteirão a cada 15 s.
+const nq = (r, padrao) => r.quarteiroes != null ? n(r.quarteiroes, padrao) : r.segundos != null ? Math.max(1, Math.round(n(r.segundos, 15) / 15)) : padrao;
+const qt = q => `${q} ${q === 1 ? 'quarteirão' : 'quarteirões'}`;
 
 export const EFEITOS = {
   cura: {
@@ -25,9 +31,9 @@ export const EFEITOS = {
   },
   municao: {
     lado: 'ajuda',
-    texto: r => `munição + tiro rápido ${n(r.segundos, 10)}s`,
-    aviso: (r, q) => `munição + tiro rápido ${Math.min(40, n(r.segundos, 10) * q)}s`,
-    aplicar: (g, r, q, quem) => g.darMunicao(Math.min(40, n(r.segundos, 10) * q), quem)
+    texto: r => `tiro rápido por ${qt(nq(r, 3))}`,
+    aviso: (r, q) => `munição + tiro rápido por ${qt(Math.min(8, nq(r, 3) + q - 1))}`,
+    aplicar: (g, r, q, quem) => g.darMunicao(Math.min(8, nq(r, 3) + q - 1), quem)
   },
   colete: {
     lado: 'ajuda',
@@ -37,19 +43,19 @@ export const EFEITOS = {
   },
   cachorro: {
     lado: 'ajuda',
-    texto: r => `cachorro ajudante ${n(r.segundos, 60)}s`,
-    aviso: () => 'mandou um cachorro ajudante',
-    aplicar: (g, r, q, quem) => g.addAliado('cachorro', Math.min(180, n(r.segundos, 60) * q), quem)
+    texto: r => `cachorro ajudante por ${qt(nq(r, 4))}`,
+    aviso: (r, q) => `mandou um cachorro ajudante por ${qt(Math.min(12, nq(r, 4) * q))}`,
+    aplicar: (g, r, q, quem) => g.addAliado('cachorro', Math.min(12, nq(r, 4) * q), quem)
   },
   aliado: {
     lado: 'ajuda',
-    texto: r => `sobrevivente ajuda ${n(r.segundos, 20)}s`,
-    aviso: () => 'entrou pra ajudar',
-    aplicar: (g, r, q, quem) => g.addAliado('sobrevivente', n(r.segundos, 20), quem)
+    texto: r => `sobrevivente ajuda por ${qt(nq(r, 1))}`,
+    aviso: r => `entrou pra ajudar por ${qt(nq(r, 1))}`,
+    aplicar: (g, r, q, quem) => g.addAliado('sobrevivente', nq(r, 1), quem)
   },
   bau: {
     lado: 'ajuda',
-    texto: r => r.raridade === 'lendario' ? 'baú LENDÁRIO' : 'baú com arma',
+    texto: r => r.raridade === 'lendario' ? 'baú LENDÁRIO (3 quarteirões)' : 'baú com arma',
     aviso: r => r.raridade === 'lendario' ? 'mandou um BAÚ LENDÁRIO' : 'mandou um baú com arma',
     aplicar: (g, r, q, quem) => { for (let i = 0; i < Math.min(q, 3); i++) g.soltarItem(r.raridade === 'lendario' ? 'bau_lendario' : 'bau_medio', {}, quem, i); }
   },
@@ -69,7 +75,7 @@ export const EFEITOS = {
     lado: 'ajuda',
     texto: () => 'helicóptero de resgate',
     aviso: () => 'chamou o HELICÓPTERO DE RESGATE',
-    aplicar: (g, r, q, quem) => g.helicoptero(n(r.segundos, 15), quem)
+    aplicar: (g, r, q, quem) => g.helicoptero(nq(r, 1), quem)
   },
 
   zumbis: {

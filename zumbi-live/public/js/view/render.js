@@ -680,7 +680,7 @@ export class Render {
     if (g.caido) { this.heroiCaido(g, spr, ax, ay); return; }
     const [sx, sy] = this.pessoa(spr, h.x, h.y, 1, g.fase === 'jogo' ? 1 : 0.6);
     this.heroiSpr = [sx, sy, spr];
-    if (h.invT > 0 && Math.floor(this.t * 10) % 2) { ctx.globalAlpha = 0.55; ctx.drawImage(this.branco(spr), sx - S.PE_X, sy - S.PE_Y); ctx.globalAlpha = 1; }
+    if ((h.invT > 0 || h.invQ > 0) && Math.floor(this.t * 10) % 2) { ctx.globalAlpha = 0.55; ctx.drawImage(this.branco(spr), sx - S.PE_X, sy - S.PE_Y); ctx.globalAlpha = 1; }
     // arma
     const [dx, dy] = this.dirTela(h.fx, h.fy);
     const m = Math.hypot(dx, dy) || 1, ux = dx / m, uy = dy / m;

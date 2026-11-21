@@ -83,14 +83,14 @@ export const CLASSES = {
   }
 };
 
-// Armas de fogo. cd = segundos entre tiros. alcance em casas.
+// Armas de fogo. cd = segundos entre tiros. alcance em casas. quarteiroes = quantos quarteirões a arma lendária dura.
 // tipo = tipo de dano (dano.js → TIPOS_DANO). categoria = perícia que melhora a arma (dano.js → PERICIAS).
 // status = efeitos que o tiro pode causar: { id (status.js), chance, duracao?, pilhas? }
 export const ARMAS = {
   pistola:     { nome: 'Pistola',       emoji: '🔫', dano: 14, cd: 0.42, alcance: 6.5, balas: 1, espalha: 0.05, tipo: 'perfuracao', categoria: 'armas_fogo' },
   escopeta:    { nome: 'Escopeta',      emoji: '💥', dano: 10, cd: 0.8,  alcance: 4.6, balas: 6, espalha: 0.45, municao: 30, tipo: 'perfuracao', categoria: 'armas_fogo', status: [{ id: 'atordoado', chance: 0.08, duracao: 0.5 }] },
-  metralhadora:{ nome: 'Metralhadora',  emoji: '🔥', dano: 11, cd: 0.085, alcance: 7, balas: 1, espalha: 0.09, tempo: 45, lendaria: true, tipo: 'perfuracao', categoria: 'armas_fogo' },
-  lanca:       { nome: 'Lança-chamas',  emoji: '🔥', dps: 75,  alcance: 3.3, cone: 0.5, tempo: 45, lendaria: true, chama: true, tipo: 'fogo', categoria: 'explosivos', status: [{ id: 'queimando', chance: 1 }] }
+  metralhadora:{ nome: 'Metralhadora',  emoji: '🔥', dano: 11, cd: 0.085, alcance: 7, balas: 1, espalha: 0.09, quarteiroes: 3, lendaria: true, tipo: 'perfuracao', categoria: 'armas_fogo' },
+  lanca:       { nome: 'Lança-chamas',  emoji: '🔥', dps: 75,  alcance: 3.3, cone: 0.5, quarteiroes: 3, lendaria: true, chama: true, tipo: 'fogo', categoria: 'explosivos', status: [{ id: 'queimando', chance: 1 }] }
 };
 
 // Ataques de perto. alcance = distância do golpe (casas). arco = abertura do golpe (radianos; maior pega mais zumbis).

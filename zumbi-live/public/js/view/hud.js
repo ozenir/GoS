@@ -226,7 +226,7 @@ export class Hud {
     const cp = CORPO[h.corpo];
     let armaTxt = a ? `${a.emoji} ${a.nome}` : `${cp.emoji} ${cp.nome}`;
     if (a && h.municao != null) armaTxt += ` · ${h.municao}`;
-    if (a && h.armaT > 0) armaTxt += ` · ${Math.ceil(h.armaT)}s`;
+    if (a && h.armaQ > 0) armaTxt += ` · 📍${h.armaQ}`;
     const golpes = cp.golpes && Number.isFinite(h.golpes) ? h.golpes : '';
     if (a && h.corpo !== 'empurrao') armaTxt += ` + ${cp.emoji}${golpes}`;
     else if (!a && golpes !== '') armaTxt += ` · ${golpes}`;
@@ -266,11 +266,13 @@ export class Hud {
     if (g.torcidaN > 0 && g.fase === 'jogo') st.push(`<span class="chip ok" title="Quem comentou nos últimos 30 s dá força ao herói">📣 torcida ${g.torcidaN} · +${Math.round(g.torcidaN * 3)}% dano</span>`);
     if (g.trecho?.livre && !g.room && g.fase === 'jogo') st.push(`<span class="chip ok">${g.trecho.tipo === 'historia' ? '📜 rua da pista' : '🍃 rua tranquila'}</span>`);
     if (h.mochila?.length) st.push(`<span class="chip ok" title="Kits guardados: ele usa sozinho quando a vida cair">💼 mochila ${h.mochila.length}</span>`);
-    if (h.invT > 0) st.push(`<span class="chip ok">✨ invencível ${Math.ceil(h.invT)}s</span>`);
+    if (h.invQ > 0) st.push(`<span class="chip ok" title="Quarteirões que ainda faltam">✨ invencível 📍${h.invQ}</span>`);
+    else if (h.invT > 0) st.push(`<span class="chip ok">✨ invencível ${Math.ceil(h.invT)}s</span>`);
     // status do herói (status.js): verde = bom, vermelho = ruim
-    if (g.fase === 'jogo') for (const s of h.estados.ativos()) st.push(`<span class="chip ${s.lado === 'positivo' ? 'ok' : 'mal'}">${s.emoji} ${esc(s.nome.toLowerCase())}${s.pilhas > 1 ? ' x' + s.pilhas : ''} ${Math.ceil(s.t)}s</span>`);
+    // bônus contados em quarteirões aparecem com 📍 (quantos quarteirões ainda faltam); o resto em segundos
+    if (g.fase === 'jogo') for (const s of h.estados.ativos()) st.push(`<span class="chip ${s.lado === 'positivo' ? 'ok' : 'mal'}">${s.emoji} ${esc(s.nome.toLowerCase())}${s.pilhas > 1 ? ' x' + s.pilhas : ''} ${s.q != null ? '📍' + s.q : Math.ceil(s.t) + 's'}</span>`);
     if (g.alarmeT > 0) st.push(`<span class="chip mal">🚨 alarme ${Math.ceil(g.alarmeT)}s</span>`);
-    for (const al of g.aliados) st.push(`<span class="chip ok">${al.tipo === 'cachorro' ? '🐶' : '🧍'} ${esc(al.nome)} ${Math.ceil(al.t)}s</span>`);
+    for (const al of g.aliados) st.push(`<span class="chip ok">${al.tipo === 'cachorro' ? '🐶' : '🧍'} ${esc(al.nome)} 📍${al.q}</span>`);
     this.html('h-status', st.join(''));
 
     // pedido de ajuda com vida baixa

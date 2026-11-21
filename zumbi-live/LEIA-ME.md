@@ -204,7 +204,7 @@ Quando falta alguma categoria, a carta é completada com outra. Cada habilidade 
 
 | Presente chega quando... | Vira |
 |---|---|
-| cura com a vida cheia | o que sobra vira 🛡️ **blindado** (menos dano por uns segundos) |
+| cura com a vida cheia | o que sobra vira 🛡️ **blindado** (menos dano por 1 ou 2 quarteirões) |
 | kit com a vida baixa (menos de 60%) | cura **na hora**, direto no herói |
 | kit com a vida alta | vai pra 💼 **mochila** (até 3). Ele usa sozinho quando a vida cai pra menos de 35%, e o kit da mochila **segura o herói de pé** quando a vida zera |
 | munição pra quem luta de perto (sem arma de fogo) | 😤 **fúria** |
@@ -218,24 +218,26 @@ Quando falta alguma categoria, a carta é completada com outra. Cada habilidade 
 
 Tudo que **ajuda** acontece na hora (e se adapta à situação, veja "O atraso da live" acima). Tudo que **atrapalha** entra numa fila: sai um a cada meio segundo e **nada sai nos primeiros 15 segundos de um herói novo** (proteção de nascimento). Presentes caros furam a fila. Os efeitos aparecem sempre **na rua logo à frente do herói**, então quem mandou vê o resultado em poucos segundos.
 
+**Bônus duram quarteirões, não segundos.** Tiro rápido, fúria, foco, blindado, arma lendária, cachorro e sobrevivente ajudante e o invencível do helicóptero valem pelos **próximos N quarteirões** que o herói andar (ex.: "tiro rápido nos próximos 3 quarteirões"). Cada cruzamento conta 1; sair de prédio, 1; sair da arena ou da praia, 2. Na tela, o que falta aparece com 📍 (ex.: `⚡ tiro rápido 📍2`). O que não é bônus continua em segundos: proteção de nascimento, sangramento, atordoado, queimando, e os efeitos de quem atrapalha (noite, alarme, vidro).
+
 | Presente | Moedas | Lado | O que acontece |
 |---|---|---|---|
 | 🌹 Rosa | 1 | ajuda | cura +10% na hora |
 | 🍦 Sorvete | 1 | atrapalha | cacos de vidro na rua: herói fica lento |
 | 🎵 TikTok | 1 | atrapalha | 3 zumbis com o nome de quem mandou |
-| 🫰 Coração com dedos | 5 | ajuda | munição + tiro rápido por 10 s |
+| 🫰 Coração com dedos | 5 | ajuda | munição + **tiro rápido nos próximos 3 quarteirões** (combo soma +1 por presente, até 8). Quem luta de perto ganha fúria |
 | 🧴 Perfume | 20 | atrapalha | horda de 8 zumbis |
 | 🍩 Rosquinha | 30 | ajuda | kit médico (+25%): cura na hora ou vai pra mochila |
 | 🎩 Chapéu e Bigode | 99 | atrapalha | zumbi que explode |
 | 🫶 Mãos de coração | 100 | ajuda | colete que segura 3 golpes |
-| 🐶 Corgi | 299 | ajuda | cachorro ajudante por 60 s, com o nome de quem mandou |
+| 🐶 Corgi | 299 | ajuda | cachorro ajudante por **4 quarteirões**, com o nome de quem mandou |
 | 🔫 Arma de Dinheiro | 500 | ajuda | baú com escopeta ou taco com pregos |
 | 🦢 Cisne | 699 | atrapalha | carro com alarme: horda chegando por 20 s |
 | 🚂 Trem | 899 | atrapalha | 15 corredores e rua bloqueada atrás |
-| 🌌 Galáxia | 1.000 | ajuda | **baú lendário**: metralhadora ou lança-chamas por 45 s |
+| 🌌 Galáxia | 1.000 | ajuda | **baú lendário**: metralhadora ou lança-chamas por **3 quarteirões** |
 | 🎆 Fogos | 1.088 | atrapalha | **chefão** com o nome de quem mandou |
 | 🦁 Leão | 29.999 | atrapalha | **Rei Zumbi** gigante + noite por 60 s |
-| 🪐 Universo | 34.999 | ajuda | **helicóptero de resgate**: limpa a tela, cura tudo e 15 s invencível |
+| 🪐 Universo | 34.999 | ajuda | **helicóptero de resgate**: limpa a tela, cura tudo e invencível até o fim do quarteirão |
 | Outros presentes | – | ajuda | pelo valor: 1 = cura, 5 = munição, 20 = kit, 100 = colete, 299 = cachorro, 500 = baú, 1.000 = baú lendário, 20.000 = helicóptero |
 
 **De graça:**
@@ -243,7 +245,7 @@ Tudo que **ajuda** acontece na hora (e se adapta à situação, veja "O atraso d
 | Ação | O que acontece |
 |---|---|
 | 💬 Comentar | vota no cruzamento (1 a 5) e na habilidade (A, B ou C). O nome de quem comenta ou entra na live pode aparecer num zumbi |
-| ➕ Seguir | um sobrevivente com o nome da pessoa ajuda por 20 s |
+| ➕ Seguir | um sobrevivente com o nome da pessoa ajuda por 1 quarteirão |
 | 🔁 Compartilhar | cai uma caixa de munição |
 | ❤️ Curtidas | a cada 300 curtidas cai um suprimento de avião (cura ou munição) |
 
@@ -293,13 +295,13 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 |---|---|---|
 | `cura` | `valor` (% da vida) | ajuda |
 | `kit` | `valor` (% da vida; cura na hora ou vai pra mochila) | ajuda |
-| `municao` | `segundos` de tiro rápido | ajuda |
+| `municao` | `quarteiroes` de tiro rápido | ajuda |
 | `colete` | `golpes` | ajuda |
-| `cachorro` | `segundos` | ajuda |
-| `aliado` | `segundos` | ajuda |
+| `cachorro` | `quarteiroes` | ajuda |
+| `aliado` | `quarteiroes` | ajuda |
 | `bau` | `raridade`: `"medio"` ou `"lendario"` | ajuda |
 | `caixa_municao`, `suprimento` | – | ajuda |
-| `helicoptero` | `segundos` invencível | ajuda |
+| `helicoptero` | `quarteiroes` invencível | ajuda |
 | `zumbis` | `qtd` | atrapalha |
 | `vidro` | `segundos` lento | atrapalha |
 | `horda` | `qtd` | atrapalha |
@@ -315,10 +317,10 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 
 | Cenário | Quanto o herói dura em média | Nível médio |
 |---|---|---|
-| Sem nenhuma interação | **3 min 31 s**, contando os 12 s caído (cada personagem entre 3 min 14 s e 4 min) | 7 |
-| Só chat (6 pessoas comentando e votando, curtidas) | 4 min | 9 |
-| Chat + presentes misturados (8 por minuto) | 2 min 31 s (a maioria cai no **golpe final** de quem atrapalha) | 7 |
-| Chat + só presentes que ajudam (4 por minuto) | **6 min** (os melhores passam de 9 min e do nível 20) | 15 |
+| Sem nenhuma interação | **3 min 46 s**, contando os 12 s caído | 8 |
+| Só chat (6 pessoas comentando e votando, curtidas) | 5 min | 12 |
+| Chat + presentes misturados (8 por minuto) | 2 min 25 s (a maioria cai no **golpe final** de quem atrapalha) | 8 |
+| Chat + só presentes que ajudam (4 por minuto) | **7 min 19 s** (os melhores passam de 11 min) | 20 |
 | Chat + só presentes que atrapalham (4 por minuto) | 1 min 40 s | 5 |
 
 Os primeiros níveis vêm rápido (a primeira escolha de habilidade sai no primeiro minuto) e depois cada nível pede mais. O nível 10 aparece em lives com chat; o 20 (lobos e braços longos), em lives que ajudam bastante; o 30 (praia) é conquista de live muito engajada.
@@ -350,7 +352,7 @@ Cada assunto tem o seu arquivo em `public/js/core/`:
 | `habilidades.js` | **as habilidades do roguelike**: ativas, passivas, armas novas, treino, como as 3 cartas são sorteadas e o que a IA escolhe. Habilidade nova = acrescentar em `ATIVAS` ou `PASSIVAS` (instruções no começo do arquivo) |
 | `jogo.js` | o resto: herói, zumbis, arena, herói caído, mochila e presentes inteligentes |
 
-**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade), `node teste/ritmo.test.mjs` (começo calmo, hordas por nível, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
+**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (começo calmo, hordas por nível, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
 
 **Para testar o equilíbrio sem live:** `node teste/simular.mjs` roda dezenas de partidas em segundos em 5 cenários (sem interação, só chat, presentes misturados, só presentes que ajudam, só presentes que atrapalham) e mostra quanto cada herói durou. Para testar números sem mexer no `config.json`: `AJUSTES='{"horda_base":8}' node teste/simular.mjs 20 nada`.
 

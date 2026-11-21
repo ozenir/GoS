@@ -44,6 +44,8 @@ export function makeRng(seed = Date.now()) {
 // Direções do mundo: 0 = norte (y-), 1 = leste (x+), 2 = sul (y+), 3 = oeste (x-)
 export const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];
 export const turnLeft = d => (d + 3) % 4;
+// "1 quarteirão" / "3 quarteirões"
+export const quarteiroesTxt = q => `${q} ${q === 1 ? 'quarteirão' : 'quarteirões'}`;
 export const turnRight = d => (d + 1) % 4;
 
 // Tira acentos e deixa minúsculo, pra ler os comentários do chat

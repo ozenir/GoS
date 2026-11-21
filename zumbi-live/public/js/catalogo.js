@@ -27,7 +27,7 @@ export const PRESENTES_PADRAO = {
     "nome": "Coração c/ dedos",
     "moedas": 5,
     "efeito": "municao",
-    "segundos": 10
+    "quarteiroes": 3
   },
   "Perfume": {
     "emoji": "🧴",
@@ -62,7 +62,7 @@ export const PRESENTES_PADRAO = {
     "nome": "Corgi",
     "moedas": 299,
     "efeito": "cachorro",
-    "segundos": 60
+    "quarteiroes": 4
   },
   "Money Gun": {
     "emoji": "🔫",
@@ -110,10 +110,10 @@ export const PRESENTES_PADRAO = {
     "nome": "Universo",
     "moedas": 34999,
     "efeito": "helicoptero",
-    "segundos": 15
+    "quarteiroes": 1
   }
 };
-export const SEGUIR_PADRAO = {"efeito": "aliado", "segundos": 20};
+export const SEGUIR_PADRAO = {"efeito": "aliado", "quarteiroes": 1};
 export const COMPARTILHAR_PADRAO = {"efeito": "caixa_municao"};
 export const JOGO_PADRAO = {
   "segundos_de_votacao": 10,

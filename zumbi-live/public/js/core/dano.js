@@ -222,7 +222,7 @@ export function velocidadeHeroi(h, base, { lutando = false, noVidro = false } = 
 // Sangramento e infecção vêm de dentro: ignoram esquiva, colete, defesa e resistência.
 // Devolve { bloqueado: 'invencivel' | 'esquiva' | 'colete' | null, dano }
 export function danoNoHeroi(h, bruto, tipo = 'mordida', rng = null) {
-  if (h.invT > 0) return { bloqueado: 'invencivel', dano: 0 };
+  if (h.invT > 0 || h.invQ > 0) return { bloqueado: 'invencivel', dano: 0 };
   if (IGNORA_ARMADURA.has(tipo)) return { bloqueado: null, dano: bruto };
   if (rng && rng.next() < h.attr.get('esquiva')) return { bloqueado: 'esquiva', dano: 0 };
   if (h.colete > 0) return { bloqueado: 'colete', dano: 0 };
