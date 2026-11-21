@@ -28,11 +28,21 @@ export const AMEACA = {
   grupoPorNivel: 0.35,
   grupoMax: 6,
 
-  // Hordas que chegam sozinhas de tempos em tempos
-  hordaCadaSegundos: 24,
+  // Começo calmo: até o herói chegar no nível 5, só 40% dos zumbis; até o nível 10, 80%.
+  // Vale pros zumbis da rua, grupos, hordas dos caminhos perigosos, prédios e ondas da arena.
+  // (Os mandados por presente não são afetados.)
+  calmoAteNivel: 5, calmoMult: 0.4,
+  medioAteNivel: 10, medioMult: 0.8,
+
+  // Horda do nível: a cada 5 níveis do herói chega uma horda anunciada. Do nível 10 em diante ela é bem maior.
+  hordaNivelBase: 6, hordaNivelPorNivel: 1.2, hordaNivelGrande: 1.6,
+
+  // Hordas que chegam sozinhas de tempos em tempos (só a partir do nível 10 do herói)
+  hordaDesdeNivel: 10,
+  hordaCadaSegundos: 35,
   hordaBase: 10,
   hordaPorNivel: 2,
-  hordaMax: 30,
+  hordaMax: 40,
 
   // Hordas mandadas pelo público (presentes TikTok, Perfume, Trem) crescem com a ameaça
   presentePorNivel: 0.12,
@@ -41,15 +51,22 @@ export const AMEACA = {
   predioBase: 0.8,
   predioPorNivel: 0.12,
 
-  // Trava contra herói imortal: depois de X minutos vivo, os zumbis que nascem batem
-  // cada vez mais forte (+furiaPorMinuto por minuto). Por mais forte ou curado que o herói esteja,
-  // um dia ele cai e a live troca de herói.
-  furiaDepoisDe: 3,
+  // Trava contra herói imortal SEM a live ajudar: não é tempo limite da run.
+  // Conta só os minutos desde o último presente de ajuda (ou seguir). Passou de furiaDepoisDe,
+  // os zumbis que nascem batem cada vez mais forte. Com a live ajudando, a run pode durar o quanto aguentar.
+  furiaDepoisDe: 4,
   furiaPorMinuto: 0.2
 };
 
-// Multiplicador de dano dos zumbis pela trava acima
+// Multiplicador de dano dos zumbis pela trava acima. minutos = minutos SEM AJUDA da live.
 export const furiaDaHorda = (minutos, A = AMEACA) => 1 + Math.max(0, minutos - A.furiaDepoisDe) * A.furiaPorMinuto;
+
+// Quanto dos zumbis normais aparece no nível do herói (começo calmo)
+export const multInicio = (nivelHeroi, A = AMEACA) => nivelHeroi < A.calmoAteNivel ? A.calmoMult : nivelHeroi < A.medioAteNivel ? A.medioMult : 1;
+
+// Tamanho da horda do nível (a cada 5 níveis do herói)
+export const tamanhoHordaNivel = (nivelHeroi, A = AMEACA) =>
+  Math.round((A.hordaNivelBase + nivelHeroi * A.hordaNivelPorNivel) * (nivelHeroi >= A.medioAteNivel ? A.hordaNivelGrande : 1));
 
 // extra = pontos ganhos de outros jeitos (ex.: caminhos perigosos, ver caminhos.js)
 export function pontosAmeaca(minutos, quarteiroes, nivelHeroi, A = AMEACA, extra = 0) {
@@ -74,12 +91,16 @@ export const tamanhoHorda = (n, A = AMEACA) => Math.min(A.hordaMax, Math.round(A
 export const multPresente = (n, A = AMEACA) => 1 + acima(n) * A.presentePorNivel;
 export const multPredio = (n, A = AMEACA) => A.predioBase + n * A.predioPorNivel;
 
-// Que tipos aparecem na rua em cada nível (pesos)
-export function pesosTipos(n) {
+// Que tipos aparecem na rua em cada nível (pesos). n = nível de ameaça; nivelHeroi libera os inimigos novos.
+export const NIVEL_INIMIGOS_NOVOS = 20;
+export function pesosTipos(n, nivelHeroi = 1) {
+  const novos = nivelHeroi >= NIVEL_INIMIGOS_NOVOS;
   return [
     ['comum', 10],
     ['gordo', 2 + acima(n) * 0.3],
     ['corredor', n >= 2 ? Math.min(4, (n - 1) * 0.8) : 0],
-    ['explosivo', n >= 3 ? Math.min(1.5, (n - 2) * 0.3) : 0]
+    ['explosivo', n >= 3 ? Math.min(1.5, (n - 2) * 0.3) : 0],
+    ['lobo', novos ? 2.5 : 0],
+    ['esticado', novos ? 2 : 0]
   ];
 }

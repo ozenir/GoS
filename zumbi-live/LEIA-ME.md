@@ -67,6 +67,8 @@ Quem luta de perto vai pra cima dos zumbis que estão à frente, não ataca os e
 | Explosivo | **fogo (dobro)**, tiro | corte, impacto |
 | Chefão | corte, explosão, fogo | tiro, impacto |
 | Rei Zumbi | fogo, corte | tiro, explosão, impacto |
+| 🐺 Lobo zumbi (nível 20+) | fogo, impacto | tiro |
+| 🦾 Braço longo (nível 20+) | corte, explosão | impacto |
 
 O herói também tem resistências por tipo (a bombeira aguenta fogo; o mecânico, explosão). Sangramento e infecção vêm "de dentro": atravessam armadura, colete e resistência.
 
@@ -84,7 +86,27 @@ O herói também tem resistências por tipo (a bombeira aguenta fogo; o mecânic
 
 Facas e cacos de vidro fazem sangrar, a chave e o taco atordoam, o machado quebra armadura, o lança-chamas queima. As mordidas podem infectar o herói, e os chefes podem atordoá-lo.
 
-**O ex-herói volta.** Uns 45 segundos depois de um novo sobrevivente começar, o anterior aparece como **zumbi chefão**, com a roupa dele. Derrotar ele solta a arma que ele usava (ou um baú, se era só a pistola).
+**O ex-herói volta.** O herói anterior volta como **zumbi chefão**, com a roupa dele. Antes do nível 10 ele espera e aparece como **o chefe da próxima arena** (praça); do nível 10 em diante ele pode aparecer na rua. Derrotar ele solta a arma que ele usava (ou um baú, se era só a pistola).
+
+**O ritmo da run (do nível 1 ao 30+).** O jogo foi feito pra começar calmo, dar tempo de curtir e ir ficando mais pesado:
+
+| Nível do herói | O que muda |
+|---|---|
+| 1 a 4 | **começo calmo**: só 40% dos zumbis normais na rua (grupos menores, hordas dos caminhos menores). Nenhuma horda periódica. Chefe só na arena |
+| 5 | 🧟 **horda do nível 5** chega de uma vez. Daqui até o 10, 80% dos zumbis |
+| 10 | ☠️ **horda gigante do nível 10** (nunca vista até ali). A partir daqui: todos os zumbis, hordas periódicas (a cada 35 s), chefe de rua e ex-herói na rua |
+| 15, 20, 25... | uma horda anunciada a cada 5 níveis, cada vez maior |
+| 20 | 🐺 **novos inimigos**: **lobo zumbi** (corre e **salta** no herói: o salto **paralisa** e tem **50% de deixar sangrando**) e **braço longo** (estica o braço e acerta **de longe**, até ~3 casas, com **30% de chance**) |
+| 30 | 🏖️ **a praia**: cada cruzamento tem **25%** de chance de dar na praia. Lá, uma horda maior **sai de dentro do mar** e o herói precisa **sobreviver 1 minuto**; depois vem um baú, um kit e a votação de **por onde sair** (esquerda, frente ou direita), e ele volta pra cidade em outro ponto |
+
+Tudo anda mais devagar que antes (herói e zumbis), então tem menos decisão por minuto e mais tempo de ver a luta. Cada nível pede mais experiência que o anterior, e zumbi mais forte (ameaça maior) dá mais experiência.
+
+**A cidade vai sendo destruída.** Quanto mais tempo a run dura, mais destruídas vêm as ruas e prédios novos: começa depois de 1 minuto e chega no máximo com 10 minutos.
+- 🕳️ **buracos no asfalto** (machucam e deixam lento)
+- 🚗 **carros batidos fechando a rua** (engavetamento)
+- 🔥 **carros pegando fogo** (fogo no chão em volta)
+- 🏢 **prédios pegando fogo**, com fumaça
+- 🧍 **pessoas fugindo** gritando, ou **sendo devoradas** por zumbis e **pedindo socorro**. É só cenário: ninguém interage com elas
 
 **A câmera gira com o herói.** Ele sempre anda para cima e para a direita (↗). Por isso, na votação, **1 é sempre ↖ esquerda, 2 é ↗ frente, 3 é ↘ direita e 5 é ↙ voltar**. As mesmas setas aparecem desenhadas no chão do cruzamento.
 
@@ -113,6 +135,7 @@ Facas e cacos de vidro fazem sangrar, a chave e o taco atordoam, o machado quebr
 | 🟫 Lama | metade da velocidade |
 | 💧 Água (lagos do parque) | bem lento, mas **apaga o fogo** de quem está queimando |
 | 🧱 Entulho | deixa lento |
+| 🕳️ Buraco (cidade destruída) | machuca, pode deixar lento |
 
 **As praças: arena de chefe.** Algumas esquinas têm uma praça com chafariz. Na votação aparece **4 ⚔️ ARENA**. Lá dentro vem um **chefe** e ondas de zumbis por todos os lados, por até 100 segundos. Quem vence ganha recompensa: um baú (às vezes lendário) e um kit médico.
 
@@ -132,13 +155,13 @@ Facas e cacos de vidro fazem sangrar, a chave e o taco atordoam, o machado quebr
 
 | Caminho | Chance | O que acontece |
 |---|---|---|
-| ☠️ Perigoso | 80% | aparece um perigo e a ameaça sobe um pouco: ⚠️ emboscada (zumbis dos dois lados), 🧟 rua lotada, 🏃 corredores, 💣 explosivos, 🌑 rua escura ou 👹 chefe de rua |
+| ☠️ Perigoso | 80% | aparece um perigo e a ameaça sobe um pouco: ⚠️ emboscada (zumbis dos dois lados), 🧟 rua lotada, 🏃 corredores, 💣 explosivos, 🌑 rua escura ou 👹 chefe de rua (só a partir do nível 10). No começo calmo, as hordas dos caminhos são menores |
 | 🍃 Livre | 18% | nenhum zumbi novo até o próximo cruzamento: hora de respirar |
 | 📜 História | 2% | rua livre com um papel brilhando no chão: um fragmento da história |
 
 **A história.** São 12 fragmentos em 3 capítulos ("Os Diários de Porto Sereno"), encontrados um por vez, na ordem. O progresso continua de um herói para o outro e de uma live para a outra. Para escrever ou mudar a história, mexa só no arquivo `public/js/core/historia.js` (as instruções estão no começo dele).
 
-**O nível de ameaça (☠️).** Começa em 1 e sobe com o tempo vivo, com os quarteirões andados, com cada caminho perigoso e com o nível do herói. Assim, quanto mais forte o herói fica, mais fortes os zumbis ficam. A cada nível os zumbis nascem com mais vida, dano, velocidade e **resistência** (ignoram parte do dano; ver também as fraquezas de cada zumbi acima), aparecem mais zumbis na rua e as **hordas ficam maiores**: a horda que chega sozinha de tempos em tempos e também as mandadas por presentes. De tempos em tempos vem uma **noite** (escuro, mais zumbis). Quando a vida está muito baixa, o jogo alivia um pouco os zumbis normais (os mandados pelo público nunca são aliviados).
+**O nível de ameaça (☠️).** Começa em 1 e sobe com o tempo vivo, com os quarteirões andados, com cada caminho perigoso e com o nível do herói. Assim, quanto mais forte o herói fica, mais fortes os zumbis ficam. A cada nível os zumbis nascem com mais vida, dano, velocidade e **resistência** (ignoram parte do dano; ver também as fraquezas de cada zumbi acima), aparecem mais zumbis na rua e as **hordas ficam maiores**: a horda que chega sozinha de tempos em tempos (do nível 10 do herói em diante) e também as mandadas por presentes. De tempos em tempos vem uma **noite** (escuro, mais zumbis). Quando a vida está muito baixa, o jogo alivia um pouco os zumbis normais (os mandados pelo público nunca são aliviados).
 
 **Habilidades (a cada nível, o chat escolhe).** Quando o herói sobe de nível, aparece embaixo da tela uma escolha com 3 cartas. O chat vota comentando só a letra: **A**, **B** ou **C** (os números continuam sendo da direção, então as duas votações podem rolar ao mesmo tempo). A contagem tem a mesma janela de votos atrasados da live. Se ninguém votar, a IA escolhe. Se subir vários níveis de uma vez, as escolhas vêm uma depois da outra.
 
@@ -189,7 +212,7 @@ Quando falta alguma categoria, a carta é completada com outra. Cada habilidade 
 
 - **Resposta na hora:** todo presente mostra o emoji e o nome de quem mandou **em cima do herói** no instante em que chega, mesmo os que entram na fila.
 
-**Quanto dura.** Sem ninguém interagindo, o herói cai em uns **2 minutos** (mais os 12 segundos caído). Com chat e presentes que ajudam, dura bem mais. Esse é o estímulo pra live participar. (Números medidos no simulador estão em "Equilíbrio", mais abaixo.)
+**Quanto dura.** Sem ninguém interagindo, o herói cai em uns **3 minutos e meio** (contando os 12 segundos caído). Com chat e presentes que ajudam, dura bem mais. Esse é o estímulo pra live participar. (Números medidos no simulador estão em "Equilíbrio", mais abaixo.)
 
 ## Presentes
 
@@ -255,10 +278,10 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 | `protecao_ao_nascer_segundos` | segundos sem nada que atrapalhe no começo de cada herói | 15 |
 | `curtidas_por_suprimento` | curtidas para cair um suprimento (0 desliga) | 300 |
 | `maximo_zumbis` | limite de zumbis ao mesmo tempo (os do público passam um pouco disso) | 90 |
-| `velocidade_do_heroi` | casas por segundo | 1.5 |
+| `velocidade_do_heroi` | casas por segundo | 1.1 |
 | `ameaca_por_minuto` / `ameaca_por_quarteirao` / `ameaca_por_caminho_perigoso` / `ameaca_por_nivel_do_heroi` | quanto cada coisa faz a ameaça subir (1 = um nível inteiro). Maior = heróis morrem mais rápido | ver config |
 | `zumbis_na_rua_base` / `zumbis_na_rua_por_nivel` | zumbis normais na rua ao mesmo tempo, no nível 1 e a mais por nível | ver config |
-| `horda_a_cada_segundos` / `horda_base` / `horda_por_nivel` | a horda que chega sozinha: de quanto em quanto tempo, tamanho no nível 1 e a mais por nível | ver config |
+| `horda_a_cada_segundos` / `horda_base` / `horda_por_nivel` | a horda que chega sozinha (só a partir do nível 10 do herói): de quanto em quanto tempo, tamanho no nível 1 e a mais por nível | ver config |
 | `caminho_perigoso_porcento` / `caminho_livre_porcento` / `caminho_historia_porcento` | chance de cada tipo de caminho | 80 / 18 / 2 |
 | `torcida_maximo_pessoas` | quantas pessoas da torcida contam no máximo (0 desliga a torcida) | 10 |
 | `noite_a_cada_segundos` / `noite_dura_segundos` | ciclo da noite (0 desliga) | 150 / 35 |
@@ -290,17 +313,19 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 
 ## Equilíbrio (medido no simulador)
 
-| Cenário | Quanto o herói dura em média |
-|---|---|
-| Sem nenhuma interação | **2 min 07 s**, contando os 12 s caído (cada personagem entre 1 min 54 s e 2 min 35 s) |
-| Só chat (6 pessoas comentando e votando, curtidas) | 3 min 12 s |
-| Chat + presentes misturados (8 por minuto) | 2 min 17 s (a maioria cai no **golpe final** de quem atrapalha) |
-| Chat + só presentes que ajudam (4 por minuto) | **4 min 28 s** |
-| Chat + só presentes que atrapalham (4 por minuto) | 1 min 36 s |
+| Cenário | Quanto o herói dura em média | Nível médio |
+|---|---|---|
+| Sem nenhuma interação | **3 min 31 s**, contando os 12 s caído (cada personagem entre 3 min 14 s e 4 min) | 7 |
+| Só chat (6 pessoas comentando e votando, curtidas) | 4 min | 9 |
+| Chat + presentes misturados (8 por minuto) | 2 min 31 s (a maioria cai no **golpe final** de quem atrapalha) | 7 |
+| Chat + só presentes que ajudam (4 por minuto) | **6 min** (os melhores passam de 9 min e do nível 20) | 15 |
+| Chat + só presentes que atrapalham (4 por minuto) | 1 min 40 s | 5 |
+
+Os primeiros níveis vêm rápido (a primeira escolha de habilidade sai no primeiro minuto) e depois cada nível pede mais. O nível 10 aparece em lives com chat; o 20 (lobos e braços longos), em lives que ajudam bastante; o 30 (praia) é conquista de live muito engajada.
 
 Como as habilidades deixam o herói bem mais forte a cada nível, a ameaça também sobe com o nível do herói (`ameaca_por_nivel_do_heroi`, 0.45): quanto mais forte ele fica, mais forte vem a horda.
 
-**Trava contra herói imortal:** depois de 3 minutos vivo, os zumbis que nascem batem 20% mais forte a cada minuto. Por mais forte ou curado que o herói fique, um dia ele cai e a live troca de herói. O herói também nunca fica parado: se passar do cruzamento, volta; se for empurrado pra outra rua, volta contornando os prédios; se ficar muito tempo sem avançar, abre caminho pela horda; se travar, é levado até o cruzamento.
+**Sem tempo limite:** a run dura o quanto a live aguentar. A única trava é contra herói imortal **sem ninguém ajudando**: se passar 4 minutos sem nenhum presente de ajuda (ou seguir), os zumbis que nascem batem 20% mais forte a cada minuto. Um presente de ajuda zera essa conta. O herói também nunca fica parado: se passar do cruzamento, volta; se for empurrado pra outra rua, volta contornando os prédios; se ficar muito tempo sem avançar, abre caminho pela horda; se travar, é levado até o cruzamento.
 
 O que mais mexe nisso é `ameaca_por_minuto` (maior = partidas mais curtas) e o tamanho/frequência das hordas. Subir a ameaça devagar e começar com mais pressão faz a ajuda do público render mais; subir rápido deixa tudo mais curto, com ou sem ajuda.
 
@@ -311,20 +336,21 @@ Cada assunto tem o seu arquivo em `public/js/core/`:
 | Arquivo | O que tem |
 |---|---|
 | `dano.js` | **todas as contas de combate**: tipos de dano, fraquezas e resistências dos zumbis (AFINIDADES), perícias, atributos do herói (vida, dano, cadência, velocidade, defesa, esquiva, resistências por tipo, crítico, alcance, cura, cura por golpe, regeneração), dano de armas, corpo a corpo, fogo, zumbis, explosões, aliados e torcida. Buff novo = um modificador (`h.attr.addMod(...)`); as instruções estão no começo do arquivo |
-| `ameaca.js` | quando a ameaça sobe, quantos zumbis vêm (hordas, grupos, prédios) e a trava contra herói imortal |
+| `ameaca.js` | quando a ameaça sobe, quantos zumbis vêm (hordas, grupos, prédios), o **começo calmo** (até o nível 5 e 10), a **horda a cada 5 níveis**, os **inimigos do nível 20** e a trava contra herói imortal sem ajuda |
 | `caminhos.js` | as chances dos caminhos e os tipos de perigo |
 | `historia.js` | a história (só texto) |
 | `status.js` | os status positivos e negativos (sangrando, atordoado, fúria...) |
 | `dados.js` | **personagens** (arma, golpe, perícias, crescimento por nível, atributos, passiva), zumbis (vida, dano, tipo de ataque), armas e golpes (tipo de dano, perícia, efeitos) e melhorias de nível |
 | `efeitos.js` | o que cada presente faz |
 | `ambiente.js` | **perigos do chão** (vidro, arame, fogo, ácido, fios, lama, água, entulho): dano, status e lentidão |
-| `city.js` | a cidade: bairros, ruas, bloqueios, ruas sem saída, praças e lojas |
+| `city.js` | a cidade: bairros, ruas, bloqueios, ruas sem saída, praças, lojas e o **desgaste** (buracos, carros batidos e em chamas, prédios pegando fogo: `DESGASTE`) |
+| `praia.js` | **a praia** do nível 30: chance, tempo pra sobreviver, ondas do mar e o mapa |
 | `room.js` | o lado de dentro dos prédios (tamanho, móveis, loot e perigos de cada tipo) |
 | `votacao.js` | as opções, as palavras do chat e a janela de votos atrasados |
 | `habilidades.js` | **as habilidades do roguelike**: ativas, passivas, armas novas, treino, como as 3 cartas são sorteadas e o que a IA escolhe. Habilidade nova = acrescentar em `ATIVAS` ou `PASSIVAS` (instruções no começo do arquivo) |
 | `jogo.js` | o resto: herói, zumbis, arena, herói caído, mochila e presentes inteligentes |
 
-**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
+**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade), `node teste/ritmo.test.mjs` (começo calmo, hordas por nível, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
 
 **Para testar o equilíbrio sem live:** `node teste/simular.mjs` roda dezenas de partidas em segundos em 5 cenários (sem interação, só chat, presentes misturados, só presentes que ajudam, só presentes que atrapalham) e mostra quanto cada herói durou. Para testar números sem mexer no `config.json`: `AJUSTES='{"horda_base":8}' node teste/simular.mjs 20 nada`.
 

@@ -66,7 +66,9 @@ export const AFINIDADES = {
   explosivo: { fogo: 2.0, perfuracao: 1.3, corte: 0.75, impacto: 0.8 },
   chefao:    { perfuracao: 0.7, impacto: 0.8, corte: 1.3, fogo: 1.2, explosao: 1.25 },
   rei:       { perfuracao: 0.75, explosao: 0.7, impacto: 0.7, corte: 1.25, fogo: 1.35 },
-  exheroi:   { perfuracao: 0.9, corte: 1.1 }
+  exheroi:   { perfuracao: 0.9, corte: 1.1 },
+  lobo:      { fogo: 1.3, impacto: 1.25, perfuracao: 0.85 },
+  esticado:  { corte: 1.35, explosao: 1.2, impacto: 0.8 }
 };
 export const SUPER_EFETIVO = 1.25, POUCO_EFETIVO = 0.8;
 export const afinidade = (tipoZumbi, tipoDano) => (AFINIDADES[tipoZumbi] && AFINIDADES[tipoZumbi][tipoDano]) ?? 1;

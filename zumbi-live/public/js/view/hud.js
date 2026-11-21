@@ -125,6 +125,10 @@ export class Hud {
       case 'aviso': this.banner(e.texto, '', e.tipo === 'perigo' ? 'perigo' : 'bom', 2.4); break;
       case 'ameaca': this.banner(`☠️ AMEAÇA ${e.nivel}`, 'zumbis mais resistentes e hordas maiores', 'perigo', 1.8); break;
       case 'horda': this.banner('🧟 HORDA CHEGANDO!', `${e.qtd} zumbis`, 'perigo', 2); break;
+      case 'horda_nivel': this.banner(e.grande ? `☠️ HORDA GIGANTE DO NÍVEL ${e.nivel}!` : `🧟 HORDA DO NÍVEL ${e.nivel}!`, `${e.qtd} zumbis de uma vez`, 'perigo', 2.8); break;
+      case 'entrou_praia': this.banner('🏖️ A PRAIA!', `uma horda está saindo do mar · sobreviva 1 minuto`, 'perigo', 3.2); break;
+      case 'praia_vencida': this.banner('🏆 SOBREVIVEU À PRAIA!', 'escolham por onde sair', 'ouro', 2.8); break;
+      case 'novos_inimigos': this.banner('🐺 NOVOS INIMIGOS!', 'lobos zumbis que saltam e braços longos que acertam de longe', 'perigo', 3.2); break;
       case 'arena': this.banner('⚔️ ARENA!', `derrote o ${e.nome}`, 'perigo', 2.6); break;
       case 'arena_vencida': this.banner('🏆 ARENA VENCIDA!', 'pegue a recompensa', 'ouro', 2.6); break;
       case 'arena_tempo': this.banner('⏱️ FIM DA ARENA', 'o chefe ainda está solto...', 'perigo', 2); break;
@@ -257,7 +261,8 @@ export class Hud {
     if (g.protecao > 0 && g.fase === 'jogo') st.push(`<span class="chip ok">🛡️ proteção ${Math.ceil(g.protecao)}s</span>`);
     if (g.fila.length && g.protecao > 0) st.push(`<span class="chip mal">😈 ${g.fila.length} na fila</span>`);
     if (g.noiteT > 0) st.push(`<span class="chip mal">🌙 noite ${Math.ceil(g.noiteT)}s</span>`);
-    if (g.room) st.push(`<span class="chip">${g.room.shop.emoji} ${g.room.shop.nome} · ${Math.max(0, Math.ceil(g.cfg.predioT - g.salaT))}s</span>`);
+    if (g.room?.praia && g.praia) st.push(g.praia.vencida ? '<span class="chip ok">🏖️ praia · sobreviveu!</span>' : `<span class="chip mal">🏖️ praia · sobreviva ${Math.max(0, Math.ceil(60 - g.praia.t))}s</span>`);
+    else if (g.room) st.push(`<span class="chip">${g.room.shop.emoji} ${g.room.shop.nome} · ${Math.max(0, Math.ceil(g.cfg.predioT - g.salaT))}s</span>`);
     if (g.torcidaN > 0 && g.fase === 'jogo') st.push(`<span class="chip ok" title="Quem comentou nos últimos 30 s dá força ao herói">📣 torcida ${g.torcidaN} · +${Math.round(g.torcidaN * 3)}% dano</span>`);
     if (g.trecho?.livre && !g.room && g.fase === 'jogo') st.push(`<span class="chip ok">${g.trecho.tipo === 'historia' ? '📜 rua da pista' : '🍃 rua tranquila'}</span>`);
     if (h.mochila?.length) st.push(`<span class="chip ok" title="Kits guardados: ele usa sozinho quando a vida cair">💼 mochila ${h.mochila.length}</span>`);
@@ -361,7 +366,7 @@ export class Hud {
   atualizarVoto(g) {
     const box = $('h-voto');
     const v = g.voto;
-    const mostrar = g.fase === 'jogo' && !g.caido && !g.room && v && (v.aberta || performance.now() < this.resultadoAte || g.decisao);
+    const mostrar = g.fase === 'jogo' && !g.caido && (!g.room || g.room.praia) && v && (v.aberta || performance.now() < this.resultadoAte || g.decisao);
     if (!mostrar) { if (!box.hidden) box.hidden = true; this.cache.vkey = null; return; }
     if (box.hidden) box.hidden = false;
     const bloq = v.bloqueadas || [];
@@ -402,7 +407,7 @@ export class Hud {
         this.set('v-titulo', '⏳ CONTANDO VOTOS DA LIVE...');
         this.set('v-sub', 'ainda dá tempo de votar');
       } else {
-        this.set('v-titulo', `🗳️ PRÓXIMO CRUZAMENTO · ${Math.ceil(resta)}s`);
+        this.set('v-titulo', v.praia ? `🏖️ SAIR DA PRAIA POR ONDE? · ${Math.ceil(resta)}s` : `🗳️ PRÓXIMO CRUZAMENTO · ${Math.ceil(resta)}s`);
         this.set('v-sub', v.loja ? `${v.loja.emoji} ${v.loja.nome} aqui!` : 'comente o número');
       }
     } else {

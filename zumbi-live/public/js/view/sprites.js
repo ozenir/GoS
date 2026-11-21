@@ -103,6 +103,17 @@ export function spriteHeroi(roupa, zumbi = false) {
   return cache.get(k);
 }
 
+// Pessoas comuns (figurantes: fugindo ou sendo devoradas)
+const CIVIL_CAMISA = ['#c84a4a', '#4a8ac8', '#e8c84a', '#8a5ac8', '#4ab87a', '#e88a4a'];
+const CIVIL_PELE = ['#e0ac7e', '#c98a5e', '#8d5a3b', '#f0c39b', '#a86e48', '#d29a6e'];
+export function spriteCivil(k) {
+  const key = 'civil' + k;
+  if (cache.has(key)) return cache.get(key);
+  const s = setDePessoa({ camisa: CIVIL_CAMISA[k % 6], calca: ['#30405a', '#3b3b3b', '#5a4a3a'][k % 3], bota: '#2a2420', cabelo: ['#2a1c14', '#6b3a1e', '#1e1a18', '#c8a040'][k % 4], pele: CIVIL_PELE[(k * 5) % 6] });
+  cache.set(key, s);
+  return s;
+}
+
 export function spriteZumbi(tipo, roupa) {
   const k = 'z' + tipo + roupa;
   if (cache.has(k)) return cache.get(k);
@@ -113,6 +124,7 @@ export function spriteZumbi(tipo, roupa) {
   if (tipo === 'explosivo') o = { ...o, largura: 2, pele: '#b8c860', camisa: '#7a8a3a', cabelo: '#6a7a30' };
   if (tipo === 'chefao') o = { ...o, largura: 1, pele: '#8a6a6a', camisa: '#4a2a2a', calca: '#2a1a1a', cabelo: '#2a1010' };
   if (tipo === 'rei') o = { ...o, largura: 1, pele: '#7a8aa0', camisa: '#5a2a7a', calca: '#2a1a3a', capa: '#8a1e3a', chapeu: { tipo: 'coroa' } };
+  if (tipo === 'esticado') o = { ...o, largura: -1, pele: '#9aa07a', camisa: '#3a4656', calca: '#262a32', cabelo: '#3a3a2a' };
   const s = setDePessoa(o);
   cache.set(k, s);
   return s;
@@ -133,6 +145,28 @@ export function spriteCachorro() {
   });
   const s = { quadros, quadrosE: quadros.map(espelhar) };
   cache.set('dog', s);
+  return s;
+}
+
+// Lobo zumbi (a partir do nível 20): magro, pelo cinza-esverdeado, costelas e olho vermelho
+export function spriteLobo() {
+  if (cache.has('lobo')) return cache.get('lobo');
+  const quadros = [0, 1].map(f => {
+    const [c, x] = canvas(20, 14);
+    const r = (px, py, w, h, cor) => { x.fillStyle = cor; x.fillRect(px, py, w, h); };
+    r(3, 5, 11, 4, '#5f6b52'); r(4, 8, 9, 1, '#4a5440');            // corpo
+    r(6, 6, 1, 2, '#c8c4a8'); r(8, 6, 1, 2, '#c8c4a8'); r(10, 6, 1, 2, '#c8c4a8');   // costelas
+    r(13, 2, 6, 4, '#5f6b52'); r(17, 4, 2, 2, '#7a3a32');           // cabeça e focinho
+    r(17, 5, 1, 1, '#e8e0c8'); r(15, 3, 1, 1, '#ff3a2a');           // dente e olho
+    r(13, 0, 1, 2, '#4a5440'); r(15, 0, 1, 2, '#4a5440');           // orelhas
+    r(0, 4, 3, 1, '#4a5440'); r(1, 3, 1, 1, '#4a5440');             // rabo
+    r(9, 5, 2, 1, '#7a2a22');                                       // ferida
+    const p = f ? [[4, 10], [7, 11], [11, 10], [13, 11]] : [[4, 11], [7, 10], [11, 11], [13, 10]];
+    for (const [px, py] of p) r(px, 9, 1, py - 8, '#3a4232');
+    return contorno(c);
+  });
+  const s = { quadros, quadrosE: quadros.map(espelhar) };
+  cache.set('lobo', s);
   return s;
 }
 
@@ -206,6 +240,20 @@ export function tile(tipo, variante = 0) {
     x.fillStyle = '#8a867c';
     for (let i = 0; i < 6; i++) { x.fillRect(12 + i * 2, i, 1, 1); x.fillRect(11 - i * 2, i + 6, 1, 1); }
     salpicar(x, ['#b4b0a6', '#908c82'], 6, 90 + v);
+  } else if (tipo === 'areia') {
+    losango(x, (v % 2) ? '#e2c98e' : '#dcc286');
+    salpicar(x, ['#ead6a2', '#cfb377', '#c8a86a'], 14, 120 + v);
+    if (v === 3) { x.fillStyle = '#f4ece0'; x.fillRect(10, 6, 2, 1); }   // conchinha
+  } else if (tipo === 'mar') {
+    // 3 quadros de onda (v = 0, 1, 2)
+    losango(x, '#2f7fa8');
+    salpicar(x, ['#3a8fb8', '#2a6f98'], 10, 140);
+    x.fillStyle = '#5ab0d0';
+    for (let i = 0; i < 4; i++) x.fillRect(4 + ((i * 5 + v * 3) % 14), 3 + (i * 2 + v) % 6, 3, 1);
+  } else if (tipo === 'espuma') {
+    losango(x, '#c8b47a');
+    x.fillStyle = 'rgba(240,250,255,0.85)';
+    for (let i = 0; i < 6; i++) x.fillRect(2 + ((i * 4 + v * 5) % 18), 4 + (i + v) % 4, 3, 1);
   } else if (tipo === 'terra') {
     losango(x, '#2a2620');
   } else if (tipo.startsWith('piso_')) {
@@ -331,6 +379,31 @@ export function spriteProp(tipo) {
     [c, x] = canvas(16, 12); ox = 8; oy = 10;
     caixaIso(x, 8, 10, 6, 4, 3, '#a07a4a', '#86623a', '#6e4f2e');
     x.fillStyle = '#3a3a3a'; x.fillRect(3, 9, 1, 2); x.fillRect(12, 9, 1, 2);
+  } else if (tipo === 'coqueiro') {
+    [c, x] = canvas(26, 44); ox = 13; oy = 41;
+    x.fillStyle = '#8a6a3a'; for (let i = 0; i < 26; i++) x.fillRect(12 + Math.round(Math.sin(i / 9) * 2), 16 + i, 3, 1);
+    x.fillStyle = '#6a4e2a'; for (let i = 0; i < 26; i += 4) x.fillRect(12 + Math.round(Math.sin(i / 9) * 2), 16 + i, 3, 1);
+    const folha = (dx, dy) => { for (let k = 0; k < 9; k++) { x.fillStyle = k % 2 ? '#3f8a3a' : '#2f7030'; x.fillRect(13 + Math.round(dx * k), 14 + Math.round(dy * k + k * k * 0.06), 2, 2); } };
+    folha(1.3, -0.6); folha(-1.3, -0.6); folha(1.1, 0.3); folha(-1.1, 0.3); folha(0.2, -1);
+    x.fillStyle = '#6a4a2a'; x.fillRect(12, 16, 2, 2); x.fillRect(14, 17, 2, 2);   // cocos
+  } else if (tipo === 'guarda_sol') {
+    [c, x] = canvas(22, 26); ox = 11; oy = 24;
+    x.fillStyle = '#5a5a5a'; x.fillRect(10, 8, 1, 17);
+    for (let i = 0; i < 7; i++) { x.fillStyle = i % 2 ? '#f0f0f0' : '#d8443a'; x.fillRect(2 + i * 2.6, 6 - Math.abs(3 - i) * 0.6, 3, 3); }
+    x.fillStyle = '#c8b47a'; x.fillRect(7, 23, 8, 2);
+  } else if (tipo === 'cadeira_praia') {
+    [c, x] = canvas(14, 10); ox = 7; oy = 8;
+    x.fillStyle = '#3a7ab8'; x.fillRect(2, 4, 10, 2); x.fillRect(9, 1, 3, 4);
+    x.fillStyle = '#f0f0f0'; x.fillRect(3, 4, 2, 2); x.fillRect(7, 4, 2, 2);
+    x.fillStyle = '#7a6a5a'; x.fillRect(2, 6, 1, 3); x.fillRect(11, 6, 1, 3);
+  } else if (tipo === 'pedra') {
+    [c, x] = canvas(16, 12); ox = 8; oy = 10;
+    disc(x, 8, 7, 5, '#7a7470', 0.6); disc(x, 7, 6, 3, '#8a847e', 0.6); x.fillStyle = '#9a948e'; x.fillRect(6, 4, 2, 1);
+  } else if (tipo === 'salva_vidas') {
+    [c, x] = canvas(20, 38); ox = 10; oy = 35;
+    x.fillStyle = '#e8e0d0'; x.fillRect(4, 16, 1, 20); x.fillRect(15, 16, 1, 20); x.fillRect(4, 26, 12, 1);
+    caixaIso(x, 10, 18, 7, 5, 7, '#d84a3a', '#b83a2a', '#9a2e22');
+    x.fillStyle = '#f0f0f0'; x.fillRect(6, 3, 8, 2); x.fillStyle = '#d84a3a'; x.fillRect(9, 3, 2, 2);
   } else if (tipo === 'conteiner') {
     [c, x] = canvas(20, 24); ox = 10; oy = 21;
     caixaIso(x, 10, 22, 9, 8, 12, '#3a7a8a', '#2e6270', '#224a56');

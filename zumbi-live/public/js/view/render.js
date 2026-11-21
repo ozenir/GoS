@@ -23,6 +23,7 @@ export class Render {
     this.fade = 0; this.shake = 0; this.flash = null; this.t = 0;
     this.parts = []; this.decals = []; this.tracers = []; this.explosoes = []; this.textos = []; this.raios = [];
     this.arremessos = []; this.choques = []; this.ondas = [];   // efeitos das habilidades
+    this.bracos = [];   // braço esticado do zumbi de braço longo
     [this.escuro, this.ex] = novoCanvas(W, H);
     this.brancos = new WeakMap();
     this.vistos = new Set();
@@ -116,6 +117,9 @@ export class Render {
       }
       case 'dano_heroi': this.sangue(e.x, e.y, 4, ['#a8282a', '#7a1a1c']); this.tremer(2); this.piscar('#ff2a2a', 0.18); break;
       case 'colete': this.texto(e.x, e.y, '🛡️ bloqueou', '#9fd0ff'); break;
+      case 'braco': this.bracos.push({ ...e, age: 0, life: 0.32 }); if (e.acertou) this.sangue(e.tx, e.ty, 3); break;
+      case 'lobo_pulou': this.texto(e.x, e.y, '🐺!', '#ff9a90', 0.9); break;
+      case 'lobo_caiu': for (let i = 0; i < 6; i++) this.particula({ x: e.x, y: e.y, z: 0.05, vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2, vz: 0.8, life: 0.35, cor: '#8a8070', tam: 1 }); if (e.acertou) this.tremer(3); break;
       case 'arremesso': this.arremessos.push({ ...e, age: 0, life: e.t }); break;
       case 'raio': this.choques.push({ pts: e.pts, age: 0, life: 0.22 }); for (const p of e.pts.slice(1)) this.raios.push({ x: p[0], y: p[1], age: 0, life: 0.15, r: 22 }); break;
       case 'onda': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.45 }); this.tremer(3); break;
@@ -148,7 +152,7 @@ export class Render {
       case 'chefe': this.tremer(e.tipo === 'rei' ? 14 : 9); this.piscar('#ff2a2a', 0.35); break;
       case 'helicoptero': this.heli = { t: 0 }; break;
       case 'virou': this.fade = 1; break;
-      case 'entrou_predio': case 'saiu_predio': this.fade = 1.4; this.decals = []; this.parts = []; break;
+      case 'entrou_predio': case 'saiu_predio': case 'entrou_praia': this.fade = 1.4; this.decals = []; this.parts = []; break;
       case 'novo_heroi': this.fade = 1.6; this.decals = []; this.parts = []; this.camAlvo = null; break;
       case 'vidro_pisou': for (let i = 0; i < 8; i++) this.particula({ x: e.x, y: e.y, z: 0.2, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, vz: 2, life: 0.5, cor: '#d8f4ff', tam: 1 }); break;
       case 'golpe': {
@@ -173,7 +177,8 @@ export class Render {
     let rAlvo = g.room ? 0 : g.rota.dir;
     if (rAlvo !== this.r) { this.r = rAlvo; }
     let alvo;
-    if (g.room) alvo = { x: g.room.w / 2 + (h.x - g.room.w / 2) * 0.25, y: g.room.h / 2 + 0.6 + (h.y - g.room.h / 2) * 0.25 };
+    if (g.room?.praia) alvo = { x: h.x * 0.8 + g.room.w / 2 * 0.2, y: h.y * 0.8 + g.room.h / 2 * 0.2 - 1 };   // praia é grande: segue o herói
+    else if (g.room) alvo = { x: g.room.w / 2 + (h.x - g.room.w / 2) * 0.25, y: g.room.h / 2 + 0.6 + (h.y - g.room.h / 2) * 0.25 };
     else { const [dx, dy] = DIRS[g.rota.dir]; alvo = { x: h.x + dx * 2.5, y: h.y + dy * 2.5 }; }
     if (!this.camAlvo || this.fade > 0.9) { this.cam.x = alvo.x; this.cam.y = alvo.y; }
     const k = 1 - Math.pow(0.02, dt);
@@ -247,7 +252,20 @@ export class Render {
     }
   }
 
+  // Praia: areia, a linha de espuma e o mar com ondas mexendo
+  chaoPraia(g) {
+    const ctx = this.ctx, room = g.room, f = Math.floor(this.t * 2.5);
+    for (let ty = -14; ty < room.h + 14; ty++) for (let tx = -14; tx < room.w + 14; tx++) {
+      const [sx, sy] = this.topoCasa(tx, ty);
+      if (sx < -24 || sx > 240 || sy < -14 || sy > 390) continue;
+      const nome = ty < room.mar - 1 ? 'mar' : ty === room.mar - 1 ? 'espuma' : 'areia';
+      const v = nome === 'areia' ? (tx * 7 + ty * 3) % 4 : (f + tx + ty * 2) % 3;
+      ctx.drawImage(S.tile(nome, (v + 3) % (nome === 'areia' ? 4 : 3)), sx - 12, sy);
+    }
+  }
+
   chaoSala(g) {
+    if (g.room.praia) return this.chaoPraia(g);
     const ctx = this.ctx, room = g.room, estilo = room.info.chao;
     for (let ty = 0; ty < room.h; ty++) for (let tx = 0; tx < room.w; tx++) {
       const [sx, sy] = this.topoCasa(tx, ty);
@@ -291,6 +309,7 @@ export class Render {
   desenharZonas(g) {
     const ctx = this.ctx;
     for (const z of g.zonasAgora || []) {
+      if (z.oculta) continue;   // ex.: o mar da praia já é desenhado no chão
       const [mx, my] = this.tela((z.x0 + z.x1) / 2, (z.y0 + z.y1) / 2);
       if (mx < -80 || mx > W + 80 || my < -80 || my > H + 80) continue;
       const cantos = [this.tela(z.x0, z.y0), this.tela(z.x1, z.y0), this.tela(z.x1, z.y1), this.tela(z.x0, z.y1)];
@@ -344,6 +363,13 @@ export class Render {
           const meio = [(ax + bx) / 2, (ay + by) / 2 - 4];
           line(ctx, ax, ay - 15, meio[0], meio[1], '#1a1a1a'); line(ctx, meio[0], meio[1], bx, by - 15, '#1a1a1a');
           if (ligadoZona(z, g.t)) for (let i = 0; i < 3; i++) if (Math.random() < 0.6) { ctx.fillStyle = Math.random() < 0.5 ? '#fff3a0' : '#9fe8ff'; ctx.fillRect(meio[0] + (Math.random() - 0.5) * 10, meio[1] + (Math.random() - 0.2) * 8, 2, 2); }
+          break;
+        }
+        case 'buraco': {
+          // buraco no asfalto: escuro no meio, borda quebrada
+          const [cx, cy] = this.tela((z.x0 + z.x1) / 2, (z.y0 + z.y1) / 2), rr = (z.x1 - z.x0) * 7;
+          disc(ctx, cx, cy, rr + 1, '#2a2a2e', 0.55); disc(ctx, cx, cy, rr - 1, '#0e0e12', 0.55);
+          ctx.fillStyle = '#4a4a50'; ctx.fillRect(cx - rr, cy - 1, 2, 1); ctx.fillRect(cx + rr - 2, cy, 2, 1); ctx.fillRect(cx - 1, cy - rr / 2 - 1, 3, 1);
           break;
         }
         case 'entulho':
@@ -437,12 +463,12 @@ export class Render {
           const cs = [[p.x, p.y], [p.x + 3, p.y], [p.x, p.y + 3], [p.x + 3, p.y + 3]].map(([x, y]) => this.view(x, y));
           const u0 = Math.min(...cs.map(c => c[0])), v0 = Math.min(...cs.map(c => c[1]));
           lista.push({ key: u0 + v0 + 3, tipo: 'fonte', u0, v0 });
-        } else if (p.tipo === 'carro' || g.room) {
+        } else if (p.tipo === 'carro' || (g.room && !g.room.praia)) {
           const w = p.w || 1, hh = p.h || 1;
           const cs = [[p.x, p.y], [p.x + w, p.y], [p.x, p.y + hh], [p.x + w, p.y + hh]].map(([x, y]) => this.view(x, y));
           const u0 = Math.min(...cs.map(c => c[0])), v0 = Math.min(...cs.map(c => c[1]));
           const u1 = Math.max(...cs.map(c => c[0])), v1 = Math.max(...cs.map(c => c[1]));
-          lista.push({ key: (u0 + u1 + v0 + v1) / 2, tipo: g.room ? 'movel' : 'carro', p, u0, v0, u1, v1 });
+          lista.push({ key: (u0 + u1 + v0 + v1) / 2, tipo: g.room && !g.room.praia ? 'movel' : 'carro', p, u0, v0, u1, v1 });
         } else if (p.tipo === 'barricada') {
           // barricada do Trem (várias casas) ou de rua bloqueada (uma casa)
           const casas = p.tiles || [{ x: p.x, y: p.y }];
@@ -456,6 +482,7 @@ export class Render {
     for (const it of g.itens) { const [u, v] = this.view(it.x, it.y); lista.push({ key: u + v, tipo: 'item', it }); }
     for (const z of g.zumbis) { if (z.morto) continue; const [u, v] = this.view(z.x, z.y); lista.push({ key: u + v, tipo: 'zumbi', z }); }
     for (const a of g.aliados) { const [u, v] = this.view(a.x, a.y); lista.push({ key: u + v, tipo: 'aliado', a }); }
+    if (!g.room) for (const f of g.figurantes || []) { const [u, v] = this.view(f.x, f.y); lista.push({ key: u + v, tipo: 'figurante', f }); }
     if (g.fase === 'jogo' || this.t % 1 < 0.5) lista.push({ key: heroiKey, tipo: 'heroi' });
     lista.sort((a, b) => a.key - b.key);
     this.nomes = [];
@@ -469,6 +496,7 @@ export class Render {
         if (tampa) ctx.globalAlpha = 0.35;
         ctx.drawImage(s.c, x0, y0);
         ctx.globalAlpha = 1;
+        if (o.b.fogo) this.fogoPredio(o.b, x0, y0, s.c.width);
         if (s.placa && o.b.shop) this.nomes.push({ placa: true, x: x0 + s.placa[0], y: y0 + s.placa[1] - 16, shop: o.b.shop, tampa });
       } else if (o.tipo === 'fonte') {
         const s = S.spriteFonte();
@@ -479,6 +507,7 @@ export class Render {
         const s = o.tipo === 'carro' ? S.spriteCarro(p.cor, o.u1 - o.u0 > o.v1 - o.v0 ? 'u' : 'v', p.virado) : S.spriteMovel(p.tipo, Math.round(o.u1 - o.u0), Math.round(o.v1 - o.v0), p.v || 0);
         const [sx, sy] = this.topoVista(o.u0, o.v0);
         ctx.drawImage(s.c, sx - s.ox, sy - s.oy);
+        if (p.fogo) this.chamas(p.x + (p.w || 1) / 2, p.y + (p.h || 1) / 2, 8, 3);
         if (p.alarme && Math.floor(this.t * 4) % 2) {
           const [cx, cy] = this.tela(p.x + (p.w || 1) / 2, p.y + (p.h || 1) / 2, 10);
           ctx.fillStyle = '#ffb02a'; ctx.fillRect(cx - 10, cy, 3, 2); ctx.fillRect(cx + 8, cy, 3, 2);
@@ -491,6 +520,7 @@ export class Render {
       } else if (o.tipo === 'item') this.desenharItem(o.it);
       else if (o.tipo === 'zumbi') this.desenharZumbi(o.z, g);
       else if (o.tipo === 'aliado') this.desenharAliado(o.a);
+      else if (o.tipo === 'figurante') this.desenharFigurante(o.f, g);
       else if (o.tipo === 'heroi') this.desenharHeroi(g);
     }
   }
@@ -539,6 +569,7 @@ export class Render {
 
   desenharZumbi(z, g) {
     const T = ZUMBIS[z.tipo];
+    if (z.tipo === 'lobo') return this.desenharLobo(z, T);
     const set = z.tipo === 'exheroi' ? S.spriteHeroi(CLASSES[z.extra?.classe]?.roupa || 'sobrevivente', true) : S.spriteZumbi(z.tipo, z.roupa);
     const esc = z.tipo === 'rei' ? 3 : z.tipo === 'chefao' || z.tipo === 'exheroi' ? 2 : 1;
     const spr = this.quadro(set, z.fx, z.fy, z.animT * (z.tipo === 'corredor' ? 1.4 : 1), !z.dormindo);
@@ -567,6 +598,72 @@ export class Render {
       this.nomes.push({ x: sx, y: sy - S.PE_Y * esc - (z.nome ? (T.chefe ? 16 : 9) : (T.chefe ? 8 : 1)), txt: ic, cor: '#fff', tam: 4.5 });
     }
     if (z.nome && nasc >= 1) this.nomes.push({ x: sx, y: sy - S.PE_Y * esc - (T.chefe ? 8 : 2), txt: z.nome, chefe: T.chefe, cor: z.tipo === 'exheroi' ? '#9fd0ff' : T.chefe ? '#ff6a4a' : '#ffd8a8' });
+  }
+
+  // Chamas no ponto (x, y) do mundo, a z pixels de altura: retângulos piscando e fumaça subindo
+  chamas(x, y, z, n) {
+    const ctx = this.ctx, [sx, sy] = this.tela(x, y, z);
+    for (let k = 0; k < n; k++) {
+      const ox = Math.round(Math.sin(k * 2.1 + this.t * 9) * 4 + (k - n / 2) * 3), alt = 3 + ((k * 7 + Math.floor(this.t * 12)) % 4);
+      ctx.fillStyle = '#e8442a'; ctx.fillRect(sx + ox - 1, sy - alt, 3, alt);
+      ctx.fillStyle = '#ffd23f'; ctx.fillRect(sx + ox, sy - alt + 1, 1, alt - 1);
+    }
+    if (Math.random() < 0.12) this.particula({ x, y, z: z / 12 + 0.4, vz: 0.9, g: -0.4, life: 1.6, cor: 'rgba(50,50,50,0.6)', tam: 3, fumaca: true });
+  }
+
+  // Prédio pegando fogo: chamas em algumas janelas e no telhado, fumaça saindo
+  fogoPredio(b, x0, y0, largura) {
+    const ctx = this.ctx;
+    for (let k = 0; k < 7; k++) {
+      const hx = ((b.bi * 31 + b.sx * 7 + k * 13) % 17) / 17, hy = ((b.bj * 17 + b.sy * 5 + k * 11) % 13) / 13;
+      const px = Math.round(x0 + largura * (0.15 + hx * 0.7)), py = Math.round(y0 + 8 + hy * b.altura * 0.8);
+      const alt = 5 + ((k + Math.floor(this.t * 10)) % 4);
+      ctx.globalAlpha = 0.3; disc(ctx, px, py - 3, 6, '#ff7a2a', 0.6); ctx.globalAlpha = 1;
+      ctx.fillStyle = '#c8321e'; ctx.fillRect(px - 2, py - alt, 5, alt);
+      ctx.fillStyle = '#ff8a2a'; ctx.fillRect(px - 1, py - alt + 1, 3, alt - 1);
+      ctx.fillStyle = '#ffe27a'; ctx.fillRect(px, py - alt + 2, 1, alt - 3);
+    }
+    if (Math.random() < 0.08) this.particula({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2, z: b.altura / 12 + 1, vz: 0.8, g: -0.3, life: 2.2, cor: 'rgba(40,40,40,0.6)', tam: 4, fumaca: true });
+  }
+
+  // Figurantes (só cenário): pessoa fugindo, ou pessoa caída com dois zumbis em cima pedindo socorro
+  desenharFigurante(f, g) {
+    const ctx = this.ctx, set = S.spriteCivil(f.roupa);
+    if (f.tipo === 'fugindo') {
+      const spr = this.quadro(set, f.fx || f.vx, f.fy || f.vy, f.animT * 1.6, true);
+      const [sx, sy] = this.pessoa(spr, f.x, f.y);
+      if (f.t < 3.5) this.nomes.push({ x: sx, y: sy - 27, txt: '😱 ' + f.grito, cor: '#ffffff' });
+      return;
+    }
+    const corpo = S.deitado(set.frente[0]);
+    const [sx, sy] = this.tela(f.x, f.y);
+    ctx.drawImage(S.sombra(14), sx - 8, sy - 3);
+    ctx.drawImage(corpo, sx - 14, sy - 10);
+    if (f.t < 12) for (const [dx, dy, k] of [[-0.55, -0.25, 0], [0.5, 0.3, 1]]) {
+      const zs = S.spriteZumbi('comum', (f.roupa + k * 3) % 6);
+      const spr = this.quadro(zs, -dx, -dy, this.t * 2 + k, Math.floor(this.t * 3 + k) % 2 === 0);
+      this.pessoa(spr, f.x + dx, f.y + dy, 1, 1, 0.8);
+    }
+    if (f.t < 7) {
+      this.nomes.push({ x: sx, y: sy - 30, txt: '🆘 ' + f.grito, cor: '#ff6a5a' });
+      if (Math.random() < 0.15) this.sangue(f.x, f.y, 2);
+    }
+  }
+
+  // Lobo zumbi: quatro patas; no salto ele sobe (z.alt)
+  desenharLobo(z, T) {
+    const ctx = this.ctx, s = S.spriteLobo();
+    const [dx] = this.dirTela(z.fx, z.fy);
+    const q = (dx < 0 ? s.quadrosE : s.quadros)[z.salto ? 1 : Math.floor(z.animT * 5) % 2];
+    const [gx, gy] = this.tela(z.x, z.y);
+    const sh = S.sombra(10); ctx.drawImage(sh, gx - 6, gy - 3);
+    const [sx, sy] = this.tela(z.x, z.y, (z.alt || 0) * 14);
+    if (z.nascendo > 0) ctx.globalAlpha = Math.max(0.2, 1 - z.nascendo / 0.8);
+    ctx.drawImage(q, sx - 10, sy - 12);
+    if (z.flash > 0.04) { ctx.globalAlpha = 0.6; ctx.drawImage(this.branco(q), sx - 10, sy - 12); }
+    ctx.globalAlpha = 1;
+    if (z.estados.lista.size) { let ic = ''; for (const st of z.estados.lista.values()) { ic += STATUS[st.id].emoji; if (ic.length > 6) break; } this.nomes.push({ x: sx, y: sy - 14, txt: ic, cor: '#fff', tam: 4.5 }); }
+    if (z.nome) this.nomes.push({ x: sx, y: sy - (z.estados.lista.size ? 21 : 14), txt: z.nome, cor: '#ffd8a8' });
   }
 
   desenharHeroi(g) {
@@ -689,7 +786,8 @@ export class Render {
     this.tracers = this.tracers.filter(t => t.age < t.life);
     for (const e of this.explosoes) e.age += dt;
     this.explosoes = this.explosoes.filter(e => e.age < e.life);
-    for (const l of [this.arremessos, this.choques, this.ondas]) for (const a of l) a.age += dt;
+    for (const l of [this.arremessos, this.choques, this.ondas, this.bracos]) for (const a of l) a.age += dt;
+    this.bracos = this.bracos.filter(a => a.age < a.life);
     this.arremessos = this.arremessos.filter(a => a.age < a.life);
     this.choques = this.choques.filter(a => a.age < a.life);
     this.ondas = this.ondas.filter(a => a.age < a.life);
@@ -731,6 +829,13 @@ export class Render {
         ctx.fillStyle = '#3a7a3a'; ctx.fillRect(sx - 1, sy - 2, 2, 4);
         ctx.fillStyle = Math.random() < 0.5 ? '#ffd23f' : '#ff8a2a'; ctx.fillRect(sx - 1, sy - 4, 2, 2);
       } else { disc(ctx, sx, sy, 2, '#3e4a2a', 1); ctx.fillStyle = '#c8c8c8'; ctx.fillRect(sx, sy - 3, 1, 1); }
+    }
+    // braço longo: estica até o alvo e volta
+    for (const b of this.bracos) {
+      const k = b.age / b.life, ext = k < 0.4 ? k / 0.4 : 1 - (k - 0.4) / 0.6;
+      const [x0, y0] = this.tela(b.x, b.y, 13), [x1, y1] = this.tela(b.x + (b.tx - b.x) * ext, b.y + (b.ty - b.y) * ext, 10);
+      line(ctx, x0, y0, x1, y1, '#6a7050', 2); line(ctx, x0, y0 - 1, x1, y1 - 1, '#9aa07a', 1);
+      ctx.fillStyle = '#9aa07a'; ctx.fillRect(x1 - 1, y1 - 1, 3, 3);
     }
     for (const r of this.choques) {
       ctx.globalAlpha = 1 - r.age / r.life;

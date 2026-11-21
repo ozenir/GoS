@@ -25,7 +25,8 @@ export const AMBIENTE = {
   lama:    { nome: 'Lama', emoji: '🟫', lentidao: 0.5 },
   agua:    { nome: 'Água', emoji: '💧', lentidao: 0.4, apagaFogo: true },
   fios:    { nome: 'Fios elétricos', emoji: '⚡', golpe: 9, intervalo: 1.5, tipoDano: 'eletrico', status: [{ id: 'atordoado', chance: 0.6, duracao: 0.6 }], lentidao: 0.85, piscando: true, luz: true },
-  entulho: { nome: 'Entulho', emoji: '🧱', lentidao: 0.6 }
+  entulho: { nome: 'Entulho', emoji: '🧱', lentidao: 0.6 },
+  buraco:  { nome: 'Buraco', emoji: '🕳️', golpe: 4, intervalo: 1.6, tipoDano: 'impacto', status: [{ id: 'lento', chance: 0.5 }], lentidao: 0.55 }
 };
 
 // Perigos que machucam (o herói tenta desviar deles primeiro)

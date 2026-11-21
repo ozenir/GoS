@@ -1,16 +1,28 @@
 // Tabelas do jogo: tipos de zumbi, classes de herói, armas e melhorias de nível.
 // Mexa aqui pra mudar números (vida, dano, velocidade...). Velocidade em casas por segundo.
+// (o herói anda 1,1 por padrão: config.json → velocidade_do_heroi)
 
 // ataque: tipo de dano do golpe do zumbi (dano.js → TIPOS_DANO) e efeitos que ele pode causar no herói (status.js)
 // Fraquezas e resistências de cada zumbi a cada tipo de dano: dano.js → AFINIDADES
 export const ZUMBIS = {
-  comum:     { nome: 'Zumbi',        vida: 30,   vel: 0.75, dano: 6,  cd: 1.0, raio: 0.32, xp: 1,  alcance: 0.62, ataque: { tipo: 'mordida', status: [{ id: 'infectado', chance: 0.06 }] } },
-  gordo:     { nome: 'Zumbi gordo',  vida: 55,   vel: 0.58, dano: 8,  cd: 1.2, raio: 0.4,  xp: 2,  alcance: 0.66, ataque: { tipo: 'mordida', status: [{ id: 'infectado', chance: 0.1 }] } },
-  corredor:  { nome: 'Corredor',     vida: 20,   vel: 1.9,  dano: 4,  cd: 0.7, raio: 0.28, xp: 1,  alcance: 0.6,  ataque: { tipo: 'mordida', status: [{ id: 'sangramento', chance: 0.15 }] } },
-  explosivo: { nome: 'Explosivo',    vida: 40,   vel: 0.72, dano: 0,  cd: 1.0, raio: 0.42, xp: 3,  alcance: 0.9,  ataque: { tipo: 'explosao' } },
-  chefao:    { nome: 'Chefão',       vida: 480,  vel: 0.72, dano: 11, cd: 1.3, raio: 0.6,  xp: 25, alcance: 1.05, chefe: true, ataque: { tipo: 'impacto', status: [{ id: 'atordoado', chance: 0.2, duracao: 0.6 }] } },
-  rei:       { nome: 'Rei Zumbi',    vida: 1400, vel: 0.62, dano: 16, cd: 1.5, raio: 0.85, xp: 60, alcance: 1.35, chefe: true, ataque: { tipo: 'impacto', status: [{ id: 'atordoado', chance: 0.2, duracao: 0.7 }, { id: 'lento', chance: 0.3 }] } },
-  exheroi:   { nome: 'Ex-herói',     vida: 300,  vel: 1.0,  dano: 9,  cd: 1.0, raio: 0.45, xp: 15, alcance: 0.8,  chefe: true, ataque: { tipo: 'mordida', status: [{ id: 'sangramento', chance: 0.25 }, { id: 'infectado', chance: 0.1 }] } }
+  comum:     { nome: 'Zumbi',        vida: 30,   vel: 0.56, dano: 6,  cd: 1.0, raio: 0.32, xp: 1,  alcance: 0.62, ataque: { tipo: 'mordida', status: [{ id: 'infectado', chance: 0.06 }] } },
+  gordo:     { nome: 'Zumbi gordo',  vida: 55,   vel: 0.44, dano: 8,  cd: 1.2, raio: 0.4,  xp: 2,  alcance: 0.66, ataque: { tipo: 'mordida', status: [{ id: 'infectado', chance: 0.1 }] } },
+  corredor:  { nome: 'Corredor',     vida: 20,   vel: 1.4,  dano: 4,  cd: 0.7, raio: 0.28, xp: 1,  alcance: 0.6,  ataque: { tipo: 'mordida', status: [{ id: 'sangramento', chance: 0.15 }] } },
+  explosivo: { nome: 'Explosivo',    vida: 40,   vel: 0.54, dano: 0,  cd: 1.0, raio: 0.42, xp: 3,  alcance: 0.9,  ataque: { tipo: 'explosao' } },
+  chefao:    { nome: 'Chefão',       vida: 480,  vel: 0.55, dano: 11, cd: 1.3, raio: 0.6,  xp: 25, alcance: 1.05, chefe: true, ataque: { tipo: 'impacto', status: [{ id: 'atordoado', chance: 0.2, duracao: 0.6 }] } },
+  rei:       { nome: 'Rei Zumbi',    vida: 1400, vel: 0.48, dano: 16, cd: 1.5, raio: 0.85, xp: 60, alcance: 1.35, chefe: true, ataque: { tipo: 'impacto', status: [{ id: 'atordoado', chance: 0.2, duracao: 0.7 }, { id: 'lento', chance: 0.3 }] } },
+  exheroi:   { nome: 'Ex-herói',     vida: 300,  vel: 0.78,  dano: 9,  cd: 1.0, raio: 0.45, xp: 15, alcance: 0.8,  chefe: true, ataque: { tipo: 'mordida', status: [{ id: 'sangramento', chance: 0.25 }, { id: 'infectado', chance: 0.1 }] } },
+  // A partir do nível 20 do herói:
+  //   lobo: corre, e de 1,3 a 3,4 casas de distância SALTA no herói (a cada 4 s). O salto paralisa (atordoa)
+  //         e tem 50% de chance de deixar sangrando (saltoStatus). A mordida normal é mais fraca.
+  //   esticado: estica o braço e acerta de longe (até 2,8 casas), com 30% de chance de acertar (braco).
+  lobo:      { nome: 'Lobo zumbi',   vida: 34,   vel: 1.25, dano: 7,  cd: 1.3, raio: 0.3,  xp: 3,  alcance: 0.6,  desdeNivel: 20,
+               salto: { min: 1.3, max: 3.4, recarga: 4, duracao: 0.42, dano: 1.5 },
+               saltoStatus: [{ id: 'atordoado', chance: 1, duracao: 1.1 }, { id: 'sangramento', chance: 0.5 }],
+               ataque: { tipo: 'mordida', status: [{ id: 'sangramento', chance: 0.2 }] } },
+  esticado:  { nome: 'Braço longo',  vida: 46,   vel: 0.46, dano: 8,  cd: 1.6, raio: 0.34, xp: 3,  alcance: 0.62, desdeNivel: 20,
+               braco: { alcance: 2.8, chance: 0.3, recarga: 2.2 },
+               ataque: { tipo: 'impacto', status: [{ id: 'lento', chance: 0.2 }] } }
 };
 
 // Personagens. Todos usam o mesmo corpo, muda roupa, armas e o jeito de lutar.
@@ -94,5 +106,6 @@ for (const c of Object.values(CORPO)) c.corpo = true;
 
 // O que o herói ganha ao subir de nível é escolhido pelo chat: ver habilidades.js
 
-// XP para passar do nível n para o n+1
-export const xpParaNivel = n => 8 + n * 6;
+// XP para passar do nível n para o n+1: cada nível pede mais que o anterior
+// (nível 1→2: 8 · 5→6: 31 · 10→11: 80 · 20→21: 245 · 30→31: 500). Zumbi dá mais XP quanto maior a ameaça.
+export const xpParaNivel = n => Math.round(5 + n * 3 + n * n * 0.45);

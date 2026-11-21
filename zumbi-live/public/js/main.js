@@ -186,6 +186,8 @@ function tocar(e, g) {
     case 'voto': som.voto(); break;
     case 'decisao': som.decisao(); break;
     case 'entrou_predio': case 'saiu_predio': som.porta(); break;
+    case 'entrou_praia': som.perigo(); break;
+    case 'praia_vencida': som.recorde(); break;
     case 'virou': som.virou(); break;
     case 'chefe': som.chefe(e.tipo === 'rei'); break;
     case 'alarme': som.alarme(e.sala ? 4 : 6); break;
@@ -195,6 +197,11 @@ function tocar(e, g) {
     case 'heroi_morreu': som.morteHeroi(); break;
     case 'caiu': som.caiu(); break;
     case 'raio': som.zap(); break;
+    case 'lobo_pulou': som.rosnado(); break;
+    case 'grito': som.grito(); break;
+    case 'braco': som.esticar(); break;
+    case 'horda_nivel': som.perigo(); break;
+    case 'novos_inimigos': som.chefe(false); break;
     case 'onda': som.onda(); break;
     case 'arremesso': som.arremesso(); break;
     case 'habilidade': som.habilidade(); break;

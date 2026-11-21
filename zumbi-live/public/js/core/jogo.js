@@ -4,6 +4,7 @@
 import { clamp, dist, dist2, makeRng, DIRS, turnLeft, turnRight, nomeSeguro } from './util.js';
 import { City, SHOPS, BAIRROS, P as PERIODO } from './city.js';
 import { Room } from './room.js';
+import { Praia, PRAIA } from './praia.js';
 import { FlowField } from './flow.js';
 import { ZUMBIS, CLASSES, ARMAS, CORPO, xpParaNivel } from './dados.js';
 import { EFEITOS, ladoDo } from './efeitos.js';
@@ -17,14 +18,15 @@ import {
 import { STATUS, Estados, sincronizarAtributos } from './status.js';
 import { AMBIENTE, efeitoDoAmbiente, faixaLivre, machuca } from './ambiente.js';
 import {
-  AMEACA, furiaDaHorda, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos
+  AMEACA, furiaDaHorda, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos,
+  multInicio, tamanhoHordaNivel, NIVEL_INIMIGOS_NOVOS
 } from './ameaca.js';
 import { CHANCES_PADRAO, PERIGOS, AMEACA_POR_PERIGO, ATRASO_PERIGO, sortearCaminho } from './caminhos.js';
 import { Historia, HISTORIA } from './historia.js';
 
 export const PADRAO = {
   votoDur: 10, relNum: 10, relDest: 12, protecao: 15, likesPor: 300, maxZ: 90,
-  velHeroi: 1.5, noiteCada: 150, noiteDur: 35, predioT: 70, torcidaMax: TORCIDA.maxPessoas,
+  velHeroi: 1.1, noiteCada: 150, noiteDur: 35, predioT: 70, torcidaMax: TORCIDA.maxPessoas,
   atraso: 6,        // atraso da live (s): quanto tempo a tela do TikTok chega atrasada pra quem assiste
   escolhaDur: 12,   // tempo da contagem da escolha de habilidade (A, B, C) ao subir de nível
   caidoDur: 12      // quanto tempo o herói fica caído esperando presente antes de morrer (0 = morre na hora)
@@ -115,6 +117,9 @@ export class Jogo {
       mochila: [],     // kits que chegaram com a vida alta: ele usa sozinho quando precisar
       habs: {}, passivas: {}, treino: 0, habT: {}   // habilidades escolhidas pelo chat (habilidades.js)
     };
+    this.praia = null;            // praia em andamento (praia.js)
+    this.figurantes = [];         // pessoas fugindo ou sendo devoradas (só cenário, ninguém interage)
+    this.figT = 25;
     this.escolha = null;          // escolha de habilidade aberta (votação A/B/C)
     this.niveisPendentes = 0;     // níveis que ainda vão virar escolha
     this.escolhaEspera = 0;
@@ -158,7 +163,8 @@ export class Jogo {
     this.alarmeCarro = null;
     this.heliT = 0;
     this.flowT = 0;
-    this.exHeroiT = this.ultimoHeroi ? 45 : -1;
+    this.exHeroiT = this.ultimoHeroi ? 45 : -1;   // até o nível 10 o ex-herói espera a próxima arena
+    this.ultimaAjudaT = this.t;                     // último presente de ajuda (a fúria da horda só conta o tempo sem ajuda)
     this.relatorio = null;
     this.curaGolpes = 0;
     this.emit('novo_heroi', { n: this.heroiN, classe, nome: C.nome, emoji: C.emoji, exHeroi: !!this.ultimoHeroi, viewer: this.hero.viewer, exNome: this.ultimoHeroi?.viewer?.nick || null });
@@ -307,6 +313,7 @@ export class Jogo {
     this.processarFila(dt);
     this.atualizarHeroi(dt);
     if (this.fase === 'jogo' && !this.caido) { this.atualizarEscolha(dt); atualizarHabilidades(this, dt); }
+    this.atualizarFigurantes(dt);
     this.atualizarAliados(dt);
     this.atualizarZumbis(dt);
     this.atualizarItens(dt);
@@ -317,6 +324,9 @@ export class Jogo {
   /* =================== Diretor: ritmo da partida =================== */
   diretor(dt) {
     const minutos = (this.t - this.stats.inicio) / 60;
+    // Desgaste da cidade: começa depois de 1 minuto e chega no máximo com 10 minutos de run.
+    // Ruas e prédios que aparecem depois disso vêm com buracos, carros batidos e em chamas, prédios pegando fogo.
+    this.city.desgaste = clamp((minutos - 1) / 9, 0, 1);
     const n = nivelAmeaca(minutos, this.stats.quarteiroes, this.hero.nivel, this.A, this.ameacaBonus);
     if (!this.room) {
       const b = this.city.bairroNaPosicao(this.hero.x, this.hero.y);
@@ -331,7 +341,8 @@ export class Jogo {
       if (this.proxNoite <= 0) { this.proxNoite = this.cfg.noiteCada; this.noite(this.cfg.noiteDur); }
     }
     if (this.exHeroiT > 0 && (this.exHeroiT -= dt) <= 0) {
-      if (this.room) this.exHeroiT = 5;   // espera sair do prédio
+      // espera sair do prédio; antes do nível 10 só aparece como chefe da arena (iniciarArena)
+      if (this.room || this.arena || this.hero.nivel < this.A.medioAteNivel) this.exHeroiT = 5;
       else this.chefe('exheroi', { nick: this.ultimoHeroi.viewer ? `${this.ultimoHeroi.viewer.nick} zumbi` : `Ex-herói #${this.ultimoHeroi.n}`, id: '__exheroi' }, 0);
     }
 
@@ -362,7 +373,7 @@ export class Jogo {
       this.trecho.livre = false;
     }
     // Horda que chega sozinha de tempos em tempos (cresce com a ameaça)
-    if (this.protecao <= 0 && this.A.hordaCadaSegundos > 0) {
+    if (this.protecao <= 0 && this.A.hordaCadaSegundos > 0 && h.nivel >= this.A.hordaDesdeNivel) {
       this.hordaT -= dt;
       if (this.hordaT <= 0) {
         this.hordaT = this.A.hordaCadaSegundos;
@@ -371,7 +382,7 @@ export class Jogo {
         this.emit('horda', { qtd });
       }
     }
-    let alvo = Math.round(alvoNaturais(nv, this.A));
+    let alvo = Math.round(alvoNaturais(nv, this.A) * this.multInicio());
     if (noite) alvo *= 1.6;
     if (vidaPct < 0.3) alvo *= 0.55;   // alivia quando o herói está quase morrendo (presentes não são afetados)
     if (this.protecao > 0) alvo *= 0.5;
@@ -381,7 +392,7 @@ export class Jogo {
     this.spawnT -= dt;
     if (this.spawnT <= 0 && naturais < alvo) {
       this.spawnT = intervaloAparecer(nv, this.A) * (noite ? 0.7 : 1);
-      const grupo = tamanhoGrupo(nv, this.A);
+      const grupo = Math.max(1, Math.round(tamanhoGrupo(nv, this.A) * this.multInicio()));
       const p = this.pontoNaRua(h, 10, 15, 0.7);
       if (p) for (let k = 0; k < grupo; k++) {
         const q = this.pontoPerto(p, 1.5) || p;
@@ -402,7 +413,7 @@ export class Jogo {
   // Nível de ameaça: quão fortes os zumbis nascem agora (força: dano.js → statsZumbi; quando sobe: ameaca.js)
   ameaca() { return this.nivelAmeaca; }
 
-  tipoNatural() { return this.rng.weighted(pesosTipos(this.nivelAmeaca)); }
+  tipoNatural() { return this.rng.weighted(pesosTipos(this.nivelAmeaca, this.hero.nivel)); }
 
   noite(seg) {
     const antes = this.noiteT > 0;
@@ -432,7 +443,7 @@ export class Jogo {
     for (const it of this.itens) { const p = this.room.pontoLivre(this.rng, null); it.x = p.x; it.y = p.y; }
     this.zonas = [];
     const info = this.room.info;
-    const nZ = Math.round(info.zumbis * multPredio(this.nivelAmeaca, this.A));
+    const nZ = Math.max(1, Math.round(info.zumbis * multPredio(this.nivelAmeaca, this.A) * Math.max(0.6, this.multInicio())));
     for (let k = 0; k < nZ; k++) {
       const p = this.room.pontoLivre(this.rng, this.room.entrada, 4);
       const tipo = shop.tipo === 'hospital' && this.rng.chance(0.3) ? 'gordo' : this.rng.chance(0.15 * shop.risco) ? 'corredor' : 'comum';
@@ -448,6 +459,7 @@ export class Jogo {
   }
 
   atualizarSala(dt) {
+    if (this.room.praia) { this.atualizarPraia(dt); return; }
     this.salaT += dt;
     const lim = this.cfg.predioT;
     if (!this.salaAlarme && this.salaT > lim - 20) {
@@ -496,6 +508,124 @@ export class Jogo {
     this.spawnT = 2;
     this.flowT = 0;
     this.emit('saiu_predio', { tipo: shop.tipo });
+    this.checarRecorde();
+  }
+
+  /* =================== Figurantes: pessoas fugindo ou sendo devoradas (só cenário) =================== */
+  // Aparecem mais conforme o desgaste da cidade. Ninguém interage com eles: zumbis e herói não veem.
+  //   fugindo:  corre pela rua gritando e some
+  //   devorado: caído no chão com dois zumbis em cima, pedindo socorro; depois fica só o corpo
+  atualizarFigurantes(dt) {
+    for (const f of this.figurantes) {
+      f.t += dt;
+      if (f.tipo === 'fugindo') {
+        const antes = { x: f.x, y: f.y };
+        this.mover(f, f.vx * dt, f.vy * dt, 0.2);
+        f.animT += Math.hypot(f.x - antes.x, f.y - antes.y);
+        if (Math.hypot(f.x - antes.x, f.y - antes.y) < 0.005) { const a = this.rng.next() * Math.PI * 2; f.vx = Math.cos(a) * 1.7; f.vy = Math.sin(a) * 1.7; }
+      }
+    }
+    if (this.figurantes.length) this.figurantes = this.figurantes.filter(f => f.t < f.vida && !this.room);
+    const dg = this.city.desgaste || 0;
+    if (this.room || this.arena || this.fase !== 'jogo' || dg <= 0) return;
+    if ((this.figT -= dt) > 0) return;
+    this.figT = this.rng.range(8, 16) / (0.5 + dg);
+    const h = this.hero, p = this.pontoNaRua(h, 5, 9, 1);
+    if (!p) return;
+    const roupa = this.rng.int(0, 5);
+    if (this.rng.chance(0.5)) {
+      const dx = p.x - h.x, dy = p.y - h.y, d = Math.hypot(dx, dy) || 1;
+      this.figurantes.push({ tipo: 'fugindo', x: p.x, y: p.y, vx: dx / d * 1.7, vy: dy / d * 1.7, fx: dx / d, fy: dy / d, t: 0, vida: 6, animT: 0, roupa, grito: this.rng.pick(['SOCORRO!', 'CORRE!', 'AAAH!', 'ME AJUDA!']) });
+    } else {
+      this.figurantes.push({ tipo: 'devorado', x: p.x, y: p.y, t: 0, vida: 16, roupa, grito: 'SOCORRO!' });
+      this.emit('grito', { x: p.x, y: p.y });
+    }
+  }
+
+  /* =================== Praia (nível 30+, praia.js) =================== */
+  podePraia() {
+    return this.hero.nivel >= PRAIA.desdeNivel && this.stats.cruzamentos - (this.ultimaPraia ?? -99) >= PRAIA.intervalo && this.rng.chance(PRAIA.chance);
+  }
+
+  // A rua deu na praia: uma horda maior sai do mar; sobreviver 1 minuto
+  entrarPraia() {
+    const h = this.hero;
+    this.figurantes = [];
+    this.room = new Praia(this.rng.int(1, 1e9));
+    this.map = this.room;
+    this.praia = { t: 0, ondaT: PRAIA.ondaCada, vencida: false };
+    this.ultimaPraia = this.stats.cruzamentos;
+    this.stats.praias = (this.stats.praias || 0) + 1;
+    this.trecho = null; this.indoPorta = null; this.indoPraca = null; this.voto = null; this.decisao = null;
+    h.x = this.room.entrada.x; h.y = this.room.entrada.y; h.fx = 0; h.fy = -1;
+    this.zumbis = [];
+    this.zonas = [];
+    for (const a of this.aliados) { a.x = h.x + this.rng.range(-1, 1); a.y = h.y + 0.3; }
+    for (const it of this.itens) { const p = this.room.pontoLivre(this.rng, null); it.x = p.x; it.y = p.y; }
+    const q = Math.round(tamanhoHorda(this.nivelAmeaca, this.A) * PRAIA.hordaInicial);
+    this.zumbisDoMar(q);
+    this.emit('entrou_praia', { qtd: q });
+  }
+
+  zumbisDoMar(q) {
+    for (let k = 0; k < q; k++) {
+      const p = this.room.pontoNoMar(this.rng);
+      const t = this.rng.chance(0.15) ? 'gordo' : this.hero.nivel >= NIVEL_INIMIGOS_NOVOS && this.rng.chance(0.15) ? 'esticado' : 'comum';
+      this.criarZumbi(t, p.x, p.y, null, { nascendo: 0.3 + k * 0.1 });
+    }
+  }
+
+  atualizarPraia(dt) {
+    const p = this.praia, h = this.hero;
+    p.t += dt;
+    if (!p.vencida) {
+      if ((p.ondaT -= dt) <= 0) {
+        p.ondaT = PRAIA.ondaCada;
+        if (this.zumbis.length < this.cfg.maxZ) this.zumbisDoMar(tamanhoGrupo(this.nivelAmeaca, this.A) + 3);
+      }
+      if (p.t >= PRAIA.duracao) {
+        p.vencida = true;
+        const a = this.pontoPerto(h, 1.5) || h, b = this.pontoPerto(h, 2) || h;
+        this.soltarItemEm('bau_medio', {}, null, a.x, a.y, 6);
+        this.soltarItemEm('kit', { valor: 30 }, null, b.x, b.y, 6);
+        this.emit('praia_vencida', {});
+        // votação de pra onde ir (mesma janela de votos atrasados)
+        const ops = ['esquerda', 'frente', 'direita'].map(id => ({ id, ...OPCOES[id] }));
+        this.voto = new Votacao(ops, this.cfg.votoDur, this.cfg.atraso);
+        this.voto.loja = null; this.voto.bloqueadas = []; this.voto.praia = true;
+        this.emit('votacao_abriu', { opcoes: ops.map(o => o.id), loja: null, praia: true });
+      }
+    } else if (this.voto) {
+      if (this.voto.aberta) { this.voto.update(dt); if (this.voto.t <= 0) this.fecharVotacao(); }
+      if (this.decisao && (p.saindoT = (p.saindoT ?? 2) - dt) <= 0) this.sairPraia(this.decisao.id);
+    }
+    if (p.t > PRAIA.duracao + 60) this.sairPraia('frente');   // segurança
+  }
+
+  // Na praia o herói fica na areia, longe do mar, girando em volta do meio (e pega o que cair)
+  objetivoPraia() {
+    const h = this.hero, room = this.room, c = room.centro;
+    const ang = Math.atan2(h.y - c.y, h.x - c.x) + 0.5;
+    return { x: clamp(c.x + Math.cos(ang) * 4, 2, room.w - 2), y: clamp(c.y + Math.sin(ang) * 2.6, room.mar + 1.5, room.h - 1.5), arena: true };
+  }
+
+  // Saindo da praia pela orla: volta pra cidade dois quarteirões na direção escolhida
+  sairPraia(id = 'frente') {
+    const r = this.rota, h = this.hero;
+    const dir = id === 'esquerda' ? turnLeft(r.dir) : id === 'direita' ? turnRight(r.dir) : r.dir;
+    const i = r.i + DIRS[dir][0] * 2, j = r.j + DIRS[dir][1] * 2;
+    this.room = null; this.map = this.city; this.praia = null;
+    r.i = i; r.j = j; r.dir = this.direcaoLivre(i, j, dir); r.beco = null;
+    r.alvo = { i: i + DIRS[r.dir][0], j: j + DIRS[r.dir][1] };
+    const p = this.city.nodePos(i, j);
+    h.x = p.x; h.y = p.y; h.fx = DIRS[r.dir][0]; h.fy = DIRS[r.dir][1];
+    h.ultimaPos = { x: h.x, y: h.y }; h.parado = 0;
+    this.zumbis = []; this.zonas = [];
+    for (const a of this.aliados) { a.x = h.x; a.y = h.y; }
+    this.itens = this.itens.filter(it => !it.achado && it.kind !== 'bau_medio' && it.kind !== 'kit');
+    this.decisao = null; this.voto = null; this.votoAbreT = 0.8; this.trecho = null; this.spawnT = 2; this.flowT = 0;
+    this.stats.quarteiroes += 2;
+    this.emit('saiu_predio', { tipo: 'praia' });
     this.checarRecorde();
   }
 
@@ -568,6 +698,8 @@ export class Jogo {
     this.votoAbreT = 0.8;
     if (virou) this.emit('virou', { dir: r.dir, voltou: op.id === 'voltar' });
     this.checarRecorde();
+    // nível 30+: às vezes a rua dá na praia
+    if (this.podePraia()) { this.entrarPraia(); return; }
     const t = this.city.trecho(r.i, r.j, r.dir);
     if (t.s.semSaida) this.entrarBeco(t);
     else this.iniciarTrecho();
@@ -588,12 +720,17 @@ export class Jogo {
     const ox = c.x + (c.x - h.x) * 0.6, oy = c.y + (c.y - h.y) * 0.6;
     const nomes = { centro: 'Brutamontes da Praça', residencial: 'Síndico Zumbi', parque: 'Guarda do Parque', industrial: 'Operário Gigante' };
     const nome = nomes[praca.bairro] || 'Chefe da Praça';
-    const tipo = this.nivelAmeaca >= 8 ? 'rei' : 'chefao';
+    // o ex-herói que ainda não voltou é o chefe desta arena
+    const ex = this.exHeroiT > 0 && this.ultimoHeroi;
+    const tipo = ex ? 'exheroi' : this.nivelAmeaca >= 8 ? 'rei' : 'chefao';
+    const nomeChefe = ex ? (this.ultimoHeroi.viewer ? `${this.ultimoHeroi.viewer.nick} zumbi` : `Ex-herói #${this.ultimoHeroi.n}`) : nome;
+    if (ex) this.exHeroiT = -1;
     const p = this.pontoPerto({ x: ox, y: oy }, 1.5) || { x: ox, y: oy };
-    const chefe = this.criarZumbi(tipo, p.x, p.y, null, { nome, nascendo: 1.2, vidaMult: A.chefeVida });
+    const extra = ex ? { classe: this.ultimoHeroi.classe, arma: this.ultimoHeroi.arma } : null;
+    const chefe = this.criarZumbi(tipo, p.x, p.y, null, { nome: nomeChefe, nascendo: 1.2, vidaMult: A.chefeVida, extra });
     this.arena = { praca, t: 0, ondaT: 3, chefe, vencida: false, fimT: 0 };
-    this.emit('arena', { nome, bairro: praca.bairro });
-    this.emit('chefe', { tipo, nome, x: p.x, y: p.y, arena: true });
+    this.emit('arena', { nome: nomeChefe, bairro: praca.bairro });
+    this.emit('chefe', { tipo, nome: nomeChefe, x: p.x, y: p.y, arena: true });
   }
 
   atualizarArena(dt) {
@@ -604,7 +741,7 @@ export class Jogo {
       if (a.ondaT <= 0) {
         a.ondaT = A.ondaCada;
         // ondas entrando pelas bordas da praça
-        const q = tamanhoGrupo(this.nivelAmeaca, this.A) + 2;
+        const q = Math.round((tamanhoGrupo(this.nivelAmeaca, this.A) + 2) * Math.max(0.6, this.multInicio()));
         const { bi, bj } = a.praca;
         for (let k = 0; k < q; k++) {
           const lado = this.rng.int(0, 3), r = this.rng.range(0, 15);
@@ -688,13 +825,13 @@ export class Jogo {
     this.votoAbreT = 0.3;
     this.emit('virou', { dir: r.dir, voltou: true });
     this.emit('beco_emboscada', {});
-    this.soltarZumbisAtras(Math.round(tamanhoHorda(this.nivelAmeaca, this.A) * 0.7));
+    this.soltarZumbisAtras(Math.round(this.hordaDaRua(this.nivelAmeaca) * 0.7));
   }
 
   // Sorteia o que vai acontecer na rua escolhida (caminhos.js)
   iniciarTrecho() {
     const frag = this.historia.proximo();
-    const s = sortearCaminho(this.rng, this.chances, !!frag);
+    const s = sortearCaminho(this.rng, this.chances, !!frag, this.hero.nivel);
     this.trecho = { tipo: s.tipo, livre: s.tipo !== 'perigoso', perigo: s.perigo || null };
     this.stats.caminhos[s.tipo]++;
     if (s.tipo === 'perigoso') {
@@ -863,13 +1000,14 @@ export class Jogo {
       if (z.morto || z.nascendo > 0) continue;
       const dx = h.x - z.x, dy = h.y - z.y, d2 = dx * dx + dy * dy;
       const T = ZUMBIS[z.tipo];
-      // Quem luta de perto só recua de explosivo, de chefe (com pouca vida) e quando fica cercado
+      // Quem luta de perto só recua de explosivo (com menos de metade da vida; com mais, vai pra cima e
+      // aguenta a explosão), de chefe (com pouca vida) e quando fica cercado
       const raio = perto
-        ? (z.tipo === 'explosivo' ? 2.8 : T.chefe ? (h.vida / h.vidaMax < 0.4 ? 2.6 : 0) : 0.7)
+        ? (z.tipo === 'explosivo' ? (h.vida / h.vidaMax < 0.5 ? 2.8 : 0) : T.chefe ? (h.vida / h.vidaMax < 0.4 ? 2.6 : 0) : 0.7)
         : (T.chefe ? 2.8 : z.tipo === 'explosivo' ? 2.6 : 1.7);
       if (!raio || d2 > raio * raio || d2 < 1e-6) continue;
       const d = Math.sqrt(d2);
-      const peso = (raio - d) / raio * (T.chefe ? 2.2 : z.tipo === 'explosivo' ? 2.6 : 1) * (forcando && z.tipo !== 'explosivo' ? 0.3 : 1);
+      const peso = (raio - d) / raio * (T.chefe ? 2.2 : z.tipo === 'explosivo' ? 2.6 : 1) * (forcando ? 0.3 : 1);
       rx += dx / d * peso; ry += dy / d * peso;
       const naMinhaFrente = d < 1.7 && (vx * -dx + vy * -dy) / d > 0.3;
       if (naMinhaFrente) naFrente++;
@@ -913,7 +1051,8 @@ export class Jogo {
         h.ultimaPos = { x: h.x, y: h.y };
         this.itens = this.itens.filter(it => it !== item);
         this.emit('destravou', { vez: h.travas });
-      } else this.sairPredio();
+      } else if (this.room.praia) { h.x = this.room.centro.x; h.y = this.room.centro.y; h.ultimaPos = { x: h.x, y: h.y }; }
+      else this.sairPredio();
     }
   }
 
@@ -947,6 +1086,7 @@ export class Jogo {
   }
 
   objetivoSala() {
+    if (this.room.praia) return this.objetivoPraia();
     const h = this.hero, room = this.room;
     const restam = this.itens.filter(it => it.achado);
     const vivos = this.zumbis.filter(z => !z.morto).length;
@@ -1126,12 +1266,12 @@ export class Jogo {
 
   deixarLento(seg) { this.aplicarStatus(this.hero, 'lento', { duracao: seg }); }
 
-  // perto = true: luta de perto (não mira em explosivo, que explode na cara)
+  // perto = true: luta de perto (só mira em explosivo com mais de metade da vida: ele explode na cara)
   escolherAlvo(alcance, perto = false) {
     const h = this.hero;
     const cand = [];
     for (const z of this.zumbis) {
-      if (z.morto || z.nascendo > 0 || (perto && z.tipo === 'explosivo')) continue;
+      if (z.morto || z.nascendo > 0 || (perto && z.tipo === 'explosivo' && h.vida / h.vidaMax < 0.5)) continue;
       const d = dist(h.x, h.y, z.x, z.y);
       if (d > alcance + ZUMBIS[z.tipo].raio) continue;
       let s = d;
@@ -1195,10 +1335,28 @@ export class Jogo {
       this.sincronizarVida();
       h.vida = Math.min(h.vidaMax, h.vida + h.vidaMax * 0.08);   // subir de nível cura um pouco
       this.emit('nivel', { nivel: h.nivel, pericias: subiu });
+      if (h.nivel === NIVEL_INIMIGOS_NOVOS) this.emit('novos_inimigos', {});
+      // a cada 5 níveis, uma horda anunciada (do nível 10 em diante, bem maior)
+      if (h.nivel % 5 === 0) this.agendar(4, () => this.hordaDoNivel(h.nivel));
       // cada nível vira uma escolha de habilidade do chat (A, B ou C)
       this.niveisPendentes++;
       if (!this.escolha && this.escolhaEspera <= 0) this.escolhaEspera = 0.6;
     }
+  }
+
+  // Começo calmo: quanto dos zumbis normais aparece no nível atual do herói (ameaca.js → multInicio)
+  multInicio() { return multInicio(this.hero.nivel, this.A); }
+  // Tamanho de horda dos caminhos perigosos, já com o começo calmo
+  hordaDaRua(n) { return Math.max(3, Math.round(tamanhoHorda(n, this.A) * this.multInicio())); }
+
+  hordaDoNivel(nivel) {
+    if (this.fase !== 'jogo' || this.hero.nivel < nivel) return;
+    if (this.room || this.arena || this.caido) { this.agendar(4, () => this.hordaDoNivel(nivel)); return; }   // espera sair
+    const qtd = tamanhoHordaNivel(nivel, this.A);
+    const grande = nivel >= this.A.medioAteNivel;
+    this.soltarZumbis('horda', Math.ceil(qtd * 0.65), null, { horda: true, semEscala: true });
+    this.soltarZumbisAtras(Math.floor(qtd * 0.35));
+    this.emit('horda_nivel', { nivel, qtd, grande });
   }
 
   /* =================== Escolha de habilidade (roguelike) =================== */
@@ -1238,7 +1396,7 @@ export class Jogo {
   criarZumbi(tipo, x, y, quem, opts = {}) {
     const T = ZUMBIS[tipo];
     const z = {
-      id: proxId++, tipo, x, y, ...statsZumbi(T, this.ameaca(), opts.vidaMult || 1, furiaDaHorda((this.t - this.stats.inicio) / 60, this.A)),
+      id: proxId++, tipo, x, y, ...statsZumbi(T, this.ameaca(), opts.vidaMult || 1, furiaDaHorda((this.t - Math.max(this.stats.inicio, this.ultimaAjudaT ?? 0)) / 60, this.A)),
       atkCd: 0.5 + this.rng.next(), velMult: 0.85 + this.rng.next() * 0.3, nascendo: opts.nascendo ?? 0.7,
       dono: quem || null, nome: opts.nome || null, kx: 0, ky: 0, fx: 0, fy: 1, animT: this.rng.next() * 10,
       flash: 0, estados: new Estados(), pavio: -1, dormindo: !!opts.dormindo, roupa: this.rng.int(0, 5), extra: opts.extra || null
@@ -1298,6 +1456,47 @@ export class Jogo {
       if (d > 30 && vivo) {
         if (T.chefe) { const p = this.pontoNaRua(h, 8, 11, 0); if (p) { z.x = p.x; z.y = p.y; } }
         else { z.morto = true; z.sumiu = true; continue; }
+      }
+      // lobo zumbi: salta no herói (paralisa e pode fazer sangrar)
+      if (T.salto && vivo && !this.caido) {
+        if (z.salto) {
+          const sa = z.salto;
+          sa.t += dt;
+          const k = Math.min(1, sa.t / sa.dur);
+          this.mover(z, sa.x0 + (sa.x1 - sa.x0) * k - z.x, sa.y0 + (sa.y1 - sa.y0) * k - z.y, 0.2);
+          z.alt = Math.sin(k * Math.PI);
+          if (k >= 1) {
+            z.salto = null; z.alt = 0; z.atkCd = T.cd;
+            const perto = dist(z.x, z.y, h.x, h.y) < 0.75 + T.raio;
+            if (perto) {
+              const entrou = this.ferirHeroi(danoDoZumbi(z) * T.salto.dano, z.dono, 'o salto do lobo zumbi', 'mordida');
+              if (entrou) for (const s of T.saltoStatus) if (this.rng.next() < s.chance) this.aplicarStatus(h, s.id, { duracao: s.duracao, fonte: z.dono });
+            }
+            this.emit('lobo_caiu', { x: z.x, y: z.y, acertou: perto });
+          }
+          continue;
+        }
+        z.saltoCd = (z.saltoCd ?? 1 + this.rng.next() * 2) - dt;
+        if (z.saltoCd <= 0 && !alvoAliado && d >= T.salto.min && d <= T.salto.max && this.linhaLivre(z.x, z.y, h.x, h.y)) {
+          z.saltoCd = T.salto.recarga;
+          z.salto = { t: 0, dur: T.salto.duracao, x0: z.x, y0: z.y, x1: h.x - (h.x - z.x) / d * 0.35, y1: h.y - (h.y - z.y) / d * 0.35 };
+          z.fx = (h.x - z.x) / d; z.fy = (h.y - z.y) / d;
+          this.emit('lobo_pulou', { x: z.x, y: z.y });
+          continue;
+        }
+      }
+      // braço longo: estica o braço e acerta de longe (com chance de errar)
+      if (T.braco && vivo && !alvoAliado && !this.caido) {
+        z.bracoCd = (z.bracoCd ?? 1 + this.rng.next() * 1.5) - dt;
+        if (z.bracoCd <= 0 && d > T.alcance + 0.3 && d <= T.braco.alcance && this.linhaLivre(z.x, z.y, h.x, h.y)) {
+          z.bracoCd = T.braco.recarga;
+          const acertou = this.rng.next() < T.braco.chance;
+          if (acertou) {
+            const entrou = this.ferirHeroi(danoDoZumbi(z), z.dono, 'o braço longo', 'impacto');
+            if (entrou) for (const s of T.ataque.status || []) if (this.rng.next() < s.chance) this.aplicarStatus(h, s.id, { duracao: s.duracao, fonte: z.dono });
+          }
+          this.emit('braco', { x: z.x, y: z.y, tx: acertou ? h.x : z.x + (h.x - z.x) * 0.8 + (this.rng.next() - 0.5) * 0.8, ty: acertou ? h.y : z.y + (h.y - z.y) * 0.8 + (this.rng.next() - 0.5) * 0.8, acertou });
+        }
       }
       // explosivo: acende o pavio quando chega perto
       if (z.tipo === 'explosivo') {
@@ -1369,7 +1568,7 @@ export class Jogo {
     z.morto = true;
     const T = ZUMBIS[z.tipo];
     this.stats.abates++;
-    if (this.fase === 'jogo') this.ganharXp(T.xp);
+    if (this.fase === 'jogo') this.ganharXp(T.xp * (1 + (this.nivelAmeaca - 1) * 0.1));   // zumbi mais forte dá mais XP
     this.emit('morte_zumbi', { x: z.x, y: z.y, tipo: z.tipo, chefe: !!T.chefe, nome: z.nome, dono: z.dono?.nick || null, roupa: z.roupa });
     if (z.tipo === 'explosivo') this.explodir(z.x, z.y, 1.9, 18, 80, z.dono, 'explosão');
     if (T.chefe) {
@@ -1620,7 +1819,8 @@ export class Jogo {
   soltarZumbis(tipo, qtd, quem, opts = {}) {
     const h = this.hero;
     // Hordas mandadas pelo público crescem com a ameaça (o explosivo é sempre 1 por presente)
-    if (quem && tipo !== 'explosivo' && !opts.semEscala) qtd = Math.round(qtd * multPresente(this.nivelAmeaca, this.A));
+    // (no começo calmo, até o nível 10, vêm um pouco menos: no mínimo 60%)
+    if (quem && tipo !== 'explosivo' && !opts.semEscala) qtd = Math.max(1, Math.round(qtd * multPresente(this.nivelAmeaca, this.A) * Math.max(0.6, this.multInicio())));
     const nome = opts.nomeados && quem ? nomeSeguro(quem.nick, 12) : null;
     const lugares = [];
     if (this.room) {
@@ -1642,7 +1842,8 @@ export class Jogo {
       for (let k = 0; k < Math.min(sobra, longe.length); k++) { longe[k].morto = true; longe[k].sumiu = true; }
     }
     lugares.forEach((p, k) => {
-      const t = tipo === 'horda' ? (this.rng.chance(0.2) ? 'corredor' : this.rng.chance(0.2) ? 'gordo' : 'comum') : tipo;
+      const novos = this.hero.nivel >= NIVEL_INIMIGOS_NOVOS;
+      const t = tipo === 'horda' ? (novos && this.rng.chance(0.25) ? (this.rng.chance(0.55) ? 'lobo' : 'esticado') : this.rng.chance(0.2) ? 'corredor' : this.rng.chance(0.2) ? 'gordo' : 'comum') : tipo;
       this.criarZumbi(t, p.x, p.y, quem, { nome, nascendo: 0.5 + k * 0.08 });
     });
   }
@@ -1834,6 +2035,7 @@ export class Jogo {
     this.emit('presente', { nick: quem.nick, avatar: quem.avatar || '', emoji: emoji || regra.emoji || '🎁', image: image || '', texto: ef.aviso(regra, qtd), lado, coins, qtd, giftName, espera });
     // Resposta na hora, em cima do herói, com o nome de quem mandou (mesmo que o efeito vá pra fila)
     if (this.fase === 'jogo') this.emit('presente_heroi', { nick: quem.nick, emoji: emoji || regra.emoji || '🎁', lado, x: this.hero.x, y: this.hero.y });
+    if (lado === 'ajuda' && (coins > 0 || giftName === 'seguiu')) this.ultimaAjudaT = this.t;
     if (lado === 'ajuda') {
       if (this.fase === 'jogo') {
         // caído: qualquer presente de ajuda (ou seguir) levanta; compartilhar e curtidas não (são de graça e sem limite)

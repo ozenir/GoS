@@ -129,6 +129,9 @@ export class Som {
     if (!this.running) return;
     for (let i = 0; i < 40; i++) this.noise(0.05, Math.max(0.02, 0.25 * Math.sin(i / 40 * Math.PI)), 'lowpass', 500, i * 0.1);
   }
+  grito() { if (this.pode('grito', 3)) { this.osc('sine', 900, 1500, 0.35, 0.05); this.osc('sine', 1400, 800, 0.4, 0.04, 0.35); } }
+  rosnado() { if (this.pode('rosna', 0.3)) { this.osc('sawtooth', 320, 110, 0.25, 0.12); this.noise(0.2, 0.12, 'lowpass', 700); } }
+  esticar() { if (this.pode('estica', 0.2)) this.noise(0.18, 0.12, 'bandpass', 900, 0, 1, 2200); }
   zap() { if (this.pode('zap', 0.1)) { this.noise(0.15, 0.25, 'highpass', 3000); this.osc('sawtooth', 900, 200, 0.15, 0.08); } }
   onda() { this.osc('sine', 140, 40, 0.35, 0.35); this.noise(0.3, 0.2, 'lowpass', 600, 0, 0.7, 100); }
   arremesso() { if (this.pode('arr', 0.2)) this.noise(0.2, 0.08, 'bandpass', 1200, 0, 1, 400); }

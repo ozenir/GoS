@@ -8,7 +8,6 @@
 //  As chances ficam no config.json (caminho_perigoso_porcento etc.).
 //  A história em si fica em historia.js.
 // ============================================================================
-import { tamanhoHorda } from './ameaca.js';
 
 export const CHANCES_PADRAO = { perigoso: 80, livre: 18, historia: 2 };
 
@@ -23,40 +22,41 @@ export const PERIGOS = {
   emboscada: {
     nome: 'EMBOSCADA', emoji: '⚠️', texto: 'zumbis dos dois lados', peso: 3,
     aplicar: (g, n) => {
-      const q = tamanhoHorda(n, g.A);
+      const q = g.hordaDaRua(n);
       g.soltarZumbis('horda', Math.ceil(q / 2), null, { horda: true, semEscala: true });
       g.soltarZumbisAtras(Math.ceil(q / 2));
     }
   },
   horda: {
     nome: 'RUA LOTADA', emoji: '🧟', texto: 'uma horda bloqueia a rua', peso: 3,
-    aplicar: (g, n) => g.soltarZumbis('horda', Math.round(tamanhoHorda(n, g.A) * 1.2), null, { horda: true, semEscala: true })
+    aplicar: (g, n) => g.soltarZumbis('horda', Math.round(g.hordaDaRua(n) * 1.2), null, { horda: true, semEscala: true })
   },
   corredores: {
     nome: 'CORREDORES', emoji: '🏃', texto: 'eles correm!', peso: 2,
-    aplicar: (g, n) => g.soltarZumbis('corredor', 3 + n, null, { semEscala: true })
+    aplicar: (g, n) => g.soltarZumbis('corredor', Math.max(2, Math.round((3 + n) * g.multInicio())), null, { semEscala: true })
   },
   explosivos: {
     nome: 'EXPLOSIVOS', emoji: '💣', texto: 'cuidado com os inchados', peso: 1.5,
-    aplicar: (g, n) => g.soltarZumbis('explosivo', 2 + Math.floor(n / 3), null, { semEscala: true })
+    aplicar: (g, n) => g.soltarZumbis('explosivo', Math.max(1, Math.round((2 + Math.floor(n / 3)) * g.multInicio())), null, { semEscala: true })
   },
   escuridao: {
     nome: 'RUA ESCURA', emoji: '🌑', texto: 'as luzes apagaram', peso: 1.5,
-    aplicar: (g, n) => { g.noite(20); g.soltarZumbis('horda', Math.round(tamanhoHorda(n, g.A) * 0.6), null, { horda: true, semEscala: true }); }
+    aplicar: (g, n) => { g.noite(20); g.soltarZumbis('horda', Math.round(g.hordaDaRua(n) * 0.6), null, { horda: true, semEscala: true }); }
   },
   chefe: {
-    nome: 'CHEFE DE RUA', emoji: '👹', texto: 'um grandão no caminho', peso: 0.7,
+    nome: 'CHEFE DE RUA', emoji: '👹', texto: 'um grandão no caminho', peso: 0.7, desdeNivel: 10,   // antes do nível 10, chefe só na arena
     aplicar: g => g.chefe('chefao', null, 0, { nome: 'Chefe de rua', vidaMult: 0.5 })
   }
 };
 
 // Sorteia o caminho. temHistoria = ainda existe fragmento não visto (se não, vira caminho livre).
-export function sortearCaminho(rng, chances = CHANCES_PADRAO, temHistoria = true) {
+// nivelHeroi: perigos com desdeNivel só aparecem a partir desse nível do herói.
+export function sortearCaminho(rng, chances = CHANCES_PADRAO, temHistoria = true, nivelHeroi = 99) {
   const c = { ...CHANCES_PADRAO, ...chances };
   const total = Math.max(0.0001, c.perigoso + c.livre + c.historia);
   const r = rng.next() * total;
   if (r < c.perigoso) {
-    const perigo = rng.weighted(Object.entries(PERIGOS).map(([id, p]) => [id, p.peso]));
+    const perigo = rng.weighted(Object.entries(PERIGOS).map(([id, p]) => [id, nivelHeroi >= (p.desdeNivel || 0) ? p.peso : 0]));
     return { tipo: 'perigoso', perigo };
   }
   if (r < c.perigoso + c.livre || !temHistoria) return { tipo: 'livre' };

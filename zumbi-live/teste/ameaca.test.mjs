@@ -39,7 +39,7 @@ teste('corredor só a partir do nível 2, explosivo a partir do 3', () => {
   assert.equal(peso(1, 'corredor'), 0); assert.ok(peso(2, 'corredor') > 0);
   assert.equal(peso(2, 'explosivo'), 0); assert.ok(peso(3, 'explosivo') > 0);
 });
-teste('trava contra herói imortal: dano dos zumbis cresce sem parar depois de alguns minutos', () => {
+teste('trava contra herói imortal sem ajuda: dano dos zumbis cresce depois de alguns minutos sem presente de ajuda', () => {
   assert.equal(furiaDaHorda(0), 1);
   assert.equal(furiaDaHorda(AMEACA.furiaDepoisDe), 1);
   assert.ok(furiaDaHorda(AMEACA.furiaDepoisDe + 5) > furiaDaHorda(AMEACA.furiaDepoisDe + 1));

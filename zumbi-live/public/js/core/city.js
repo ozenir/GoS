@@ -16,7 +16,7 @@ export const BAND = 5;
 export const MID = 2.5;
 export const BSIZE = 7;
 
-export const T = { BLOCK: 0, ROAD: 1, SIDEWALK: 2, ALLEY: 3, GRAMA: 4, PRACA: 5, FLOOR: 10, WALL: 11, OUT: 12 };
+export const T = { BLOCK: 0, ROAD: 1, SIDEWALK: 2, ALLEY: 3, GRAMA: 4, PRACA: 5, FLOOR: 10, WALL: 11, OUT: 12, AREIA: 13, MAR: 14 };
 
 export const SHOPS = {
   farmacia:  { nome: 'Farmácia', emoji: '💊', risco: 1, cor: '#3fbf7f', placa: '#1f7a4f' },
@@ -56,6 +56,15 @@ export const BAIRROS = {
 export const CHANCE_BLOQUEIO = 0.08;
 const PESOS_BAIRRO = Object.entries(BAIRROS).map(([k, b]) => [k, b.peso]);
 export const CHANCE_SEM_SAIDA = 0.07;
+
+// Desgaste da cidade (0 a 1): sobe com o tempo da run (jogo.js → city.desgaste). As ruas e prédios
+// que aparecem depois já vêm mais destruídos. Números = chance quando o desgaste está no máximo.
+export const DESGASTE = {
+  bloqueioCarros: 0.1,   // rua fechada por carros batidos (além dos bloqueios normais)
+  carroFogo: 0.35,       // carro abandonado pegando fogo (fogo no chão em volta)
+  buracos: 0.6,          // buracos no asfalto (machucam e deixam lento)
+  prediosFogo: 0.25      // prédio pegando fogo (só visual)
+};
 
 const escolher = (lista, r) => {
   let tot = 0; for (const [, w] of lista) tot += w;
@@ -209,6 +218,8 @@ export class City {
       paleta: Math.floor(hash3(bi * 2 + sx, bj * 2 + sy, 2, this.seed) * 6),
       janelas: Math.floor(hash3(bi * 2 + sx, bj * 2 + sy, 3, this.seed) * 3),
       ruina: hash3(bi * 2 + sx, bj * 2 + sy, 4, this.seed) < 0.18,
+      // desgaste da run: com o tempo, alguns prédios começam a pegar fogo (só visual)
+      fogo: !isShop && hash3(bi * 2 + sx, bj * 2 + sy, 5, this.seed) < (this.desgaste || 0) * DESGASTE.prediosFogo,
       shop: isShop ? shop : null
     };
   }
@@ -285,10 +296,21 @@ export class City {
     const pertoDoInicio = Math.abs(i) <= 1 && Math.abs(j) <= 1;
     const rb = hash3(i, j, sd + 80, this.seed);
     let bloqueio = null, semSaida = null;
+    const dg = this.desgaste || 0;
     if (!pertoDoInicio && rb < CHANCE_BLOQUEIO) bloqueio = { along: 10 };
     else if (!pertoDoInicio && rb < CHANCE_BLOQUEIO + CHANCE_SEM_SAIDA) semSaida = { along: 13 };
+    else if (!pertoDoInicio && hash3(i, j, sd + 100, this.seed) < dg * DESGASTE.bloqueioCarros) bloqueio = { along: 10, carros: true };
     const barreira = bloqueio || semSaida;
-    if (barreira) {
+    if (bloqueio?.carros) {
+      // engavetamento: dois carros atravessados e uma barricada fecham a rua
+      for (const across of [0, 2]) {
+        const p = at(10, across), p2 = at(10, across + 1);
+        props.push({ tipo: 'carro', x: Math.min(p.x, p2.x), y: Math.min(p.y, p2.y), w: ax ? 1 : 2, h: ax ? 2 : 1, cor: Math.floor(hash3(i, j, sd + 101 + across, this.seed) * 6), virado: across === 2, batido: true, fogo: hash3(i, j, sd + 103 + across, this.seed) < 0.5 });
+        solid.add(p.x + ',' + p.y); solid.add(p2.x + ',' + p2.y);
+      }
+      const p = at(10, 4); solid.add(p.x + ',' + p.y);
+      props.push({ tipo: 'barricada', x: p.x, y: p.y, eixo: axis });
+    } else if (barreira) {
       for (let across = 0; across < BAND; across++) {
         const p = at(barreira.along, across);
         solid.add(p.x + ',' + p.y);
@@ -305,8 +327,14 @@ export class City {
       const lado = hash3(i, j, sd + 7 + n, this.seed) < 0.5 ? 1 : 3;
       const p = at(along, lado);
       const p2 = at(along + 1, lado);
-      props.push({ tipo: 'carro', x: p.x, y: p.y, w: ax ? 2 : 1, h: ax ? 1 : 2, cor: Math.floor(hash3(i, j, sd + 12 + n, this.seed) * 6), virado: hash3(i, j, sd + 17 + n, this.seed) < 0.2 });
+      const fogo = hash3(i, j, sd + 20 + n, this.seed) < dg * DESGASTE.carroFogo;
+      props.push({ tipo: 'carro', x: p.x, y: p.y, w: ax ? 2 : 1, h: ax ? 1 : 2, cor: Math.floor(hash3(i, j, sd + 12 + n, this.seed) * 6), virado: hash3(i, j, sd + 17 + n, this.seed) < 0.2, fogo });
       solid.add(p.x + ',' + p.y); solid.add(p2.x + ',' + p2.y);
+      if (fogo) {
+        // carro em chamas: fogo no chão em volta (machuca quem passa raspando)
+        const x0 = Math.min(p.x, p2.x) - 0.35, y0 = Math.min(p.y, p2.y) - 0.35;
+        zonas.push({ tipo: 'fogo', x0, y0, x1: Math.max(p.x, p2.x) + 1.35, y1: Math.max(p.y, p2.y) + 1.35, fixo: true, carro: true, semente: Math.floor(hash3(i, j, sd + 22 + n, this.seed) * 1e6) });
+      }
     }
     // Postes nas calçadas
     for (let along = 7; along < P; along += 7) {
@@ -338,6 +366,16 @@ export class City {
       const [c0, c1] = rl < 0.25 ? [0, 5] : rl < 0.6 ? [1, 4] : rl < 0.8 ? [0, 2.2] : [2.8, 5];
       const p0 = at(a0, c0), p1 = at(a0 + comp, c1);
       zonas.push({ tipo, x0: Math.min(p0.x, p1.x), y0: Math.min(p0.y, p1.y), x1: Math.max(p0.x, p1.x), y1: Math.max(p0.y, p1.y), fixo: true, semente: Math.floor(hash3(i, j, sd + 95, this.seed) * 1e6) });
+    }
+    // Buracos no asfalto (desgaste): um ou dois por rua
+    if (!pertoDoInicio && hash3(i, j, sd + 110, this.seed) < dg * DESGASTE.buracos) {
+      const n = hash3(i, j, sd + 111, this.seed) < 0.5 ? 1 : 2;
+      for (let k = 0; k < n; k++) {
+        const along = 4 + hash3(i, j, sd + 112 + k, this.seed) * 12, across = 0.6 + hash3(i, j, sd + 115 + k, this.seed) * 3;
+        if (barreira && Math.abs(along - barreira.along) < 2) continue;
+        const p = at(along, across), r = 0.5 + hash3(i, j, sd + 118 + k, this.seed) * 0.3;
+        zonas.push({ tipo: 'buraco', x0: p.x - r, y0: p.y - r, x1: p.x + r, y1: p.y + r, fixo: true, semente: Math.floor(hash3(i, j, sd + 121 + k, this.seed) * 1e6) });
+      }
     }
     return { axis, i, j, props, solid, zonas, bairro, bloqueio, semSaida, at };
   }

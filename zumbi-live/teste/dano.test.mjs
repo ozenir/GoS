@@ -157,7 +157,7 @@ teste('cura respeita vida máxima e bônus de cura', () => {
 console.log('Zumbis, explosões, aliados');
 teste('ameaça 1 = números da tabela', () => {
   const s = statsZumbi(ZUMBIS.comum, 1);
-  assert.equal(s.vida, 30); assert.equal(s.dano, 6); assert.equal(s.vel, 0.75); assert.equal(s.resistencia, 0);
+  assert.equal(s.vida, 30); assert.equal(s.dano, 6); assert.equal(s.vel, ZUMBIS.comum.vel); assert.equal(s.resistencia, 0);
 });
 teste('ameaça maior = zumbi mais forte', () => {
   const s = statsZumbi(ZUMBIS.comum, 3);

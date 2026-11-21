@@ -125,7 +125,7 @@ export const JOGO_PADRAO = {
   "protecao_ao_nascer_segundos": 15,
   "curtidas_por_suprimento": 300,
   "maximo_zumbis": 90,
-  "velocidade_do_heroi": 1.5,
+  "velocidade_do_heroi": 1.1,
   "ameaca_por_minuto": 1.2,
   "ameaca_por_quarteirao": 0.12,
   "ameaca_por_nivel_do_heroi": 0.45,
