@@ -96,7 +96,7 @@ Facas e cacos de vidro fazem sangrar, a chave e o taco atordoam, o machado quebr
 | 5 | 🧟 **horda do nível 5** chega de uma vez. Daqui até o 10, 80% dos zumbis |
 | 10 | 🔥 **habilidade suprema** (escolha especial do chat) e depois ☠️ **horda gigante do nível 10** (nunca vista até ali). A partir daqui: todos os zumbis, hordas periódicas (a cada 35 s), chefe de rua e ex-herói na rua |
 | 15, 20, 25... | uma horda anunciada a cada 5 níveis, cada vez maior |
-| 20 | 🐺 **novos inimigos**: **lobo zumbi** (corre e **salta** no herói: o salto **paralisa** e tem **50% de deixar sangrando**) e **braço longo** (estica o braço e acerta **de longe**, até ~3 casas, com **30% de chance**) |
+| 20 | ☠️ **horda do nível 20** chega em **3 ondas** (uma a cada 9 s, não tudo de uma vez) e 🐺 **novos inimigos**: **lobo zumbi** (corre e **salta** no herói: o salto **paralisa** e tem **50% de deixar sangrando**) e **braço longo** (estica o braço e acerta **de longe**, até ~3 casas, com **30% de chance**) |
 | 30 | 🏖️ **a praia**: cada cruzamento tem **25%** de chance de dar na praia. Lá, uma horda maior **sai de dentro do mar** e o herói precisa **sobreviver 1 minuto**; depois vem um baú, um kit e a votação de **por onde sair** (esquerda, frente ou direita), e ele volta pra cidade em outro ponto |
 
 Tudo anda mais devagar que antes (herói e zumbis), então tem menos decisão por minuto e mais tempo de ver a luta. Cada nível pede mais experiência que o anterior, e zumbi mais forte (ameaça maior) dá mais experiência.
@@ -169,28 +169,39 @@ Tudo anda mais devagar que antes (herói e zumbis), então tem menos decisão po
 - **B = algo novo**: uma habilidade ativa nova (no máximo 3 ao mesmo tempo) ou uma arma nova
 - **C = uma passiva nova**
 
-Quando falta alguma categoria, a carta é completada com outra. Cada habilidade e passiva vai até o nível 5.
+Quando falta alguma categoria, a carta é completada com outra. Cada habilidade e passiva vai até o nível 5, e **cada nível fortalece muito**: a força (dano, bônus) é a do nível 1 multiplicada por **1× · 3× · 5× · 7,5× · 10×** (do nível 1 ao 5). Ou seja, **o nível 2 triplica** o nível 1. Habilidades que disparam também ficam mais rápidas a cada nível.
 
-| Habilidade ativa | O que faz (dispara sozinha) |
-|---|---|
-| 💣 Granada | joga no maior grupo de zumbis, explode (não machuca o herói) |
-| ⚡ Raio em cadeia | pula de zumbi em zumbi e pode atordoar |
-| 🌀 Lâminas giratórias | lâminas girando em volta do herói, fazem sangrar |
-| 🍾 Coquetel molotov | fogo no chão onde tem mais zumbi (o fogo dele não queima o herói) |
-| 🛸 Drone atirador | um drone voando em volta atira sozinho |
-| 💫 Onda de choque | quando fica cercado, empurra e atordoa todo mundo em volta |
+| Habilidade ativa | O que faz (dispara sozinha) | Nível 1 | Nível 2 | Nível 5 |
+|---|---|---|---|---|
+| 💣 Granada | joga no maior grupo de zumbis, explode (não machuca o herói) | 45 de dano a cada 6,5 s | 135 a cada 6 s | 450 a cada 4,5 s |
+| ⚡ Raio em cadeia | pula de zumbi em zumbi e pode atordoar | 18 de dano, 4 zumbis | 54, 5 zumbis | 180, 8 zumbis |
+| 🌀 Lâminas giratórias | lâminas girando em volta do herói, fazem sangrar | 2 lâminas, 9 de dano | 2 lâminas, 27 | 4 lâminas, 90 |
+| 🍾 Coquetel molotov | fogo no chão onde tem mais zumbi (o fogo dele não queima o herói) | fogo normal | fogo 3× | fogo 10× |
+| 🛸 Drone atirador | um drone voando em volta atira sozinho | 6 de dano | 18 | 60 |
+| 💫 Onda de choque | quando fica cercado, empurra e atordoa todo mundo em volta | 16 de dano | 48 | 160 |
 
-| Passiva | O que faz (por nível) |
-|---|---|
-| ❤️ Vitalidade | +12% de vida máxima |
-| 🛡️ Couro grosso | +5% de defesa |
-| 👟 Pernas rápidas | +7% de velocidade |
-| 🎯 Olho de águia | +6% de crítico |
-| 🔁 Mãos rápidas | ataca 10% mais rápido |
-| 💪 Força | +10% de dano em tudo (as habilidades também) |
-| 💚 Regeneração | +0,45 de vida por segundo |
-| 🦇 Vampirismo | golpe de perto cura |
-| 💨 Reflexos | +4% de chance de desviar |
+| Passiva | Nível 1 | Nível 2 | Nível 3 | Nível 4 | Nível 5 |
+|---|---|---|---|---|---|
+| ❤️ Vitalidade (vida máxima) | +15% | +45% | +75% | +113% | +150% |
+| 🛡️ Couro grosso (defesa) | +4% | +12% | +20% | +30% | +40% |
+| 👟 Pernas rápidas (velocidade) | +5% | +15% | +25% | +38% | +50% |
+| 🎯 Olho de águia (crítico) | +5% | +15% | +25% | +38% | +50% |
+| 🔁 Mãos rápidas (velocidade de ataque) | +10% | +30% | +50% | +75% | +100% |
+| 💪 Força (dano em tudo, habilidades também) | +10% | +30% | +50% | +75% | +100% |
+| 💚 Regeneração (vida por segundo) | 0,5 | 1,5 | 2,5 | 3,8 | 5 |
+| 🦇 Vampirismo (cura por golpe de perto) | 0,5 | 1,5 | 2,5 | 3,8 | 5 |
+| 💨 Reflexos (chance de desviar) | 3% | 9% | 15% | 22% | 30% |
+
+**🧬 Combos (habilidade + passiva).** Quando o herói tem uma habilidade **no nível 3 ou mais** e a **passiva que combina com ela**, a carta **A** vira um **COMBO** (carta roxa, com a receita na etiqueta). Escolhendo, a habilidade evolui para uma versão **muito mais forte**, que junta a força das duas (de 2,5× a 5× o dano da habilidade no nível máximo, medido no teste). A passiva continua com o herói, e **cada nível a mais da passiva deixa o combo mais forte** (do nível 1 ao 5 da passiva, o combo vai de 1× a 2×). A habilidade evoluída aparece no cartão do herói com ★. Se ninguém votar, a IA quase sempre escolhe o combo.
+
+| Combo | Receita | O que faz (passiva nível 1) |
+|---|---|---|
+| ☄️ Bomba de fragmentação | 💣 Granada + 💪 Força | a cada 3 s, bomba de 800 de dano que solta 6 explosões menores em volta |
+| 🌩️ Tempestade elétrica | ⚡ Raio em cadeia + 🎯 Olho de águia | a cada 1,8 s, 3 raios que pulam em 8 zumbis cada · 380 de dano, sempre atordoa e pode dar crítico |
+| 🩸 Lâminas vampíricas | 🌀 Lâminas giratórias + 🦇 Vampirismo | 6 lâminas de sangue · 200 de dano, sempre fazem sangrar e cada corte cura o herói |
+| 🐦‍🔥 Fogo da fênix | 🍾 Coquetel molotov + 💚 Regeneração | a cada 4 s, 3 molotovs com fogo 14× mais forte; pisar no fogo **cura** o herói |
+| 🛰️ Esquadrilha de drones | 🛸 Drone atirador + 🔁 Mãos rápidas | 3 drones atirando a cada 0,3 s · 60 de dano cada tiro |
+| 🏰 Fortaleza | 💫 Onda de choque + 🛡️ Couro grosso | a cada 4 s, onda gigante de 600 de dano que atordoa e deixa o herói blindado (+40% de defesa) |
 
 **🔥 Habilidade SUPREMA (nível 10).** O nível 10 é onde o jogo aperta (todos os zumbis, hordas a cada 35 s, a horda gigante do nível). Por isso, ao chegar no 10, a escolha é especial: as 3 cartas são **habilidades supremas**, bem mais fortes que as normais, e o herói fica com uma delas até o fim. Essa escolha **passa na frente** das escolhas de níveis anteriores que ainda estiverem na fila, e **enquanto o chat escolhe o jogo ainda não aperta**: as hordas periódicas e a horda gigante do nível 10 só começam depois. Ao ganhar a suprema o herói também recupera 30% da vida.
 
@@ -200,7 +211,11 @@ Quando falta alguma categoria, a carta é completada com outra. Cada habilidade 
 | ☀️ Aura de fogo | anel de fogo em volta do herói: 26 de dano por segundo em quem chega perto e deixa os zumbis lentos |
 | ❤️‍🔥 Coração de ferro | +15% de defesa e +1,2 de vida por segundo; quando ia cair (ou a vida fica abaixo de 25%), explode uma onda que empurra e atordoa, cura 45% e fica 3 s invencível (uma vez a cada 40 s) |
 
-**Armas novas** (aparecem na carta B quando fazem sentido): 💥 **Escopeta** no lugar da pistola, de vez (recarrega sozinha), e 🏏 **Taco com pregos** no lugar do empurrão, sem quebrar. Subir de nível também cura 8% da vida.
+**Armas novas** (aparecem na carta B quando fazem sentido): 💥 **Escopeta** no lugar da pistola, de vez (recarrega sozinha), e 🏏 **Taco com pregos** no lugar do empurrão, sem quebrar. 
+
+**Subir de nível recupera a vida toda** e a **vida máxima cresce com o nível**: +10% da vida do personagem a cada nível até o 20 e +3% por nível depois (o Policial vai de 100 no nível 1 para 190 no 10, 290 no 20 e 320 no 30). Isso multiplica com a Vitalidade.
+
+**Limites dos atributos:** defesa até 60%, chance de desviar até 45% e velocidade até 2,2×, somando tudo (personagem, perícias, passivas, presentes). Sem isso, defesa + esquiva + velocidade deixavam o herói intocável.
 
 **A torcida (📣).** Comentar também ajuda: cada pessoa diferente que comentou nos últimos 30 segundos dá +3% de dano e um pouco de regeneração ao herói (até 10 pessoas).
 
@@ -230,14 +245,14 @@ Tudo que **ajuda** acontece na hora (e se adapta à situação, veja "O atraso d
 
 | Presente | Moedas | Lado | O que acontece |
 |---|---|---|---|
-| 🌹 Rosa | 1 | ajuda | cura +10% na hora |
+| 🌹 Rosa | 1 | ajuda | cura +14% na hora |
 | 🍦 Sorvete | 1 | atrapalha | cacos de vidro na rua: herói fica lento |
 | 🎵 TikTok | 1 | atrapalha | 3 zumbis com o nome de quem mandou |
 | 🫰 Coração com dedos | 5 | ajuda | munição + **tiro rápido nos próximos 3 quarteirões** (combo soma +1 por presente, até 8). Quem luta de perto ganha fúria |
 | 🧴 Perfume | 20 | atrapalha | horda de 8 zumbis |
-| 🍩 Rosquinha | 30 | ajuda | kit médico (+25%): cura na hora ou vai pra mochila |
+| 🍩 Rosquinha | 30 | ajuda | kit médico (+35%): cura na hora ou vai pra mochila |
 | 🎩 Chapéu e Bigode | 99 | atrapalha | zumbi que explode |
-| 🫶 Mãos de coração | 100 | ajuda | colete que segura 3 golpes |
+| 🫶 Mãos de coração | 100 | ajuda | colete que segura 4 golpes |
 | 🐶 Corgi | 299 | ajuda | cachorro ajudante por **4 quarteirões**, com o nome de quem mandou |
 | 🔫 Arma de Dinheiro | 500 | ajuda | baú com escopeta ou taco com pregos |
 | 🦢 Cisne | 699 | atrapalha | carro com alarme: horda chegando por 20 s |
@@ -325,17 +340,17 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 
 | Cenário | Quanto o herói dura em média | Nível médio |
 |---|---|---|
-| Sem nenhuma interação | **3 min 47 s**, contando os 12 s caído | 8 |
-| Só chat (6 pessoas comentando e votando, curtidas) | 5 min 29 s | 12 |
-| Chat + presentes misturados (8 por minuto) | 5 min 35 s (a maioria cai no **golpe final** de quem atrapalha) | 20 |
-| Chat + só presentes que ajudam (4 por minuto) | **7 min 13 s** (os melhores passam de 11 min) | 20 |
-| Chat + só presentes que atrapalham (4 por minuto) | 4 min 24 s | 16 |
+| Sem nenhuma interação | **5 min 52 s** (o mais longo 8 min 24 s) | 14 |
+| Só chat (6 pessoas comentando e votando, curtidas) | 7 min 10 s | 18 |
+| Chat + presentes misturados (8 por minuto) | **12 min 18 s** (a maioria cai no **golpe final** de quem atrapalha; o mais longo 19 min) | 37 |
+| Chat + só presentes que ajudam (4 por minuto) | 12 min 8 s (o mais longo 23 min) | 30 |
+| Chat + só presentes que atrapalham (4 por minuto) | 6 min 36 s | 20 |
 
 Os primeiros níveis vêm rápido (a primeira escolha de habilidade sai no primeiro minuto) e depois cada nível pede mais. O nível 10 aparece em lives com chat; o 20 (lobos e braços longos), em lives que ajudam bastante; o 30 (praia) é conquista de live muito engajada.
 
-Como as habilidades deixam o herói bem mais forte a cada nível, a ameaça também sobe com o nível do herói (`ameaca_por_nivel_do_heroi`, 0.45): quanto mais forte ele fica, mais forte vem a horda.
+Como as habilidades deixam o herói bem mais forte a cada nível, a ameaça também sobe com o nível do herói (`ameaca_por_nivel_do_heroi`, 0.45): quanto mais forte ele fica, mais forte vem a horda. E, como as habilidades e combos crescem **multiplicando**, da ameaça 18 em diante os zumbis também crescem **multiplicando** (+9% de vida e +6% de dano por nível de ameaça, acumulando; `dano.js` → `ESCALA_AMEACA`, `aceleraDesde`, `vidaExp`, `danoExp`): vida ×1,8 na ameaça 25 e ×6,6 na 40. Assim o herói fica muito forte, mas a horda sempre acaba vencendo.
 
-**Sem tempo limite:** a run dura o quanto a live aguentar. A única trava é contra herói imortal **sem ninguém ajudando**: se passar 4 minutos sem nenhum presente de ajuda (ou seguir), os zumbis que nascem batem 20% mais forte a cada minuto. Um presente de ajuda zera essa conta. O herói também nunca fica parado: se passar do cruzamento, volta; se for empurrado pra outra rua, volta contornando os prédios; se ficar muito tempo sem avançar, abre caminho pela horda; se travar, é levado até o cruzamento.
+**Sem tempo limite:** a run dura o quanto a live aguentar. A única trava é contra herói imortal **sem ninguém ajudando**: se passar 4 minutos sem nenhum presente de ajuda (ou seguir), os zumbis que nascem batem **60% mais forte e aguentam 60% mais** a cada minuto. Um presente de ajuda zera essa conta. O herói também nunca fica parado: se passar do cruzamento, volta; se for empurrado pra outra rua, volta contornando os prédios; se ficar muito tempo sem avançar, abre caminho pela horda; se travar, ou se passar 75 s na mesma quadra sem conseguir atravessar o cruzamento (empurrado pra frente e pra trás por uma horda gigante), é levado até o cruzamento.
 
 O que mais mexe nisso é `ameaca_por_minuto` (maior = partidas mais curtas) e o tamanho/frequência das hordas. Subir a ameaça devagar e começar com mais pressão faz a ajuda do público render mais; subir rápido deixa tudo mais curto, com ou sem ajuda.
 
@@ -360,7 +375,7 @@ Cada assunto tem o seu arquivo em `public/js/core/`:
 | `habilidades.js` | **as habilidades do roguelike**: ativas, passivas, armas novas, treino, como as 3 cartas são sorteadas e o que a IA escolhe. Habilidade nova = acrescentar em `ATIVAS` ou `PASSIVAS` (instruções no começo do arquivo) |
 | `jogo.js` | o resto: herói, zumbis, arena, herói caído, mochila e presentes inteligentes |
 
-**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (começo calmo, hordas por nível, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
+**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade, força por nível, combos, suprema, vida por nível), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (começo calmo, hordas por nível, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
 
 **Para testar o equilíbrio sem live:** `node teste/simular.mjs` roda dezenas de partidas em segundos em 5 cenários (sem interação, só chat, presentes misturados, só presentes que ajudam, só presentes que atrapalham) e mostra quanto cada herói durou. Para testar números sem mexer no `config.json`: `AJUSTES='{"horda_base":8}' node teste/simular.mjs 20 nada`.
 
@@ -384,7 +399,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.5.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.6.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.

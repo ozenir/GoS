@@ -2,7 +2,7 @@
 // Rodar:  node teste/habilidades.test.mjs
 import assert from 'node:assert/strict';
 import { Jogo } from '../public/js/core/jogo.js';
-import { ATIVAS, PASSIVAS, SUPREMAS, NIVEL_SUPREMA, MAX_ATIVAS, sortearCartas, aplicarCarta, atualizarHabilidades, escolhaDaIA } from '../public/js/core/habilidades.js';
+import { ATIVAS, PASSIVAS, SUPREMAS, NIVEL_SUPREMA, COMBOS, COMBO_NIVEL, FORCA, combosDisponiveis, MAX_ATIVAS, sortearCartas, aplicarCarta, atualizarHabilidades, escolhaDaIA } from '../public/js/core/habilidades.js';
 import { lerEscolha, lerVoto } from '../public/js/core/votacao.js';
 import { makeRng } from '../public/js/core/util.js';
 import { xpParaNivel } from '../public/js/core/dados.js';
@@ -53,7 +53,7 @@ teste('passiva: o nível novo substitui o anterior (não acumula duas vezes)', (
   const base = j.hero.attr.get('defesa');
   aplicarCarta(j, carta('passiva', 'couro', 1));
   aplicarCarta(j, carta('passiva', 'couro', 2));
-  assert.ok(Math.abs(j.hero.attr.get('defesa') - (base + 0.1)) < 1e-9);
+  assert.ok(Math.abs(j.hero.attr.get('defesa') - (base + PASSIVAS.couro.base * 3)) < 1e-9, 'nível 2 = 3× o nível 1, uma vez só');
 });
 
 teste('vitalidade aumenta a vida máxima e cura o que aumentou', () => {
@@ -229,6 +229,81 @@ teste('coração de ferro segura o golpe que ia derrubar (uma vez a cada 40 s)',
 
 teste('toda suprema tem nome, emoji e descrição', () => {
   for (const S of Object.values(SUPREMAS)) assert.ok(S.nome && S.emoji && S.desc());
+});
+
+/* ---------------- Força por nível e combos ---------------- */
+teste('cada nível fortalece muito: o nível 2 triplica o nível 1', () => {
+  assert.equal(FORCA(2), 3 * FORCA(1));
+  for (let n = 1; n < 5; n++) assert.ok(FORCA(n + 1) > FORCA(n));
+  for (const A of Object.values(ATIVAS)) if (A.dano) assert.ok(Math.abs(A.dano(2) - 3 * A.dano(1)) < 1e-9);
+  for (const P of Object.values(PASSIVAS)) { const m1 = P.mod(1), m2 = P.mod(2); assert.ok(Math.abs((m2.soma ?? m2.mult - 1) - 3 * (m1.soma ?? m1.mult - 1)) < 1e-9); }
+});
+
+// rodar habilidades + agendados + zonas + zumbis por alguns segundos (igual ao teste das ativas)
+const rodar = (j, seg) => { for (let i = 0; i < seg / DT; i++) { atualizarHabilidades(j, DT); j.t += DT; for (let k = j.agendados.length - 1; k >= 0; k--) { const a = j.agendados[k]; if ((a.t -= DT) <= 0) { j.agendados.splice(k, 1); a.fn(); } } j.atualizarZonas(DT); j.atualizarZumbis(DT); } };
+
+teste(`combo: aparece com a habilidade no nível ${COMBO_NIVEL}+ e a passiva certa, sempre como carta A`, () => {
+  for (const [id, C] of Object.entries(COMBOS)) {
+    const j = jogo();
+    aplicarCarta(j, carta('ativa', C.ativa, COMBO_NIVEL - 1));
+    aplicarCarta(j, carta('passiva', C.passiva, 1));
+    assert.deepEqual(combosDisponiveis(j.hero), [], `${id}: ainda não`);
+    aplicarCarta(j, carta('ativa', C.ativa, COMBO_NIVEL));
+    assert.deepEqual(combosDisponiveis(j.hero), [id]);
+    for (let s = 1; s < 10; s++) {
+      const c = sortearCartas(j.hero, makeRng(s));
+      assert.equal(c[0].tipo, 'combo'); assert.equal(c[0].id, id); assert.equal(c[0].letra, 'A');
+    }
+    aplicarCarta(j, { tipo: 'combo', id });
+    assert.equal(j.hero.evo[C.ativa], id);
+    assert.deepEqual(combosDisponiveis(j.hero), [], 'não aparece de novo');
+    for (let s = 1; s < 20; s++) for (const c of sortearCartas(j.hero, makeRng(s))) assert.ok(!(c.tipo === 'ativa' && c.id === C.ativa), 'a habilidade evoluída não sobe mais de nível');
+  }
+});
+
+teste('cada combo machuca bem mais que a habilidade no nível máximo', () => {
+  const dano = (id, evo) => {
+    const j = jogo();
+    j.hero.arma = null;
+    const zs = [];
+    for (let k = 0; k < 8; k++) { const z = zumbi(j, 1.1 + (k % 4) * 0.25, -0.5 + Math.floor(k / 4) * 0.8, 'gordo'); z.vel = 0; z.atkCd = 99; z.vida = z.vidaMax = 1e6; zs.push(z); }
+    const A = ATIVAS[id];
+    aplicarCarta(j, carta('ativa', id, A.max));
+    if (evo) { const [cid, C] = Object.entries(COMBOS).find(([, C]) => C.ativa === id); aplicarCarta(j, carta('passiva', C.passiva, 1)); aplicarCarta(j, { tipo: 'combo', id: cid }); }
+    rodar(j, 8);
+    return zs.reduce((a, z) => a + (1e6 - z.vida), 0);
+  };
+  for (const id of Object.keys(ATIVAS)) {
+    const normal = dano(id, false), combo = dano(id, true);
+    if (process.env.DEBUG) console.log('   ', id, Math.round(normal), '->', Math.round(combo), (combo / normal).toFixed(1) + '×');
+    assert.ok(combo > normal * 1.8, `${id}: combo ${Math.round(combo)} vs nível máximo ${Math.round(normal)}`);
+  }
+});
+
+teste('lâminas vampíricas e fogo da fênix curam o herói', () => {
+  for (const [ativa, passiva, id] of [['laminas', 'vampiro', 'vampiricas'], ['molotov', 'regen', 'fenix']]) {
+    const j = jogo();
+    const h = j.hero;
+    aplicarCarta(j, carta('ativa', ativa, COMBO_NIVEL)); aplicarCarta(j, carta('passiva', passiva, 1)); aplicarCarta(j, { tipo: 'combo', id });
+    h.attr.addMod({ id: 'sem-regen', attr: 'regen', mult: 0 });
+    for (let k = 0; k < 6; k++) { const z = zumbi(j, 1.3 + k * 0.2, 0.4, 'gordo'); z.vel = 0; z.atkCd = 99; z.vida = z.vidaMax = 1e6; }
+    h.vida = 10;
+    rodar(j, 5);
+    assert.ok(h.vida > 25, `${id}: vida ${h.vida.toFixed(1)}`);
+  }
+});
+
+teste('subir de nível recupera a vida toda e aumenta a vida máxima', () => {
+  const j = jogo();
+  const h = j.hero, v1 = h.vidaMax;
+  h.vida = 5;
+  j.ganharXp(xpParaNivel(1));
+  assert.equal(h.vida, h.vidaMax);
+  assert.ok(h.vidaMax > v1 * 1.05);
+  let x = 0; for (let k = 2; k < 10; k++) x += xpParaNivel(k);
+  j.ganharXp(x);
+  assert.equal(h.nivel, 10);
+  assert.ok(Math.abs(h.vidaMax - v1 * 1.9) < 1e-6, `nível 10: ${h.vidaMax}`);
 });
 
 console.log(`\n${ok} testes passaram.`);

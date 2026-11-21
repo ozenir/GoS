@@ -5,6 +5,7 @@ import { P, T as TT } from '../core/city.js';
 import { ZUMBIS, CLASSES } from '../core/dados.js';
 import { STATUS } from '../core/status.js';
 import { AMBIENTE, ligado as ligadoZona } from '../core/ambiente.js';
+import { posDrone } from '../core/habilidades.js';
 import { fillPoly, line, disc, canvas as novoCanvas } from './pixel.js';
 import * as S from './sprites.js';
 
@@ -125,7 +126,7 @@ export class Render {
       case 'onda': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.45 }); this.tremer(3); break;
       case 'habilidade': {
         const c = e.carta;
-        this.texto(e.x, e.y, `${c.emoji} ${c.nome}${c.tipo === 'ativa' || c.tipo === 'passiva' ? ' ' + c.nivel : ''}`, c.tipo === 'suprema' ? '#ff8a3d' : '#ffd23f', c.tipo === 'suprema' ? 1.6 : 1.2);
+        this.texto(e.x, e.y, `${c.emoji} ${c.nome}${c.tipo === 'ativa' || c.tipo === 'passiva' ? ' ' + c.nivel : ''}`, c.tipo === 'combo' ? '#c58bff' : c.tipo === 'suprema' ? '#ff8a3d' : '#ffd23f', c.tipo === 'suprema' || c.tipo === 'combo' ? 1.6 : 1.2);
         for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; this.particula({ x: e.x, y: e.y, z: 0.6, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3, vz: 1.5, life: 0.6, cor: i % 2 ? '#ffd23f' : '#fff3a0', tam: 2 }); }
         break;
       }
@@ -876,20 +877,23 @@ export class Render {
       ctx.globalAlpha = 1;
       if (Math.random() < 0.35) { const a = Math.random() * Math.PI * 2, d = 0.6 + Math.random() * 1.6; this.particula({ x: h.x + Math.cos(a) * d, y: h.y + Math.sin(a) * d, z: 0.1, vx: 0, vy: 0, vz: 1.2, life: 0.4, cor: Math.random() < 0.5 ? '#ff8a3d' : '#ffd23f', tam: 1 }); }
     }
-    const nL = h.habs.laminas;
+    const nL = h.habs.laminas, evo = h.evo || {};
     if (nL) {
-      const q = 1 + Math.ceil(nL / 2), giro = this.t * 22;
+      // combo Lâminas vampíricas: 6 lâminas vermelhas, mais longe
+      const vamp = evo.laminas === 'vampiricas';
+      const q = vamp ? 6 : 1 + Math.ceil(nL / 2), r = vamp ? 1.55 : 1.25, giro = this.t * 22, cor = vamp ? '#ff4a5a' : '#d8dde6';
       for (let k = 0; k < q; k++) {
         const a = (h.laminaAng || 0) + k * Math.PI * 2 / q;
-        const [sx, sy] = this.tela(h.x + Math.cos(a) * 1.25, h.y + Math.sin(a) * 1.25, 7);
+        const [sx, sy] = this.tela(h.x + Math.cos(a) * r, h.y + Math.sin(a) * r, 7);
         const cx = Math.cos(giro) * 3, cy = Math.sin(giro) * 3;
-        line(ctx, sx - cx, sy - cy, sx + cx, sy + cy, '#d8dde6', 1);
-        line(ctx, sx + cy, sy - cx, sx - cy, sy + cx, '#d8dde6', 1);
-        ctx.fillStyle = '#6a6a72'; ctx.fillRect(sx, sy, 1, 1);
+        line(ctx, sx - cx, sy - cy, sx + cx, sy + cy, cor, 1);
+        line(ctx, sx + cy, sy - cx, sx - cy, sy + cx, cor, 1);
+        ctx.fillStyle = vamp ? '#8a1020' : '#6a6a72'; ctx.fillRect(sx, sy, 1, 1);
       }
     }
-    if (h.habs.drone) {
-      const a = g.t * 1.6, wx = h.x + Math.cos(a) * 0.8, wy = h.y + Math.sin(a) * 0.8;
+    // combo Esquadrilha: 3 drones em volta
+    if (h.habs.drone) for (let k = 0, nd = evo.drone === 'esquadrilha' ? 3 : 1; k < nd; k++) {
+      const [wx, wy] = posDrone(g, h, k, nd);
       const [gx, gy] = this.tela(wx, wy);
       ctx.globalAlpha = 0.35; disc(ctx, gx, gy, 3, '#000', 0.5); ctx.globalAlpha = 1;
       const [sx, sy] = this.tela(wx, wy, 21 + Math.sin(this.t * 6));

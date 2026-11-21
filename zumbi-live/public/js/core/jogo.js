@@ -6,7 +6,7 @@ import { City, SHOPS, BAIRROS, P as PERIODO } from './city.js';
 import { Room } from './room.js';
 import { Praia, PRAIA } from './praia.js';
 import { FlowField } from './flow.js';
-import { ZUMBIS, CLASSES, ARMAS, CORPO, xpParaNivel } from './dados.js';
+import { ZUMBIS, CLASSES, ARMAS, CORPO, xpParaNivel, multVidaNivel } from './dados.js';
 import { EFEITOS, ladoDo } from './efeitos.js';
 import { Votacao, lerVoto, lerEscolha, OPCOES } from './votacao.js';
 import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasSupremas, supremaSegura, NIVEL_SUPREMA } from './habilidades.js';
@@ -454,7 +454,7 @@ export class Jogo {
       let kk = kind;
       if (kind === 'bau_lendario_chance') { if (!this.rng.chance(0.35)) continue; kk = 'bau_lendario'; }
       const p = this.room.pontoLivre(this.rng, this.room.entrada, 3);
-      this.itens.push({ id: proxId++, kind: kk, x: p.x, y: p.y, z: 0, vz: 0, data: kk === 'kit' ? { valor: 25 } : {}, quem: null, vida: 999, achado: true });
+      this.itens.push({ id: proxId++, kind: kk, x: p.x, y: p.y, z: 0, vz: 0, data: kk === 'kit' ? { valor: 35 } : {}, quem: null, vida: 999, achado: true });
     }
     this.emit('entrou_predio', { tipo: shop.tipo, nome: shop.nome, emoji: shop.emoji });
   }
@@ -588,7 +588,7 @@ export class Jogo {
         p.vencida = true;
         const a = this.pontoPerto(h, 1.5) || h, b = this.pontoPerto(h, 2) || h;
         this.soltarItemEm('bau_medio', {}, null, a.x, a.y, 6);
-        this.soltarItemEm('kit', { valor: 30 }, null, b.x, b.y, 6);
+        this.soltarItemEm('kit', { valor: 40 }, null, b.x, b.y, 6);
         this.emit('praia_vencida', {});
         // votação de pra onde ir (mesma janela de votos atrasados)
         const ops = ['esquerda', 'frente', 'direita'].map(id => ({ id, ...OPCOES[id] }));
@@ -756,7 +756,7 @@ export class Jogo {
         a.vencida = true; a.fimT = 4;
         const px = a.chefe.x, py = a.chefe.y, p1 = this.pontoPerto({ x: px, y: py }, 0.8) || { x: px, y: py }, p2 = this.pontoPerto({ x: px, y: py }, 1.2) || p1;
         this.soltarItemEm(this.rng.chance(0.5) ? 'bau_lendario' : 'bau_medio', {}, null, p1.x, p1.y).arena = true;
-        this.soltarItemEm('kit', { valor: 35 }, null, p2.x, p2.y).arena = true;
+        this.soltarItemEm('kit', { valor: 45 }, null, p2.x, p2.y).arena = true;
         this.emit('arena_vencida', {});
       } else if (a.t > A.duracao) { a.vencida = true; a.fimT = 0.5; this.emit('arena_tempo', {}); }
     } else {
@@ -1076,10 +1076,17 @@ export class Jogo {
   vigiarProgresso(dt) {
     const h = this.hero;
     h.focoRota = Math.max(0, (h.focoRota || 0) - dt);
-    if (this.room || this.arena) { h.semProgresso = 0; return; }
-    const no = this.city.nodePos(this.rota.alvo.i, this.rota.alvo.j);
+    if (this.room || this.arena) { h.semProgresso = 0; h.semCruzar = 0; return; }
+    const r = this.rota, no = this.city.nodePos(r.alvo.i, r.alvo.j);
     const d = dist(h.x, h.y, no.x, no.y);
-    const chave = this.rota.alvo.i + ',' + this.rota.alvo.j;
+    const chave = r.alvo.i + ',' + r.alvo.j;
+    // Herói forte preso no meio de uma horda gigante, empurrado pra frente e pra trás do cruzamento sem
+    // conseguir atravessar: depois de 75 s na mesma quadra, é levado até o cruzamento (como no anti-travamento).
+    h.semCruzar = (h.semCruzar || 0) + dt;
+    if (h.semCruzar > 75 && !r.beco && !this.indoPorta && !this.indoPraca) {
+      h.semCruzar = 0; h.x = no.x; h.y = no.y; h.ultimaPos = { x: h.x, y: h.y };
+      this.emit('destravou', { vez: 2 });
+    }
     if (h.progressoNo !== chave || d < (h.melhorDist ?? 1e9) - 1) { h.progressoNo = chave; h.melhorDist = d; h.semProgresso = 0; return; }
     h.semProgresso = (h.semProgresso || 0) + dt;
     if (h.semProgresso > 20 && h.focoRota <= 0) { h.focoRota = 8; h.semProgresso = 0; h.melhorDist = d; }
@@ -1333,8 +1340,11 @@ export class Jogo {
         if (Math.floor(h.pericias[cat]) > antes) subiu.push(`${PERICIAS[cat].emoji} ${PERICIAS[cat].nome} ${Math.floor(h.pericias[cat])}`);
       }
       aplicarPericias(h, C);
+      // a vida máxima cresce com o nível, e subir de nível recupera a vida toda
+      h.attr.addMod({ id: 'nivel:vida', attr: 'vidaMax', mult: multVidaNivel(h.nivel), fonte: 'nível' });
       this.sincronizarVida();
-      h.vida = Math.min(h.vidaMax, h.vida + h.vidaMax * 0.08);   // subir de nível cura um pouco
+      h.vida = h.vidaMax;
+      h.vidaBaixa = false;
       this.emit('nivel', { nivel: h.nivel, pericias: subiu });
       if (h.nivel === NIVEL_INIMIGOS_NOVOS) this.emit('novos_inimigos', {});
       // a cada 5 níveis, uma horda anunciada (do nível 10 em diante, bem maior)
@@ -1360,8 +1370,15 @@ export class Jogo {
     if ((this.escolha?.suprema || (nivel === NIVEL_SUPREMA && this.filaNiveis.includes(NIVEL_SUPREMA) && !this.hero.suprema))) { this.agendar(2, () => this.hordaDoNivel(nivel)); return; }
     const qtd = tamanhoHordaNivel(nivel, this.A);
     const grande = nivel >= this.A.medioAteNivel;
-    this.soltarZumbis('horda', Math.ceil(qtd * 0.65), null, { horda: true, semEscala: true });
-    this.soltarZumbisAtras(Math.floor(qtd * 0.35));
+    // horda grande (nível 20 em diante) chega em ondas, não toda de uma vez
+    const ondas = nivel >= 20 ? 3 : 1, por = Math.ceil(qtd / ondas);
+    for (let k = 0; k < ondas; k++) this.agendar(k * 9, () => {
+      if (this.fase !== 'jogo') return;
+      this.soltarZumbis('horda', Math.ceil(por * 0.65), null, { horda: true, semEscala: true });
+      this.soltarZumbisAtras(Math.floor(por * 0.35));
+    });
+    // a horda periódica não chega junto com a do nível (as duas somadas eram parede: 88 zumbis no nível 20)
+    this.hordaT = Math.max(this.hordaT, this.A.hordaCadaSegundos);
     this.emit('horda_nivel', { nivel, qtd, grande });
   }
 
@@ -1370,6 +1387,7 @@ export class Jogo {
   // arma lendária, cachorro e sobrevivente ajudante e o invencível do helicóptero.
   andouQuarteirao(n = 1) {
     const h = this.hero;
+    h.semCruzar = 0;
     this.stats.quarteiroes += n;
     const fim = h.estados.passarQuarteiroes(n);
     if (fim.length) { sincronizarAtributos(h.estados, h.attr); for (const id of fim) this.emit('buff_acabou', { id }); }
@@ -1423,10 +1441,16 @@ export class Jogo {
   }
 
   /* =================== Zumbis =================== */
+  statsComFuria(T, vidaMult) {
+    const f = furiaDaHorda((this.t - Math.max(this.stats.inicio, this.ultimaAjudaT ?? 0)) / 60, this.A);
+    return statsZumbi(T, this.ameaca(), vidaMult * (1 + (f - 1) * this.A.furiaVida), f);
+  }
+
   criarZumbi(tipo, x, y, quem, opts = {}) {
     const T = ZUMBIS[tipo];
     const z = {
-      id: proxId++, tipo, x, y, ...statsZumbi(T, this.ameaca(), opts.vidaMult || 1, furiaDaHorda((this.t - Math.max(this.stats.inicio, this.ultimaAjudaT ?? 0)) / 60, this.A)),
+      // fúria sem ajuda da live: zumbis batem mais forte e (com FURIA_VIDA) também aguentam mais
+      id: proxId++, tipo, x, y, ...this.statsComFuria(T, opts.vidaMult || 1),
       atkCd: 0.5 + this.rng.next(), velMult: 0.85 + this.rng.next() * 0.3, nascendo: opts.nascendo ?? 0.7,
       dono: quem || null, nome: opts.nome || null, kx: 0, ky: 0, fx: 0, fy: 1, animT: this.rng.next() * 10,
       flash: 0, estados: new Estados(), pavio: -1, dormindo: !!opts.dormindo, roupa: this.rng.int(0, 5), extra: opts.extra || null
@@ -1607,7 +1631,7 @@ export class Jogo {
         const arma = z.extra?.arma;
         if (arma && arma !== 'pistola' && ARMAS[arma]) this.soltarItemEm('arma', { arma }, null, z.x, z.y);
         else this.soltarItemEm('bau_medio', {}, null, z.x, z.y);
-      } else this.soltarItemEm(z.tipo === 'rei' ? 'bau_lendario' : 'kit', { valor: 30 }, null, z.x, z.y);
+      } else this.soltarItemEm(z.tipo === 'rei' ? 'bau_lendario' : 'kit', { valor: 40 }, null, z.x, z.y);
     }
   }
 
@@ -1740,11 +1764,11 @@ export class Jogo {
     const h = this.hero;
     const quem = it.quem;
     switch (it.kind) {
-      case 'kit': this.curar(it.data.valor || 25, quem, true); break;
-      case 'cura_pequena': this.curar(12, quem, true); break;
+      case 'kit': this.curar(it.data.valor || 35, quem, true); break;
+      case 'cura_pequena': this.curar(18, quem, true); break;
       case 'municao': this.darMunicao(1, quem, true); break;
-      case 'colete': this.darColete(3, quem, true); break;
-      case 'suprimento': if (h.vida / h.vidaMax < 0.7) this.curar(20, quem, true); else this.darMunicao(1, quem, true); break;
+      case 'colete': this.darColete(4, quem, true); break;
+      case 'suprimento': if (h.vida / h.vidaMax < 0.7) this.curar(30, quem, true); else this.darMunicao(1, quem, true); break;
       case 'bau_medio': this.abrirBau('medio', quem); break;
       case 'bau_lendario': this.abrirBau('lendario', quem); break;
       case 'arma': this.trocarArma(it.data.arma, quem); this.emit('bau', { raridade: 'medio', arma: it.data.arma, x: it.x, y: it.y }); break;

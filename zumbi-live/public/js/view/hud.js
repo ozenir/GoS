@@ -251,7 +251,7 @@ export class Hud {
       const antes = new Set((this.cache.habs || '').split(','));
       this.cache.habs = hk;
       $('h-habs').innerHTML = habs.length
-        ? habs.map(x => `<span class="hb ${x.tipo}${antes.has(x.emoji + x.nivel) ? '' : ' novo'}" title="${esc(x.nome)}">${esc(x.emoji)}${x.tipo === 'suprema' ? '' : `<i>${x.nivel}</i>`}</span>`).join('')
+        ? habs.map(x => `<span class="hb ${x.tipo}${antes.has(x.emoji + x.nivel) ? '' : ' novo'}" title="${esc(x.nome)}">${esc(x.emoji)}${x.tipo === 'suprema' ? '' : x.tipo === 'combo' ? '<i>★</i>' : `<i>${x.nivel}</i>`}</span>`).join('')
         : '<span class="hb-vazio">⭐ cada nível: o chat escolhe uma habilidade</span>';
     }
     $('h-xp').style.width = (clamp(h.xp / xpParaNivel(h.nivel), 0, 1) * 100).toFixed(0) + '%';
@@ -323,8 +323,8 @@ export class Hud {
     const key = cartas.map(c => c.tipo + c.id + c.nivel).join(',') + (e ? 'a' : 'f');
     if (this.cache.ekey !== key) {
       this.cache.ekey = key;
-      const tag = c => c.cat === 'suprema' ? 'SUPREMA' : c.cat === 'nova' ? (c.tipo === 'arma' ? 'ARMA NOVA' : 'NOVA') : c.cat === 'passiva' ? 'PASSIVA' : (c.tipo === 'treino' ? 'APRIMORAR' : `NÍVEL ${c.nivel}`);
-      $('e-ops').innerHTML = cartas.map(c => `<div class="ec" data-l="${c.letra}"><i class="fill"></i><span class="le">${c.letra}</span><span class="ic">${esc(c.emoji)}</span><span class="tag ${c.cat}">${tag(c)}</span><b>${esc(c.nome)}</b><p>${esc(c.desc)}</p><span class="cnt">0 votos</span></div>`).join('');
+      const tag = c => c.cat === 'combo' ? `COMBO ${c.de}` : c.cat === 'suprema' ? 'SUPREMA' : c.cat === 'nova' ? (c.tipo === 'arma' ? 'ARMA NOVA' : 'NOVA') : c.cat === 'passiva' ? 'PASSIVA' : (c.tipo === 'treino' ? 'APRIMORAR' : `NÍVEL ${c.nivel}`);
+      $('e-ops').innerHTML = cartas.map(c => `<div class="ec${c.cat === 'combo' ? ' combo' : ''}" data-l="${c.letra}"><i class="fill"></i><span class="le">${c.letra}</span><span class="ic">${esc(c.emoji)}</span><span class="tag ${c.cat}">${tag(c)}</span><b>${esc(c.nome)}</b><p>${esc(c.desc)}</p><span class="cnt">0 votos</span></div>`).join('');
     }
     const vt = e ? e.voto : res.voto;
     if (vt) {

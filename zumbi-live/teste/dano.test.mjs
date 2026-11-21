@@ -1,6 +1,6 @@
 // Testes do módulo de dano e atributos.   Rodar:  node teste/dano.test.mjs
 import assert from 'node:assert/strict';
-import {
+import { ATRIBUTOS,
   Atributos, atributosDaClasse, danoDoHeroi, danoNoHeroi, intervaloTiro, intervaloCorpo, alcanceArma,
   velocidadeHeroi, valorCura, statsZumbi, danoExplosao, danoAliado, ESCALA_AMEACA, TORCIDA, aplicarTorcida,
   danoNoZumbi, afinidade, efetividade, chanceDoStatus, multPericia, PERICIA_PADRAO, EFEITO_PERICIA, aplicarPericias
@@ -36,7 +36,7 @@ teste('vários multiplicadores se multiplicam', () => {
 teste('limites mínimo e máximo', () => {
   const a = new Atributos();
   a.addMod({ attr: 'defesa', soma: 5 });
-  assert.equal(a.get('defesa'), 0.75);
+  assert.equal(a.get('defesa'), ATRIBUTOS.defesa.max);
   a.addMod({ attr: 'velocidade', mult: 0.01 });
   assert.equal(a.get('velocidade'), 0.2);
 });

@@ -55,7 +55,8 @@ export const AMEACA = {
   // Conta só os minutos desde o último presente de ajuda (ou seguir). Passou de furiaDepoisDe,
   // os zumbis que nascem batem cada vez mais forte. Com a live ajudando, a run pode durar o quanto aguentar.
   furiaDepoisDe: 4,
-  furiaPorMinuto: 0.2
+  furiaPorMinuto: 0.6,
+  furiaVida: 1   // a fúria também dá vida aos zumbis (1 = o mesmo tanto que o dano)
 };
 
 // Multiplicador de dano dos zumbis pela trava acima. minutos = minutos SEM AJUDA da live.

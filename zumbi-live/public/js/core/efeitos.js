@@ -19,15 +19,15 @@ const qt = q => `${q} ${q === 1 ? 'quarteirão' : 'quarteirões'}`;
 export const EFEITOS = {
   cura: {
     lado: 'ajuda',
-    texto: r => `cura +${n(r.valor, 10)}%`,
-    aviso: (r, q) => `curou +${Math.min(60, n(r.valor, 10) * q)}%`,
-    aplicar: (g, r, q, quem) => g.curarPresente(Math.min(60, n(r.valor, 10) * q), quem)
+    texto: r => `cura +${n(r.valor, 14)}%`,
+    aviso: (r, q) => `curou +${Math.min(60, n(r.valor, 14) * q)}%`,
+    aplicar: (g, r, q, quem) => g.curarPresente(Math.min(60, n(r.valor, 14) * q), quem)
   },
   kit: {
     lado: 'ajuda',
-    texto: r => `kit médico +${n(r.valor, 25)}%`,
+    texto: r => `kit médico +${n(r.valor, 35)}%`,
     aviso: (r, q) => q > 1 ? `${q} kits médicos` : 'kit médico',
-    aplicar: (g, r, q, quem) => g.kitPresente(n(r.valor, 25), Math.min(q, 4), quem)
+    aplicar: (g, r, q, quem) => g.kitPresente(n(r.valor, 35), Math.min(q, 4), quem)
   },
   municao: {
     lado: 'ajuda',
@@ -37,9 +37,9 @@ export const EFEITOS = {
   },
   colete: {
     lado: 'ajuda',
-    texto: r => `colete (${n(r.golpes, 3)} golpes)`,
-    aviso: (r, q) => `colete de ${Math.min(12, n(r.golpes, 3) * q)} golpes`,
-    aplicar: (g, r, q, quem) => g.darColete(Math.min(12, n(r.golpes, 3) * q), quem)
+    texto: r => `colete (${n(r.golpes, 4)} golpes)`,
+    aviso: (r, q) => `colete de ${Math.min(12, n(r.golpes, 4) * q)} golpes`,
+    aplicar: (g, r, q, quem) => g.darColete(Math.min(12, n(r.golpes, 4) * q), quem)
   },
   cachorro: {
     lado: 'ajuda',

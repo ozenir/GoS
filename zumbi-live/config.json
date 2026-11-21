@@ -38,14 +38,14 @@
   "compartilhar": { "efeito": "caixa_municao" },
   "presentes": {
     "por_nome": {
-      "Rose":             { "emoji": "🌹", "nome": "Rosa",              "moedas": 1,     "efeito": "cura",        "valor": 10 },
+      "Rose":             { "emoji": "🌹", "nome": "Rosa",              "moedas": 1,     "efeito": "cura",        "valor": 14 },
       "Ice Cream Cone":   { "emoji": "🍦", "nome": "Sorvete",           "moedas": 1,     "efeito": "vidro",       "segundos": 5 },
       "TikTok":           { "emoji": "🎵", "nome": "TikTok",            "moedas": 1,     "efeito": "zumbis",      "qtd": 3 },
       "Finger Heart":     { "emoji": "🫰", "nome": "Coração c/ dedos",  "moedas": 5,     "efeito": "municao",     "quarteiroes": 3 },
       "Perfume":          { "emoji": "🧴", "nome": "Perfume",           "moedas": 20,    "efeito": "horda",       "qtd": 8 },
-      "Donut":            { "emoji": "🍩", "nome": "Rosquinha",         "moedas": 30,    "efeito": "kit",         "valor": 25 },
+      "Donut":            { "emoji": "🍩", "nome": "Rosquinha",         "moedas": 30,    "efeito": "kit",         "valor": 35 },
       "Hat and Mustache": { "emoji": "🎩", "nome": "Chapéu e Bigode",   "moedas": 99,    "efeito": "explosivo",   "qtd": 1 },
-      "Hand Hearts":      { "emoji": "🫶", "nome": "Mãos de coração",   "moedas": 100,   "efeito": "colete",      "golpes": 3 },
+      "Hand Hearts":      { "emoji": "🫶", "nome": "Mãos de coração",   "moedas": 100,   "efeito": "colete",      "golpes": 4 },
       "Corgi":            { "emoji": "🐶", "nome": "Corgi",             "moedas": 299,   "efeito": "cachorro",    "quarteiroes": 4 },
       "Money Gun":        { "emoji": "🔫", "nome": "Arma de Dinheiro",  "moedas": 500,   "efeito": "bau",         "raridade": "medio" },
       "Swan":             { "emoji": "🦢", "nome": "Cisne",             "moedas": 699,   "efeito": "alarme",      "segundos": 20 },

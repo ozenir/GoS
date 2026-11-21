@@ -21,8 +21,8 @@ for (const classe of Object.keys(CLASSES)) {
       assert.ok(j.t - j.stats.inicio < VIDA_MAXIMA, `${classe}: herói passou de 10 minutos vivo sem interação (imortal?)`);
     } else { semAndar = 0; ultimoQ = -1; }
   }
-  // (a habilidade suprema do nível 10 deixa o herói durar um pouco mais; o limite de 10 min acima continua valendo)
-  assert.ok(mortes.length >= 5, `${classe}: só ${mortes.length} heróis caíram em ${MINUTOS} minutos`);
+  // (suprema, combos e vida por nível deixam o herói durar mais, ~6 min sem ajuda; o limite de 10 min acima é o que garante que ninguém fica imortal)
+  assert.ok(mortes.length >= 4, `${classe}: só ${mortes.length} heróis caíram em ${MINUTOS} minutos`);
   const media = mortes.reduce((a, b) => a + b, 0) / mortes.length;
   console.log(`  ✔ ${CLASSES[classe].nome.padEnd(10)} ${mortes.length} heróis em ${MINUTOS} min, média ${Math.floor(media / 60)}:${String(Math.round(media % 60)).padStart(2, '0')}`);
   ok++;

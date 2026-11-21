@@ -54,7 +54,7 @@ export function efeitoDoAmbiente(e, zonas, dt, t, rng) {
     if (A.lentidao && A.lentidao < r.lentidao) r.lentidao = A.lentidao;
     if (A.apagaFogo) r.apagaFogo = true;
     if (!ligado(z, t)) continue;
-    if (A.dps) r.danos.push({ valor: A.dps * dt, tipo: A.tipoDano, zona: z });
+    if (A.dps) r.danos.push({ valor: A.dps * dt * (z.mult || 1), tipo: A.tipoDano, zona: z });   // mult: fogo do molotov fica mais forte por nível
     const primeiraVez = !e.zt.has(z);
     let prox = primeiraVez ? 0 : e.zt.get(z) - dt;
     if (primeiraVez) r.entrou.push(z);

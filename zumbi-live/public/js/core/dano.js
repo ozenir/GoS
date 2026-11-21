@@ -22,14 +22,14 @@ export const ATRIBUTOS = {
   dano:       { base: 1,    min: 0.1,  nome: 'dano' },                 // multiplica todo dano que o herói causa
   corpo:      { base: 1,    min: 0.1,  nome: 'dano corpo a corpo' },   // multiplica só o corpo a corpo (além de "dano")
   cadencia:   { base: 1,    min: 0.2, max: 6, nome: 'cadência' },      // maior = atira mais rápido
-  velocidade: { base: 1,    min: 0.2, max: 3, nome: 'velocidade' },
-  defesa:     { base: 0,    min: -0.5, max: 0.75, nome: 'defesa' },    // fração do dano recebido que é ignorada (negativo = toma mais dano)
+  velocidade: { base: 1,    min: 0.2, max: 2.2, nome: 'velocidade' },
+  defesa:     { base: 0,    min: -0.5, max: 0.6, nome: 'defesa' },    // fração do dano recebido que é ignorada (negativo = toma mais dano)
   regen:      { base: 0,    min: 0,    nome: 'regeneração' },          // vida por segundo
   critChance: { base: 0.05, min: 0, max: 1, nome: 'chance de crítico' },
   critMult:   { base: 1.8,  min: 1,    nome: 'dano crítico' },
   alcance:    { base: 1,    min: 0.5, max: 2, nome: 'alcance' },       // multiplica o alcance das armas
   cura:       { base: 1,    min: 0,    nome: 'cura recebida' },        // multiplica toda cura
-  esquiva:    { base: 0,    min: 0, max: 0.6, nome: 'esquiva' },        // chance de desviar de um ataque
+  esquiva:    { base: 0,    min: 0, max: 0.45, nome: 'esquiva' },        // chance de desviar de um ataque
   curaPorAcerto: { base: 0, min: 0,    nome: 'cura por acerto' },      // vida que volta a cada golpe corpo a corpo que acerta
   chanceStatus:  { base: 0, min: 0, max: 1, nome: 'chance de efeito' }, // soma na chance de causar sangramento, atordoar...
   // Resistência do herói por tipo de dano (fração ignorada)
@@ -274,16 +274,23 @@ export const ESCALA_AMEACA = {
   vel: 0.025,           // +2,5% de velocidade por nível...
   velMax: 0.35,         // ...até no máximo +35%
   resistencia: 0.025,   // +2,5% de resistência (dano ignorado) por nível...
-  resistenciaMax: 0.4   // ...até no máximo 40%
+  resistenciaMax: 0.4,  // ...até no máximo 40%
+  // Acelera no fim: da ameaça aceleraDesde em diante, vida e dano ainda multiplicam por (1 + isto) a cada nível
+  // (+9% de vida e +6% de dano por nível, acumulando). Nada até a 18, pouco na 25 (vida ×1,8), muito na 40
+  // (vida ×6,6). As habilidades e combos crescem multiplicando; sem isso, um herói forte ficaria imortal.
+  aceleraDesde: 18,
+  vidaExp: 0.09,
+  danoExp: 0.06
 };
 // danoMult: multiplicador extra de dano (ameaca.js → furiaDaHorda)
 export function statsZumbi(T, ameaca, vidaMult = 1, danoMult = 1) {
   const n = Math.max(0, ameaca - 1);
   const E = ESCALA_AMEACA;
-  const vida = T.vida * (1 + n * E.vida) * vidaMult;
+  const m = Math.max(0, ameaca - E.aceleraDesde);
+  const vida = T.vida * (1 + n * E.vida) * Math.pow(1 + E.vidaExp, m) * vidaMult;
   return {
     vida, vidaMax: vida,
-    dano: T.dano * (1 + n * E.dano) * danoMult,
+    dano: T.dano * (1 + n * E.dano) * Math.pow(1 + E.danoExp, m) * danoMult,
     vel: T.vel * (1 + Math.min(E.velMax, n * E.vel)),
     resistencia: Math.min(E.resistenciaMax, (T.resistencia || 0) + n * E.resistencia)
   };
