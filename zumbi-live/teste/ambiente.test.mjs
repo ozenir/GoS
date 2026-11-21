@@ -4,6 +4,7 @@ import { AMBIENTE, efeitoDoAmbiente, faixaLivre, ligado, machuca } from '../publ
 import { STATUS } from '../public/js/core/status.js';
 import { TIPOS_DANO } from '../public/js/core/dano.js';
 import { City, BAIRROS } from '../public/js/core/city.js';
+import { Jogo } from '../public/js/core/jogo.js';
 
 let ok = 0;
 const teste = (nome, fn) => { fn(); ok++; console.log('  ✔', nome); };
@@ -75,4 +76,64 @@ teste('a cidade coloca perigos nos trechos de rua conforme o bairro', () => {
   }
   assert.ok(n > 10);
 });
+// Herói parado dentro de um perigo por "seg" segundos: quanto de vida perde (sem esquiva, colete nem invencível)
+function danoNoHeroiEm(tipo, seg, extra = {}) {
+  const j = new Jogo({ seed: 9, classe: 'policial' });
+  const h = j.hero;
+  j.zumbis = []; h.invT = 0; h.attr.base.esquiva = 0;
+  j.zonas = [{ tipo, x0: h.x - 1, y0: h.y - 1, x1: h.x + 1, y1: h.y + 1, t: 99, semente: 1, ...extra }];
+  j.atualizarZonas(0);
+  const v0 = h.vida, DT = 1 / 30;
+  for (let i = 0; i < seg / DT; i++) {
+    j.ambienteNoHeroi(DT);
+    const st = h.estados.update(DT);
+    for (const d of st.danos) j.ferirHeroi(d.valor, null, 'teste', d.tipo, true);
+    h.vida = Math.max(h.vida, 1); h.colete = 0;
+  }
+  return v0 - h.vida;
+}
+
+// Mede com a redução e sem ela (mesma semente, mesmo sorteio) e compara
+function razao(tipo, seg, extra) {
+  const noHeroi = AMBIENTE[tipo].noHeroi, multQ = STATUS.queimando.multNoHeroi;
+  const reduzido = danoNoHeroiEm(tipo, seg, extra);
+  AMBIENTE[tipo].noHeroi = 1; STATUS.queimando.multNoHeroi = undefined;
+  const cheio = danoNoHeroiEm(tipo, seg, extra);
+  AMBIENTE[tipo].noHeroi = noHeroi; STATUS.queimando.multNoHeroi = multQ;
+  return { reduzido, cheio, r: cheio / reduzido };
+}
+
+teste('fogo machuca o herói 4× menos (chão e queimando)', () => {
+  const { reduzido, cheio, r } = razao('fogo', 3);
+  assert.ok(Math.abs(r - 4) < 0.3, `cheio ${cheio.toFixed(1)} · agora ${reduzido.toFixed(1)} (${r.toFixed(2)}×)`);
+});
+
+teste('cacos de vidro machucam o herói 6× menos (corte e sangramento)', () => {
+  const { reduzido, cheio, r } = razao('vidro', 5);
+  assert.ok(Math.abs(r - 6) < 0.4, `cheio ${cheio.toFixed(1)} · agora ${reduzido.toFixed(1)} (${r.toFixed(2)}×)`);
+});
+
+teste('armadilha de vidro do presente (sangramento duplo) também 6× menor', () => {
+  const { reduzido, cheio, r } = razao('vidro', 5, { lentoAoEntrar: 5 });
+  assert.ok(Math.abs(r - 6) < 0.4, `cheio ${cheio.toFixed(1)} · agora ${reduzido.toFixed(1)} (${r.toFixed(2)}×)`);
+});
+
+teste('zumbi continua levando o dano cheio de fogo (molotov e lança-chamas não ficam fracos)', () => {
+  const j = new Jogo({ seed: 9, classe: 'policial' });
+  const z = j.criarZumbi('comum', j.hero.x + 8, j.hero.y, null, { nascendo: 0 });
+  j.aplicarStatus(z, 'queimando');
+  const v0 = z.vida;
+  const st = z.estados.update(1);
+  assert.ok(Math.abs(st.danos[0].valor - 10) < 1e-9);
+  assert.equal(v0, z.vida);
+});
+
+teste('sangramento de mordida no herói não fica fraco por causa do vidro', () => {
+  const j = new Jogo({ seed: 9, classe: 'policial' });
+  const h = j.hero;
+  j.aplicarStatus(h, 'sangramento', { mult: 1 / 6 });
+  j.aplicarStatus(h, 'sangramento');
+  assert.equal(h.estados.lista.get('sangramento').mult, 1);
+});
+
 console.log(`\n${ok} testes passaram.`);

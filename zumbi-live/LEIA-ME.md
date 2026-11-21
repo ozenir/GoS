@@ -127,9 +127,9 @@ Tudo anda mais devagar que antes (herói e zumbis), então tem menos decisão po
 
 | Perigo | O que faz |
 |---|---|
-| 🔸 Cacos de vidro | corta (sangramento) e deixa lento |
+| 🔸 Cacos de vidro | corta (sangramento) e deixa lento. No herói o corte e o sangramento são **6× mais fracos** que nos zumbis |
 | ➰ Arame farpado | corta muito (sangramento) e deixa **bem** lento |
-| 🔥 Fogo | queima e ilumina a noite. Explosões deixam fogo no chão por uns segundos |
+| 🔥 Fogo | queima e ilumina a noite. Explosões deixam fogo no chão por uns segundos. No herói o fogo e o "queimando" são **4× mais fracos** (zumbi queima com força total) |
 | 🧪 Ácido | dano químico, pode infectar e quebra a armadura dos zumbis |
 | ⚡ Fios elétricos | choque que **atordoa**; liga e desliga, piscando |
 | 🟫 Lama | metade da velocidade |
@@ -317,11 +317,11 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 
 | Cenário | Quanto o herói dura em média | Nível médio |
 |---|---|---|
-| Sem nenhuma interação | **3 min 46 s**, contando os 12 s caído | 8 |
-| Só chat (6 pessoas comentando e votando, curtidas) | 5 min | 12 |
-| Chat + presentes misturados (8 por minuto) | 2 min 25 s (a maioria cai no **golpe final** de quem atrapalha) | 8 |
-| Chat + só presentes que ajudam (4 por minuto) | **7 min 19 s** (os melhores passam de 11 min) | 20 |
-| Chat + só presentes que atrapalham (4 por minuto) | 1 min 40 s | 5 |
+| Sem nenhuma interação | **3 min 47 s**, contando os 12 s caído | 8 |
+| Só chat (6 pessoas comentando e votando, curtidas) | 5 min 29 s | 12 |
+| Chat + presentes misturados (8 por minuto) | 5 min 35 s (a maioria cai no **golpe final** de quem atrapalha) | 20 |
+| Chat + só presentes que ajudam (4 por minuto) | **7 min 13 s** (os melhores passam de 11 min) | 20 |
+| Chat + só presentes que atrapalham (4 por minuto) | 4 min 24 s | 16 |
 
 Os primeiros níveis vêm rápido (a primeira escolha de habilidade sai no primeiro minuto) e depois cada nível pede mais. O nível 10 aparece em lives com chat; o 20 (lobos e braços longos), em lives que ajudam bastante; o 30 (praia) é conquista de live muito engajada.
 

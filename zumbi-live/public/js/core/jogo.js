@@ -1246,6 +1246,7 @@ export class Jogo {
     if ((S.so === 'heroi' && !heroi) || (S.so === 'zumbi' && heroi)) return false;
     if (!heroi && id === 'atordoado' && ZUMBIS[alvo.tipo].chefe) opts = { ...opts, duracao: (opts.duracao ?? S.duracao) * 0.4 }; // chefes se recuperam rápido
     if (heroi && id === 'infectado' && this.rng.next() < alvo.attr.get('resInfeccao')) return false;
+    if (heroi && S.multNoHeroi) opts = { ...opts, mult: (opts.mult ?? 1) * S.multNoHeroi };
     const novo = alvo.estados.aplicar(id, opts);
     if (heroi) {
       sincronizarAtributos(alvo.estados, alvo.attr);
@@ -1900,12 +1901,17 @@ export class Jogo {
     const h = this.hero;
     const r = efeitoDoAmbiente(h, this.zonasHeroi || this.zonasAgora, dt, this.t, this.rng);
     for (const z of r.entrou) {
-      if (z.lentoAoEntrar) { this.deixarLento(z.lentoAoEntrar); this.aplicarStatus(h, 'sangramento', { pilhas: 2, fonte: z.quem }); this.emit('vidro_pisou', { x: h.x, y: h.y }); }
+      if (z.lentoAoEntrar) { this.deixarLento(z.lentoAoEntrar); this.aplicarStatus(h, 'sangramento', { pilhas: 2, fonte: z.quem, mult: AMBIENTE.vidro.noHeroi }); this.emit('vidro_pisou', { x: h.x, y: h.y }); }
       if (machuca(z.tipo)) this.emit('ambiente', { tipo: z.tipo, x: h.x, y: h.y });
     }
-    for (const d of r.danos) this.ferirHeroi(d.valor, d.zona.quem || null, AMBIENTE[d.zona.tipo].nome.toLowerCase(), d.tipo, !d.golpe);
+    // perigos machucam menos o herói do que os zumbis (ambiente.js → noHeroi): vidro 1/6, fogo 1/4
+    for (const d of r.danos) this.ferirHeroi(d.valor * (AMBIENTE[d.zona.tipo].noHeroi ?? 1), d.zona.quem || null, AMBIENTE[d.zona.tipo].nome.toLowerCase(), d.tipo, !d.golpe);
     if (this.fase !== 'jogo') return r;
-    for (const s of r.status) this.aplicarStatus(h, s.id, { duracao: s.duracao, pilhas: s.pilhas, fonte: s.zona.quem });
+    for (const s of r.status) {
+      // o sangramento do vidro também é 6× mais fraco (o queimando já se reduz sozinho: status.js → multNoHeroi)
+      const m = STATUS[s.id].multNoHeroi ? 1 : (AMBIENTE[s.zona.tipo].noHeroi ?? 1);
+      this.aplicarStatus(h, s.id, { duracao: s.duracao, pilhas: s.pilhas, fonte: s.zona.quem, mult: m });
+    }
     if (r.apagaFogo && h.estados.tem('queimando')) h.estados.remover('queimando');
     return r;
   }

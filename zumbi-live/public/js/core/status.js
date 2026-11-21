@@ -14,6 +14,7 @@
 //    danoRecebido multiplica o dano que quem está com o status recebe
 //    resistencia soma na resistência do zumbi (negativo = fica mais frágil)
 //    so          'heroi' ou 'zumbi' quando só faz sentido num dos dois
+//    multNoHeroi multiplica o dano por segundo quando o status está no herói (ex.: queimando 0,25)
 //
 //  Para criar um status novo: acrescente aqui e use g.aplicarStatus(alvo, 'id').
 // ============================================================================
@@ -21,7 +22,7 @@
 export const STATUS = {
   /* ------------- negativos ------------- */
   sangramento: { nome: 'Sangrando', emoji: '🩸', lado: 'negativo', duracao: 4, maxPilhas: 5, porSegundo: { dano: 3 }, tipoDano: 'sangramento' },
-  queimando:   { nome: 'Queimando', emoji: '🔥', lado: 'negativo', duracao: 3, maxPilhas: 1, porSegundo: { dano: 10 }, tipoDano: 'fogo' },
+  queimando:   { nome: 'Queimando', emoji: '🔥', lado: 'negativo', duracao: 3, maxPilhas: 1, porSegundo: { dano: 10 }, tipoDano: 'fogo', multNoHeroi: 0.25 },   // no herói queima 4× menos (2,5/s)
   atordoado:   { nome: 'Atordoado', emoji: '💫', lado: 'negativo', duracao: 0.9, maxPilhas: 1, parado: true },
   lento:       { nome: 'Lento', emoji: '🐌', lado: 'negativo', duracao: 3, maxPilhas: 1, lentidao: 0.5 },
   marcado:     { nome: 'Marcado', emoji: '🎯', lado: 'negativo', duracao: 5, maxPilhas: 1, danoRecebido: 1.25, so: 'zumbi' },
@@ -58,15 +59,19 @@ export class Estados {
       this.lista.set(id, { id, t: Infinity, q: n, pilhas: 1, fonte: opts.fonte || null });
       return true;
     }
+    // opts.mult: multiplica o dano por segundo desta aplicação (ex.: sangramento de caco de vidro 1/6).
+    // Se já tem o status, vale o maior (uma mordida que faz sangrar não fica fraca por causa do vidro).
+    const mult = opts.mult ?? 1;
     const dur = opts.duracao ?? S.duracao;
     const atual = this.lista.get(id);
     if (atual) {
       atual.t = opts.acumulaTempo ? Math.min(opts.maxDuracao ?? Infinity, atual.t + dur) : Math.max(atual.t, dur);
       atual.pilhas = Math.min(S.maxPilhas || 1, atual.pilhas + (opts.pilhas || 1));
       if (opts.fonte) atual.fonte = opts.fonte;
+      atual.mult = Math.max(atual.mult ?? 1, mult);
       return false;
     }
-    this.lista.set(id, { id, t: dur, pilhas: Math.min(S.maxPilhas || 1, opts.pilhas || 1), fonte: opts.fonte || null });
+    this.lista.set(id, { id, t: dur, pilhas: Math.min(S.maxPilhas || 1, opts.pilhas || 1), fonte: opts.fonte || null, mult });
     return true;
   }
 
@@ -92,7 +97,7 @@ export class Estados {
     for (const s of this.lista.values()) {
       const S = STATUS[s.id];
       const passo = Math.min(dt, s.t);
-      if (S.porSegundo?.dano) danos.push({ tipo: S.tipoDano || 'sangramento', valor: S.porSegundo.dano * s.pilhas * passo, fonte: s.fonte, status: s.id });
+      if (S.porSegundo?.dano) danos.push({ tipo: S.tipoDano || 'sangramento', valor: S.porSegundo.dano * s.pilhas * passo * (s.mult ?? 1), fonte: s.fonte, status: s.id });
       if (S.porSegundo?.cura) cura += S.porSegundo.cura * s.pilhas * passo;
       s.t -= dt;
       if (s.t <= 0) acabaram.push(s.id);

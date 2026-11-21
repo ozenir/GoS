@@ -15,12 +15,14 @@
 //    piscando    só machuca parte do tempo (fios elétricos: liga e desliga)
 //    apagaFogo   tira o status "queimando" de quem entra
 //    luz         ilumina à noite
+//    noHeroi     multiplica o dano no HERÓI (golpe, dps e o sangramento que o perigo causa). Zumbi leva o dano cheio.
+//                vidro: 1/6 · fogo: 1/4 (o "queimando" no herói já é 4× menor: status.js → multNoHeroi)
 // ============================================================================
 
 export const AMBIENTE = {
-  vidro:   { nome: 'Cacos de vidro', emoji: '🔸', golpe: 3, intervalo: 1.2, tipoDano: 'corte', status: [{ id: 'sangramento', chance: 0.7 }], lentidao: 0.75 },
+  vidro:   { nome: 'Cacos de vidro', emoji: '🔸', golpe: 3, intervalo: 1.2, tipoDano: 'corte', status: [{ id: 'sangramento', chance: 0.7 }], lentidao: 0.75, noHeroi: 1 / 6 },
   arame:   { nome: 'Arame farpado', emoji: '➰', golpe: 5, intervalo: 1.0, tipoDano: 'corte', status: [{ id: 'sangramento', chance: 0.9 }], lentidao: 0.45 },
-  fogo:    { nome: 'Fogo', emoji: '🔥', dps: 6, tipoDano: 'fogo', status: [{ id: 'queimando', chance: 1 }], lentidao: 0.9, luz: true },
+  fogo:    { nome: 'Fogo', emoji: '🔥', dps: 6, tipoDano: 'fogo', status: [{ id: 'queimando', chance: 1 }], lentidao: 0.9, luz: true, noHeroi: 0.25 },
   acido:   { nome: 'Ácido', emoji: '🧪', dps: 4, tipoDano: 'quimico', status: [{ id: 'infectado', chance: 0.25 }, { id: 'quebrado', chance: 0.5 }], lentidao: 0.7, intervalo: 1 },
   lama:    { nome: 'Lama', emoji: '🟫', lentidao: 0.5 },
   agua:    { nome: 'Água', emoji: '💧', lentidao: 0.4, apagaFogo: true },
