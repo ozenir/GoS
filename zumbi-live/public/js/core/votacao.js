@@ -1,19 +1,21 @@
 // Votação do chat nos cruzamentos. Cada pessoa vota uma vez por cruzamento; vale o primeiro voto.
-// Números fixos pra ficar fácil de decorar: 1 esquerda, 2 frente, 3 direita, 4 entrar.
+// Números fixos pra ficar fácil de decorar: 1 esquerda, 2 frente, 3 direita, 4 entrar, 5 voltar.
 import { normalizar } from './util.js';
 
 export const OPCOES = {
   esquerda: { n: 1, nome: 'ESQUERDA', seta: '↖' },
   frente: { n: 2, nome: 'FRENTE', seta: '↗' },
   direita: { n: 3, nome: 'DIREITA', seta: '↘' },
-  entrar: { n: 4, nome: 'ENTRAR', seta: '🚪' }
+  entrar: { n: 4, nome: 'ENTRAR', seta: '🚪' },
+  voltar: { n: 5, nome: 'VOLTAR', seta: '↙' }
 };
 
 const PALAVRAS = {
   esquerda: ['1', 'e', 'esq', 'esquerda', 'esquerdo', 'left', '⬅', '⬅️', '↖', '👈'],
   frente: ['2', 'f', 'frente', 'reto', 'segue', 'seguir', 'siga', 'em frente', 'pra frente', 'avanca', '⬆', '⬆️', '↗', '👆'],
   direita: ['3', 'd', 'dir', 'direita', 'direito', 'right', '➡', '➡️', '↘', '👉'],
-  entrar: ['4', 'p', 'entrar', 'entra', 'entre', 'porta', 'dentro', 'loja', 'predio', '🚪']
+  entrar: ['4', 'p', 'entrar', 'entra', 'entre', 'porta', 'dentro', 'loja', 'predio', 'praca', 'arena', '🚪'],
+  voltar: ['5', 'v', 'voltar', 'volta', 'volte', 'tras', 'atras', 'pra tras', 'para tras', 're', '⬇', '⬇️', '↙', '👇']
 };
 
 // Lê um comentário e devolve a opção (ou null se não for voto)

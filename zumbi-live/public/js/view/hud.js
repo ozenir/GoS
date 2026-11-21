@@ -2,6 +2,7 @@
 import { fmtTempo, clamp } from '../core/util.js';
 import { ARMAS, CORPO, CLASSES, xpParaNivel } from '../core/dados.js';
 import { STATUS } from '../core/status.js';
+import { BAIRROS } from '../core/city.js';
 import { EFEITOS, ladoDo } from '../core/efeitos.js';
 import { progressoAmeaca } from '../core/ameaca.js';
 
@@ -120,6 +121,9 @@ export class Hud {
       case 'aviso': this.banner(e.texto, '', e.tipo === 'perigo' ? 'perigo' : 'bom', 2.4); break;
       case 'ameaca': this.banner(`☠️ AMEAÇA ${e.nivel}`, 'zumbis mais resistentes e hordas maiores', 'perigo', 1.8); break;
       case 'horda': this.banner('🧟 HORDA CHEGANDO!', `${e.qtd} zumbis`, 'perigo', 2); break;
+      case 'bairro': this.banner(`${e.emoji} ${e.nome.toUpperCase()}`, 'bairro novo à vista', '', 2); break;
+      case 'beco': this.banner('🚧 RUA SEM SAÍDA', 'tem um baú lá no fim...', 'ouro', 2); break;
+      case 'beco_emboscada': this.banner('⚠️ EMBOSCADA!', 'a horda fechou a saída do beco', 'perigo', 2.2); break;
       case 'caminho':
         if (e.tipo === 'perigoso') this.banner(`${e.emoji} ${e.nome}`, `caminho perigoso: ${e.texto}`, 'perigo', 2.4);
         else if (e.tipo === 'historia') this.banner('📜 TEM ALGO NO CHÃO...', 'uma pista do que aconteceu aqui', 'ouro', 2.2);
@@ -224,6 +228,7 @@ export class Hud {
 
     // situação
     const st = [];
+    if (!g.room && g.bairroAtual) { const B = BAIRROS[g.bairroAtual]; st.push(`<span class="chip">${B.emoji} ${esc(B.nome)}</span>`); }
     if (g.protecao > 0 && g.fase === 'jogo') st.push(`<span class="chip ok">🛡️ proteção ${Math.ceil(g.protecao)}s</span>`);
     if (g.fila.length && g.protecao > 0) st.push(`<span class="chip mal">😈 ${g.fila.length} na fila</span>`);
     if (g.noiteT > 0) st.push(`<span class="chip mal">🌙 noite ${Math.ceil(g.noiteT)}s</span>`);
@@ -267,18 +272,26 @@ export class Hud {
     const mostrar = g.fase === 'jogo' && !g.room && v && (v.aberta || performance.now() < this.resultadoAte || g.decisao);
     if (!mostrar) { if (!box.hidden) box.hidden = true; this.cache.vkey = null; return; }
     if (box.hidden) box.hidden = false;
-    const key = v.opcoes.map(o => o.id).join(',') + (v.aberta ? 'a' : 'f');
+    const bloq = v.bloqueadas || [];
+    const key = v.opcoes.map(o => o.id).join(',') + '|' + bloq.map(o => o.id).join(',') + (v.aberta ? 'a' : 'f');
     if (this.cache.vkey !== key) {
       this.cache.vkey = key;
       const ops = $('v-ops');
-      ops.style.setProperty('--n', v.opcoes.length);
-      ops.innerHTML = v.opcoes.map(o => `<div class="op" data-op="${o.id}"><i class="fill"></i><span class="num">${o.n}</span><span class="nome"><small>${o.id === 'entrar' ? esc(o.shop.emoji) : o.seta}</small> ${o.id === 'entrar' ? 'ENTRAR' : o.nome}</span><span class="cnt">0 votos</span></div>`).join('');
+      // opções na ordem dos números; rua bloqueada aparece riscada no lugar dela
+      const todas = [...v.opcoes, ...bloq.map(o => ({ ...o, bloqueada: true }))].sort((a, b) => a.n - b.n);
+      ops.style.setProperty('--n', todas.length);
+      ops.innerHTML = todas.map(o => {
+        if (o.bloqueada) return `<div class="op bloq"><span class="num">${o.n}</span><span class="nome"><small>🚧</small> ${o.nome}</span><span class="cnt">bloqueada</span></div>`;
+        const icone = o.id === 'entrar' ? esc(o.shop.emoji) : o.seta;
+        const extra = o.semSaida ? ' <small>📦</small>' : '';
+        return `<div class="op${o.semSaida ? ' beco' : ''}" data-op="${o.id}"><i class="fill"></i><span class="num">${o.n}</span><span class="nome"><small>${icone}</small> ${o.id === 'entrar' ? 'ENTRAR' : o.nome}${extra}</span><span class="cnt">${o.semSaida ? 'sem saída' : '0 votos'}</span></div>`;
+      }).join('');
       this.cache.vt = null;
     }
     const max = Math.max(1, ...v.opcoes.map(o => o.votos));
     for (const o of v.opcoes) {
       const el = document.querySelector(`.op[data-op="${o.id}"]`); if (!el) continue;
-      el.querySelector('.cnt').textContent = `${o.votos} voto${o.votos === 1 ? '' : 's'}`;
+      el.querySelector('.cnt').textContent = `${o.votos} voto${o.votos === 1 ? '' : 's'}${o.semSaida ? ' · sem saída' : ''}`;
       el.querySelector('.fill').style.height = (o.votos / max * 100).toFixed(0) + '%';
       const lider = v.aberta && o.votos > 0 && o.votos === max;
       el.classList.toggle('lider', lider);

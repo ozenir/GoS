@@ -197,6 +197,15 @@ export function tile(tipo, variante = 0) {
   } else if (tipo === 'beco') {
     losango(x, '#4a463f');
     salpicar(x, ['#3f3b35', '#58534a', '#6a5a3a'], 16, 50 + v);
+  } else if (tipo === 'grama') {
+    losango(x, v % 2 ? '#4f7a3a' : '#4a7436');
+    salpicar(x, ['#5f8f44', '#3f6430', '#6a9a4a'], 20, 80 + v);
+    if (v === 3) { x.fillStyle = '#e8d060'; x.fillRect(9, 5, 1, 1); x.fillStyle = '#e86a8a'; x.fillRect(14, 7, 1, 1); }
+  } else if (tipo === 'praca') {
+    losango(x, (v % 2) ? '#a8a49a' : '#9c988e');
+    x.fillStyle = '#8a867c';
+    for (let i = 0; i < 6; i++) { x.fillRect(12 + i * 2, i, 1, 1); x.fillRect(11 - i * 2, i + 6, 1, 1); }
+    salpicar(x, ['#b4b0a6', '#908c82'], 6, 90 + v);
   } else if (tipo === 'terra') {
     losango(x, '#2a2620');
   } else if (tipo.startsWith('piso_')) {
@@ -307,6 +316,25 @@ export function spriteProp(tipo) {
     [c, x] = canvas(16, 16); ox = 8; oy = 13;
     caixaIso(x, 8, 14, 7, 6, 7, '#a08050', '#d84a3a', '#b83a2a');
     x.fillStyle = '#f0f0f0'; x.fillRect(3, 9, 2, 2); x.fillRect(7, 11, 2, 2); x.fillRect(11, 9, 2, 2);
+  } else if (tipo === 'barricada_placa') {
+    [c, x] = canvas(18, 30); ox = 9; oy = 27;
+    caixaIso(x, 9, 28, 7, 6, 7, '#a08050', '#d84a3a', '#b83a2a');
+    x.fillStyle = '#3a3a3a'; x.fillRect(8, 6, 2, 16);
+    x.fillStyle = '#f2c230'; x.fillRect(2, 2, 14, 7); x.fillStyle = '#1a1a1a';
+    for (let i = 0; i < 4; i++) x.fillRect(3 + i * 4, 3, 2, 5);
+  } else if (tipo === 'arvore') {
+    [c, x] = canvas(22, 38); ox = 11; oy = 35;
+    x.fillStyle = '#5a3a22'; x.fillRect(10, 22, 3, 14);
+    disc(x, 11, 16, 9, '#2f5a2a', 0.9); disc(x, 9, 13, 6, '#3f7a34', 0.9); disc(x, 14, 11, 4, '#4f8a3e', 0.9);
+    x.fillStyle = '#6aa04a'; x.fillRect(8, 9, 2, 1); x.fillRect(13, 8, 1, 1);
+  } else if (tipo === 'banco') {
+    [c, x] = canvas(16, 12); ox = 8; oy = 10;
+    caixaIso(x, 8, 10, 6, 4, 3, '#a07a4a', '#86623a', '#6e4f2e');
+    x.fillStyle = '#3a3a3a'; x.fillRect(3, 9, 1, 2); x.fillRect(12, 9, 1, 2);
+  } else if (tipo === 'conteiner') {
+    [c, x] = canvas(20, 24); ox = 10; oy = 21;
+    caixaIso(x, 10, 22, 9, 8, 12, '#3a7a8a', '#2e6270', '#224a56');
+    x.fillStyle = 'rgba(0,0,0,0.18)'; for (let i = 0; i < 5; i++) x.fillRect(2 + i * 2, 9 + i, 1, 11);
   }
   contorno(c);
   const s = { c, ox, oy };
@@ -315,6 +343,20 @@ export function spriteProp(tipo) {
 }
 
 /* ===================== Prédios ===================== */
+// Cores de prédio por bairro
+const PALETAS_BAIRRO = {
+  residencial: [
+    { parede: '#c9a27a', topo: '#9a3a2a', janela: '#3a4a5a' },
+    { parede: '#b8c0a0', topo: '#7a3a2a', janela: '#33404c' },
+    { parede: '#d8c8a8', topo: '#5a4a6a', janela: '#3a4048' },
+    { parede: '#a8b8c8', topo: '#8a4a3a', janela: '#2e3a46' }
+  ],
+  industrial: [
+    { parede: '#7a7a7a', topo: '#4a4a4a', janela: '#2a3038', listras: true },
+    { parede: '#8a6a4a', topo: '#5a4a3a', janela: '#2a2a2a', listras: true },
+    { parede: '#5a6a72', topo: '#3a4a52', janela: '#1e2428', listras: true }
+  ]
+};
 const PALETAS = [
   { parede: '#8a6a5a', topo: '#5a4a44', janela: '#2a3040' },
   { parede: '#6a7a8a', topo: '#4a5560', janela: '#1e2632' },
@@ -335,7 +377,8 @@ export function spritePredio(b, du, dv, porta, rot) {
   const [c, x] = canvas(W, H);
   const T = [dv * 12 + 2, alt + 4];
   const P = (u, v, z) => [T[0] + (u - v) * 12, T[1] + (u + v) * 6 - z];
-  const pal = PALETAS[b.paleta % PALETAS.length];
+  const lista = PALETAS_BAIRRO[b.bairro] || PALETAS;
+  const pal = lista[b.paleta % lista.length];
   const shop = b.shop;
   const parede = shop ? tom(shop.cor, -0.35) : pal.parede;
   const esq = parede, dir = tom(parede, -0.28);
@@ -352,6 +395,15 @@ export function spritePredio(b, du, dv, porta, rot) {
     fillPoly(x, [P(u0, v0 + 1.2, alt), P(u0 + 1.2, v0 + 1.2, alt), P(u0 + 1.2, v0 + 1.2, alt + 6), P(u0, v0 + 1.2, alt + 6)], '#7a7a80');
     fillPoly(x, [P(u0 + 1.2, v0 + 1.2, alt), P(u0 + 1.2, v0, alt), P(u0 + 1.2, v0, alt + 6), P(u0 + 1.2, v0 + 1.2, alt + 6)], '#5a5a60');
     fillPoly(x, [P(u0, v0, alt + 6), P(u0 + 1.2, v0, alt + 6), P(u0 + 1.2, v0 + 1.2, alt + 6), P(u0, v0 + 1.2, alt + 6)], '#9a9aa0');
+  }
+  if (pal.listras) { // galpão: chapa ondulada
+    for (let a2 = 0.25; a2 < du; a2 += 0.25) { const p0 = P(a2, dv, 0), p1 = P(a2, dv, alt); line(x, p0[0], p0[1], p1[0], p1[1], tom(esq, -0.12)); }
+    for (let a2 = 0.25; a2 < dv; a2 += 0.25) { const p0 = P(du, a2, 0), p1 = P(du, a2, alt); line(x, p0[0], p0[1], p1[0], p1[1], tom(dir, -0.12)); }
+  }
+  if (b.bairro === 'residencial' && !shop) { // chaminé
+    const u0 = 1 + hh * 3, v0 = 1;
+    fillPoly(x, [P(u0, v0 + 0.8, alt), P(u0 + 0.8, v0 + 0.8, alt), P(u0 + 0.8, v0 + 0.8, alt + 9), P(u0, v0 + 0.8, alt + 9)], '#8a4a3a');
+    fillPoly(x, [P(u0 + 0.8, v0 + 0.8, alt), P(u0 + 0.8, v0, alt), P(u0 + 0.8, v0, alt + 9), P(u0 + 0.8, v0 + 0.8, alt + 9)], '#6a3a2a');
   }
   // janelas
   const janela = (face, a, z, cor) => {
@@ -436,6 +488,28 @@ export function spriteParedeSala(w, h, estilo, saidaX) {
   }
   const s = { c, ox: T[0], oy: T[1], alt };
   cache.set(k, s);
+  return s;
+}
+
+// Fonte da praça (3x3): bacia de pedra com água e um jato no meio
+export function spriteFonte() {
+  if (cache.has('fonte')) return cache.get('fonte');
+  const w = 3, h = 3, alt = 8;
+  const W = (w + h) * 12 + 4, H = (w + h) * 6 + alt + 24;
+  const [c, x] = canvas(W, H);
+  const T = [h * 12 + 2, alt + 21];
+  const P = (u, v, z) => [T[0] + (u - v) * 12, T[1] + (u + v) * 6 - z];
+  fillPoly(x, [P(0, h, 0), P(w, h, 0), P(w, h, alt), P(0, h, alt)], '#9a968c');
+  fillPoly(x, [P(w, h, 0), P(w, 0, 0), P(w, 0, alt), P(w, h, alt)], '#7a766c');
+  fillPoly(x, [P(0, 0, alt), P(w, 0, alt), P(w, h, alt), P(0, h, alt)], '#b4b0a6');
+  fillPoly(x, [P(0.4, 0.4, alt), P(w - 0.4, 0.4, alt), P(w - 0.4, h - 0.4, alt), P(0.4, h - 0.4, alt)], '#3a7aa8');
+  fillPoly(x, [P(0.6, 0.6, alt), P(w - 0.6, 0.6, alt), P(w - 0.6, h - 0.6, alt), P(0.6, h - 0.6, alt)], '#4a8ab8');
+  const [mx, my] = P(1.5, 1.5, alt);
+  x.fillStyle = '#9a968c'; x.fillRect(mx - 2, my - 10, 4, 10);
+  x.fillStyle = '#bfe8ff'; x.fillRect(mx - 1, my - 18, 2, 8); x.fillRect(mx - 4, my - 13, 2, 2); x.fillRect(mx + 2, my - 13, 2, 2);
+  contorno(c);
+  const s = { c, ox: T[0], oy: T[1] };
+  cache.set('fonte', s);
   return s;
 }
 

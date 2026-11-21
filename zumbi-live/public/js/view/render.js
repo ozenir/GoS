@@ -212,6 +212,8 @@ export class Render {
           else nome = 'asfalto';
         }
       } else if (t === TT.SIDEWALK) nome = 'calcada';
+      else if (t === TT.GRAMA) nome = 'grama';
+      else if (t === TT.PRACA) nome = 'praca';
       else nome = 'beco';
       ctx.drawImage(S.tile(nome, vr), sx - 12, sy);
     }
@@ -281,6 +283,16 @@ export class Render {
     const max = Math.max(...v.opcoes.map(o => o.votos));
     const pulso = 0.5 + 0.5 * Math.sin(this.t * 6);
     this.marcadores = [];
+    // rua bloqueada: X vermelho no chão
+    for (const o of v.bloqueadas || []) {
+      const [dx, dy] = DIRS[o.dir], px = -dy, py = dx;
+      const c = { x: n.x + dx * 2.6, y: n.y + dy * 2.6 };
+      const pt = (a, l) => this.tela(c.x + dx * a + px * l, c.y + dy * a + py * l);
+      for (const [a0, l0, a1, l1] of [[-0.6, -0.6, 0.6, 0.6], [-0.6, 0.6, 0.6, -0.6]]) {
+        const [x0, y0] = pt(a0, l0), [x1, y1] = pt(a1, l1);
+        line(ctx, x0, y0, x1, y1, '#ff4a3a', 2);
+      }
+    }
     for (const o of v.opcoes) {
       const escolhida = v.resultado ? v.resultado.id === o.id : false;
       if (v.resultado && !escolhida) continue;
@@ -332,14 +344,20 @@ export class Render {
       } else {
         const p = o.p;
         if (p.tipo === 'mancha') continue;
-        if (p.tipo === 'carro' || g.room) {
+        if (p.tipo === 'fonte') {
+          const cs = [[p.x, p.y], [p.x + 3, p.y], [p.x, p.y + 3], [p.x + 3, p.y + 3]].map(([x, y]) => this.view(x, y));
+          const u0 = Math.min(...cs.map(c => c[0])), v0 = Math.min(...cs.map(c => c[1]));
+          lista.push({ key: u0 + v0 + 3, tipo: 'fonte', u0, v0 });
+        } else if (p.tipo === 'carro' || g.room) {
           const w = p.w || 1, hh = p.h || 1;
           const cs = [[p.x, p.y], [p.x + w, p.y], [p.x, p.y + hh], [p.x + w, p.y + hh]].map(([x, y]) => this.view(x, y));
           const u0 = Math.min(...cs.map(c => c[0])), v0 = Math.min(...cs.map(c => c[1]));
           const u1 = Math.max(...cs.map(c => c[0])), v1 = Math.max(...cs.map(c => c[1]));
           lista.push({ key: (u0 + u1 + v0 + v1) / 2, tipo: g.room ? 'movel' : 'carro', p, u0, v0, u1, v1 });
         } else if (p.tipo === 'barricada') {
-          for (const t of p.tiles || []) { const [u, v] = this.view(t.x + 0.5, t.y + 0.5); lista.push({ key: u + v, tipo: 'prop', p: { tipo: 'barricada', x: t.x, y: t.y } }); }
+          // barricada do Trem (várias casas) ou de rua bloqueada (uma casa)
+          const casas = p.tiles || [{ x: p.x, y: p.y }];
+          for (const t of casas) { const [u, v] = this.view(t.x + 0.5, t.y + 0.5); lista.push({ key: u + v, tipo: 'prop', p: { tipo: 'barricada', x: t.x, y: t.y } }); }
         } else {
           const [u, v] = this.view(p.x + 0.5, p.y + 0.5);
           lista.push({ key: u + v, tipo: 'prop', p });
@@ -363,6 +381,10 @@ export class Render {
         ctx.drawImage(s.c, x0, y0);
         ctx.globalAlpha = 1;
         if (s.placa && o.b.shop) this.nomes.push({ placa: true, x: x0 + s.placa[0], y: y0 + s.placa[1] - 16, shop: o.b.shop, tampa });
+      } else if (o.tipo === 'fonte') {
+        const s = S.spriteFonte();
+        const [sx, sy] = this.topoVista(o.u0, o.v0);
+        ctx.drawImage(s.c, sx - s.ox, sy - s.oy);
       } else if (o.tipo === 'carro' || o.tipo === 'movel') {
         const p = o.p;
         const s = o.tipo === 'carro' ? S.spriteCarro(p.cor, o.u1 - o.u0 > o.v1 - o.v0 ? 'u' : 'v', p.virado) : S.spriteMovel(p.tipo, Math.round(o.u1 - o.u0), Math.round(o.v1 - o.v0), p.v || 0);

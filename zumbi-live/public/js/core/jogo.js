@@ -2,7 +2,7 @@
 // quem desenha é a parte "view", que lê o estado daqui e os eventos (this.events).
 // Por isso dá pra rodar partidas inteiras no Node pra testar e equilibrar (teste/simular.mjs).
 import { clamp, dist, dist2, makeRng, DIRS, turnLeft, turnRight, nomeSeguro } from './util.js';
-import { City, SHOPS } from './city.js';
+import { City, SHOPS, BAIRROS, P as PERIODO } from './city.js';
 import { Room } from './room.js';
 import { FlowField } from './flow.js';
 import { ZUMBIS, CLASSES, ARMAS, CORPO, MELHORIAS, xpParaNivel } from './dados.js';
@@ -112,7 +112,8 @@ export class Jogo {
     this.hero.estados = new Estados();
     aplicarPericias(this.hero, C);
     this.sincronizarVida();
-    this.rota = { i: 0, j: 0, dir, alvo: { i: DIRS[dir][0], j: DIRS[dir][1] } };
+    this.rota = { i: 0, j: 0, dir, alvo: { i: DIRS[dir][0], j: DIRS[dir][1] }, beco: null };
+    this.bairroAtual = null;
     this.zumbis = [];
     this.aliados = [];
     this.itens = [];
@@ -220,6 +221,13 @@ export class Jogo {
   diretor(dt) {
     const minutos = (this.t - this.stats.inicio) / 60;
     const n = nivelAmeaca(minutos, this.stats.quarteiroes, this.hero.nivel, this.A, this.ameacaBonus);
+    if (!this.room) {
+      const b = this.city.bairroNaPosicao(this.hero.x, this.hero.y);
+      if (b !== this.bairroAtual) {
+        const antes = this.bairroAtual; this.bairroAtual = b;
+        if (antes) this.emit('bairro', { id: b, nome: BAIRROS[b].nome, emoji: BAIRROS[b].emoji });
+      }
+    }
     if (n > this.nivelAmeaca) { this.nivelAmeaca = n; this.emit('ameaca', { nivel: n }); }
     if (this.cfg.noiteCada > 0) {
       this.proxNoite -= dt;
@@ -370,7 +378,9 @@ export class Jogo {
     h.x = p.x; h.y = p.y;
     const r = this.rota;
     r.i = node.i; r.j = node.j;
+    r.dir = this.direcaoLivre(node.i, node.j, r.dir);
     r.alvo = { i: node.i + DIRS[r.dir][0], j: node.j + DIRS[r.dir][1] };
+    r.beco = null;
     h.fx = DIRS[r.dir][0]; h.fy = DIRS[r.dir][1];
     this.stats.quarteiroes++;
     this.zumbis = [];
@@ -392,18 +402,24 @@ export class Jogo {
   }
 
   /* =================== Rota, votação e decisões =================== */
+  // Opções do próximo cruzamento: esquerda, frente, direita, voltar (+ entrar, se tiver loja).
+  // Rua bloqueada não entra na votação (aparece riscada); rua sem saída entra, marcada (tem baú no fim).
   abrirVotacao() {
-    const r = this.rota;
-    const shop = this.city.shopAt(r.alvo.i, r.alvo.j);
-    const ops = [
-      { id: 'esquerda', dir: turnLeft(r.dir) },
-      { id: 'frente', dir: r.dir },
-      { id: 'direita', dir: turnRight(r.dir) }
-    ];
+    const r = this.rota, N = r.alvo;
+    const shop = this.city.shopAt(N.i, N.j);
+    const ops = [], bloqueadas = [];
+    for (const [id, d] of [['esquerda', turnLeft(r.dir)], ['frente', r.dir], ['direita', turnRight(r.dir)], ['voltar', (r.dir + 2) % 4]]) {
+      const t = this.city.trecho(N.i, N.j, d);
+      if (t.s.bloqueio) { bloqueadas.push({ id, dir: d, ...OPCOES[id] }); continue; }
+      ops.push({ id, dir: d, semSaida: !!t.s.semSaida, bairro: t.s.bairro });
+    }
     if (shop) ops.push({ id: 'entrar', shop });
     for (const o of ops) Object.assign(o, OPCOES[o.id]);
+    ops.sort((a, b) => a.n - b.n);
     this.voto = new Votacao(ops, this.cfg.votoDur);
     this.voto.loja = shop;
+    this.voto.bloqueadas = bloqueadas;
+    this.voto.no = { ...N };
     this.emit('votacao_abriu', { opcoes: ops.map(o => o.id), loja: shop ? { tipo: shop.tipo, nome: shop.nome, emoji: shop.emoji } : null });
   }
 
@@ -426,7 +442,10 @@ export class Jogo {
         if (vidaPct < 0.5 && cura) return [o.id, 4];
         return [o.id, 0.7 - o.shop.risco * 0.1];
       }
-      return [o.id, o.id === 'frente' ? 1.3 : 1];
+      if (o.id === 'voltar') return [o.id, ops.length === 1 ? 1 : 0.06];
+      const base = o.id === 'frente' ? 1.3 : 1;
+      if (o.semSaida) return [o.id, base * (vidaPct > 0.5 ? 0.5 : 0.15)];   // baú no fim, mas é arriscado
+      return [o.id, base];
     });
     return this.rng.weighted(pesos);
   }
@@ -446,9 +465,48 @@ export class Jogo {
     r.alvo = { i: r.i + DIRS[r.dir][0], j: r.j + DIRS[r.dir][1] };
     this.stats.quarteiroes++;
     this.votoAbreT = 0.8;
-    if (virou) this.emit('virou', { dir: r.dir });
+    if (virou) this.emit('virou', { dir: r.dir, voltou: op.id === 'voltar' });
     this.checarRecorde();
-    this.iniciarTrecho();
+    const t = this.city.trecho(r.i, r.j, r.dir);
+    if (t.s.semSaida) this.entrarBeco(t);
+    else this.iniciarTrecho();
+  }
+
+  // Direção pra seguir a partir de um cruzamento sem passar por rua bloqueada nem sem saída:
+  // a mesma se der; senão um dos lados; em último caso, volta.
+  direcaoLivre(i, j, dir) {
+    for (const d of [dir, turnLeft(dir), turnRight(dir), (dir + 2) % 4]) {
+      const t = this.city.trecho(i, j, d);
+      if (!t.s.bloqueio && !t.s.semSaida) return d;
+    }
+    return dir;
+  }
+
+  // Rua sem saída: baú no fim, perto da barricada. Quando o herói pega, a horda fecha a volta.
+  entrarBeco(t) {
+    const r = this.rota, s = t.s;
+    const [dx, dy] = DIRS[r.dir];
+    const no = this.city.nodePos(r.i, r.j);
+    const b = (dx ? s.i : s.j) * PERIODO + s.semSaida.along;     // casa da barricada, no eixo da rua
+    const fimEixo = t.inicio ? b - 1.4 : b + 2.4;
+    const fim = dx ? { x: fimEixo, y: no.y } : { x: no.x, y: fimEixo };
+    r.beco = { fim };
+    this.trecho = { tipo: 'beco', livre: false };
+    const kind = this.rng.chance(0.2) ? 'bau_lendario' : 'bau_medio';
+    this.soltarItemEm(kind, {}, null, fim.x - dx * 0.6, fim.y - dy * 0.6, 0).beco = true;
+    this.emit('beco', {});
+  }
+
+  // Chegou no fim da rua sem saída: emboscada e meia-volta
+  voltarDoBeco() {
+    const r = this.rota;
+    r.beco = null;
+    r.dir = (r.dir + 2) % 4;
+    r.alvo = { i: r.i, j: r.j };            // volta pro cruzamento de onde veio
+    this.votoAbreT = 0.3;
+    this.emit('virou', { dir: r.dir, voltou: true });
+    this.emit('beco_emboscada', {});
+    this.soltarZumbisAtras(Math.round(tamanhoHorda(this.nivelAmeaca, this.A) * 0.7));
   }
 
   // Sorteia o que vai acontecer na rua escolhida (caminhos.js)
@@ -483,6 +541,11 @@ export class Jogo {
       const d = this.indoPorta.door;
       if (dist(h.x, h.y, d.x, d.y) < 0.45) { this.entrarPredio(this.indoPorta); return null; }
       return { x: d.x, y: d.y, porta: true };
+    }
+    if (r.beco) {
+      // rua sem saída: vai até o fim (baú), depois dá meia-volta
+      if (dist(h.x, h.y, r.beco.fim.x, r.beco.fim.y) < 0.8) { this.voltarDoBeco(); return this.objetivoRota(0); }
+      return { x: r.beco.fim.x, y: r.beco.fim.y };
     }
     if (!this.voto && !this.decisao) {
       this.votoAbreT -= dt;
