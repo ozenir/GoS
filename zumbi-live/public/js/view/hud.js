@@ -130,7 +130,7 @@ export class Hud {
       case 'limpar_area': this.banner('🧟 LIMPE A ÁREA!', `faltam ${e.restam} zumbi${e.restam === 1 ? '' : 's'} pra atravessar`, 'perigo', 1.6); break;
       case 'entrou_praia': this.banner('🏖️ A PRAIA!', `uma horda está saindo do mar · sobreviva 1 minuto`, 'perigo', 3.2); break;
       case 'praia_vencida': this.banner('🏆 SOBREVIVEU À PRAIA!', 'escolham por onde sair', 'ouro', 2.8); break;
-      case 'novos_inimigos': this.banner('🐺 NOVOS INIMIGOS!', 'lobos zumbis que saltam e braços longos que acertam de longe', 'perigo', 3.2); break;
+      case 'novos_inimigos': this.banner('🐺 NOVOS INIMIGOS!', 'lobos que saltam, braços longos e 💣 inchados instáveis que estouram em cadeia (🧯 Anti-explosão salva)', 'perigo', 3.6); break;
       case 'arena': this.banner('⚔️ ARENA!', `derrote o ${e.nome}`, 'perigo', 2.6); break;
       case 'arena_vencida': this.banner('🏆 ARENA VENCIDA!', 'pegue a recompensa', 'ouro', 2.6); break;
       case 'arena_tempo': this.banner('⏱️ FIM DA ARENA', 'o chefe ainda está solto...', 'perigo', 2); break;

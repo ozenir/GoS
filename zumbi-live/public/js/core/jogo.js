@@ -19,7 +19,7 @@ import { STATUS, Estados, sincronizarAtributos } from './status.js';
 import { AMBIENTE, efeitoDoAmbiente, faixaLivre, machuca } from './ambiente.js';
 import {
   AMEACA, furiaDaHorda, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos,
-  multInicio, forcaInicio, cotaQuadra, tamanhoHordaQuadra, NIVEL_INIMIGOS_NOVOS
+  multInicio, forcaInicio, cotaQuadra, tamanhoHordaQuadra, NIVEL_INIMIGOS_NOVOS, EXPLOSAO
 } from './ameaca.js';
 import { CHANCES_PADRAO, PERIGOS, AMEACA_POR_PERIGO, ATRASO_PERIGO, sortearCaminho } from './caminhos.js';
 import { Historia, HISTORIA } from './historia.js';
@@ -1550,7 +1550,9 @@ export class Jogo {
     const f = furiaDaHorda((this.t - Math.max(this.stats.inicio, this.ultimaAjudaT ?? 0)) / 60, this.A);
     // começo puxado (antes do nível 10): zumbis mais fortes
     const ini = forcaInicio(this.esperandoSuprema() ? NIVEL_SUPREMA - 1 : this.hero.nivel, this.A);
-    return statsZumbi(T, this.ameaca(), vidaMult * (1 + (f - 1) * this.A.furiaVida) * ini, f * ini);
+    const s = statsZumbi(T, this.ameaca(), vidaMult * (1 + (f - 1) * this.A.furiaVida) * ini, f * ini);
+    s.vel *= 1 + Math.min(this.A.furiaVelMax, (f - 1) * this.A.furiaVel);
+    return s;
   }
 
   criarZumbi(tipo, x, y, quem, opts = {}) {
@@ -1562,6 +1564,13 @@ export class Jogo {
       dono: quem || null, nome: opts.nome || null, kx: 0, ky: 0, fx: 0, fy: 1, animT: this.rng.next() * 10,
       flash: 0, estados: new Estados(), pavio: -1, dormindo: !!opts.dormindo, roupa: this.rng.int(0, 5), extra: opts.extra || null
     };
+    if (tipo === 'explosivo') {
+      // do nível 20 em diante, inchado instável: o estouro cresce com a ameaça como o dano dos outros zumbis
+      const E = EXPLOSAO, instavel = this.hero.nivel >= E.desdeNivel;
+      z.estouro = instavel ? E.base * this.statsComFuria(ZUMBIS.comum, 1).dano / ZUMBIS.comum.dano * E.multNovo : E.base;
+      z.estouroRaio = instavel ? E.raioNovo : E.raio;
+      z.instavel = instavel;
+    }
     this.zumbis.push(z);
     return z;
   }
@@ -1733,7 +1742,7 @@ export class Jogo {
     this.stats.abates++;
     if (this.fase === 'jogo') this.ganharXp(T.xp * (1 + (this.nivelAmeaca - 1) * 0.1));   // zumbi mais forte dá mais XP
     this.emit('morte_zumbi', { x: z.x, y: z.y, tipo: z.tipo, chefe: !!T.chefe, nome: z.nome, dono: z.dono?.nick || null, roupa: z.roupa });
-    if (z.tipo === 'explosivo') this.explodir(z.x, z.y, 1.9, 18, 80, z.dono, 'explosão');
+    if (z.tipo === 'explosivo') this.explodir(z.x, z.y, z.estouroRaio ?? EXPLOSAO.raio, z.estouro ?? EXPLOSAO.base, EXPLOSAO.danoZumbi, z.dono, z.instavel ? 'o inchado instável' : 'explosão', z.instavel);
     if (T.chefe) {
       this.explodir(z.x, z.y, 1.4, 0, 60, null, '');
       if (z.tipo === 'exheroi') {
@@ -1744,17 +1753,23 @@ export class Jogo {
     }
   }
 
-  explodir(x, y, raio, danoHeroi, danoZumbi, quem, causa) {
+  // cadeia = true: explosivos dentro do estouro estouram logo em seguida (inchados instáveis do nível 20)
+  explodir(x, y, raio, danoHeroi, danoZumbi, quem, causa, cadeia = false) {
     this.emit('explosao', { x, y, raio });
     // explosão grande deixa o chão pegando fogo por alguns segundos
     if (raio >= 1.5 && this.zonas.length < 12) { const m = raio * 0.55; this.zonas.push({ tipo: 'fogo', x0: x - m, y0: y - m, x1: x + m, y1: y + m, t: 4, semente: this.rng.int(1, 1e6) }); }
     const h = this.hero;
     const dh = dist(x, y, h.x, h.y);
-    if (danoHeroi > 0 && dh < raio) this.ferirHeroi(danoExplosao(danoHeroi, dh, raio), quem, causa, 'explosao');
+    if (danoHeroi > 0 && dh < raio) {
+      const entrou = this.ferirHeroi(danoExplosao(danoHeroi, dh, raio), quem, causa, 'explosao');
+      // o estouro do inchado instável derruba o herói (atordoa), a não ser que ele aguente explosão (Anti-explosão)
+      if (entrou && cadeia && h.attr.get('resExplosao') < EXPLOSAO.resSemAtordoar) this.aplicarStatus(h, 'atordoado', { duracao: EXPLOSAO.atordoa });
+    }
     for (const z of this.zumbis) {
       if (z.morto) continue;
       const d = dist(x, y, z.x, z.y);
       if (d < raio + ZUMBIS[z.tipo].raio) {
+        if (cadeia && z.tipo === 'explosivo' && z.nascendo <= 0) { z.pavio = Math.min(z.pavio >= 0 ? z.pavio : 9, EXPLOSAO.cadeia); continue; }
         this.ferirZumbi(z, danoNoZumbi(z, danoZumbi, 'explosao'), null, true);
         if (!z.morto && d > 0.01 && !ZUMBIS[z.tipo].chefe) { z.kx += (z.x - x) / d * 4; z.ky += (z.y - y) / d * 4; }
       }
@@ -2007,7 +2022,7 @@ export class Jogo {
     }
     lugares.forEach((p, k) => {
       const novos = this.hero.nivel >= NIVEL_INIMIGOS_NOVOS;
-      const t = tipo === 'horda' ? (novos && this.rng.chance(0.25) ? (this.rng.chance(0.55) ? 'lobo' : 'esticado') : this.rng.chance(0.2) ? 'corredor' : this.rng.chance(0.2) ? 'gordo' : 'comum') : tipo;
+      const t = tipo === 'horda' ? (novos && this.rng.chance(EXPLOSAO.naHorda) ? 'explosivo' : novos && this.rng.chance(0.25) ? (this.rng.chance(0.55) ? 'lobo' : 'esticado') : this.rng.chance(0.2) ? 'corredor' : this.rng.chance(0.2) ? 'gordo' : 'comum') : tipo;
       this.criarZumbi(t, p.x, p.y, quem, { nome, nascendo: 0.5 + k * 0.08 });
     });
   }
@@ -2017,7 +2032,8 @@ export class Jogo {
     const h = this.hero;
     for (let k = 0; k < qtd; k++) {
       const p = this.room ? this.room.pontoLivre(this.rng, h, 3) : this.pontoNaRua(h, 5, 9, -1);
-      if (p) this.criarZumbi(this.rng.chance(0.25) ? 'corredor' : 'comum', p.x, p.y, null, { nascendo: 0.5 + k * 0.08 });
+      const instaveis = this.hero.nivel >= EXPLOSAO.desdeNivel && this.rng.chance(EXPLOSAO.naHorda);
+      if (p) this.criarZumbi(instaveis ? 'explosivo' : this.rng.chance(0.25) ? 'corredor' : 'comum', p.x, p.y, null, { nascendo: 0.5 + k * 0.08 });
     }
   }
 

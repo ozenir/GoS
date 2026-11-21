@@ -2,7 +2,8 @@
 // Rodar:  node teste/habilidades.test.mjs
 import assert from 'node:assert/strict';
 import { Jogo } from '../public/js/core/jogo.js';
-import { ATIVAS, PASSIVAS, SUPREMAS, NIVEL_SUPREMA, COMBOS, COMBO_NIVEL, FORCA, combosDisponiveis, MAX_ATIVAS, sortearCartas, aplicarCarta, atualizarHabilidades, escolhaDaIA } from '../public/js/core/habilidades.js';
+import { ATIVAS, PASSIVAS, SUPREMAS, NIVEL_SUPREMA, COMBOS, COMBO_NIVEL, FORCA, combosDisponiveis, MAX_ATIVAS, sortearCartas, aplicarCarta, atualizarHabilidades, escolhaDaIA, SALVA_DESDE } from '../public/js/core/habilidades.js';
+import { EXPLOSAO } from '../public/js/core/ameaca.js';
 import { lerEscolha, lerVoto } from '../public/js/core/votacao.js';
 import { makeRng } from '../public/js/core/util.js';
 import { xpParaNivel } from '../public/js/core/dados.js';
@@ -155,6 +156,77 @@ teste('escolha da IA sempre é uma das cartas', () => {
     const c = sortearCartas(j.hero, makeRng(s));
     assert.ok(c.some(x => x.letra === escolhaDaIA(j.hero, c, makeRng(s + 100))));
   }
+});
+
+/* ---------------- Anti-explosão e os inchados instáveis do nível 20 ---------------- */
+// estouro de um explosivo bem do lado do herói; devolve quanto de vida ele perdeu
+const estourarDoLado = (j, nivel) => {
+  j.hero.nivel = nivel; j.hero.invT = 0; j.hero.colete = 0;
+  j.hero.attr.addMod({ id: 'sem-esquiva', attr: 'esquiva', mult: 0 });
+  j.hero.vida = j.hero.vidaMax = 1e6;
+  const z = zumbi(j, 0.5, 0, 'explosivo');
+  const antes = j.hero.vida;
+  j.matarZumbi(z, null);
+  return antes - j.hero.vida;
+};
+
+teste('Anti-explosão: cada nível tira mais dano de explosão (até 80%)', () => {
+  const sem = estourarDoLado(jogo(), 20);
+  const j = jogo();
+  aplicarCarta(j, carta('passiva', 'explosao', 1));
+  const n1 = estourarDoLado(j, 20);
+  aplicarCarta(j, carta('passiva', 'explosao', 5));
+  const n5 = estourarDoLado(j, 20);
+  assert.ok(n1 < sem && n5 < n1, `${sem.toFixed(0)} → ${n1.toFixed(0)} → ${n5.toFixed(0)}`);
+  assert.ok(Math.abs(n5 / sem - 0.2) < 0.01, 'nível 5: 80% menos');
+});
+
+teste('inchado instável (nível 20): estoura bem mais forte, atordoa o herói e estoura os explosivos em volta', () => {
+  const j = jogo();
+  const antes = estourarDoLado(j, SALVA_DESDE);
+  assert.ok(!j.hero.estados.tem('atordoado'), 'antes do 20 o estouro não atordoa');
+  const k = jogo();
+  const depois = estourarDoLado(k, EXPLOSAO.desdeNivel);
+  assert.ok(depois > antes * 2, `estouro ${antes.toFixed(0)} → ${depois.toFixed(0)}`);
+  assert.ok(k.hero.estados.tem('atordoado'), 'atordoa');
+  // reação em cadeia
+  const c = jogo();
+  c.hero.nivel = EXPLOSAO.desdeNivel; c.hero.invT = 999;
+  const a = zumbi(c, 4, 0, 'explosivo'), b = zumbi(c, 5.5, 0, 'explosivo');
+  c.matarZumbi(a, null);
+  for (let i = 0; i < 20; i++) c.atualizarZumbis(DT);
+  assert.ok(b.morto, 'o vizinho estourou junto');
+  // com Anti-explosão nível 2 o herói não é atordoado
+  const r = jogo();
+  aplicarCarta(r, carta('passiva', 'explosao', 2));
+  estourarDoLado(r, EXPLOSAO.desdeNivel);
+  assert.ok(!r.hero.estados.tem('atordoado'), 'Anti-explosão segura o atordoamento');
+});
+
+teste('o estouro do inchado instável cresce com a ameaça (antes do nível 20 é fixo)', () => {
+  const j = jogo();
+  j.hero.nivel = 12; j.hero.suprema = 'imortal';
+  j.nivelAmeaca = 2; const a = zumbi(j, 5, 0, 'explosivo').estouro;
+  j.nivelAmeaca = 15; assert.equal(zumbi(j, 5, 0, 'explosivo').estouro, a);
+  j.hero.nivel = EXPLOSAO.desdeNivel;
+  j.nivelAmeaca = 2; const fraco = zumbi(j, 5, 0, 'explosivo').estouro;
+  j.nivelAmeaca = 15; const forte = zumbi(j, 5, 0, 'explosivo').estouro;
+  assert.ok(forte > fraco * 2);
+});
+
+teste(`do nível ${SALVA_DESDE} em diante a Anti-explosão é sempre oferecida (carta C) e a IA prefere ela`, () => {
+  const conta = nivel => {
+    const rng = makeRng(5); let n = 0;
+    for (let k = 0; k < 400; k++) { const h = jogo().hero; h.nivel = nivel; if (sortearCartas(h, rng).some(c => c.id === 'explosao')) n++; }
+    return n;
+  };
+  const antes = conta(SALVA_DESDE - 1), depois = conta(SALVA_DESDE);
+  assert.ok(antes < 80 && depois === 400, `${antes} → ${depois} de 400`);
+  const h = jogo().hero; h.nivel = SALVA_DESDE;
+  const cartas = [{ tipo: 'passiva', id: 'explosao', nivel: 1, letra: 'A' }, { tipo: 'passiva', id: 'forca', nivel: 1, letra: 'B' }];
+  const rng = makeRng(9); let a = 0;
+  for (let k = 0; k < 400; k++) if (escolhaDaIA(h, cartas, rng) === 'A') a++;
+  assert.ok(a > 260, `IA escolheu Anti-explosão ${a} de 400`);
 });
 
 teste('toda passiva e ativa tem nome, emoji e descrição em todos os níveis', () => {

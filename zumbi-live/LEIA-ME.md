@@ -99,7 +99,8 @@ Facas e cacos de vidro fazem sangrar, a chave e o taco atordoam, o machado quebr
 | 1 a 4 | **começo**: 20% a mais de zumbis na rua, 50% mais fortes (vida e dano). Chefe só na arena |
 | 5 a 9 | **a parte mais difícil**: 30% a mais de zumbis, **2× mais fortes**. As habilidades ainda estão no começo. 💢 **Segundo fôlego** (até o nível 9): quando a vida cai abaixo de 20%, o herói solta um grito, **empurra e atordoa** os zumbis em volta, fica **3 s invencível** e recupera 20% da vida. Recarrega em 50 s, então dá pra morrer se apertar de novo |
 | 10 | 🔥 **habilidade suprema** (escolha especial do chat). Enquanto o chat escolhe, os zumbis continuam como no nível 9. Com a suprema eles voltam ao normal (quantidade e força), e o herói fica forte o bastante pra encarar as hordas gigantes, que dali em diante crescem bem. A partir daqui: chefe de rua e ex-herói na rua |
-| 20 | 🐺 **novos inimigos**: **lobo zumbi** (corre e **salta** no herói: o salto **paralisa** e tem **50% de deixar sangrando**) e **braço longo** (estica o braço e acerta **de longe**, até ~3 casas, com **30% de chance**) |
+| 19 | 🧯 a carta **Anti-explosão** passa a aparecer sempre (carta C) até o herói ter |
+| 20 | 🐺 **novos inimigos**: **lobo zumbi** (corre e **salta** no herói: o salto **paralisa** e tem **50% de deixar sangrando**), **braço longo** (estica o braço e acerta **de longe**, até ~3 casas, com **30% de chance**) e 💣 **inchados instáveis** (muitos explosivos, estouro forte que atordoa e estoura os vizinhos em cadeia; a 🧯 Anti-explosão salva) |
 | 30 | 🏖️ **a praia**: cada cruzamento tem **25%** de chance de dar na praia. Lá, uma horda maior **sai de dentro do mar** e o herói precisa **sobreviver 1 minuto**; depois vem um baú, um kit e a votação de **por onde sair** (esquerda, frente ou direita), e ele volta pra cidade em outro ponto |
 
 Tudo anda mais devagar que antes (herói e zumbis), então tem menos decisão por minuto e mais tempo de ver a luta. Cada nível pede mais experiência que o anterior, e zumbi mais forte (ameaça maior) dá mais experiência.
@@ -194,6 +195,9 @@ Quando falta alguma categoria, a carta é completada com outra. Cada habilidade 
 | 💚 Regeneração (vida por segundo) | 0,5 | 1,5 | 2,5 | 3,8 | 5 |
 | 🦇 Vampirismo (cura por golpe de perto) | 0,5 | 1,5 | 2,5 | 3,8 | 5 |
 | 💨 Reflexos (chance de desviar) | 3% | 9% | 15% | 22% | 30% |
+| 🧯 **Anti-explosão** (menos dano de explosão) | 8% | 24% (e o estouro do inchado não atordoa mais) | 40% | 60% | 80% |
+
+**🧯 Anti-explosão: a passiva que salva do nível 20 em diante.** Antes do 19 ela é rara nas cartas e quase não faz falta. Do **nível 19** em diante ela é **sempre a carta C** até o herói ter, aparece bem mais pra aprimorar e, se ninguém votar, a IA escolhe ela. É que no nível 20 chegam os 💣 **inchados instáveis**: o explosivo passa a aparecer muito mais (na rua e em 30% das hordas), o estouro cresce com a ameaça (2,2× mais forte e maior), **atordoa o herói** por 1 s e **estoura os explosivos em volta** (reação em cadeia). Sem a passiva, os inchados viram a maior causa de dano depois do nível 20 (38% a 48%); com ela, caem pra 25% a 33%. No simulador com presentes, o herói dura em média **~18 min com a Anti-explosão e ~14 min e meio sem ela**. O mecânico (50%) e a bombeira (30%) já nascem resistentes a explosão.
 
 **🧬 Combos (habilidade + passiva).** Quando o herói tem uma habilidade **no nível 3 ou mais** e a **passiva que combina com ela**, a carta **A** vira um **COMBO** (carta roxa, com a receita na etiqueta). Escolhendo, a habilidade evolui para uma versão **muito mais forte**, que junta a força das duas (de 2,5× a 5× o dano da habilidade no nível máximo, medido no teste). A passiva continua com o herói, e **cada nível a mais da passiva deixa o combo mais forte** (do nível 1 ao 5 da passiva, o combo vai de 1× a 2×). A habilidade evoluída aparece no cartão do herói com ★. Se ninguém votar, a IA quase sempre escolhe o combo.
 
@@ -346,17 +350,17 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 
 | Cenário | Quanto o herói dura em média | Nível médio | Antes do nível 10 |
 |---|---|---|---|
-| Sem nenhuma interação | **4 min 29 s** (o mais longo 10 min 39 s) | 10 | quase metade cai entre o 5 e o 9 (sem curtida, torcida nem presente, ninguém ajuda) |
-| Só chat (6 pessoas comentando e votando, curtidas) | **7 min 29 s** | 17 | ninguém cai; a vida chega a ~50% (às vezes 25%) entre o 5 e o 9. A maioria cai entre o nível 15 e o 24 |
-| Chat + presentes misturados (8 por minuto) | **16 min** (a maioria cai no **golpe final** de quem atrapalha; o mais longo 27 min) | 33 | quase ninguém cai |
-| Chat + só presentes que ajudam (4 por minuto) | 20 min 43 s (o mais longo 29 min) | 36 | ninguém cai |
-| Chat + só presentes que atrapalham (4 por minuto) | 7 min 44 s | 19 | ninguém cai |
+| Sem nenhuma interação | **4 min** (o mais longo 7 min 11 s) | 10 | mais da metade cai entre o 5 e o 9 (sem curtida, torcida nem presente, ninguém ajuda) |
+| Só chat (6 pessoas comentando e votando, curtidas) | **8 min 23 s** | 17 | quase ninguém cai; a vida chega a ~40-60% entre o 5 e o 9. A maioria cai entre o nível 15 e o 24 |
+| Chat + presentes misturados (8 por minuto) | **~18 min** (a maioria cai no **golpe final** de quem atrapalha; o mais longo 30 min) | 33 | ninguém cai |
+| Chat + só presentes que ajudam (4 por minuto) | ~20 min (o mais longo 29 min) | 36 | ninguém cai |
+| Chat + só presentes que atrapalham (4 por minuto) | 5 min 49 s (a maioria cai no golpe final) | 17 | quase ninguém cai |
 
 Os primeiros níveis vêm rápido (a primeira escolha de habilidade sai no primeiro minuto) e depois cada nível pede mais. O nível 10 chega por volta dos 3 minutos em lives com chat; o 20 (lobos e braços longos), em lives que ajudam; o 30 (praia), em lives muito engajadas. Cada quarteirão leva perto de 1 minuto (limpar a área inclusive), então a horda gigante vem a cada 4 ou 5 minutos.
 
 Como as habilidades deixam o herói bem mais forte a cada nível, a ameaça também sobe com o nível do herói (`ameaca_por_nivel_do_heroi`, 0.45): quanto mais forte ele fica, mais forte vem a horda. E, como as habilidades e combos crescem **multiplicando**, da ameaça 18 em diante os zumbis também crescem **multiplicando** (+9% de vida e +6% de dano por nível de ameaça, acumulando; `dano.js` → `ESCALA_AMEACA`, `aceleraDesde`, `vidaExp`, `danoExp`): vida ×1,8 na ameaça 25 e ×6,6 na 40. Assim o herói fica muito forte, mas a horda sempre acaba vencendo.
 
-**Sem tempo limite:** a run dura o quanto a live aguentar. A única trava é contra herói imortal **sem ninguém ajudando**: se passar 4 minutos sem nenhum presente de ajuda (ou seguir), os zumbis que nascem batem **60% mais forte e aguentam 60% mais** a cada minuto. Um presente de ajuda zera essa conta. O herói também nunca fica parado: se passar do cruzamento, volta; se for empurrado pra outra rua, volta contornando os prédios; se ficar muito tempo sem avançar, abre caminho pela horda; se travar, ou se passar 75 s na mesma quadra sem conseguir chegar no cruzamento (empurrado pra frente e pra trás por uma horda gigante), é levado até o cruzamento. Lá ele ainda precisa limpar a área (no máximo 90 s esperando).
+**Sem tempo limite:** a run dura o quanto a live aguentar. A única trava é contra herói imortal **sem ninguém ajudando**: se passar 4 minutos sem nenhum presente de ajuda (ou seguir), os zumbis que nascem batem **60% mais forte e aguentam 60% mais** a cada minuto, e ficam um pouco mais rápidos (+3% por minuto, até +50%; senão um herói que deixa os zumbis lentos e empurra todo mundo segura a horda longe pra sempre). Um presente de ajuda zera essa conta. O herói também nunca fica parado: se passar do cruzamento, volta; se for empurrado pra outra rua, volta contornando os prédios; se ficar muito tempo sem avançar, abre caminho pela horda; se travar, ou se passar 75 s na mesma quadra sem conseguir chegar no cruzamento (empurrado pra frente e pra trás por uma horda gigante), é levado até o cruzamento. Lá ele ainda precisa limpar a área (no máximo 90 s esperando).
 
 O que mais mexe nisso é `ameaca_por_minuto` (maior = partidas mais curtas) e o tamanho/frequência das hordas. Subir a ameaça devagar e começar com mais pressão faz a ajuda do público render mais; subir rápido deixa tudo mais curto, com ou sem ajuda.
 
@@ -367,7 +371,7 @@ Cada assunto tem o seu arquivo em `public/js/core/`:
 | Arquivo | O que tem |
 |---|---|
 | `dano.js` | **todas as contas de combate**: tipos de dano, fraquezas e resistências dos zumbis (AFINIDADES), perícias, atributos do herói (vida, dano, cadência, velocidade, defesa, esquiva, resistências por tipo, crítico, alcance, cura, cura por golpe, regeneração), dano de armas, corpo a corpo, fogo, zumbis, explosões, aliados e torcida. Buff novo = um modificador (`h.attr.addMod(...)`); as instruções estão no começo do arquivo |
-| `ameaca.js` | quando a ameaça sobe, quantos zumbis vêm (cota da quadra, hordas, grupos, prédios), **limpar a área** (raio, quanto tempo espera), o **começo puxado** (até o nível 5 e 10: `calmoMult`/`calmoForca`, `medioMult`/`medioForca`), a **horda gigante a cada 5 quarteirões**, os **inimigos do nível 20** e a trava contra herói imortal sem ajuda. O **segundo fôlego** fica em `jogo.js` → `FOLEGO` |
+| `ameaca.js` | quando a ameaça sobe, quantos zumbis vêm (cota da quadra, hordas, grupos, prédios), **limpar a área** (raio, quanto tempo espera), o **começo puxado** (até o nível 5 e 10: `calmoMult`/`calmoForca`, `medioMult`/`medioForca`), a **horda gigante a cada 5 quarteirões**, os **inimigos do nível 20**, os **inchados instáveis** (`EXPLOSAO`) e a trava contra herói imortal sem ajuda. O **segundo fôlego** fica em `jogo.js` → `FOLEGO` |
 | `caminhos.js` | as chances dos caminhos e os tipos de perigo |
 | `historia.js` | a história (só texto) |
 | `status.js` | os status positivos e negativos (sangrando, atordoado, fúria...) |
@@ -381,7 +385,7 @@ Cada assunto tem o seu arquivo em `public/js/core/`:
 | `habilidades.js` | **as habilidades do roguelike**: ativas, passivas, armas novas, treino, como as 3 cartas são sorteadas e o que a IA escolhe. Habilidade nova = acrescentar em `ATIVAS` ou `PASSIVAS` (instruções no começo do arquivo) |
 | `jogo.js` | o resto: herói, zumbis, arena, herói caído, mochila e presentes inteligentes |
 
-**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade, força por nível, combos, suprema, vida por nível), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (começo puxado, cota da quadra, limpar a área, horda a cada 5 quarteirões, segundo fôlego, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
+**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade, força por nível, combos, suprema, vida por nível, Anti-explosão e inchados instáveis), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (começo puxado, cota da quadra, limpar a área, horda a cada 5 quarteirões, segundo fôlego, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
 
 **Para testar o equilíbrio sem live:** `node teste/simular.mjs` roda dezenas de partidas em segundos em 5 cenários (sem interação, só chat, presentes misturados, só presentes que ajudam, só presentes que atrapalham) e mostra quanto cada herói durou. Para testar números sem mexer no `config.json`: `AJUSTES='{"horda_base":8}' node teste/simular.mjs 20 nada`. Também dá pra mexer em `ameaca.js` e na força dos zumbis só na simulação: `AMEACA='{"medioForca":1.5}' ESCALA='{"vida":0.3}' node teste/simular.mjs 20 chat`, e `SEED=1` roda outra sequência de partidas. O simulador mostra em que faixa de nível os heróis caem, a vida mínima em cada faixa, quando chegam no nível 10 e quanto tempo levam pra limpar a área.
 
@@ -405,7 +409,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.7.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.8.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.

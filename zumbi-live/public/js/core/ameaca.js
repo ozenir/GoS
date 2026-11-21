@@ -77,7 +77,10 @@ export const AMEACA = {
   // os zumbis que nascem batem cada vez mais forte. Com a live ajudando, a run pode durar o quanto aguentar.
   furiaDepoisDe: 4,
   furiaPorMinuto: 0.6,
-  furiaVida: 1   // a fúria também dá vida aos zumbis (1 = o mesmo tanto que o dano)
+  furiaVida: 1,   // a fúria também dá vida aos zumbis (1 = o mesmo tanto que o dano)
+  // e velocidade: +furiaVel por ponto de fúria, até furiaVelMax (senão um herói que deixa os zumbis lentos
+  // e empurra todo mundo, como aura de fogo + onda de choque, segura a horda longe pra sempre)
+  furiaVel: 0.05, furiaVelMax: 0.5
 };
 
 // Multiplicador de dano dos zumbis pela trava acima. minutos = minutos SEM AJUDA da live.
@@ -120,13 +123,24 @@ export const multPredio = (n, A = AMEACA) => A.predioBase + n * A.predioPorNivel
 
 // Que tipos aparecem na rua em cada nível (pesos). n = nível de ameaça; nivelHeroi libera os inimigos novos.
 export const NIVEL_INIMIGOS_NOVOS = 20;
+
+// Estouro do zumbi explosivo: até o nível 19 do herói é fixo (base). Do nível 20 em diante (desdeNivel) vêm os
+// INCHADOS INSTÁVEIS: aparecem muito mais (na rua e no meio das hordas, naHorda = parte da horda), o estouro
+// cresce com a ameaça como o dano dos outros zumbis, é maior e mais forte (multNovo, raioNovo) e um estouro faz
+// os explosivos em volta estourarem junto (reação em cadeia). É a fase em que a passiva Anti-explosão salva.
+// O estouro do inchado também atordoa o herói (atordoa s), a não ser que a resistência a explosão dele seja de pelo
+// menos resSemAtordoar (Anti-explosão nível 2, ou o mecânico e a bombeira, que já nascem resistentes).
+export const EXPLOSAO = {
+  base: 18, raio: 1.9, danoZumbi: 80, desdeNivel: NIVEL_INIMIGOS_NOVOS,
+  multNovo: 2.2, raioNovo: 2.4, naHorda: 0.3, pesoRua: 6, cadeia: 0.18, atordoa: 1, resSemAtordoar: 0.24
+};
 export function pesosTipos(n, nivelHeroi = 1) {
   const novos = nivelHeroi >= NIVEL_INIMIGOS_NOVOS;
   return [
     ['comum', 10],
     ['gordo', 2 + acima(n) * 0.3],
     ['corredor', n >= 2 ? Math.min(4, (n - 1) * 0.8) : 0],
-    ['explosivo', n >= 3 ? Math.min(1.5, (n - 2) * 0.3) : 0],
+    ['explosivo', (n >= 3 ? Math.min(1.5, (n - 2) * 0.3) : 0) + (nivelHeroi >= EXPLOSAO.desdeNivel ? EXPLOSAO.pesoRua : 0)],
     ['lobo', novos ? 2.5 : 0],
     ['esticado', novos ? 2 : 0]
   ];

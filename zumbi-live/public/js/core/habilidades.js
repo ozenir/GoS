@@ -205,8 +205,16 @@ export const PASSIVAS = {
   forca:      passiva('Força', '💪', 'dano', 'mult', 0.1, v => `+${pct(v)} de dano em tudo`),
   regen:      passiva('Regeneração', '💚', 'regen', 'soma', 0.5, v => `recupera ${f1(v)} de vida por segundo`),
   vampiro:    passiva('Vampirismo', '🦇', 'curaPorAcerto', 'soma', 0.5, v => `cada golpe de perto cura ${f1(v)}`),
-  reflexos:   passiva('Reflexos', '💨', 'esquiva', 'soma', 0.03, v => `${pct(v)} de chance de desviar`)
+  reflexos:   passiva('Reflexos', '💨', 'esquiva', 'soma', 0.03, v => `${pct(v)} de chance de desviar`),
+  // Anti-explosão: a que salva do nível 20 em diante, quando chegam os inchados instáveis (ameaca.js → EXPLOSAO).
+  // Por isso, a partir do nível SALVA_DESDE ela é sempre a carta C (até o herói ter), aparece mais pra
+  // aprimorar e a IA prefere ela. Antes disso é rara.
+  // (resistência a explosão tem teto de 80%: nível 5 já chega lá)
+  explosao:   passiva('Anti-explosão', '🧯', 'resExplosao', 'soma', 0.08, v => `${pct(v)} menos dano de explosão (salva dos inchados do nível 20)`)
 };
+// Nível do herói em que a Anti-explosão vira prioridade (um antes dos inchados instáveis)
+export const SALVA_DESDE = 19;
+const salva = (h, id) => id === 'explosao' && h.nivel >= SALVA_DESDE;
 
 /* ---------------- Combos: habilidade + passiva = habilidade evoluída ---------------- */
 // Quando o herói tem uma habilidade no nível COMBO_NIVEL (ou mais) e a passiva que combina com ela,
@@ -428,14 +436,14 @@ export function sortearCartas(h, rng) {
   const habs = h.habs || {}, pas = h.passivas || {};
   const aprimorar = [], nova = [], passiva = [];
   for (const [id, n] of Object.entries(habs)) if (n < ATIVAS[id].max && !h.evo?.[id]) aprimorar.push({ ...cartaAtiva(id, n + 1), cat: 'aprimorar', peso: 1.3 });
-  for (const [id, n] of Object.entries(pas)) if (n < PASSIVAS[id].max) aprimorar.push({ ...cartaPassiva(id, n + 1), cat: 'aprimorar', peso: 0.8 });
+  for (const [id, n] of Object.entries(pas)) if (n < PASSIVAS[id].max) aprimorar.push({ ...cartaPassiva(id, n + 1), cat: 'aprimorar', peso: salva(h, id) ? 2.5 : 0.8 });
   if ((h.treino || 0) < TREINO_MAX) {
     const cat = categoriaPrincipal(h), P = PERICIAS[cat];
     aprimorar.push({ tipo: 'treino', id: cat, nivel: (h.treino || 0) + 1, nome: `Treino: ${P.nome}`, emoji: P.emoji, desc: '+1 de perícia no ataque principal (dano, cadência, crítico)', cat: 'aprimorar', peso: 0.9 });
   }
   if (Object.keys(habs).length < MAX_ATIVAS) for (const id of Object.keys(ATIVAS)) if (!habs[id]) nova.push({ ...cartaAtiva(id, 1), cat: 'nova', peso: 1 });
   for (const [id, A] of Object.entries(ARMAS_NOVAS)) if (A.pode(h)) nova.push({ tipo: 'arma', id, nivel: 1, nome: A.nome, emoji: A.emoji, desc: A.desc(), cat: 'nova', peso: 0.8 });
-  for (const id of Object.keys(PASSIVAS)) if (!pas[id]) passiva.push({ ...cartaPassiva(id, 1), cat: 'passiva', peso: 1 });
+  for (const id of Object.keys(PASSIVAS)) if (!pas[id]) passiva.push({ ...cartaPassiva(id, 1), cat: 'passiva', peso: id === 'explosao' ? 0.5 : 1 });
 
   const tirar = lista => {
     if (!lista.length) return null;
@@ -444,7 +452,10 @@ export function sortearCartas(h, rng) {
   };
   // combo disponível: ele sempre aparece, no lugar da carta A
   const combos = combosDisponiveis(h);
-  const cartas = [combos.length ? cartaCombo(combos[Math.floor(rng.next() * combos.length)], h) : tirar(aprimorar), tirar(nova), tirar(passiva)];
+  // do nível SALVA_DESDE em diante, a Anti-explosão é sempre a carta C até o herói ter ela
+  const kSalva = passiva.findIndex(c => salva(h, c.id));
+  const cartaC = kSalva >= 0 ? passiva.splice(kSalva, 1)[0] : tirar(passiva);
+  const cartas = [combos.length ? cartaCombo(combos[Math.floor(rng.next() * combos.length)], h) : tirar(aprimorar), tirar(nova), cartaC];
   const resto = [...aprimorar, ...nova, ...passiva];
   for (let k = 0; k < 3; k++) if (!cartas[k]) cartas[k] = tirar(resto);
   return cartas.filter(Boolean).map((c, k) => ({ ...c, letra: 'ABC'[k] }));
@@ -463,6 +474,7 @@ export function escolhaDaIA(h, cartas, rng) {
     if (c.tipo === 'combo') p = 5;
     if (c.tipo === 'suprema') p = c.id === 'imortal' && vidaPct < 0.4 ? 2 : 1;
     if (c.tipo === 'passiva' && vidaPct < 0.5 && ['vitalidade', 'couro', 'regen'].includes(c.id)) p = 2;
+    if (c.tipo === 'passiva' && salva(h, c.id) && c.nivel <= 3) p = 3;   // do nível 19 em diante, a Anti-explosão salva
     return [c.letra, p];
   }));
 }
