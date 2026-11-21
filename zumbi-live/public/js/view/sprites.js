@@ -355,6 +355,37 @@ export function spriteCarro(cor, eixo, virado) {
   return s;
 }
 
+// Conversível dos zumbis: carro vermelho sem capota (os zumbis em pé são desenhados por cima, no render)
+export function spriteConversivel(eixo) {
+  const k = 'conv' + eixo;
+  if (cache.has(k)) return cache.get(k);
+  const du = eixo === 'u' ? 2 : 1, dv = eixo === 'u' ? 1 : 2;
+  const W = (du + dv) * 12 + 2, Hh = (du + dv) * 6 + 22;
+  const [c, x] = canvas(W, Hh);
+  const T = [dv * 12 + 1, 20];
+  const P = (u, v, z) => [T[0] + (u - v) * 12, T[1] + (u + v) * 6 - z];
+  const box = (u0, v0, u1, v1, z0, z1, top, l, r) => {
+    fillPoly(x, [P(u0, v1, z0), P(u1, v1, z0), P(u1, v1, z1), P(u0, v1, z1)], l);
+    fillPoly(x, [P(u1, v1, z0), P(u1, v0, z0), P(u1, v0, z1), P(u1, v1, z1)], r);
+    fillPoly(x, [P(u0, v0, z1), P(u1, v0, z1), P(u1, v1, z1), P(u0, v1, z1)], top);
+  };
+  const m = 0.1, base = '#c8302a';
+  box(m, m, du - m, dv - m, 1, 7, tom(base, 0.18), tom(base, -0.05), tom(base, -0.3));
+  // por dentro: bancos escuros (sem capota)
+  const i = 0.22;
+  fillPoly(x, [P(m + i, m + i, 7), P(du - m - i, m + i, 7), P(du - m - i, dv - m - i, 7), P(m + i, dv - m - i, 7)], '#3a1414');
+  // para-brisa baixinho
+  if (eixo === 'u') box(du - 0.62, m + 0.1, du - 0.5, dv - m - 0.1, 7, 11, '#9fd0ff', '#6a9ac8', '#4a7aa8');
+  else box(m + 0.1, dv - 0.62, du - m - 0.1, dv - 0.5, 7, 11, '#9fd0ff', '#6a9ac8', '#4a7aa8');
+  x.fillStyle = '#151515';
+  const rodas = eixo === 'u' ? [[0.45, dv - m], [du - 0.45, dv - m]] : [[du - m, 0.45], [du - m, dv - 0.45]];
+  for (const [u, v] of rodas) { const p = P(u, v, 1); x.fillRect(Math.round(p[0]) - 2, Math.round(p[1]) - 2, 4, 3); }
+  contorno(c);
+  const s = { c, ox: T[0], oy: T[1] };
+  cache.set(k, s);
+  return s;
+}
+
 export function spriteProp(tipo) {
   const k = 'p' + tipo;
   if (cache.has(k)) return cache.get(k);

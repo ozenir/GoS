@@ -124,6 +124,8 @@ export class Render {
       case 'arremesso': this.arremessos.push({ ...e, age: 0, life: e.t }); break;
       case 'raio': this.choques.push({ pts: e.pts, age: 0, life: 0.22 }); for (const p of e.pts.slice(1)) this.raios.push({ x: p[0], y: p[1], age: 0, life: 0.15, r: 22 }); break;
       case 'onda': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.45 }); this.tremer(3); break;
+      case 'agarrou': this.tremer(4); for (let i = 0; i < 8; i++) this.particula({ x: e.x + (Math.random() - 0.5) * 0.6, y: e.y + (Math.random() - 0.5) * 0.6, z: 0.1, vz: 1.5, life: 0.5, cor: '#8a8070', tam: 2 }); break;
+      case 'atropelou': this.tremer(e.heroi ? 6 : 2); for (let i = 0; i < (e.heroi ? 10 : 5); i++) this.particula({ x: e.x + (Math.random() - 0.5) * 0.5, y: e.y + (Math.random() - 0.5) * 0.5, z: 0.4, vz: 2 + Math.random() * 2, life: 0.5, cor: e.heroi ? '#ffd23f' : '#8a1e1e', tam: 2 }); if (e.heroi) this.piscar('#ff2a2a', 0.2); break;
       case 'inspiracao_pulso': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.35, cor: '#ffd23f' }); break;
       case 'colosso_cansou': this.tremer(4); for (let i = 0; i < 14; i++) this.particula({ x: e.x + (Math.random() - 0.5), y: e.y + (Math.random() - 0.5), z: 1.5, vz: 1, g: 1, life: 1, cor: '#9fd0ff', tam: 2 }); break;
       case 'segundo_folego': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.6 }); this.tremer(4); break;
@@ -486,6 +488,15 @@ export class Render {
     for (const it of g.itens) { const [u, v] = this.view(it.x, it.y); lista.push({ key: u + v, tipo: 'item', it }); }
     for (const z of g.zumbis) { if (z.morto) continue; const [u, v] = this.view(z.x, z.y); lista.push({ key: u + v, tipo: 'zumbi', z }); }
     for (const a of g.aliados) { const [u, v] = this.view(a.x, a.y); lista.push({ key: u + v, tipo: 'aliado', a }); }
+    for (const p of g.paraquedistas || []) { const [u, v] = this.view(p.x, p.y); lista.push({ key: u + v + 0.5, tipo: 'paraquedista', p }); }
+    for (const c of g.carros || []) {
+      // retângulo do carro (2 casas no sentido em que anda, 1 de largura), igual aos carros parados
+      const px = -c.dy * 0.5, py = c.dx * 0.5;
+      const cs = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([a, b]) => this.view(c.x + c.dx * a + px * b, c.y + c.dy * a + py * b));
+      const u0 = Math.min(...cs.map(q => q[0])), v0 = Math.min(...cs.map(q => q[1]));
+      const u1 = Math.max(...cs.map(q => q[0])), v1 = Math.max(...cs.map(q => q[1]));
+      lista.push({ key: (u0 + u1 + v0 + v1) / 2, tipo: 'conversivel', c, u0, v0, eixo: u1 - u0 > v1 - v0 ? 'u' : 'v' });
+    }
     if (!g.room) for (const f of g.figurantes || []) { const [u, v] = this.view(f.x, f.y); lista.push({ key: u + v, tipo: 'figurante', f }); }
     if (g.fase === 'jogo' || this.t % 1 < 0.5) lista.push({ key: heroiKey, tipo: 'heroi' });
     lista.sort((a, b) => a.key - b.key);
@@ -524,6 +535,8 @@ export class Render {
       } else if (o.tipo === 'item') this.desenharItem(o.it);
       else if (o.tipo === 'zumbi') this.desenharZumbi(o.z, g);
       else if (o.tipo === 'aliado') this.desenharAliado(o.a);
+      else if (o.tipo === 'conversivel') this.desenharConversivel(o);
+      else if (o.tipo === 'paraquedista') this.desenharParaquedista(o.p);
       else if (o.tipo === 'figurante') this.desenharFigurante(o.f, g);
       else if (o.tipo === 'heroi') this.desenharHeroi(g);
     }
@@ -682,6 +695,15 @@ export class Render {
     disc(ctx, ax, ay, 6, 'rgba(26,20,32,0.9)', 0.45);
     ctx.globalAlpha = 1;
     if (g.caido) { this.heroiCaido(g, spr, ax, ay); return; }
+    // zumbi paraquedista agarrado na perna: deitado atrás do herói, puxando
+    const agarrados = h.estados.pilhas('agarrado');
+    for (let k = 0; k < agarrados; k++) {
+      const lx = ax - 8 - k * 5 + (k % 2) * 10, ly = ay - 2 + k * 2, mexe = Math.round(Math.sin(this.t * 8 + k) * 1);
+      ctx.fillStyle = ['#4a3a6a', '#3a5a3a', '#6a3a3a'][k % 3]; ctx.fillRect(lx - 5, ly - 2, 8, 3);   // corpo deitado
+      ctx.fillStyle = '#7a9a5a'; ctx.fillRect(lx + 3, ly - 3 + mexe, 4, 4);                             // cabeça
+      ctx.fillStyle = '#c8302a'; ctx.fillRect(lx + 5, ly - 2 + mexe, 1, 1);
+      ctx.fillStyle = '#7a9a5a'; ctx.fillRect(lx + 6, ly - 6, 1, 4); ctx.fillRect(lx + 7, ly - 6, (ax - lx) - 6 > 0 ? Math.min(6, ax - lx - 6) : 1, 1);   // braço segurando a perna
+    }
     // inspirado (doação): aura dourada pulsando
     if (h.estados.tem('inspirado')) {
       const k = Math.sin(this.t * 9) * 0.5 + 0.5;
@@ -758,6 +780,47 @@ export class Render {
       line(ctx, sx, sy - 11, sx + dx / m * 5, sy - 11 + dy / m * 5, '#2a2a30');
       this.nomes.push({ x: sx, y: sy - 26, txt: a.nome, cor: '#9dffb0' });
     }
+  }
+
+  // Conversível dos zumbis: o carro e os zumbis em pé no banco, de braços pra cima, pulando
+  desenharConversivel(o) {
+    const ctx = this.ctx, c = o.c;
+    const s = S.spriteConversivel(o.eixo);
+    const [sx, sy] = this.topoVista(o.u0, o.v0);
+    ctx.drawImage(s.c, sx - s.ox, sy - s.oy);
+    for (let k = 0; k < c.passageiros; k++) {
+      const a = 0.6 - k * 0.45, lado = k % 2 ? 0.2 : -0.2;
+      const [px, py] = this.tela(c.x + c.dx * a - c.dy * lado, c.y + c.dy * a + c.dx * lado);
+      const pula = Math.round(Math.abs(Math.sin(this.t * 14 + k * 1.7)) * 3);
+      const y = py - 14 - pula;
+      ctx.fillStyle = ['#7a9a5a', '#8aa868', '#6a8a50', '#9ab070'][k % 4]; ctx.fillRect(px - 2, y, 5, 5);   // cabeça
+      ctx.fillStyle = '#c8302a'; ctx.fillRect(px - 1, y + 1, 1, 1); ctx.fillRect(px + 2, y + 1, 1, 1);    // olhos
+      ctx.fillStyle = ['#4a3a6a', '#2a4a6a', '#6a3a3a', '#3a5a3a'][k % 4]; ctx.fillRect(px - 2, y + 5, 5, 4);   // camisa
+      ctx.fillStyle = '#7a9a5a';
+      const braco = Math.sin(this.t * 10 + k) > 0 ? 1 : 0;   // braços pra cima, balançando
+      ctx.fillRect(px - 4, y - 3 + braco, 1, 6); ctx.fillRect(px + 4, y - 3 + (1 - braco), 1, 6);
+    }
+    // faróis piscando e poeira atrás
+    if (Math.floor(this.t * 8) % 2) {
+      const [fx, fy] = this.tela(c.x + c.dx * 1.05, c.y + c.dy * 1.05, 3);
+      disc(ctx, fx, fy, 3, '#fff3a0', 0.6);
+    }
+    if (Math.random() < 0.7) this.particula({ x: c.x - c.dx * 1.1 + (Math.random() - 0.5) * 0.6, y: c.y - c.dy * 1.1 + (Math.random() - 0.5) * 0.6, z: 0.1, vz: 0.6, life: 0.5, cor: '#8a8070', tam: 2 });
+  }
+
+  // Zumbi descendo de paraquedas: sombra no chão crescendo, o zumbi balançando e o paraquedas listrado
+  desenharParaquedista(p) {
+    const ctx = this.ctx;
+    const [sx, sy] = this.tela(p.x, p.y);
+    const z = Math.round(p.z * 14), bal = Math.round(Math.sin(this.t * 2.5 + p.id) * 2);
+    const sh = S.sombra(Math.max(4, 12 - z / 8));
+    ctx.drawImage(sh, sx - Math.floor(sh.width / 2), sy - 2);
+    const spr = this.quadro(S.spriteZumbi('comum', p.roupa), 0, 1, this.t * 2, true);
+    ctx.drawImage(spr, sx - S.PE_X + bal, sy - S.PE_Y - z);
+    const topo = sy - S.PE_Y - z - 12;
+    fillPoly(ctx, [[sx - 12 + bal, topo], [sx + 12 + bal, topo], [sx + 9 + bal, topo - 6], [sx - 9 + bal, topo - 6]], '#2a2a30');
+    fillPoly(ctx, [[sx - 4 + bal, topo], [sx + 4 + bal, topo], [sx + 3 + bal, topo - 6], [sx - 3 + bal, topo - 6]], '#c8302a');
+    line(ctx, sx - 11 + bal, topo, sx - 3 + bal, topo + 12, '#c0c0c0'); line(ctx, sx + 11 + bal, topo, sx + 3 + bal, topo + 12, '#c0c0c0');
   }
 
   desenharItem(it) {

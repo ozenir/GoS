@@ -28,6 +28,7 @@ export const STATUS = {
   marcado:     { nome: 'Marcado', emoji: '🎯', lado: 'negativo', duracao: 5, maxPilhas: 1, danoRecebido: 1.25, so: 'zumbi' },
   cansado:     { nome: 'Cansado', emoji: '😵', lado: 'negativo', duracao: 9999, maxPilhas: 1, lentidao: 0.35, so: 'zumbi' },   // colosso da doação quando o herói chega em 30% (recompensas.js)
   quebrado:    { nome: 'Armadura quebrada', emoji: '💔', lado: 'negativo', duracao: 5, maxPilhas: 1, resistencia: -0.2, so: 'zumbi' },
+  agarrado:    { nome: 'Zumbi na perna', emoji: '🧟', lado: 'negativo', duracao: 30, maxPilhas: 3, lentidao: 0.6, lentidaoPorPilha: true, so: 'heroi' },   // zumbi paraquedista (recompensas.js): cada um pendurado deixa mais lento
   infectado:   { nome: 'Infectado', emoji: '🦠', lado: 'negativo', duracao: 8, maxPilhas: 3, porSegundo: { dano: 1 }, tipoDano: 'infeccao', mods: [{ attr: 'cura', mult: 0.6 }], so: 'heroi' },
 
   /* ------------- positivos ------------- */
@@ -122,7 +123,7 @@ export class Estados {
   }
 
   parado() { for (const s of this.lista.values()) if (STATUS[s.id].parado) return true; return false; }
-  lentidao() { let m = 1; for (const s of this.lista.values()) if (STATUS[s.id].lentidao) m *= STATUS[s.id].lentidao; return m; }
+  lentidao() { let m = 1; for (const s of this.lista.values()) { const S = STATUS[s.id]; if (S.lentidao) m *= S.lentidaoPorPilha ? Math.pow(S.lentidao, s.pilhas) : S.lentidao; } return m; }
   danoRecebido() { let m = 1; for (const s of this.lista.values()) if (STATUS[s.id].danoRecebido) m *= STATUS[s.id].danoRecebido; return m; }
   resistencia() { let r = 0; for (const s of this.lista.values()) r += STATUS[s.id].resistencia || 0; return r; }
 

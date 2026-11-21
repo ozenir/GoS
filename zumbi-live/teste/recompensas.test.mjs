@@ -2,7 +2,7 @@
 // Rodar:  node teste/recompensas.test.mjs
 import assert from 'node:assert/strict';
 import { Jogo } from '../public/js/core/jogo.js';
-import { RECOMPENSA, DROPS } from '../public/js/core/recompensas.js';
+import { RECOMPENSA, DROPS, CONVERSIVEL, PARAQUEDISTA } from '../public/js/core/recompensas.js';
 import { STATUS } from '../public/js/core/status.js';
 import { aplicarCarta, atualizarHabilidades } from '../public/js/core/habilidades.js';
 
@@ -154,6 +154,81 @@ teste('pegar a runa: gruda numa habilidade que o herói tem e avisa', () => {
   const k = jogo();
   k.pegar({ kind: 'runa', data: {}, quem: null, x: k.hero.x, y: k.hero.y });
   assert.ok(k.hero.runas.principal, 'sem habilidade: vai pro ataque principal');
+});
+
+/* ---------------- atrapalhar com 1 moeda ---------------- */
+teste('presente de atrapalhar de 1 moeda: não dá drop; vem o conversível ou o zumbi paraquedista', () => {
+  const visto = { conversivel: 0, paraquedista: 0 };
+  for (let s = 0; s < 30; s++) {
+    const j = new Jogo({ seed: 100 + s, classe: 'policial' });
+    j.zumbis = []; j.spawnT = 999; j.cotaRua = 0; j.protecao = 0;
+    presente(j, 1, 1, 'zumbis');
+    passar(j, 2);
+    for (const e of eventos(j)) if (e.type in visto) visto[e.type]++;
+    assert.ok(!j.itens.some(it => it.kind === 'drop'), 'sem drop');
+  }
+  assert.ok(visto.conversivel > 5 && visto.paraquedista > 5, JSON.stringify(visto));
+});
+
+teste('conversível: tira metade da vida ATUAL de quem pegar (herói e zumbis, inclusive chefe) e passa', () => {
+  const j = jogo(), h = j.hero;
+  h.invT = 0;
+  const z = j.criarZumbi('comum', h.x, h.y, null, { nascendo: 0 });
+  const chefe = j.criarZumbi('chefao', h.x, h.y, null, { nascendo: 0 });
+  z.x = h.x + 0.01; z.y = h.y; chefe.x = h.x - 0.01; chefe.y = h.y;
+  const vh = h.vida, vz = z.vida, vc = chefe.vida;
+  j.conversivel(null);
+  const c = j.carros[0];
+  c.desvia = false;
+  // anda até passar do herói (sem rodar a IA, pra ninguém sair do lugar)
+  for (let i = 0; i < 60 && j.carros.length; i++) j.atualizarCarros(DT);
+  assert.ok(Math.abs(h.vida - vh * (1 - CONVERSIVEL.dano)) < 1e-6, `herói ${vh} → ${h.vida}`);
+  assert.ok(Math.abs(z.vida - vz * 0.5) < 1e-6 && Math.abs(chefe.vida - vc * 0.5) < 1e-6, 'zumbi e chefe pela metade');
+  assert.ok(!z.morto, 'metade nunca mata');
+  for (let i = 0; i < 200 && j.carros.length; i++) j.atualizarCarros(DT);
+  assert.equal(j.carros.length, 0, 'foi embora');
+  const fim = eventos(j).find(e => e.type === 'conversivel_fim');
+  assert.ok(fim && fim.heroi && fim.zumbis === 2);
+});
+
+teste('conversível: quando o herói percebe, pula pro lado e escapa', () => {
+  let escapou = 0;
+  for (let s = 0; s < 6; s++) {
+    const j = new Jogo({ seed: 300 + s, classe: 'policial' });
+    j.zumbis = []; j.spawnT = 999; j.cotaRua = 0; j.protecao = 0; j.hero.invT = 0;
+    j.conversivel(null);
+    j.carros[0].desvia = true;
+    const v = j.hero.vida;
+    passar(j, 4);
+    if (j.hero.vida >= v) escapou++;
+  }
+  assert.ok(escapou >= 4, `escapou ${escapou} de 6`);
+});
+
+teste('zumbi paraquedista: cai em cima, agarra a perna (lento por 3 quarteirões), depois solta e vira zumbi', () => {
+  const j = jogo(), h = j.hero;
+  const vel0 = h.estados.lentidao();
+  j.paraquedista(null);
+  assert.equal(j.paraquedistas.length, 1);
+  passar(j, PARAQUEDISTA.altura / PARAQUEDISTA.queda + 0.5);
+  assert.equal(j.paraquedistas.length, 0);
+  assert.ok(h.estados.tem('agarrado') && h.estados.lentidao() < vel0, 'lento');
+  j.paraquedista(null); passar(j, PARAQUEDISTA.altura / PARAQUEDISTA.queda + 0.5);
+  assert.equal(h.estados.pilhas('agarrado'), 2);
+  assert.ok(h.estados.lentidao() < 0.6 * vel0, 'dois pendurados: mais lento');
+  j.zumbis = [];
+  j.andouQuarteirao(PARAQUEDISTA.quarteiroes);
+  assert.ok(!h.estados.tem('agarrado'), 'soltou');
+  assert.equal(j.zumbis.filter(z => !z.morto).length, 2, 'viraram zumbis no chão');
+  assert.ok(eventos(j).some(e => e.type === 'soltou_perna'));
+});
+
+teste('zumbi paraquedista: herói invencível, ele quica e cai do lado', () => {
+  const j = jogo(), h = j.hero;
+  h.invT = 99;
+  j.paraquedista(null); passar(j, PARAQUEDISTA.altura / PARAQUEDISTA.queda + 0.5);
+  assert.ok(!h.estados.tem('agarrado'));
+  assert.ok(j.zumbis.some(z => !z.morto && z.tipo === 'comum'));
 });
 
 console.log(`\n${ok} testes passaram.`);

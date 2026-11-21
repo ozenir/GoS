@@ -252,7 +252,7 @@ Quando falta alguma categoria, a carta é completada com outra. Cada habilidade 
 
 Todo presente continua fazendo o que faz (tabela abaixo). Além disso:
 
-- **🪂 Presente de 1 moeda (Rosa, TikTok, Sorvete...): cai um DROP de paraquedas.** Uma caixa roxa com ❓ desce devagar, balançando, perto do herói (uns 5 segundos, pra todo mundo ver). Quando ele pega, aparece o **bônus sorteado**, que dura **5 quarteirões**. Os bônus **acumulam**: pegar o mesmo de novo soma uma pilha (fica mais forte, até x5) e o tempo volta pros 5 quarteirões; bônus diferentes valem juntos. Presente repetido (Rosa x5) solta uma caixa por unidade (até 5).
+- **🪂 Presente de AJUDAR de 1 moeda (Rosa): cai um DROP de paraquedas.** Uma caixa roxa com ❓ desce devagar, balançando, perto do herói (uns 5 segundos, pra todo mundo ver). Quando ele pega, aparece o **bônus sorteado**, que dura **5 quarteirões**. Os bônus **acumulam**: pegar o mesmo de novo soma uma pilha (fica mais forte, até x5) e o tempo volta pros 5 quarteirões; bônus diferentes valem juntos. Presente repetido (Rosa x5) solta uma caixa por unidade (até 5).
 
   | Bônus | Por pilha |
   |---|---|
@@ -263,6 +263,10 @@ Todo presente continua fazendo o que faz (tabela abaixo). Além disso:
   | 🎯 Olho vivo | +5% de crítico |
   | 👟 Pernas leves | +6% de velocidade |
   | 🍀 Sortudo | +25% de experiência |
+
+- **😈 Presente de ATRAPALHAR de 1 moeda (TikTok, Sorvete):** além do efeito dele, sorteia uma de duas surpresas:
+  - **🚗 Conversível dos zumbis**: um conversível vermelho cheio de zumbi em pé no banco, de braços pra cima, corta a rua do herói (de frente ou por trás), buzinando. **Quem estiver na frente perde metade da vida ATUAL**: o herói, os zumbis e até chefe (até o colosso!). Todo mundo é jogado pro lado e fica tonto um instante. Metade da vida atual nunca mata. O herói às vezes percebe e pula pro lado, às vezes não. No fim aparece o placar ("🚗 atropelou 9 zumbis e o herói!"). O motor tem Doppler: mais agudo chegando, mais grave indo embora.
+  - **🪂🧟 Zumbi paraquedista**: um zumbi desce de paraquedas seguindo o herói e **cai em cima dele, agarrado na perna**: o herói fica **lento por 3 quarteirões** com o zumbi pendurado. Mais de um pendurado (até 3) deixa ainda mais lento. Passado o tempo, o zumbi solta e vira um zumbi normal no chão (tem que matar pra limpar a área). Se o herói estiver invencível, o zumbi quica e cai do lado.
 
 - **✨ Doação (presente de 2 moedas ou mais):**
   - **Inspiração**: por 10 segundos o herói brilha dourado, **toma só 20% do dano** e solta pulsos de luz que machucam todos os zumbis em volta.
@@ -347,7 +351,7 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 | `torcida_maximo_pessoas` | quantas pessoas da torcida contam no máximo (0 desliga a torcida) | 10 |
 | `noite_a_cada_segundos` / `noite_dura_segundos` | ciclo da noite (0 desliga) | 150 / 35 |
 | `segundos_dentro_do_predio` | quanto tempo até o alarme mandar ele sair | 70 |
-| `drop_ate_moedas` | presente de até tantas moedas solta um drop de paraquedas | 1 |
+| `drop_ate_moedas` | presente de até tantas moedas: o de ajudar solta um drop; o de atrapalhar manda o conversível ou o zumbi paraquedista | 1 |
 | `doacao_a_partir_de_moedas` | presente a partir de tantas moedas é doação: inspiração, drop e colosso | 2 |
 | `inspiracao_segundos` | quanto dura a inspiração | 10 |
 | `vida_do_colosso` | vida do colosso no nível 1 do herói (+25% por nível) | 10000 |
@@ -415,7 +419,7 @@ Cada assunto tem o seu arquivo em `public/js/core/`:
 | `habilidades.js` | **as habilidades do roguelike**: ativas, passivas, armas novas, treino, como as 3 cartas são sorteadas e o que a IA escolhe. Habilidade nova = acrescentar em `ATIVAS` ou `PASSIVAS` (instruções no começo do arquivo) |
 | `jogo.js` | o resto: herói, zumbis, arena, herói caído, mochila e presentes inteligentes |
 
-**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/som.test.mjs` (acústica), `node teste/recompensas.test.mjs` (drops, inspiração, colosso e runas), `node teste/catalogo.test.mjs` (a prévia sem o programa usa os mesmos números do config.json), `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade, força por nível, combos, suprema, vida por nível, Anti-explosão e inchados instáveis), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (começo puxado, cota da quadra, limpar a área, horda a cada 5 quarteirões, segundo fôlego, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
+**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/som.test.mjs` (acústica), `node teste/recompensas.test.mjs` (drops, inspiração, colosso, runas, conversível e zumbi paraquedista), `node teste/catalogo.test.mjs` (a prévia sem o programa usa os mesmos números do config.json), `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade, força por nível, combos, suprema, vida por nível, Anti-explosão e inchados instáveis), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (começo puxado, cota da quadra, limpar a área, horda a cada 5 quarteirões, segundo fôlego, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
 
 **Para testar o equilíbrio sem live:** `node teste/simular.mjs` roda dezenas de partidas em segundos em 5 cenários (sem interação, só chat, presentes misturados, só presentes que ajudam, só presentes que atrapalham) e mostra quanto cada herói durou. Para testar números sem mexer no `config.json`: `AJUSTES='{"horda_base":8}' node teste/simular.mjs 20 nada`. Também dá pra mexer em `ameaca.js` e na força dos zumbis só na simulação: `AMEACA='{"medioForca":1.5}' ESCALA='{"vida":0.3}' node teste/simular.mjs 20 chat`, e `SEED=1` roda outra sequência de partidas. O simulador mostra em que faixa de nível os heróis caem, a vida mínima em cada faixa, quando chegam no nível 10 e quanto tempo levam pra limpar a área.
 
@@ -439,7 +443,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.12.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.13.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.

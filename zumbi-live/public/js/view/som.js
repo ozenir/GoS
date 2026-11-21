@@ -202,6 +202,60 @@ export class Som {
     });
   }
 
+  /* ---------- atrapalhar com 1 moeda (recompensas.js) ---------- */
+  // Conversível passando pelo herói: o motor (grave, rouco) vem de longe, passa e vai embora. Física: o volume e
+  // os agudos seguem a distância (acustica) e o Doppler muda a altura (mais agudo chegando, mais grave indo).
+  // Buzina "fom-fom" quando aparece e a festa dos zumbis ("uhuu!") quando passa.
+  conversivel(D = 16, vel = 9) {
+    if (!this.running) return;
+    const ac = this.ac, t0 = ac.currentTime, T = 2 * D / vel, N = 30;
+    const o = ac.createOscillator(); o.type = 'sawtooth';
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.8;
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0);
+    const am = ac.createOscillator(), amg = ac.createGain(); am.frequency.value = 22; amg.gain.value = 0.35;   // ronco do motor
+    const ronco = ac.createGain(); ronco.gain.value = 0.65; am.connect(amg); amg.connect(ronco.gain);
+    o.connect(ronco); ronco.connect(lp); lp.connect(g); g.connect(this.mundo);
+    for (let k = 0; k <= N; k++) {
+      const t = k / N * T, ate = D - vel * t, a = acustica(Math.abs(ate));
+      const r = Math.hypot(ate, CAMERA_ALTURA), vr = vel * ate / r * METROS_POR_CASA;   // m/s: + chegando, − indo embora
+      o.frequency.linearRampToValueAtTime(55 * VEL_SOM / (VEL_SOM - vr), t0 + t);
+      lp.frequency.linearRampToValueAtTime(Math.min(a.corte, 700), t0 + t);
+      g.gain.linearRampToValueAtTime(Math.max(0.0001, 0.2 * a.vol * a.vol), t0 + t);
+    }
+    g.gain.linearRampToValueAtTime(0.0001, t0 + T + 0.2);
+    o.start(t0); am.start(t0); o.stop(t0 + T + 0.3); am.stop(t0 + T + 0.3);
+    setTimeout(() => { g.disconnect(); lp.disconnect(); ronco.disconnect(); }, (T + 1) * 1000);
+    this.noMundo(D, 1, () => {   // buzina de longe: fom-fom
+      for (const q of [0, 0.26]) { this.nota('square', 233, q, 0.2, 0.05, 0.01, 900); this.nota('square', 294, q, 0.2, 0.04, 0.01, 900); }
+    });
+    setTimeout(() => this.noMundo(1.5, 1.2, () => {   // os zumbis fazendo festa quando passam
+      this.voz(120, 210, 0.45, 0.1, [[480, 4, 1.3], [900, 5, 0.45]], 0, 0.3);
+      this.voz(105, 180, 0.5, 0.09, [[440, 4, 1.3], [850, 5, 0.45]], 0.18, 0.3);
+    }), Math.max(0, D / vel - 0.35) * 1000);
+  }
+  // atropelou: pancada grave; no herói, mais forte
+  atropelou(heroi, d = 2) {
+    if (!heroi && !this.pode('atrop', 0.08)) return;
+    this.noMundo(d, 0.5, () => { this.nota('sine', heroi ? 85 : 110, 0, 0.25, heroi ? 0.3 : 0.12, 0.003, 300, 40); this.noise(0.15, heroi ? 0.2 : 0.08, 'lowpass', 500, 0, 0.7, 120); });
+  }
+  // zumbi paraquedista descendo: o pano abrindo lá em cima e um gemido vindo do alto
+  paraquedista() {
+    this.noMundo(4, 3, () => {
+      this.noise(0.12, 0.12, 'lowpass', 500, 0, 0.8, 200, 0.01);
+      this.noise(2.4, 0.035, 'bandpass', 320, 0.1, 0.8, 220, 0.3);
+      this.voz(95, 80, 1.2, 0.08, [[300, 5, 1.6], [650, 6, 0.6]], 0.6, 0, 0.04);
+    });
+  }
+  // agarrou a perna: tombo no chão e o rosnado bem perto
+  agarrou() {
+    this.noMundo(0, 1.2, () => {
+      this.nota('sine', 80, 0, 0.22, 0.25, 0.003, 300, 45); this.noise(0.18, 0.12, 'lowpass', 450, 0, 0.7, 120);
+      this.voz(88, 70, 0.7, 0.13, [[400, 4, 1.4], [850, 5, 0.45]], 0.1, 0.85);
+    });
+  }
+  // soltou a perna: arrastado no chão
+  soltouPerna() { this.noMundo(0.8, 0.8, () => { this.noise(0.4, 0.06, 'bandpass', 380, 0, 1, 220, 0.05); this.voz(80, 60, 0.5, 0.08, [[380, 4, 1.4], [800, 5, 0.4]], 0.1, 0.6); }); }
+
   /* ---------- sozinho: só os próprios passos e a respiração ---------- */
   // Sem nenhum zumbi na tela, depois de SOZINHO.espera segundos, o herói ouve só ele mesmo: passos baixinhos
   // (um a cada SOZINHO.passo casas andadas, pé esquerdo e direito um pouco diferentes) e a respiração lenta.

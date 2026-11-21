@@ -65,3 +65,30 @@ export const XP_POR_PILHA_SORTE = 0.25;
 export const multRunaDano = (runa, nivel, R = RECOMPENSA) => 1 + (runa?.dano || 0) * R.runa.dano * nivel;
 // Defesa que as runas de resistência dão: 4% × nível da habilidade × quantas runas
 export const defesaRuna = (runa, nivel, R = RECOMPENSA) => (runa?.resistencia || 0) * R.runa.defesa * nivel;
+
+// ============================================================================
+//  🚗 CONVERSÍVEL DOS ZUMBIS — presente de ATRAPALHAR de até dropAteMoedas (1 moeda: TikTok, Sorvete...).
+//  (o presente também faz o efeito dele; quem ajuda com 1 moeda ganha o drop, quem atrapalha manda o carro)
+//  Um conversível vermelho cheio de zumbi fazendo festa corta a rua do herói, de frente ou por trás, buzinando.
+//  Quem estiver na frente (herói, zumbi e até chefe) perde METADE DA VIDA ATUAL, é jogado pro lado e fica
+//  tonto um instante. Metade da vida atual nunca mata. O herói às vezes percebe e pula pro lado
+//  (chanceDesviar), às vezes não. No fim aparece quantos ele atropelou.
+// ============================================================================
+export const CONVERSIVEL = {
+  distancia: 16,       // casas antes do herói em que ele aparece (chega em ~1,8 s, buzinando)
+  vel: 9,              // casas por segundo
+  comprimento: 2, largura: 1.2,
+  dano: 0.5,           // parte da vida ATUAL de quem pegar
+  chanceDesviar: 0.5,
+  porPresente: 3, entre: 3,   // presente repetido: até 3 carros, um a cada 3 s
+  espera: 25           // dentro de prédio/arena: espera voltar pra rua (até tantos segundos)
+};
+
+// ============================================================================
+//  🪂🧟 ZUMBI PARAQUEDISTA — a outra opção do presente de ATRAPALHAR de 1 moeda (sorteio com o conversível:
+//  chance = chance de vir o paraquedista em vez do carro). Um zumbi desce de paraquedas seguindo o herói e
+//  cai em cima dele: AGARRA A PERNA (status "agarrado") e o herói fica lento por `quarteiroes` quarteirões.
+//  Mais de um agarrado soma (até maxPilhas), cada um deixa mais lento. Quando passa o tempo, o zumbi solta
+//  e vira um zumbi normal no chão (tem que matar pra limpar a área). Herói invencível: ele quica e cai do lado.
+// ============================================================================
+export const PARAQUEDISTA = { chance: 0.5, altura: 8, queda: 2.4, quarteiroes: 3, maxPilhas: 3 };

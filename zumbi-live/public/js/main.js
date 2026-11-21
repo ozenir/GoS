@@ -216,6 +216,11 @@ function tocar(e, g) {
     case 'inspiracao': som.inspiracao(); break;
     case 'inspiracao_pulso': som.pulso(); break;
     case 'colosso_vem': som.perigo(); break;
+    case 'conversivel': som.conversivel(e.distancia, e.vel); break;
+    case 'atropelou': som.atropelou(e.heroi, longe(e, g)); break;
+    case 'paraquedista': som.paraquedista(); break;
+    case 'agarrou': case 'paraquedista_quicou': som.agarrou(); break;
+    case 'soltou_perna': som.soltouPerna(); break;
     case 'colosso_cansou': som.cansou(longe(e, g)); break;
     case 'colosso_vencido': som.recorde(); break;
     case 'runa': som.runa(); break;

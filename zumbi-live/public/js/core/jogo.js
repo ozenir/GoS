@@ -10,7 +10,7 @@ import { ZUMBIS, CLASSES, ARMAS, CORPO, xpParaNivel, multVidaNivel } from './dad
 import { EFEITOS, ladoDo } from './efeitos.js';
 import { Votacao, lerVoto, lerEscolha, OPCOES } from './votacao.js';
 import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasSupremas, supremaSegura, NIVEL_SUPREMA, ATIVAS } from './habilidades.js';
-import { RECOMPENSA, DROPS, XP_POR_PILHA_SORTE, defesaRuna } from './recompensas.js';
+import { RECOMPENSA, DROPS, XP_POR_PILHA_SORTE, defesaRuna, CONVERSIVEL, PARAQUEDISTA } from './recompensas.js';
 import {
   atributosDaClasse, danoDoHeroi, intervaloTiro, intervaloCorpo, alcanceArma, velocidadeHeroi,
   danoNoHeroi, valorCura, statsZumbi, danoDoZumbi, danoNoZumbi, chanceDoStatus, danoExplosao, danoAliado, ALIADOS,
@@ -173,6 +173,8 @@ export class Jogo {
     this.cotaRua = null;            // zumbis da rua que ainda nascem neste quarteirão (null = calcula na hora)
     this.limpando = null;           // esperando no cruzamento a área ficar limpa
     this.colossoPendente = null;    // doação: o colosso que vem no próximo quarteirão (recompensas.js)
+    this.carros = [];               // conversíveis dos zumbis passando (presente de atrapalhar de 1 moeda)
+    this.paraquedistas = [];        // zumbis descendo de paraquedas em cima do herói (idem)
     this.proxHordaQ = this.A.hordaCadaQuarteiroes;   // quarteirão da próxima horda gigante
     this.alarmeT = 0;
     this.alarmeCarro = null;
@@ -239,6 +241,7 @@ export class Jogo {
     c.t -= dt;
     this.atualizarZonas(dt);
     this.atualizarZumbis(dt);
+    this.atualizarCarros(dt);
     this.atualizarItens(dt);
     if (c.t <= 0) {
       this.caido = null;
@@ -331,6 +334,7 @@ export class Jogo {
     this.atualizarFigurantes(dt);
     this.atualizarAliados(dt);
     this.atualizarZumbis(dt);
+    this.atualizarCarros(dt);
     this.atualizarItens(dt);
   }
 
@@ -1119,6 +1123,12 @@ export class Jogo {
       }
     }
     if (naFrente >= 4 && !obj.porta && !perto && !forcando) { vx *= 0.25; vy *= 0.25; }
+    // conversível vindo: se ele percebeu (desvia), pula pro lado da rua
+    for (const c of this.carros) {
+      if (!c.desvia || c.atingidos.has(h)) continue;
+      const qx = h.x - c.x, qy = h.y - c.y, along = qx * c.dx + qy * c.dy, lat = qx * -c.dy + qy * c.dx;
+      if (along > -1 && along < 9 && Math.abs(lat) < 1.6) { const sg = lat >= 0 ? 1 : -1; vx = -c.dy * sg * 1.6; vy = c.dx * sg * 1.6; }
+    }
     const rm = Math.hypot(rx, ry);
     if (rm > 0.01) {
       const k = Math.min(1.6, rm);
@@ -1522,6 +1532,7 @@ export class Jogo {
       this.agendar(2, () => this.hordaDaQuadra());
     }
     const fim = h.estados.passarQuarteiroes(n);
+    if (fim.includes('agarrado')) this.soltarPerna();
     if (fim.length) { sincronizarAtributos(h.estados, h.attr); for (const id of fim) this.emit('buff_acabou', { id }); }
     if (h.armaQ > 0 && (h.armaQ -= n) <= 0) { h.armaQ = 0; this.trocarArma(this.armaPadrao(), null); }
     if (h.invQ > 0) h.invQ = Math.max(0, h.invQ - n);
@@ -2047,8 +2058,13 @@ export class Jogo {
 
   /* =================== Recompensas de presente (recompensas.js) =================== */
   // moedas = valor de UMA unidade do presente; qtd = quantas vieram juntas
-  recompensaDePresente(moedas, qtd, quem) {
-    if (moedas <= this.cfg.dropAteMoedas) {
+  // lado: 'ajuda' (1 moeda = drop de paraquedas) ou 'atrapalha' (1 moeda = conversível dos zumbis)
+  recompensaDePresente(moedas, qtd, quem, lado = 'ajuda') {
+    if (moedas <= this.cfg.dropAteMoedas && lado === 'atrapalha') {
+      const n = Math.min(CONVERSIVEL.porPresente, Math.max(1, qtd));
+      // conversível ou zumbi paraquedista (sorteio por unidade)
+      for (let k = 0; k < n; k++) this.agendar(0.8 + k * CONVERSIVEL.entre, () => this.rng.chance(PARAQUEDISTA.chance) ? this.paraquedista(quem) : this.conversivel(quem));
+    } else if (moedas <= this.cfg.dropAteMoedas) {
       const n = Math.min(RECOMPENSA.dropsPorPresente, Math.max(1, qtd));
       for (let k = 0; k < n; k++) this.agendar(0.3 + k * 0.45, () => this.soltarDrop(quem));
     }
@@ -2129,6 +2145,107 @@ export class Jogo {
       if (r.resistencia) h.attr.addMod({ id: 'runa:def:' + id, attr: 'defesa', soma: defesaRuna(r, nivel), fonte: 'runa' });
       if (id === 'principal' && r.dano) h.attr.addMod({ id: 'runa:dano:principal', attr: 'dano', mult: 1 + R.runa.principal * nivel * r.dano, fonte: 'runa' });
     }
+  }
+
+  /* =================== Conversível dos zumbis (presente de atrapalhar de 1 moeda; recompensas.js) =================== */
+  conversivel(quem, esperou = 0) {
+    if (this.fase !== 'jogo') return;
+    const C = CONVERSIVEL;
+    if (this.room || this.arena) { if (esperou < C.espera) this.agendar(2, () => this.conversivel(quem, esperou + 2)); return; }   // espera voltar pra rua
+    const h = this.hero, [ax, ay] = DIRS[this.rota.dir];
+    const s = this.rng.chance(0.5) ? 1 : -1;   // 1: vem por trás, no mesmo sentido do herói; -1: vem de frente
+    const dx = ax * s, dy = ay * s;
+    const car = {
+      id: proxId++, x: h.x - dx * C.distancia, y: h.y - dy * C.distancia, dx, dy,
+      resta: C.distancia * 2, atingidos: new Set(), quem, desvia: this.rng.chance(C.chanceDesviar), zumbis: 0, heroi: false,
+      passageiros: 3 + this.rng.int(0, 1)
+    };
+    this.carros.push(car);
+    this.emit('conversivel', { nick: quem?.nick || null, x: car.x, y: car.y, distancia: C.distancia, vel: C.vel });
+  }
+
+  /* =================== Zumbi paraquedista (presente de atrapalhar de 1 moeda; recompensas.js) =================== */
+  paraquedista(quem, esperou = 0) {
+    if (this.fase !== 'jogo') return;
+    if (this.room || this.arena) { if (esperou < CONVERSIVEL.espera) this.agendar(2, () => this.paraquedista(quem, esperou + 2)); return; }
+    const h = this.hero, a = this.rng.next() * Math.PI * 2;
+    this.paraquedistas.push({ id: proxId++, x: h.x + Math.cos(a) * 3, y: h.y + Math.sin(a) * 3, z: PARAQUEDISTA.altura, quem, roupa: this.rng.int(0, 5) });
+    this.emit('paraquedista', { nick: quem?.nick || null, x: h.x, y: h.y });
+  }
+
+  atualizarParaquedistas(dt) {
+    if (!this.paraquedistas.length) return;
+    const P = PARAQUEDISTA, h = this.hero;
+    for (const p of this.paraquedistas) {
+      p.z -= P.queda * dt;
+      // desce seguindo o herói (não tem como fugir)
+      const k = Math.min(1, dt * 1.6);
+      p.x += (h.x - p.x) * k; p.y += (h.y - p.y) * k;
+      if (p.z > 0) continue;
+      p.pousou = true;
+      if (this.fase !== 'jogo') continue;
+      if (this.caido || h.invT > 0 || h.invQ > 0) {
+        // quicou: cai do lado e vira zumbi normal
+        const q = this.pontoPerto(h, 1.5) || { x: h.x, y: h.y };
+        this.criarZumbi('comum', q.x, q.y, p.quem, { nascendo: 0.2 });
+        this.emit('paraquedista_quicou', { x: h.x, y: h.y });
+        continue;
+      }
+      const antes = h.estados.tem('agarrado') ? h.agarradosQuem || [] : [];
+      this.aplicarStatus(h, 'agarrado', { quarteiroes: P.quarteiroes, pilhas: 1, fonte: p.quem });
+      h.agarradosQuem = [...antes, p.quem].slice(-P.maxPilhas);
+      this.emit('agarrou', { nick: p.quem?.nick || null, pilhas: h.estados.pilhas('agarrado'), x: h.x, y: h.y });
+    }
+    this.paraquedistas = this.paraquedistas.filter(p => !p.pousou);
+  }
+
+  // Passou o tempo: os zumbis soltam a perna e viram zumbis normais no chão
+  soltarPerna() {
+    const h = this.hero, quem = h.agarradosQuem || [];
+    for (const q of quem.length ? quem : [null]) {
+      const p = this.pontoPerto(h, 1.2) || { x: h.x, y: h.y };
+      this.criarZumbi('comum', p.x, p.y, q, { nascendo: 0.1 });
+    }
+    h.agarradosQuem = [];
+    this.emit('soltou_perna', { x: h.x, y: h.y, qtd: Math.max(1, quem.length) });
+  }
+
+  atualizarCarros(dt) {
+    this.atualizarParaquedistas(dt);
+    if (!this.carros.length) return;
+    const C = CONVERSIVEL, h = this.hero;
+    for (const c of this.carros) {
+      const passo = C.vel * dt;
+      c.x += c.dx * passo; c.y += c.dy * passo; c.resta -= passo;
+      // quem está na frente do carro: herói e zumbis (inclusive chefes)
+      const pega = (e, raio) => {
+        const rx = e.x - c.x, ry = e.y - c.y;
+        const along = rx * c.dx + ry * c.dy, lat = rx * -c.dy + ry * c.dx;
+        return Math.abs(along) < C.comprimento / 2 + raio && Math.abs(lat) < C.largura / 2 + raio ? (lat >= 0 ? 1 : -1) : 0;
+      };
+      if (this.fase === 'jogo' && !this.caido && !c.atingidos.has(h)) {
+        const lado = pega(h, 0.22);
+        if (lado) {
+          c.atingidos.add(h); c.heroi = true;
+          this.ferirHeroi(h.vida * C.dano, c.quem, c.quem ? `o conversível de ${c.quem.nick}` : 'o conversível', 'esmagar');
+          this.mover(h, -c.dy * lado * 1.2, c.dx * lado * 1.2, 0.22);   // jogado pro lado
+          this.aplicarStatus(h, 'atordoado', { duracao: 0.6 });
+          this.emit('atropelou', { x: h.x, y: h.y, heroi: true });
+        }
+      }
+      for (const z of this.zumbis) {
+        if (z.morto || z.nascendo > 0 || c.atingidos.has(z)) continue;
+        const lado = pega(z, ZUMBIS[z.tipo].raio);
+        if (!lado) continue;
+        c.atingidos.add(z); c.zumbis++;
+        z.vida *= 1 - C.dano; z.flash = 0.15;   // metade da vida atual (não passa pelos multiplicadores: é metade mesmo)
+        z.kx += -c.dy * lado * 6; z.ky += c.dx * lado * 6;
+        this.aplicarStatus(z, 'atordoado', { duracao: 0.8 });
+        this.emit('atropelou', { x: z.x, y: z.y, heroi: false, chefe: !!ZUMBIS[z.tipo].chefe });
+      }
+      if (c.resta <= 0) this.emit('conversivel_fim', { nick: c.quem?.nick || null, zumbis: c.zumbis, heroi: c.heroi });
+    }
+    this.carros = this.carros.filter(c => c.resta > 0);
   }
 
   /* =================== Coisas ruins mandadas pelo público =================== */
@@ -2360,7 +2477,7 @@ export class Jogo {
     if (this.fase === 'jogo') this.emit('presente_heroi', { nick: quem.nick, emoji: emoji || regra.emoji || '🎁', lado, x: this.hero.x, y: this.hero.y });
     if (lado === 'ajuda' && (coins > 0 || giftName === 'seguiu')) this.ultimaAjudaT = this.t;
     // recompensas de presente (recompensas.js): drop de paraquedas (1 moeda) e doação (inspiração + colosso)
-    if (coins > 0 && quem.id !== '__curtidas' && this.fase === 'jogo') this.recompensaDePresente(coins, qtd, quem);
+    if (coins > 0 && quem.id !== '__curtidas' && this.fase === 'jogo') this.recompensaDePresente(coins, qtd, quem, lado);
     if (lado === 'ajuda') {
       if (this.fase === 'jogo') {
         // caído: qualquer presente de ajuda (ou seguir) levanta; compartilhar e curtidas não (são de graça e sem limite)
