@@ -6,7 +6,7 @@ export const PRESENTES_PADRAO = {
     "nome": "Rosa",
     "moedas": 1,
     "efeito": "cura",
-    "valor": 10
+    "valor": 14
   },
   "Ice Cream Cone": {
     "emoji": "🍦",
@@ -41,7 +41,7 @@ export const PRESENTES_PADRAO = {
     "nome": "Rosquinha",
     "moedas": 30,
     "efeito": "kit",
-    "valor": 25
+    "valor": 35
   },
   "Hat and Mustache": {
     "emoji": "🎩",
@@ -55,7 +55,7 @@ export const PRESENTES_PADRAO = {
     "nome": "Mãos de coração",
     "moedas": 100,
     "efeito": "colete",
-    "golpes": 3
+    "golpes": 4
   },
   "Corgi": {
     "emoji": "🐶",
@@ -129,9 +129,12 @@ export const JOGO_PADRAO = {
   "ameaca_por_minuto": 1.2,
   "ameaca_por_quarteirao": 0.12,
   "ameaca_por_nivel_do_heroi": 0.45,
-  "horda_a_cada_segundos": 24,
+  "horda_a_cada_quarteiroes": 5,
+  "horda_a_cada_segundos": 0,
   "horda_base": 10,
   "horda_por_nivel": 2,
+  "zumbis_por_quarteirao": 24,
+  "zumbis_por_quarteirao_por_nivel": 2,
   "zumbis_na_rua_base": 14,
   "zumbis_na_rua_por_nivel": 2.5,
   "ameaca_por_caminho_perigoso": 0.18,
