@@ -133,6 +133,9 @@ export class Som {
   morteHeroi() { [392, 349, 311, 262].forEach((f, i) => this.osc('triangle', f, f * 0.98, 0.5, 0.16, i * 0.32)); this.noise(1.5, 0.2, 'lowpass', 300); }
   novoHeroi() { [262, 330, 392, 523].forEach((f, i) => this.osc('triangle', f, f, 0.25, 0.12, i * 0.1)); }
   recorde() { [523, 659, 784, 1047, 784, 1047].forEach((f, i) => this.osc('square', f, f, 0.15, 0.08, i * 0.1)); }
+  historia() { [392, 494, 587, 740, 587].forEach((f, i) => this.osc('sine', f, f, 0.6, 0.07, i * 0.18)); this.osc('triangle', 98, 98, 1.6, 0.08); }
+  perigo() { this.osc('sawtooth', 110, 55, 0.5, 0.18); this.noise(0.4, 0.2, 'lowpass', 500, 0, 0.7, 120); }
+  livre() { [523, 659].forEach((f, i) => this.osc('sine', f, f, 0.4, 0.07, i * 0.12)); }
   noite() { this.osc('sine', 110, 55, 2.5, 0.2); this.osc('sine', 165, 82, 2.5, 0.12); }
 
   /* ---------- música ambiente: um zumbido grave e um pulso que acelera com o perigo ---------- */

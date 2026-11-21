@@ -42,17 +42,18 @@ export const AMEACA = {
   predioPorNivel: 0.12
 };
 
-export function pontosAmeaca(minutos, quarteiroes, nivelHeroi, A = AMEACA) {
-  return minutos * A.porMinuto + quarteiroes * A.porQuarteirao + Math.max(0, nivelHeroi - 1) * A.porNivelHeroi;
+// extra = pontos ganhos de outros jeitos (ex.: caminhos perigosos, ver caminhos.js)
+export function pontosAmeaca(minutos, quarteiroes, nivelHeroi, A = AMEACA, extra = 0) {
+  return minutos * A.porMinuto + quarteiroes * A.porQuarteirao + Math.max(0, nivelHeroi - 1) * A.porNivelHeroi + extra;
 }
 
-export function nivelAmeaca(minutos, quarteiroes, nivelHeroi, A = AMEACA) {
-  return Math.min(A.maximo, 1 + Math.floor(pontosAmeaca(minutos, quarteiroes, nivelHeroi, A)));
+export function nivelAmeaca(minutos, quarteiroes, nivelHeroi, A = AMEACA, extra = 0) {
+  return Math.min(A.maximo, 1 + Math.floor(pontosAmeaca(minutos, quarteiroes, nivelHeroi, A, extra)));
 }
 
 // Quanto falta (0 a 1) para o próximo nível — usado na barrinha do painel
-export function progressoAmeaca(minutos, quarteiroes, nivelHeroi, A = AMEACA) {
-  const p = pontosAmeaca(minutos, quarteiroes, nivelHeroi, A);
+export function progressoAmeaca(minutos, quarteiroes, nivelHeroi, A = AMEACA, extra = 0) {
+  const p = pontosAmeaca(minutos, quarteiroes, nivelHeroi, A, extra);
   return p - Math.floor(p);
 }
 

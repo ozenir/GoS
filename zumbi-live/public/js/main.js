@@ -17,7 +17,7 @@ const isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const guardado = (k, padrao) => { try { const v = JSON.parse(localStorage.getItem('hch.' + k)); return v ?? padrao; } catch { return padrao; } };
 const guardar = (k, v) => { try { localStorage.setItem('hch.' + k, JSON.stringify(v)); } catch { /* sem armazenamento: tudo bem */ } };
 
-const jogo = new Jogo({ recorde: guardado('recorde', 0), hall: guardado('hall', []), heroiN: guardado('heroiN', 0) });
+const jogo = new Jogo({ recorde: guardado('recorde', 0), hall: guardado('hall', []), heroiN: guardado('heroiN', 0), historiaVista: guardado('historia', []) });
 jogo.configurar(JOGO_PADRAO);
 const render = new Render($('game'), $('texto'));
 const hud = new Hud();
@@ -196,6 +196,8 @@ function tocar(e, g) {
     case 'novo_heroi': som.novoHeroi(); break;
     case 'recorde': som.recorde(); break;
     case 'noite': som.noite(); break;
+    case 'historia': som.historia(); break;
+    case 'caminho': if (e.tipo === 'perigoso') som.perigo(); else som.livre(); break;
   }
 }
 
@@ -215,6 +217,7 @@ function loop(agora) {
       tocar(e, jogo);
       if (e.type === 'heroi_morreu') { guardar('recorde', jogo.recorde); guardar('hall', jogo.hall); }
       if (e.type === 'novo_heroi') guardar('heroiN', jogo.heroiN);
+      if (e.type === 'historia') guardar('historia', jogo.historia.lista());
     } catch (err) { console.error('evento', e.type, err); }
   }
   render.draw(jogo, dt);

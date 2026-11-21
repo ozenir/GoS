@@ -55,6 +55,9 @@ function rodar(nome, intensidade, seed) {
   console.log(`  média: ${fmtTempo(media('tempo'))} de vida, ${media('quarteiroes').toFixed(1)} quarteirões, ${media('abates').toFixed(0)} abates, nível ${media('nivel').toFixed(1)}, ameaça ${media('ameaca').toFixed(1)}; no máximo ${maxZ} zumbis ao mesmo tempo`);
   const interessantes = ['ameaca', 'horda', 'votacao_abriu', 'decisao', 'entrou_predio', 'saiu_predio', 'chefe', 'bau', 'nivel', 'vida_baixa', 'noite', 'helicoptero', 'alarme', 'presente', 'recorde'];
   console.log('  eventos:', interessantes.map(k => `${k} ${contagem[k] || 0}`).join(' · '));
+  const cam = res.reduce((a, r) => (a.p += r.caminhos.perigoso, a.l += r.caminhos.livre, a.h += r.caminhos.historia, a), { p: 0, l: 0, h: 0 });
+  const tot = Math.max(1, cam.p + cam.l + cam.h);
+  console.log(`  caminhos: perigoso ${(cam.p / tot * 100).toFixed(0)}% · livre ${(cam.l / tot * 100).toFixed(0)}% · história ${(cam.h / tot * 100).toFixed(1)}% (${tot} cruzamentos); fragmentos encontrados: ${contagem.historia || 0}`);
   return res;
 }
 

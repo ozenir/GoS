@@ -129,6 +129,9 @@ export const JOGO_PADRAO = {
   "horda_a_cada_segundos": 40,
   "horda_base": 5,
   "horda_por_nivel": 2,
+  "caminho_perigoso_porcento": 80,
+  "caminho_livre_porcento": 18,
+  "caminho_historia_porcento": 2,
   "noite_a_cada_segundos": 150,
   "noite_dura_segundos": 35,
   "segundos_dentro_do_predio": 70

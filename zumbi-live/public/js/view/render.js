@@ -489,10 +489,10 @@ export class Render {
     const z = Math.round(it.z * 14);
     const sh = S.sombra(Math.max(4, 12 - z / 6));
     ctx.drawImage(sh, sx - Math.floor(sh.width / 2), sy - 2);
-    const brilha = it.kind === 'bau_lendario' || it.kind === 'arma' || it.kind === 'bau_medio';
+    const brilha = it.kind === 'bau_lendario' || it.kind === 'arma' || it.kind === 'bau_medio' || it.kind === 'historia';
     if (brilha && z === 0) {
       const p = 0.5 + 0.5 * Math.sin(this.t * 5 + it.id);
-      ctx.globalAlpha = 0.25 + 0.25 * p; disc(ctx, sx, sy - 6, 10 + p * 3, it.kind === 'bau_lendario' ? '#ffd23f' : '#9fd0ff', 0.7); ctx.globalAlpha = 1;
+      ctx.globalAlpha = 0.25 + 0.25 * p; disc(ctx, sx, sy - 6, 10 + p * 3, it.kind === 'bau_lendario' ? '#ffd23f' : it.kind === 'historia' ? '#fff3d0' : '#9fd0ff', 0.7); ctx.globalAlpha = 1;
       if (Math.random() < 0.08) this.particula({ x: it.x + (Math.random() - 0.5) * 0.6, y: it.y + (Math.random() - 0.5) * 0.6, z: 0.5, vz: 1.2, g: -0.3, life: 0.8, cor: it.kind === 'bau_lendario' ? '#fff3a0' : '#d8f0ff', tam: 1 });
     }
     if (z > 0) { // paraquedas

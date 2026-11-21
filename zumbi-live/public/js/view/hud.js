@@ -118,14 +118,33 @@ export class Hud {
       case 'aviso': this.banner(e.texto, '', e.tipo === 'perigo' ? 'perigo' : 'bom', 2.4); break;
       case 'ameaca': this.banner(`☠️ AMEAÇA ${e.nivel}`, 'zumbis mais resistentes e hordas maiores', 'perigo', 1.8); break;
       case 'horda': this.banner('🧟 HORDA CHEGANDO!', `${e.qtd} zumbis`, 'perigo', 2); break;
+      case 'caminho':
+        if (e.tipo === 'perigoso') this.banner(`${e.emoji} ${e.nome}`, `caminho perigoso: ${e.texto}`, 'perigo', 2.4);
+        else if (e.tipo === 'historia') this.banner('📜 TEM ALGO NO CHÃO...', 'uma pista do que aconteceu aqui', 'ouro', 2.2);
+        else this.banner('🍃 CAMINHO LIVRE', 'nenhum zumbi novo nesta rua', 'bom', 2.2);
+        break;
+      case 'historia': this.mostrarHistoria(e); break;
       case 'recorde': this.banner('🏆 NOVO RECORDE!', `${e.quarteiroes} quarteirões`, 'ouro', 2.6); break;
       case 'entrou_predio': this.banner(`${e.emoji} ${e.nome.toUpperCase()}`, 'pegue o que der e saia pelos fundos', '', 2.2); break;
       case 'vida_baixa': this.banner('⚠️ VIDA BAIXA!', 'mande 🌹 ou 🍩 pra salvar o herói', 'perigo', 2.2); break;
       case 'decisao': this.resultadoAte = performance.now() + 2600; break;
-      case 'novo_heroi': this.intro(e, g); $('over').hidden = true; break;
+      case 'novo_heroi': this.intro(e, g); $('over').hidden = true; this.histT = 0; $('h-hist').hidden = true; break;
       case 'heroi_morreu': this.relatorio(e.relatorio, e.hall, g); break;
       case 'arma': if (e.id === 'escopeta' && e.quem) this.banner('💥 ESCOPETA!', `presente de ${e.quem}`, 'bom', 1.8); if (e.id === 'taco') this.banner('🏏 TACO COM PREGOS!', e.quem ? `presente de ${e.quem}` : '', 'bom', 1.8); break;
     }
+  }
+
+  mostrarHistoria(e) {
+    const f = e.fragmento;
+    $('hs-cap').textContent = `📜 Fragmento ${e.numero} de ${e.total} · ${e.capitulo}`;
+    $('hs-tit').textContent = f.titulo;
+    $('hs-txt').textContent = f.texto;
+    $('hs-ass').textContent = f.assinatura || '';
+    $('hs-bar').style.width = (e.numero / e.total * 100).toFixed(0) + '%';
+    const el = $('h-hist');
+    el.hidden = false; el.classList.remove('out');
+    el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+    this.histT = 11;
   }
 
   intro(e, g) {
@@ -199,7 +218,7 @@ export class Hud {
     this.set('h-rec', String(Math.max(g.recorde, g.stats.quarteiroes)));
     this.set('h-abates', String(g.stats.abates));
     this.set('h-ameaca', String(g.nivelAmeaca));
-    if (g.fase === 'jogo') $('h-amx').style.width = (progressoAmeaca((g.t - g.stats.inicio) / 60, g.stats.quarteiroes, h.nivel, g.A) * 100).toFixed(0) + '%';
+    if (g.fase === 'jogo') $('h-amx').style.width = (progressoAmeaca((g.t - g.stats.inicio) / 60, g.stats.quarteiroes, h.nivel, g.A, g.ameacaBonus) * 100).toFixed(0) + '%';
     this.set('h-tempo', fmtTempo((g.fase === 'jogo' ? g.t : g.t - g.faseT) - g.stats.inicio));
     $('h-likes').style.width = (g.cfg.likesPor > 0 ? clamp(g.likes / g.cfg.likesPor, 0, 1) * 100 : 0).toFixed(0) + '%';
 
@@ -209,6 +228,7 @@ export class Hud {
     if (g.fila.length && g.protecao > 0) st.push(`<span class="chip mal">😈 ${g.fila.length} na fila</span>`);
     if (g.noiteT > 0) st.push(`<span class="chip mal">🌙 noite ${Math.ceil(g.noiteT)}s</span>`);
     if (g.room) st.push(`<span class="chip">${g.room.shop.emoji} ${g.room.shop.nome} · ${Math.max(0, Math.ceil(g.cfg.predioT - g.salaT))}s</span>`);
+    if (g.trecho?.livre && !g.room && g.fase === 'jogo') st.push(`<span class="chip ok">${g.trecho.tipo === 'historia' ? '📜 rua da pista' : '🍃 rua tranquila'}</span>`);
     if (h.invT > 0) st.push(`<span class="chip ok">✨ invencível ${Math.ceil(h.invT)}s</span>`);
     const lento = h.attr.restante('lento');
     if (lento > 0) st.push(`<span class="chip mal">🐌 lento ${Math.ceil(lento)}s</span>`);
@@ -223,6 +243,7 @@ export class Hud {
 
     // banner, intro, relatório
     if (this.bannerT > 0 && (this.bannerT -= dt) <= 0) { const b = $('h-banner'); b.classList.add('out'); setTimeout(() => { if (this.bannerT <= 0) b.hidden = true; }, 500); }
+    if (this.histT > 0 && (this.histT -= dt) <= 0) { const el = $('h-hist'); el.classList.add('out'); setTimeout(() => { if (this.histT <= 0) el.hidden = true; }, 500); }
     if (this.introT > 0 && (this.introT -= dt) <= 0) { const el = $('intro'); el.classList.add('out'); setTimeout(() => { el.hidden = true; }, 420); }
     if (g.fase === 'morto' && this.rel) {
       this.relT += dt;

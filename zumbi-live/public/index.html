@@ -188,6 +188,15 @@ body.foco .app{padding-block:8px}
 .hall div{display:flex;justify-content:space-between;background:rgba(255,255,255,.06);border-radius:2cqw;padding:.8cqw 2.4cqw}
 .o-next{font-size:3.2cqw;opacity:.85}
 .o-next b{font-variant-numeric:tabular-nums}
+.hist{position:absolute;left:5cqw;right:5cqw;top:96cqw;padding:3cqw 3.6cqw 3.2cqw;display:flex;flex-direction:column;gap:1.2cqw;background:rgba(36,28,18,.94);border:.5cqw solid #c9a45a;border-radius:2.4cqw;box-shadow:0 1cqw 4cqw rgba(0,0,0,.6),0 0 4cqw rgba(255,210,120,.25);animation:histIn .6s cubic-bezier(.2,1.4,.4,1);font-family:var(--font-display)}
+.hist small{font-size:2.6cqw;color:#e8c98a;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.hist b{font-size:4.6cqw;color:#fff3d6;line-height:1.1}
+.hist p{margin:0;font-family:var(--font-body);font-size:3.25cqw;line-height:1.45;color:#f3e6cc}
+.hist em{font-style:italic;font-size:2.7cqw;color:#c9a45a;text-align:right}
+.hist .barra{height:.8cqw;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
+.hist .barra i{display:block;height:100%;background:#c9a45a}
+.hist.out{animation:out .5s ease-in forwards}
+@keyframes histIn{from{transform:translateY(4cqw) rotate(-2deg);opacity:0}to{transform:none;opacity:1}}
 .snd-hint{position:absolute;left:50%;top:140cqw;transform:translateX(-50%);font:600 3cqw var(--font-display);background:#2a2238;color:#fff;padding:1cqw 3cqw;border-radius:99px;white-space:nowrap}
 .sem-rede{position:absolute;right:3cqw;bottom:46cqw;font:600 2.6cqw var(--font-display);background:rgba(184,40,30,.9);color:#fff;padding:.8cqw 2.4cqw;border-radius:99px}
 @media (prefers-reduced-motion: reduce){.toast,.toast.out,.over-card,.intro,.intro.out,.chip.fx,.banner .bt,.cta{animation:none}}
@@ -238,6 +247,8 @@ body.foco .app{padding-block:8px}
             <div class="rk atrapalha card"><h4>😈 ATRAPALHARAM</h4><div id="rk-atrapalha"></div></div>
           </div>
         </div>
+
+        <div class="hist" id="h-hist" hidden><small id="hs-cap"></small><b id="hs-tit"></b><p id="hs-txt"></p><em id="hs-ass"></em><div class="barra"><i id="hs-bar"></i></div></div>
 
         <div class="intro card" id="intro" hidden><small id="i-n">Sobrevivente #1</small><b id="i-nome">👮 Policial</b><span id="i-arma"></span><span class="aviso" id="i-aviso" hidden></span></div>
 

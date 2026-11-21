@@ -240,6 +240,12 @@ export function spriteItem(kind) {
   } else if (kind === 'bau_lendario') {
     caixaIso(x, 10, 18, 8, 7, 7, '#f2c94c', '#d8a830', '#b8861e');
     r(9, 9, 3, 3, '#d33b2c'); r(10, 10, 1, 1, '#ffffff'); r(4, 13, 1, 3, '#8a5a10'); r(16, 13, 1, 3, '#8a5a10');
+  } else if (kind === 'historia') {
+    // folha de papel dobrada
+    fillPoly(x, [[4, 9], [11, 5], [17, 9], [10, 13]], '#f3e6cc');
+    fillPoly(x, [[4, 9], [10, 13], [10, 15], [4, 11]], '#d8c8a8');
+    fillPoly(x, [[10, 13], [17, 9], [17, 11], [10, 15]], '#c0ae8a');
+    r(8, 8, 4, 1, '#8a7a5a'); r(9, 9, 4, 1, '#8a7a5a'); r(11, 10, 3, 1, '#8a7a5a');
   } else if (kind === 'arma') {
     r(3, 9, 13, 3, '#3a3a40'); r(12, 12, 3, 4, '#5a3a22'); r(15, 9, 2, 2, '#3a3a40'); r(4, 10, 8, 1, '#6a6a70');
   }

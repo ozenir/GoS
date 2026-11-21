@@ -15,6 +15,8 @@ import {
 import {
   AMEACA, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos
 } from './ameaca.js';
+import { CHANCES_PADRAO, PERIGOS, AMEACA_POR_PERIGO, ATRASO_PERIGO, sortearCaminho } from './caminhos.js';
+import { Historia, HISTORIA } from './historia.js';
 
 export const PADRAO = {
   votoDur: 12, relNum: 10, relDest: 12, protecao: 15, likesPor: 300, maxZ: 90,
@@ -31,6 +33,8 @@ const CHAVES_AMEACA = {
   ameaca_por_minuto: 'porMinuto', ameaca_por_quarteirao: 'porQuarteirao', ameaca_por_nivel_do_heroi: 'porNivelHeroi',
   horda_a_cada_segundos: 'hordaCadaSegundos', horda_base: 'hordaBase', horda_por_nivel: 'hordaPorNivel'
 };
+// Chances de cada tipo de caminho (caminhos.js)
+const CHAVES_CAMINHO = { caminho_perigoso_porcento: 'perigoso', caminho_livre_porcento: 'livre', caminho_historia_porcento: 'historia' };
 
 let proxId = 1;
 
@@ -38,6 +42,8 @@ export class Jogo {
   constructor(opts = {}) {
     this.cfg = { ...PADRAO };
     this.A = { ...AMEACA };
+    this.chances = { ...CHANCES_PADRAO };
+    this.historia = new Historia(opts.historiaVista);
     this.rng = makeRng(opts.seed ?? (Date.now() & 0xffffffff));
     this.events = [];
     this.t = 0;
@@ -66,6 +72,8 @@ export class Jogo {
       if (c && Number.isFinite(Number(v)) && Number(v) >= 0) this.cfg[c] = Number(v);
       const a = CHAVES_AMEACA[k];
       if (a && Number.isFinite(Number(v)) && Number(v) >= 0) this.A[a] = Number(v);
+      const ch = CHAVES_CAMINHO[k];
+      if (ch && Number.isFinite(Number(v)) && Number(v) >= 0) this.chances[ch] = Number(v);
     }
   }
 
@@ -103,7 +111,7 @@ export class Jogo {
     this.decisao = null;
     this.indoPorta = null;
     this.ultimaLoja = -9;
-    this.stats = { inicio: this.t, quarteiroes: 0, abates: 0, predios: 0, ajudou: new Map(), atrapalhou: new Map(), matador: null, cruzamentos: 0 };
+    this.stats = { inicio: this.t, quarteiroes: 0, abates: 0, predios: 0, ajudou: new Map(), atrapalhou: new Map(), matador: null, cruzamentos: 0, caminhos: { perigoso: 0, livre: 0, historia: 0 } };
     this.fase = 'jogo';
     this.faseT = 0;
     this.protecao = this.cfg.protecao;
@@ -111,6 +119,8 @@ export class Jogo {
     this.proxNoite = this.cfg.noiteCada;
     this.spawnT = 3;
     this.nivelAmeaca = 1;
+    this.ameacaBonus = 0;
+    this.trecho = null;
     this.hordaT = this.A.hordaCadaSegundos;
     this.alarmeT = 0;
     this.alarmeCarro = null;
@@ -140,6 +150,7 @@ export class Jogo {
       n: h.n, classe: h.classe, nome: CLASSES[h.classe].nome, emoji: CLASSES[h.classe].emoji,
       quarteiroes: q, abates: this.stats.abates, tempo, nivel: h.nivel, predios: this.stats.predios, ameaca: this.nivelAmeaca,
       recorde: this.recorde, novoRecorde, matador: this.stats.matador,
+      caminhos: { ...this.stats.caminhos },
       topAjuda: topo(this.stats.ajudou), topAtrapalha: topo(this.stats.atrapalhou)
     };
     this.hall.push({ n: h.n, nome: CLASSES[h.classe].nome, emoji: CLASSES[h.classe].emoji, quarteiroes: q, tempo });
@@ -180,7 +191,7 @@ export class Jogo {
   /* =================== Diretor: ritmo da partida =================== */
   diretor(dt) {
     const minutos = (this.t - this.stats.inicio) / 60;
-    const n = nivelAmeaca(minutos, this.stats.quarteiroes, this.hero.nivel, this.A);
+    const n = nivelAmeaca(minutos, this.stats.quarteiroes, this.hero.nivel, this.A, this.ameacaBonus);
     if (n > this.nivelAmeaca) { this.nivelAmeaca = n; this.emit('ameaca', { nivel: n }); }
     if (this.cfg.noiteCada > 0) {
       this.proxNoite -= dt;
@@ -210,6 +221,8 @@ export class Jogo {
     const noite = this.noiteT > 0;
     const vidaPct = h.vida / h.vidaMax;
     const nv = this.nivelAmeaca;
+    // Caminho livre: nenhum zumbi novo até o próximo cruzamento
+    if (this.trecho?.livre) return;
     // Horda que chega sozinha de tempos em tempos (cresce com a ameaça)
     if (this.protecao <= 0 && this.A.hordaCadaSegundos > 0) {
       this.hordaT -= dt;
@@ -269,6 +282,7 @@ export class Jogo {
     this.indoPorta = null;
     this.ultimaLoja = this.stats.cruzamentos;
     this.stats.predios++;
+    this.trecho = null;
     h.x = this.room.entrada.x; h.y = this.room.entrada.y;
     h.fx = 0; h.fy = -1;
     // Chefes seguem o herói pra dentro; o resto fica lá fora
@@ -337,6 +351,7 @@ export class Jogo {
     for (const it of this.itens) { const q = this.pontoAFrente(2.5); it.x = q.x; it.y = q.y; }
     this.decisao = null;
     this.voto = null;
+    this.trecho = null;
     this.votoAbreT = 0.8;
     this.spawnT = 2;
     this.flowT = 0;
@@ -401,6 +416,24 @@ export class Jogo {
     this.votoAbreT = 0.8;
     if (virou) this.emit('virou', { dir: r.dir });
     this.checarRecorde();
+    this.iniciarTrecho();
+  }
+
+  // Sorteia o que vai acontecer na rua escolhida (caminhos.js)
+  iniciarTrecho() {
+    const frag = this.historia.proximo();
+    const s = sortearCaminho(this.rng, this.chances, !!frag);
+    this.trecho = { tipo: s.tipo, livre: s.tipo !== 'perigoso', perigo: s.perigo || null };
+    this.stats.caminhos[s.tipo]++;
+    if (s.tipo === 'perigoso') {
+      const P = PERIGOS[s.perigo];
+      this.ameacaBonus += AMEACA_POR_PERIGO;
+      this.agendar(ATRASO_PERIGO, () => { if (!this.room) P.aplicar(this, this.nivelAmeaca); });
+      this.emit('caminho', { tipo: 'perigoso', perigo: s.perigo, nome: P.nome, emoji: P.emoji, texto: P.texto });
+    } else if (s.tipo === 'historia') {
+      this.agendar(1.2, () => { if (!this.room) this.soltarItem('historia', { id: frag.id }, null, 1.5); });
+      this.emit('caminho', { tipo: 'historia' });
+    } else this.emit('caminho', { tipo: 'livre' });
   }
 
   checarRecorde() {
@@ -986,6 +1019,13 @@ export class Jogo {
       case 'bau_medio': this.abrirBau('medio', quem); break;
       case 'bau_lendario': this.abrirBau('lendario', quem); break;
       case 'arma': this.trocarArma(it.data.arma, quem); this.emit('bau', { raridade: 'medio', arma: it.data.arma, x: it.x, y: it.y }); break;
+      case 'historia': {
+        const f = HISTORIA.fragmentos.find(x => x.id === it.data.id);
+        if (!f) break;
+        this.historia.marcar(f.id);
+        this.emit('historia', { fragmento: f, numero: this.historia.numero(f.id), total: this.historia.total, capitulo: this.historia.nomeCapitulo(f.capitulo) });
+        break;
+      }
     }
     this.emit('pegou', { kind: it.kind, x: it.x, y: it.y });
   }
@@ -1060,6 +1100,15 @@ export class Jogo {
     });
   }
 
+  // Zumbis que aparecem atrás do herói (emboscada)
+  soltarZumbisAtras(qtd) {
+    const h = this.hero;
+    for (let k = 0; k < qtd; k++) {
+      const p = this.room ? this.room.pontoLivre(this.rng, h, 3) : this.pontoNaRua(h, 5, 9, -1);
+      if (p) this.criarZumbi(this.rng.chance(0.25) ? 'corredor' : 'comum', p.x, p.y, null, { nascendo: 0.5 + k * 0.08 });
+    }
+  }
+
   armadilhaVidro(seg, quem) {
     const h = this.hero;
     if (this.room) { this.deixarLento(seg); this.emit('vidro_pisou', { x: h.x, y: h.y }); return; }
@@ -1115,13 +1164,14 @@ export class Jogo {
     }
   }
 
-  chefe(tipo, quem, atraso = 0) {
+  // opts.nome: nome em cima do chefe (se não vier, usa o nome de quem mandou). opts.vidaMult: vida extra/menor.
+  chefe(tipo, quem, atraso = 0, opts = {}) {
     const fazer = () => {
       const h = this.hero;
       const p = this.room ? this.room.pontoLivre(this.rng, h, 4) : this.pontoPerto(this.pontoAFrente(6), 1.5) || this.pontoAFrente(6);
       const extra = tipo === 'exheroi' ? { classe: this.ultimoHeroi?.classe, arma: this.ultimoHeroi?.arma } : null;
-      const nome = quem ? nomeSeguro(quem.nick, 16) : ZUMBIS[tipo].nome;
-      this.criarZumbi(tipo, p.x, p.y, tipo === 'exheroi' ? null : quem, { nome, nascendo: 1.2, extra });
+      const nome = opts.nome || (quem ? nomeSeguro(quem.nick, 16) : ZUMBIS[tipo].nome);
+      this.criarZumbi(tipo, p.x, p.y, tipo === 'exheroi' ? null : quem, { nome, nascendo: 1.2, extra, vidaMult: opts.vidaMult });
       this.emit('chefe', { tipo, nome, x: p.x, y: p.y });
     };
     if (atraso > 0) this.agendar(atraso, fazer); else fazer();
