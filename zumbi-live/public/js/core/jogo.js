@@ -12,16 +12,24 @@ import {
   atributosDaClasse, danoDoHeroi, intervaloTiro, intervaloCorpo, alcanceArma, velocidadeHeroi,
   danoNoHeroi, valorCura, statsZumbi, danoDoZumbi, resistenciaDe, FOGO_DPS, danoExplosao, danoAliado, ALIADOS
 } from './dano.js';
+import {
+  AMEACA, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos
+} from './ameaca.js';
 
 export const PADRAO = {
   votoDur: 12, relNum: 10, relDest: 12, protecao: 15, likesPor: 300, maxZ: 90,
-  velHeroi: 1.5, difQ: 0.1, difM: 0.17, noiteCada: 150, noiteDur: 35, predioT: 70
+  velHeroi: 1.5, noiteCada: 150, noiteDur: 35, predioT: 70
 };
 const CHAVES = {
   segundos_de_votacao: 'votoDur', segundos_do_relatorio: 'relNum', segundos_dos_destaques: 'relDest',
   protecao_ao_nascer_segundos: 'protecao', curtidas_por_suprimento: 'likesPor', maximo_zumbis: 'maxZ',
-  velocidade_do_heroi: 'velHeroi', dificuldade_por_quarteirao: 'difQ', dificuldade_por_minuto: 'difM',
+  velocidade_do_heroi: 'velHeroi',
   noite_a_cada_segundos: 'noiteCada', noite_dura_segundos: 'noiteDur', segundos_dentro_do_predio: 'predioT'
+};
+// Campos do config.json que mexem no nível de ameaça (ameaca.js)
+const CHAVES_AMEACA = {
+  ameaca_por_minuto: 'porMinuto', ameaca_por_quarteirao: 'porQuarteirao', ameaca_por_nivel_do_heroi: 'porNivelHeroi',
+  horda_a_cada_segundos: 'hordaCadaSegundos', horda_base: 'hordaBase', horda_por_nivel: 'hordaPorNivel'
 };
 
 let proxId = 1;
@@ -29,6 +37,7 @@ let proxId = 1;
 export class Jogo {
   constructor(opts = {}) {
     this.cfg = { ...PADRAO };
+    this.A = { ...AMEACA };
     this.rng = makeRng(opts.seed ?? (Date.now() & 0xffffffff));
     this.events = [];
     this.t = 0;
@@ -55,6 +64,8 @@ export class Jogo {
     for (const [k, v] of Object.entries(jogo)) {
       const c = CHAVES[k];
       if (c && Number.isFinite(Number(v)) && Number(v) >= 0) this.cfg[c] = Number(v);
+      const a = CHAVES_AMEACA[k];
+      if (a && Number.isFinite(Number(v)) && Number(v) >= 0) this.A[a] = Number(v);
     }
   }
 
@@ -99,7 +110,8 @@ export class Jogo {
     this.noiteT = 0;
     this.proxNoite = this.cfg.noiteCada;
     this.spawnT = 3;
-    this.dif = 1;
+    this.nivelAmeaca = 1;
+    this.hordaT = this.A.hordaCadaSegundos;
     this.alarmeT = 0;
     this.alarmeCarro = null;
     this.heliT = 0;
@@ -126,7 +138,7 @@ export class Jogo {
     const topo = m => [...m.values()].sort((a, b) => b.coins - a.coins)[0] || null;
     this.relatorio = {
       n: h.n, classe: h.classe, nome: CLASSES[h.classe].nome, emoji: CLASSES[h.classe].emoji,
-      quarteiroes: q, abates: this.stats.abates, tempo, nivel: h.nivel, predios: this.stats.predios,
+      quarteiroes: q, abates: this.stats.abates, tempo, nivel: h.nivel, predios: this.stats.predios, ameaca: this.nivelAmeaca,
       recorde: this.recorde, novoRecorde, matador: this.stats.matador,
       topAjuda: topo(this.stats.ajudou), topAtrapalha: topo(this.stats.atrapalhou)
     };
@@ -168,7 +180,8 @@ export class Jogo {
   /* =================== Diretor: ritmo da partida =================== */
   diretor(dt) {
     const minutos = (this.t - this.stats.inicio) / 60;
-    this.dif = 1 + this.stats.quarteiroes * this.cfg.difQ + minutos * this.cfg.difM;
+    const n = nivelAmeaca(minutos, this.stats.quarteiroes, this.hero.nivel, this.A);
+    if (n > this.nivelAmeaca) { this.nivelAmeaca = n; this.emit('ameaca', { nivel: n }); }
     if (this.cfg.noiteCada > 0) {
       this.proxNoite -= dt;
       if (this.proxNoite <= 0) { this.proxNoite = this.cfg.noiteCada; this.noite(this.cfg.noiteDur); }
@@ -196,7 +209,18 @@ export class Jogo {
     const h = this.hero;
     const noite = this.noiteT > 0;
     const vidaPct = h.vida / h.vidaMax;
-    let alvo = Math.round(5 + (this.dif - 1) * 7);
+    const nv = this.nivelAmeaca;
+    // Horda que chega sozinha de tempos em tempos (cresce com a ameaça)
+    if (this.protecao <= 0 && this.A.hordaCadaSegundos > 0) {
+      this.hordaT -= dt;
+      if (this.hordaT <= 0) {
+        this.hordaT = this.A.hordaCadaSegundos;
+        const qtd = tamanhoHorda(nv, this.A);
+        this.soltarZumbis('horda', qtd, null, { horda: true, semEscala: true });
+        this.emit('horda', { qtd });
+      }
+    }
+    let alvo = Math.round(alvoNaturais(nv, this.A));
     if (noite) alvo *= 1.6;
     if (vidaPct < 0.3) alvo *= 0.55;   // alivia quando o herói está quase morrendo (presentes não são afetados)
     if (this.protecao > 0) alvo *= 0.5;
@@ -205,8 +229,8 @@ export class Jogo {
     for (const z of this.zumbis) if (!z.dono) naturais++;
     this.spawnT -= dt;
     if (this.spawnT <= 0 && naturais < alvo) {
-      this.spawnT = clamp(1.6 / this.dif, 0.3, 1.6) * (noite ? 0.7 : 1);
-      const grupo = this.dif > 2.2 && this.rng.chance(0.3) ? 3 : 1;
+      this.spawnT = intervaloAparecer(nv, this.A) * (noite ? 0.7 : 1);
+      const grupo = tamanhoGrupo(nv, this.A);
       const p = this.pontoNaRua(h, 10, 15, 0.7);
       if (p) for (let k = 0; k < grupo; k++) {
         const q = this.pontoPerto(p, 1.5) || p;
@@ -224,18 +248,10 @@ export class Jogo {
     return this.nomes[this.rng.int(0, Math.min(this.nomes.length, 15) - 1)].nick;
   }
 
-  // Nível de ameaça: quão fortes os zumbis nascem agora (dano.js → statsZumbi)
-  ameaca() { return this.dif; }
+  // Nível de ameaça: quão fortes os zumbis nascem agora (força: dano.js → statsZumbi; quando sobe: ameaca.js)
+  ameaca() { return this.nivelAmeaca; }
 
-  tipoNatural() {
-    const d = this.dif;
-    return this.rng.weighted([
-      ['comum', 10],
-      ['gordo', 2.5],
-      ['corredor', clamp((d - 1.3) * 1.6, 0, 3)],
-      ['explosivo', clamp((d - 1.7) * 0.6, 0, 1)]
-    ]);
-  }
+  tipoNatural() { return this.rng.weighted(pesosTipos(this.nivelAmeaca)); }
 
   noite(seg) {
     const antes = this.noiteT > 0;
@@ -264,7 +280,7 @@ export class Jogo {
     for (const it of this.itens) { const p = this.room.pontoLivre(this.rng, null); it.x = p.x; it.y = p.y; }
     this.armadilhas = [];
     const info = this.room.info;
-    const nZ = Math.round(info.zumbis * (0.8 + 0.25 * this.dif));
+    const nZ = Math.round(info.zumbis * multPredio(this.nivelAmeaca, this.A));
     for (let k = 0; k < nZ; k++) {
       const p = this.room.pontoLivre(this.rng, this.room.entrada, 4);
       const tipo = shop.tipo === 'hospital' && this.rng.chance(0.3) ? 'gordo' : this.rng.chance(0.15 * shop.risco) ? 'corredor' : 'comum';
@@ -1016,6 +1032,8 @@ export class Jogo {
   /* =================== Coisas ruins mandadas pelo público =================== */
   soltarZumbis(tipo, qtd, quem, opts = {}) {
     const h = this.hero;
+    // Hordas mandadas pelo público crescem com a ameaça (o explosivo é sempre 1 por presente)
+    if (quem && tipo !== 'explosivo' && !opts.semEscala) qtd = Math.round(qtd * multPresente(this.nivelAmeaca, this.A));
     const nome = opts.nomeados && quem ? nomeSeguro(quem.nick, 12) : null;
     const lugares = [];
     if (this.room) {
@@ -1072,6 +1090,7 @@ export class Jogo {
 
   trem(qtd, quem) {
     const h = this.hero;
+    qtd = Math.round(qtd * multPresente(this.nivelAmeaca, this.A));
     if (!this.room) {
       // barricada atrás: não tem volta
       const [dx, dy] = DIRS[this.rota.dir];
@@ -1088,7 +1107,7 @@ export class Jogo {
         this.agendar(40, () => city.removeDyn(bar), true);
       }
     }
-    this.soltarZumbis('corredor', Math.ceil(qtd / 2), quem, {});
+    this.soltarZumbis('corredor', Math.ceil(qtd / 2), quem, { semEscala: true });
     const h2 = this.hero;
     for (let k = 0; k < Math.floor(qtd / 2); k++) {
       const p = this.room ? this.room.pontoLivre(this.rng, h2, 3) : this.pontoNaRua(h2, 5, 8, -1);

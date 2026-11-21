@@ -51,9 +51,9 @@ function rodar(nome, intensidade, seed) {
   }
   const media = k => res.reduce((a, r) => a + r[k], 0) / Math.max(1, res.length);
   console.log(`\n=== ${nome} (${res.length} heróis, ${((Date.now() - t0) / 1000).toFixed(1)} s de processamento para ${fmtTempo(passos * DT)} de jogo) ===`);
-  for (const r of res) console.log(`  #${r.n} ${r.nome.padEnd(10)} ${fmtTempo(r.tempo).padStart(5)}  quarteirões ${String(r.quarteiroes).padStart(3)}  abates ${String(r.abates).padStart(4)}  nível ${r.nivel}  prédios ${r.predios}  derrubado por: ${r.matador?.causa || '?'}`);
-  console.log(`  média: ${fmtTempo(media('tempo'))} de vida, ${media('quarteiroes').toFixed(1)} quarteirões, ${media('abates').toFixed(0)} abates, nível ${media('nivel').toFixed(1)}; no máximo ${maxZ} zumbis ao mesmo tempo`);
-  const interessantes = ['votacao_abriu', 'decisao', 'entrou_predio', 'saiu_predio', 'chefe', 'bau', 'nivel', 'vida_baixa', 'noite', 'helicoptero', 'alarme', 'presente', 'recorde'];
+  for (const r of res) console.log(`  #${r.n} ${r.nome.padEnd(10)} ${fmtTempo(r.tempo).padStart(5)}  quarteirões ${String(r.quarteiroes).padStart(3)}  abates ${String(r.abates).padStart(4)}  nível ${r.nivel}  ameaça ${r.ameaca}  prédios ${r.predios}  derrubado por: ${r.matador?.causa || '?'}`);
+  console.log(`  média: ${fmtTempo(media('tempo'))} de vida, ${media('quarteiroes').toFixed(1)} quarteirões, ${media('abates').toFixed(0)} abates, nível ${media('nivel').toFixed(1)}, ameaça ${media('ameaca').toFixed(1)}; no máximo ${maxZ} zumbis ao mesmo tempo`);
+  const interessantes = ['ameaca', 'horda', 'votacao_abriu', 'decisao', 'entrou_predio', 'saiu_predio', 'chefe', 'bau', 'nivel', 'vida_baixa', 'noite', 'helicoptero', 'alarme', 'presente', 'recorde'];
   console.log('  eventos:', interessantes.map(k => `${k} ${contagem[k] || 0}`).join(' · '));
   return res;
 }

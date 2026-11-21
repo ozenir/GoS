@@ -147,13 +147,14 @@ export const valorCura = (h, pct) => h.attr.get('vidaMax') * pct / 100 * h.attr.
 export const resistenciaDe = z => (z && z.resistencia) || 0;
 
 // Números de um zumbi novo. T = tabela do tipo (dados.js → ZUMBIS). ameaca = nível de ameaça (1, 2, 3...).
-// O escalonamento por ameaça fica todo aqui (ver ESCALA_AMEACA).
+// Quanto o zumbi fica mais forte a cada nível de ameaça (quando a ameaça sobe: ameaca.js).
 export const ESCALA_AMEACA = {
-  vida: 0.55,          // +55% de vida por nível de ameaça acima de 1
-  dano: 0.25,          // +25% de dano por nível
-  vel: 0,              // velocidade extra por nível (0 = não muda)
-  resistencia: 0,      // resistência extra por nível
-  resistenciaMax: 0.6
+  vida: 0.22,           // +22% de vida por nível acima de 1
+  dano: 0.12,           // +12% de dano por nível
+  vel: 0.025,           // +2,5% de velocidade por nível...
+  velMax: 0.35,         // ...até no máximo +35%
+  resistencia: 0.025,   // +2,5% de resistência (dano ignorado) por nível...
+  resistenciaMax: 0.4   // ...até no máximo 40%
 };
 export function statsZumbi(T, ameaca, vidaMult = 1) {
   const n = Math.max(0, ameaca - 1);
@@ -162,7 +163,7 @@ export function statsZumbi(T, ameaca, vidaMult = 1) {
   return {
     vida, vidaMax: vida,
     dano: T.dano * (1 + n * E.dano),
-    vel: T.vel * (1 + n * E.vel),
+    vel: T.vel * (1 + Math.min(E.velMax, n * E.vel)),
     resistencia: Math.min(E.resistenciaMax, (T.resistencia || 0) + n * E.resistencia)
   };
 }

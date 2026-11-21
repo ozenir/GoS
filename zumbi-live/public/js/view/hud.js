@@ -2,6 +2,7 @@
 import { fmtTempo, clamp } from '../core/util.js';
 import { ARMAS, CORPO, CLASSES, xpParaNivel } from '../core/dados.js';
 import { EFEITOS, ladoDo } from '../core/efeitos.js';
+import { progressoAmeaca } from '../core/ameaca.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -115,6 +116,8 @@ export class Hud {
       case 'noite': this.banner('🌙 A NOITE CHEGOU', 'mais zumbis, menos visão', 'perigo', 2.4); break;
       case 'alarme': if (!e.sala) this.banner('🚨 ALARME DE CARRO!', 'a horda está vindo', 'perigo', 2.2); break;
       case 'aviso': this.banner(e.texto, '', e.tipo === 'perigo' ? 'perigo' : 'bom', 2.4); break;
+      case 'ameaca': this.banner(`☠️ AMEAÇA ${e.nivel}`, 'zumbis mais resistentes e hordas maiores', 'perigo', 1.8); break;
+      case 'horda': this.banner('🧟 HORDA CHEGANDO!', `${e.qtd} zumbis`, 'perigo', 2); break;
       case 'recorde': this.banner('🏆 NOVO RECORDE!', `${e.quarteiroes} quarteirões`, 'ouro', 2.6); break;
       case 'entrou_predio': this.banner(`${e.emoji} ${e.nome.toUpperCase()}`, 'pegue o que der e saia pelos fundos', '', 2.2); break;
       case 'vida_baixa': this.banner('⚠️ VIDA BAIXA!', 'mande 🌹 ou 🍩 pra salvar o herói', 'perigo', 2.2); break;
@@ -148,7 +151,7 @@ export class Hud {
     this.relT = 0;
     this.rel = r;
     $('o-title').textContent = `${r.emoji} ${r.nome.toUpperCase()} #${r.n} CAIU!`;
-    $('o-why').textContent = r.matador?.causa ? `derrubado por ${r.matador.causa}` : 'derrubado pela horda';
+    $('o-why').textContent = (r.matador?.causa ? `derrubado por ${r.matador.causa}` : 'derrubado pela horda') + ` · ameaça ${r.ameaca}`;
     $('o-rec').hidden = !r.novoRecorde;
     $('o-q').textContent = r.quarteiroes; $('o-abates').textContent = r.abates; $('o-tempo').textContent = fmtTempo(r.tempo);
     $('o-nivel').textContent = r.nivel; $('o-predios').textContent = r.predios; $('o-recorde').textContent = r.recorde;
@@ -195,6 +198,8 @@ export class Hud {
     this.set('h-q', String(g.stats.quarteiroes));
     this.set('h-rec', String(Math.max(g.recorde, g.stats.quarteiroes)));
     this.set('h-abates', String(g.stats.abates));
+    this.set('h-ameaca', String(g.nivelAmeaca));
+    if (g.fase === 'jogo') $('h-amx').style.width = (progressoAmeaca((g.t - g.stats.inicio) / 60, g.stats.quarteiroes, h.nivel, g.A) * 100).toFixed(0) + '%';
     this.set('h-tempo', fmtTempo((g.fase === 'jogo' ? g.t : g.t - g.faseT) - g.stats.inicio));
     $('h-likes').style.width = (g.cfg.likesPor > 0 ? clamp(g.likes / g.cfg.likesPor, 0, 1) * 100 : 0).toFixed(0) + '%';
 
