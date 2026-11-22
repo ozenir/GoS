@@ -135,7 +135,7 @@ document.querySelectorAll('[data-evento]').forEach(b => b.addEventListener('clic
 $('b-matar').addEventListener('click', () => { if (jogo.fase === 'jogo') jogo.ferirHeroi(9999, { nick: 'você (teste)' }, 'o botão de teste'); });
 window.addEventListener('keydown', e => {
   if (e.target.closest('input')) return;
-  if (['1', '2', '3', '4', '5', 'a', 'b', 'c'].includes(e.key.toLowerCase())) chatTeste(e.key.toLowerCase(), 'você ' + Math.floor(Math.random() * 1000));
+  if (['1', '2', '3', '4', '5', 'a', 'b', 'c', 'g'].includes(e.key.toLowerCase())) chatTeste(e.key.toLowerCase(), 'você ' + Math.floor(Math.random() * 1000));   // g = gráfico de atributos
 });
 
 /* ---------- modo "só o jogo": esconde os botões de teste ---------- */
