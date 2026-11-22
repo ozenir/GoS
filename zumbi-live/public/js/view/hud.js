@@ -537,7 +537,7 @@ export class Hud {
       // 2º e 3º do lado: medalha de prata e de bronze (ajudantes com a medalha à esquerda, atrapalhantes à direita)
       const resto = (lado === 'a' ? c.ajudaResto : c.atrapalhaResto) || [];
       const podio = resto.map((r, i) => `<div class="cb-pod">${['🥈', '🥉'][i]}<span>${esc(r.nick)}</span><em>${r.coins}🪙</em></div>`).join('');
-      return `<div class="cb-foto">${foto}${p ? '<span class="cb-coroa">👑</span>' : ''}<span class="cb-lado">${icone}</span></div><div class="cb-info"><div class="cb-nome">${nome}</div>${podio}</div>`;
+      return `<div class="cb-foto">${foto}${p ? '<span class="cb-coroa">👑</span>' : ''}<span class="cb-lado">${icone}</span></div><div class="cb-info"><div class="cb-nome">${nome}</div></div>${podio}`;
     };
     const k = JSON.stringify([c.ajuda, c.atrapalha, c.ajudaResto, c.atrapalhaResto, c.lado]);
     if (this.cache.cabo === k) return;

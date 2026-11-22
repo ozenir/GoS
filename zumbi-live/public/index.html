@@ -188,15 +188,18 @@ body.foco .app{padding-block:8px}
 .cb-lado{position:absolute;bottom:-.6cqw;width:3.6cqw;height:3.6cqw;border-radius:50%;display:grid;place-items:center;font-size:2.2cqw;background:#0d0b14;border:.35cqw solid}
 .cb-pessoa.a .cb-lado{left:-.8cqw;border-color:#39c47a}
 .cb-pessoa.b .cb-lado{right:-.8cqw;border-color:#ff5a4f}
-/* nome do top (e o pódio embaixo): logo abaixo da barra, alinhado com a ponta dela — ajudante na esquerda, atrapalhante na direita */
+/* nome do top 1: logo abaixo da barra, alinhado com a ponta dela — ajudante na esquerda, atrapalhante na direita.
+   O 2º e o 3º (prata e bronze) ficam embaixo da foto, na beirada da tela */
 .cb-info{position:absolute;top:6.2cqw;display:flex;flex-direction:column;gap:.4cqw;max-width:34cqw}
 .cb-pessoa.a .cb-info{left:10.6cqw;align-items:flex-start}
 .cb-pessoa.b .cb-info{right:10.6cqw;align-items:flex-end}
 .cb-nome{max-width:34cqw;font-size:2.7cqw;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 .25cqw 0 rgba(0,0,0,.75),0 0 1.4cqw rgba(0,0,0,.8)}
-.cb-pod{display:flex;align-items:center;gap:.6cqw;max-width:34cqw;font-size:2.3cqw;font-weight:600;white-space:nowrap;text-shadow:0 .25cqw 0 rgba(0,0,0,.75),0 0 1.4cqw rgba(0,0,0,.8)}
+.cb-pod{display:flex;align-items:center;gap:.6cqw;max-width:26cqw;font-size:2.1cqw;font-weight:600;white-space:nowrap;text-shadow:0 .25cqw 0 rgba(0,0,0,.75),0 0 1.4cqw rgba(0,0,0,.8)}
 .cb-pod span{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .cb-pod em{font-style:normal;opacity:.8;font-variant-numeric:tabular-nums}
-.cb-pessoa.b .cb-pod{flex-direction:row-reverse}
+.cb-info+.cb-pod{margin-top:1.9cqw}   /* o pódio começa embaixo da linha do nome do top */
+.cb-pessoa.a .cb-pod{align-self:flex-start}
+.cb-pessoa.b .cb-pod{align-self:flex-end;flex-direction:row-reverse}
 .cb-pessoa.hop .cb-foto{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
 .v-quadro.contando .v-bolas{transform:translateY(-1.4cqw)}
 .v-espera{position:absolute;left:0;right:0;bottom:.5cqw;text-align:center;font-size:2.2cqw;font-weight:600;opacity:.8}
