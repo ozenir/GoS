@@ -490,6 +490,12 @@ export class Som {
   // runa: sinos graves e um brilho
   runa() { this.naTela(() => { [392, 523, 659, 784, 1047].forEach((f, i) => this.sino(f, i * 0.1, 1.2, 0.06)); this.nota('triangle', 98, 0, 2, 0.06, 0.3, 500); }); }
 
+  // núcleo enchendo um terço: acorde que sobe um degrau a cada terço, com um gongo grave embaixo
+  nucleo(t = 1) { this.naTela(() => { const b = [262, 294, 330][Math.min(2, t - 1)] || 262; [1, 1.25, 1.5, 2].forEach((m, i) => this.sino(b * m, i * 0.09, 1.3, 0.06)); this.metal(b / 4, 0, 1.4, 0.05); this.tambor(0, 0.22); }); }
+  // nível deus: coral de sinos longe + gongo + tambores
+  deus() { this.naTela(() => { [262, 330, 392, 523, 659, 784, 1047].forEach((f, i) => this.sino(f, i * 0.12, 1.8, 0.06)); this.metal(65, 0, 2.4, 0.08); this.metal(98, 0.05, 2.4, 0.05); this.tambor(0, 0.35); this.tambor(0.42, 0.3); this.tambor(0.84, 0.35); this.nota('triangle', 131, 0, 2.6, 0.07, 0.4, 600); }); }
+  // fúria divina: estrondo grave e longo (raio de luz caindo do céu) com um brilho em cima
+  furiaDivina() { if (this.pode('furia', 1)) { this.noMundo(4, 1.6, () => { this.osc('sine', 70, 28, 1.2, 0.4); this.noise(1.2, 0.3, 'lowpass', 700, 0, 0.7, 90, 0.02); }); this.naTela(() => [784, 1047, 1319].forEach((f, i) => this.sino(f, i * 0.05, 0.9, 0.04))); } }
   noite() { this.naTela(() => { this.nota('triangle', 110, 0, 2.6, 0.12, 0.4, 500, 82); this.nota('triangle', 165, 0.1, 2.6, 0.07, 0.5, 500, 123); }); }
 
   /* ---------- música ambiente: um zumbido grave e um pulso que acelera com o perigo ---------- */

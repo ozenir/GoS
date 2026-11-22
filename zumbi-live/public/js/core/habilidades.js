@@ -17,7 +17,7 @@
 //  Para criar uma habilidade nova: acrescente em ATIVAS (com usar ou atualizar) ou em PASSIVAS.
 //  Os números de cada nível são funções de n (nível da habilidade, de 1 a max).
 // ============================================================================
-import { ZUMBIS, ARMAS, CORPO, CLASSES } from './dados.js';
+import { ZUMBIS, ARMAS, CORPO, CLASSES, NIVEL_MAXIMO } from './dados.js';
 import { danoNoZumbi, aplicarPericias, PERICIAS } from './dano.js';
 import { dist, dist2 } from './util.js';
 import { multRunaDano } from './recompensas.js';
@@ -443,7 +443,7 @@ export function sortearCartas(h, rng) {
     const cat = categoriaPrincipal(h), P = PERICIAS[cat];
     aprimorar.push({ tipo: 'treino', id: cat, nivel: (h.treino || 0) + 1, nome: `Treino: ${P.nome}`, emoji: P.emoji, desc: '+1 de perícia no ataque principal (dano, cadência, crítico)', cat: 'aprimorar', peso: 0.9 });
   }
-  if (Object.keys(habs).length < MAX_ATIVAS) for (const id of Object.keys(ATIVAS)) if (!habs[id]) nova.push({ ...cartaAtiva(id, 1), cat: 'nova', peso: 1 });
+  if (vagasOcupadas(h) < MAX_ATIVAS) for (const id of Object.keys(ATIVAS)) if (!habs[id]) nova.push({ ...cartaAtiva(id, 1), cat: 'nova', peso: 1 });
   for (const [id, A] of Object.entries(ARMAS_NOVAS)) if (A.pode(h)) nova.push({ tipo: 'arma', id, nivel: 1, nome: A.nome, emoji: A.emoji, desc: A.desc(), cat: 'nova', peso: 0.8 });
   for (const id of Object.keys(PASSIVAS)) if (!pas[id]) passiva.push({ ...cartaPassiva(id, 1), cat: 'passiva', peso: id === 'explosao' ? 0.5 : 1 });
 
@@ -467,7 +467,7 @@ export function sortearCartas(h, rng) {
 // Com pouca vida, prefere vida, defesa e regeneração.
 export function escolhaDaIA(h, cartas, rng) {
   const vidaPct = h.vida / h.vidaMax;
-  const nAtivas = Object.keys(h.habs || {}).length;
+  const nAtivas = vagasOcupadas(h);
   return rng.weighted(cartas.map(c => {
     let p = 1;
     if (c.tipo === 'ativa') p = c.cat === 'nova' ? (nAtivas < 2 ? 2.2 : 1.1) : 1.6;
@@ -508,7 +508,9 @@ export function aplicarCarta(g, carta) {
     h.evo[C.ativa] = carta.id;
     h.habT = h.habT || {};
     h.habT[C.ativa] = 0.3;   // já dispara logo
-    g.emit('aviso', { texto: `🧬 COMBO! ${ATIVAS[C.ativa].emoji} + ${PASSIVAS[C.passiva].emoji} = ${C.emoji} ${C.nome.toUpperCase()}`, tipo: 'bom' });
+    h.fusoes = [...(h.fusoes || []), carta.id];   // vai pro slot pequeno do lado do núcleo (2 fusões = 1/3 do núcleo)
+    g.emit('aviso', { texto: `🧬 FUSÃO! ${ATIVAS[C.ativa].emoji} + ${PASSIVAS[C.passiva].emoji} = ${C.emoji} ${C.nome.toUpperCase()}`, tipo: 'bom' });
+    atualizarNucleo(g);
   } else if (carta.tipo === 'suprema') {
     const S = SUPREMAS[carta.id];
     h.suprema = carta.id;
@@ -529,6 +531,8 @@ export function atualizarHabilidades(g, dt) {
   atualizarSuprema(g, h, dt);
   if (!h.habs) return;
   h.habT = h.habT || {};
+  // nível deus (núcleo cheio no nível máximo)
+  if (h.deus && (h.deusT = (h.deusT ?? 1) - dt) <= 0) h.deusT = DEUS.usar(g, h) ? DEUS.cd : 0.5;
   if (h.habs.laminas) girarAngulo(h, dt);
   for (const [id, n0] of Object.entries(h.habs)) {
     // habilidade evoluída por combo: roda a versão do combo; o nível dela é o da passiva do combo
@@ -578,6 +582,7 @@ export function habilidadesDoHeroi(h) {
   for (const [id, n] of Object.entries(h.passivas || {})) l.push({ emoji: PASSIVAS[id].emoji, nome: PASSIVAS[id].nome, nivel: n, tipo: 'passiva' });
   if (h.treino) l.push({ emoji: '🎓', nome: 'Treino', nivel: h.treino, tipo: 'passiva' });
   if (h.suprema) { const S = SUPREMAS[h.suprema]; l.unshift({ emoji: S.emoji, nome: S.nome, nivel: 1, tipo: 'suprema', pronta: S.continua || (h.supremaT ?? 0) <= 0.2 }); }
+  if (h.deus) l.unshift({ emoji: DEUS.emoji, nome: DEUS.nome, nivel: 1, tipo: 'deus', pronta: true });
   // runas do colosso: 🔮 + o que ela faz, no número a quantidade
   for (const [id, r] of Object.entries(h.runas || {})) {
     const hab = id === 'principal' ? 'ataque principal' : ATIVAS[id]?.nome;
@@ -585,4 +590,68 @@ export function habilidadesDoHeroi(h) {
     if (r.resistencia) l.push({ emoji: '🔮🛡️', nome: `Runa de resistência: ${hab}`, nivel: r.resistencia, tipo: 'runa' });
   }
   return l;
+}
+
+/* ---------------- Núcleo: fusões → terços → nível deus ---------------- */
+// Cada COMBO (habilidade nível 3+ com a passiva certa) é uma FUSÃO: no painel, a habilidade e a passiva somem das
+// fileiras e a fusão ocupa um dos 2 slots pequenos do lado do NÚCLEO (o slot redondo grande), ainda gastando a
+// vaga de ativa. Duas fusões viram 1/3 do núcleo e liberam as 2 vagas (dá pra pegar outras habilidades e fazer
+// as próximas fusões). Cada terço dá
+// +15% de dano em tudo. As 6 fusões do jogo enchem o núcleo (3 terços) e liberam a habilidade NÍVEL DEUS,
+// mas só no nível máximo do herói (dados.js → NIVEL_MAXIMO, 100). As fusões continuam funcionando.
+export const NUCLEO = { tercos: 3, porTerco: 2, danoPorTerco: 0.15 };
+export const tercosDoNucleo = h => Math.min(NUCLEO.tercos, Math.floor((h.fusoes?.length || 0) / NUCLEO.porTerco));
+export const fusoesSoltas = h => (h.fusoes || []).slice(tercosDoNucleo(h) * NUCLEO.porTerco);   // as que estão nos slots pequenos
+export const ativasLivres = h => Object.keys(h.habs || {}).filter(id => !h.evo?.[id]);           // as que aparecem na fileira
+export const vagasOcupadas = h => ativasLivres(h).length + fusoesSoltas(h).length;                 // fusão solta ainda gasta a vaga
+
+// Habilidade nível deus: a cada cd segundos, uma luz do céu derruba todo zumbi em volta (chefe perde 25% da vida),
+// cura 20% e deixa o herói invencível por 2 s
+export const DEUS = {
+  nome: 'Fúria divina', emoji: '👑', cd: 12, raio: 10, chefe: 0.25, cura: 20, invencivel: 2,
+  desc() { return `a cada ${this.cd}s uma luz do céu derruba todos os zumbis em volta (chefes perdem ${Math.round(this.chefe * 100)}% da vida), cura ${this.cura}% e deixa invencível por ${this.invencivel}s`; },
+  usar(g, h) {
+    const perto = g.zumbis.filter(z => !z.morto && !(z.nascendo > 0) && dist2(z.x, z.y, h.x, h.y) < this.raio * this.raio);
+    for (const z of perto) {
+      if (ZUMBIS[z.tipo].chefe) { if (z.fa) z.fa.escudo = 0; g.ferirZumbi(z, z.vidaMax * this.chefe, null, true); }
+      else { if (z.fa) z.fa.escudo = 0; g.matarZumbi(z, null); }
+    }
+    g.curar(this.cura, null, true);
+    h.invT = Math.max(h.invT, this.invencivel);
+    g.emit('furia_divina', { x: h.x, y: h.y, raio: this.raio, alvos: perto.length });
+    return true;
+  }
+};
+
+// Recalcula o bônus do núcleo e libera o nível deus (núcleo cheio + nível máximo). Chame depois de fusão e ao subir de nível.
+export function atualizarNucleo(g) {
+  const h = g.hero, t = tercosDoNucleo(h);
+  if (t > 0) h.attr.addMod({ id: 'nucleo', attr: 'dano', mult: 1 + NUCLEO.danoPorTerco * t, fonte: 'núcleo' });
+  if (t > (h.nucleoVisto || 0)) {
+    h.nucleoVisto = t;
+    g.emit('nucleo', { tercos: t, total: NUCLEO.tercos, bloqueado: t >= NUCLEO.tercos && h.nivel < NIVEL_MAXIMO });
+  }
+  if (!h.deus && t >= NUCLEO.tercos && h.nivel >= NIVEL_MAXIMO) {
+    h.deus = true; h.deusT = 1;
+    g.emit('deus', { nome: DEUS.nome, emoji: DEUS.emoji });
+  }
+}
+
+// O painel do herói: fileiras de habilidades (pra esquerda) e passivas (pra direita), os 2 slots pequenos e o núcleo
+export function slotsDoHeroi(h) {
+  const comRuna = id => !!(h.runas?.[id]?.dano || h.runas?.[id]?.resistencia);
+  const ativas = ativasLivres(h).map(id => ({ emoji: ATIVAS[id].emoji, nome: ATIVAS[id].nome, nivel: h.habs[id], runa: comRuna(id) }));
+  const fundidas = new Set((h.fusoes || []).map(c => COMBOS[c].passiva));
+  const passivas = Object.entries(h.passivas || {}).filter(([id]) => !fundidas.has(id)).map(([id, n]) => ({ emoji: PASSIVAS[id].emoji, nome: PASSIVAS[id].nome, nivel: n }));
+  if (h.treino) passivas.push({ emoji: '🎓', nome: 'Treino', nivel: h.treino });
+  if (comRuna('principal')) passivas.push({ emoji: '🔮', nome: 'Runa do ataque principal', nivel: (h.runas.principal.dano || 0) + (h.runas.principal.resistencia || 0) });
+  const mini = fusoesSoltas(h).map(c => ({ emoji: COMBOS[c].emoji, nome: COMBOS[c].nome, nivel: h.passivas?.[COMBOS[c].passiva] || 1 }));
+  const t = tercosDoNucleo(h), S = h.suprema && SUPREMAS[h.suprema];
+  return {
+    ativas, passivas, mini,
+    nucleo: {
+      tercos: t, total: NUCLEO.tercos, deus: !!h.deus, bloqueado: t >= NUCLEO.tercos && !h.deus,
+      centro: h.deus ? { emoji: DEUS.emoji, nome: DEUS.nome } : S ? { emoji: S.emoji, nome: S.nome } : null
+    }
+  };
 }

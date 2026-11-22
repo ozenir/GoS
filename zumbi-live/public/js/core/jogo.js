@@ -6,10 +6,10 @@ import { City, SHOPS, BAIRROS, P as PERIODO } from './city.js';
 import { Room } from './room.js';
 import { Praia, PRAIA } from './praia.js';
 import { FlowField } from './flow.js';
-import { ZUMBIS, CLASSES, ARMAS, CORPO, xpParaNivel, multVidaNivel } from './dados.js';
+import { ZUMBIS, CLASSES, ARMAS, CORPO, xpParaNivel, multVidaNivel, NIVEL_MAXIMO } from './dados.js';
 import { EFEITOS, ladoDo } from './efeitos.js';
 import { Votacao, lerVoto, lerEscolha, OPCOES } from './votacao.js';
-import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasSupremas, supremaSegura, NIVEL_SUPREMA, ATIVAS } from './habilidades.js';
+import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasSupremas, supremaSegura, NIVEL_SUPREMA, ATIVAS, atualizarNucleo } from './habilidades.js';
 import { pedeGrafico } from './grafico.js';
 import { RECOMPENSA, DROPS, XP_POR_PILHA_SORTE, defesaRuna, CONVERSIVEL, PARAQUEDISTA, ZUMBI_FA } from './recompensas.js';
 import {
@@ -1519,7 +1519,7 @@ export class Jogo {
   ganharXp(x) {
     const h = this.hero;
     h.xp += x * (1 + XP_POR_PILHA_SORTE * h.estados.pilhas('d_sorte'));   // drop Sortudo: mais experiência
-    while (h.xp >= xpParaNivel(h.nivel)) {
+    while (h.xp >= xpParaNivel(h.nivel) && h.nivel < NIVEL_MAXIMO) {
       h.xp -= xpParaNivel(h.nivel);
       h.nivel++;
       // Perícias do personagem sobem a cada nível (dados.js → CLASSES[...].crescimento)
@@ -1536,11 +1536,13 @@ export class Jogo {
       this.sincronizarVida();
       this.emit('nivel', { nivel: h.nivel, pericias: subiu });
       if (h.nivel === NIVEL_INIMIGOS_NOVOS) this.emit('novos_inimigos', {});
+      if (h.nivel === NIVEL_MAXIMO) { h.xp = 0; this.emit('nivel_maximo', { nivel: h.nivel }); atualizarNucleo(this); }   // núcleo cheio → nível deus
       // cada nível vira uma escolha de habilidade do chat (A, B ou C)
       this.niveisPendentes++;
       this.filaNiveis.push(h.nivel);
       if (!this.escolha && this.escolhaEspera <= 0) this.escolhaEspera = 0.6;
     }
+    if (h.nivel >= NIVEL_MAXIMO) h.xp = 0;   // nível máximo: a experiência para
   }
 
   // Começo puxado: quantos zumbis normais a mais aparecem no nível atual do herói (ameaca.js → multInicio)

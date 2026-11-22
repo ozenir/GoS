@@ -2,11 +2,11 @@
 // Rodar:  node teste/habilidades.test.mjs
 import assert from 'node:assert/strict';
 import { Jogo } from '../public/js/core/jogo.js';
-import { ATIVAS, PASSIVAS, SUPREMAS, NIVEL_SUPREMA, COMBOS, COMBO_NIVEL, FORCA, combosDisponiveis, MAX_ATIVAS, sortearCartas, aplicarCarta, atualizarHabilidades, escolhaDaIA, SALVA_DESDE } from '../public/js/core/habilidades.js';
+import { ATIVAS, PASSIVAS, SUPREMAS, NIVEL_SUPREMA, COMBOS, COMBO_NIVEL, FORCA, combosDisponiveis, MAX_ATIVAS, sortearCartas, aplicarCarta, atualizarHabilidades, escolhaDaIA, SALVA_DESDE, NUCLEO, DEUS, tercosDoNucleo, slotsDoHeroi, ativasLivres, vagasOcupadas } from '../public/js/core/habilidades.js';
 import { EXPLOSAO } from '../public/js/core/ameaca.js';
 import { lerEscolha, lerVoto } from '../public/js/core/votacao.js';
 import { makeRng } from '../public/js/core/util.js';
-import { xpParaNivel } from '../public/js/core/dados.js';
+import { xpParaNivel, NIVEL_MAXIMO } from '../public/js/core/dados.js';
 
 let ok = 0;
 const teste = (nome, fn) => { fn(); ok++; console.log('  ✔', nome); };
@@ -377,6 +377,92 @@ teste('subir de nível aumenta a vida máxima, mas não cura', () => {
   j.ganharXp(x);
   assert.equal(h.nivel, 10);
   assert.ok(Math.abs(h.vidaMax - v1 * 1.9) < 1e-6, `nível 10: ${h.vidaMax}`);
+});
+
+// ---------------- núcleo: fusões → terços → nível deus ----------------
+const fundir = (j, id) => { const C = COMBOS[id]; aplicarCarta(j, carta('ativa', C.ativa, COMBO_NIVEL)); aplicarCarta(j, carta('passiva', C.passiva, 1)); aplicarCarta(j, { tipo: 'combo', id }); };
+const ouvir = j => { const ev = []; const e0 = j.emit.bind(j); j.emit = (t, d) => { ev.push({ t, ...d }); return e0(t, d); }; return ev; };
+
+teste('fusão: habilidade e passiva saem das fileiras, a fusão vai pro slot pequeno; no núcleo, libera as vagas', () => {
+  const j = jogo();
+  const ids = Object.keys(COMBOS);
+  const C = COMBOS[ids[0]];
+  aplicarCarta(j, carta('ativa', C.ativa, COMBO_NIVEL)); aplicarCarta(j, carta('passiva', C.passiva, 2));
+  let S = slotsDoHeroi(j.hero);
+  assert.equal(S.ativas.length, 1); assert.equal(S.passivas.length, 1); assert.equal(S.mini.length, 0);
+  aplicarCarta(j, { tipo: 'combo', id: ids[0] });
+  S = slotsDoHeroi(j.hero);
+  assert.equal(S.ativas.length, 0, 'a habilidade fundida some da fileira');
+  assert.equal(S.passivas.length, 0, 'a passiva fundida some da fileira');
+  assert.equal(S.mini.length, 1); assert.equal(S.mini[0].emoji, COMBOS[ids[0]].emoji);
+  assert.equal(ativasLivres(j.hero).length, 0);
+  assert.equal(vagasOcupadas(j.hero), 1, 'a fusão no slot pequeno ainda gasta a vaga');
+  // quando 2 fusões entram no núcleo, as vagas abrem
+  const outras = Object.keys(ATIVAS).filter(a => a !== C.ativa && a !== COMBOS[ids[1]].ativa).slice(0, MAX_ATIVAS - 2);
+  for (const a of outras) aplicarCarta(j, carta('ativa', a));
+  fundir(j, ids[1]);
+  assert.equal(vagasOcupadas(j.hero), MAX_ATIVAS - 2, 'as 2 fusões entraram no núcleo e liberaram as vagas');
+  assert.ok(sortearCartas(j.hero, makeRng(4)).some(c => c.cat === 'nova' && c.tipo === 'ativa'), 'oferece habilidade nova');
+});
+
+teste(`núcleo: a cada ${NUCLEO.porTerco} fusões, 1 terço (+${NUCLEO.danoPorTerco * 100}% de dano); as fusões continuam valendo`, () => {
+  const j = jogo(), h = j.hero, ev = ouvir(j);
+  const ids = Object.keys(COMBOS);
+  fundir(j, ids[0]);
+  assert.equal(tercosDoNucleo(h), 0); assert.equal(slotsDoHeroi(h).mini.length, 1);
+  const C1 = COMBOS[ids[1]];
+  aplicarCarta(j, carta('ativa', C1.ativa, COMBO_NIVEL)); aplicarCarta(j, carta('passiva', C1.passiva, 1));
+  const d1 = h.attr.get('dano');
+  aplicarCarta(j, { tipo: 'combo', id: ids[1] });
+  assert.equal(tercosDoNucleo(h), 1);
+  assert.equal(slotsDoHeroi(h).mini.length, 0, 'as 2 fusões entraram no núcleo');
+  assert.ok(Math.abs(h.attr.get('dano') / d1 - (1 + NUCLEO.danoPorTerco)) < 1e-6, `dano x${(h.attr.get('dano') / d1).toFixed(3)}`);
+  assert.equal(h.evo[COMBOS[ids[0]].ativa], ids[0], 'a fusão continua ativa');
+  assert.ok(ev.some(e => e.t === 'nucleo' && e.tercos === 1));
+});
+
+teste(`núcleo cheio antes do nível ${NIVEL_MAXIMO}: trancado; no nível ${NIVEL_MAXIMO}: habilidade nível deus`, () => {
+  const j = jogo(), h = j.hero, ev = ouvir(j);
+  for (const id of Object.keys(COMBOS)) fundir(j, id);
+  assert.equal(Object.keys(COMBOS).length, NUCLEO.tercos * NUCLEO.porTerco, 'o jogo tem fusões exatas pra encher o núcleo');
+  assert.equal(tercosDoNucleo(h), 3);
+  const S = slotsDoHeroi(h);
+  assert.ok(S.nucleo.bloqueado && !S.nucleo.deus, 'trancado');
+  assert.ok(!h.deus);
+  assert.ok(ev.some(e => e.t === 'nucleo' && e.tercos === 3 && e.bloqueado));
+  let x = 0; for (let k = h.nivel; k < NIVEL_MAXIMO; k++) x += xpParaNivel(k);
+  j.ganharXp(x);
+  assert.equal(h.nivel, NIVEL_MAXIMO);
+  assert.ok(h.deus, 'nível deus liberado');
+  assert.ok(ev.some(e => e.t === 'deus'));
+  assert.ok(slotsDoHeroi(h).nucleo.deus);
+  assert.equal(slotsDoHeroi(h).nucleo.centro.emoji, DEUS.emoji);
+});
+
+teste('nível deus: a Fúria divina derruba os zumbis em volta, fere o chefe e cura', () => {
+  const j = jogo(), h = j.hero, ev = ouvir(j);
+  h.deus = true; h.deusT = 0.01; h.vida = h.vidaMax * 0.5;
+  const zs = [zumbi(j, 2, 0), zumbi(j, -3, 1, 'corredor'), zumbi(j, 0, 4)];
+  const chefe = zumbi(j, 1, 1, 'colosso');
+  const longe = zumbi(j, 30, 0);
+  rodar(j, 0.2);
+  assert.ok(zs.every(z => z.morto), 'zumbis em volta morreram');
+  assert.ok(!chefe.morto && chefe.vida < chefe.vidaMax * 0.8, `chefe ${chefe.vida}/${chefe.vidaMax}`);
+  assert.ok(!longe.morto, 'o de longe escapa');
+  assert.ok(h.vida > h.vidaMax * 0.6, 'curou');
+  assert.ok(ev.some(e => e.t === 'furia_divina'));
+  assert.ok(h.deusT > DEUS.cd - 1, 'recarrega');
+});
+
+teste(`nível máximo ${NIVEL_MAXIMO}: a experiência para`, () => {
+  const j = jogo(), h = j.hero;
+  let x = 0; for (let k = 1; k < NIVEL_MAXIMO + 20; k++) x += xpParaNivel(k);
+  j.ganharXp(x);
+  assert.equal(h.nivel, NIVEL_MAXIMO);
+  assert.equal(h.xp, 0);
+  j.ganharXp(1e6);
+  assert.equal(h.nivel, NIVEL_MAXIMO); assert.equal(h.xp, 0);
+  assert.ok(Number.isFinite(h.vidaMax));
 });
 
 console.log(`\n${ok} testes passaram.`);

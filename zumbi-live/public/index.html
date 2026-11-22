@@ -83,17 +83,32 @@ body.foco .app{padding-block:8px}
 .vbar b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:1cqw;font-size:3.3cqw;font-weight:700;text-shadow:0 .3cqw 0 rgba(0,0,0,.6);font-variant-numeric:tabular-nums}
 .vbar b span+span{font-size:2.8cqw}
 .vbar.hit{animation:tremor .25s}
-.hx{display:flex;align-items:center;gap:1.6cqw;min-width:0}
-.xpb{flex:none;width:15cqw;height:1.2cqw;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+.xpb{position:relative;height:1.2cqw;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
 .xpb i{display:block;height:100%;width:0;background:var(--ouro);transition:width .3s}
-.habs{flex:1;min-width:0;display:flex;gap:.8cqw;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
-.hb{position:relative;flex:none;display:inline-flex;align-items:center;gap:.3cqw;height:4.4cqw;padding:0 1.2cqw 0 .9cqw;border-radius:1.6cqw;background:rgba(255,255,255,.07);border:.3cqw solid rgba(255,255,255,.14);font-size:2.8cqw;font-weight:700}
-.hb i{font-style:normal;font-size:2.3cqw;color:var(--ouro)}
-.hb.ativa{border-color:rgba(255,210,63,.55);background:rgba(255,210,63,.1)}
-.hb.combo{border-color:#c58bff;background:rgba(170,100,255,.2)}
-.hb.suprema{border-color:#ff8a3d;background:rgba(255,120,40,.18)}
-.hb.novo{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
-.hb-vazio{font-size:2.5cqw;opacity:.6;white-space:nowrap}
+.xpb.max i{width:100%!important;background:linear-gradient(90deg,#ffd23f,#fff3a0,#ffd23f)}
+/* slots: habilidades ← [pequeno] (NÚCLEO) [pequeno] → passivas */
+.slots{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1cqw;min-width:0;margin-top:.4cqw}
+.lado{display:flex;gap:.7cqw;min-width:0;overflow:hidden}
+.lado.hab{flex-direction:row-reverse;-webkit-mask-image:linear-gradient(270deg,#000 80%,transparent);mask-image:linear-gradient(270deg,#000 80%,transparent)}
+.lado.pas{-webkit-mask-image:linear-gradient(90deg,#000 80%,transparent);mask-image:linear-gradient(90deg,#000 80%,transparent)}
+.sl{position:relative;flex:none;width:4.6cqw;height:4.6cqw;border-radius:50%;display:grid;place-items:center;font-size:2.6cqw;background:rgba(255,255,255,.07);border:.3cqw solid rgba(255,255,255,.16)}
+.sl.hab{border-color:rgba(255,210,63,.6);background:rgba(255,210,63,.1)}
+.sl i{position:absolute;right:-.5cqw;bottom:-.5cqw;min-width:2.3cqw;height:2.3cqw;padding:0 .3cqw;box-sizing:border-box;border-radius:99px;display:grid;place-items:center;font-style:normal;font-size:1.7cqw;font-weight:700;line-height:1;color:#1a1420;background:var(--ouro)}
+.sl.pas i{background:#cfd6e6}
+.sl u{position:absolute;left:-.5cqw;top:-.5cqw;font-size:1.8cqw;text-decoration:none}
+.sl.novo,.sm.novo{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+.nucleo{display:flex;align-items:center;gap:.8cqw}
+.sm{position:relative;flex:none;width:5cqw;height:5cqw;border-radius:50%;display:grid;place-items:center;font-size:2.9cqw;background:rgba(10,8,16,.6);border:.35cqw dashed rgba(197,139,255,.35)}
+.sm.on{border:.35cqw solid #c58bff;background:radial-gradient(circle,rgba(170,100,255,.45),rgba(60,30,100,.6));box-shadow:0 0 1.6cqw rgba(170,100,255,.6)}
+.nuc{position:relative;flex:none;width:8.4cqw;height:8.4cqw;border-radius:50%;display:grid;place-items:center}
+.nuc .anel{position:absolute;inset:0;border-radius:50%}
+.nuc .meio{position:relative;width:6.4cqw;height:6.4cqw;border-radius:50%;display:grid;place-items:center;font-size:3.6cqw;background:radial-gradient(circle at 35% 30%,#2a2238,#120e1a)}
+.nuc em{position:absolute;bottom:-1.1cqw;left:50%;transform:translateX(-50%);padding:.15cqw .8cqw;border-radius:99px;font-style:normal;font-size:1.8cqw;font-weight:700;white-space:nowrap;color:#1a1420;background:var(--ouro)}
+.nuc em.lock{background:#3a3150;color:#ffd23f}
+.nuc.deus{filter:drop-shadow(0 0 2cqw rgba(255,210,63,.85))}
+.nuc.deus .meio{background:radial-gradient(circle,#fff3a0,#ffb02a 60%,#7a4a10);animation:pisca 1.2s infinite alternate}
+.nuc.up{animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
+.hb-vazio{font-size:2.3cqw;opacity:.55;white-space:nowrap;align-self:center}
 
 .stats{display:flex;align-items:center;justify-content:space-between;gap:1cqw;padding:.9cqw 2.2cqw;border-radius:99px;background:rgba(16,13,24,.72);border:.35cqw solid var(--card-line);font-size:2.9cqw;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
 .stats span{display:inline-flex;align-items:center;gap:.7cqw}
@@ -290,7 +305,8 @@ body.foco .app{padding-block:8px}
             <div class="hm">
               <div class="hn"><b id="h-heroi">Policial #1</b><span class="arma" id="h-arma">🔫 Pistola</span></div>
               <div class="vbar" id="h-vbar"><i id="h-vfill"></i><b><span>❤️ <span id="h-vida">100</span></span><span id="h-colete"></span></b></div>
-              <div class="hx"><div class="xpb" title="Experiência até o próximo nível"><i id="h-xp"></i></div><div class="habs" id="h-habs"></div></div>
+              <div class="xpb" id="h-xpb" title="Experiência até o próximo nível"><i id="h-xp"></i></div>
+              <div class="slots" id="h-slots"></div>
             </div>
           </div>
           <div class="stats">

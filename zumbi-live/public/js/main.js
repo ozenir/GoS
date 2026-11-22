@@ -229,6 +229,10 @@ function tocar(e, g) {
     case 'colosso_cansou': som.cansou(longe(e, g)); break;
     case 'colosso_vencido': som.recorde(); break;
     case 'runa': som.runa(); break;
+    case 'nucleo': som.nucleo(e.tercos); break;
+    case 'deus': som.deus(); break;
+    case 'nivel_maximo': som.recorde(); break;
+    case 'furia_divina': som.furiaDivina(); break;
     case 'novos_inimigos': som.chefe(false); break;
     case 'onda': som.onda(); break;
     case 'arremesso': som.arremesso(); break;

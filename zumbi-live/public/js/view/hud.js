@@ -1,11 +1,11 @@
 // Painel por cima do jogo: vida, votação, avisos de presente, rankings, legenda e relatório da rodada.
 import { fmtTempo, clamp } from '../core/util.js';
-import { ARMAS, CORPO, CLASSES, xpParaNivel } from '../core/dados.js';
+import { ARMAS, CORPO, CLASSES, xpParaNivel, NIVEL_MAXIMO } from '../core/dados.js';
 import { STATUS } from '../core/status.js';
 import { BAIRROS } from '../core/city.js';
 import { EFEITOS, ladoDo } from '../core/efeitos.js';
 import { progressoAmeaca } from '../core/ameaca.js';
-import { habilidadesDoHeroi } from '../core/habilidades.js';
+import { slotsDoHeroi, NUCLEO } from '../core/habilidades.js';
 import { graficoDoHeroi, GRAFICO_SEGUNDOS, BLOCOS } from '../core/grafico.js';
 
 const $ = id => document.getElementById(id);
@@ -98,6 +98,38 @@ export class Hud {
     this.ultimoToast = { chave, el: t, qtd: e.qtd || 1, t: performance.now(), timer };
   }
 
+  // Slots do herói: habilidades ← [fusão] (NÚCLEO) [fusão] → passivas
+  atualizarSlots(h) {
+    const S = slotsDoHeroi(h), N = S.nucleo;
+    const k = JSON.stringify(S);
+    if (this.cache.slots === k) return;
+    const antes = new Set((this.cache.slotsIds || []));
+    const ids = [];
+    const slot = (x, cls) => {
+      const id = cls + x.emoji + x.nivel; ids.push(id);
+      return `<span class="sl ${cls}${antes.has(id) || !this.cache.slots ? '' : ' novo'}" title="${esc(x.nome)}">${esc(x.emoji)}<i>${x.nivel}</i>${x.runa ? '<u>🔮</u>' : ''}</span>`;
+    };
+    const mini = i => {
+      const x = S.mini[i];
+      if (!x) return '<span class="sm" title="Fusão: habilidade nível 3 + a passiva certa"></span>';
+      const id = 'm' + x.emoji; ids.push(id);
+      return `<span class="sm on${antes.has(id) || !this.cache.slots ? '' : ' novo'}" title="${esc(x.nome)} (fusão)">${esc(x.emoji)}</span>`;
+    };
+    // anel do núcleo: 3 terços com uma folguinha entre eles; cheios em dourado
+    const parte = 360 / N.total, folga = 6, cor = i => (N.deus ? '#fff3a0' : i < N.tercos ? '#ffd23f' : 'rgba(255,255,255,.12)');
+    const anel = Array.from({ length: N.total }, (_, i) => `${cor(i)} ${i * parte + folga / 2}deg ${(i + 1) * parte - folga / 2}deg, transparent ${(i + 1) * parte - folga / 2}deg ${(i + 1) * parte + folga / 2}deg`).join(',');
+    const selo = N.deus ? '<em>DEUS</em>' : N.bloqueado ? `<em class="lock">🔒${NIVEL_MAXIMO}</em>` : N.tercos ? `<em>${N.tercos}/${N.total}</em>` : '';
+    const titulo = N.deus ? 'Nível deus: Fúria divina' : `Núcleo ${N.tercos}/${N.total}: a cada ${NUCLEO.porTerco} fusões, 1 terço (+${Math.round(NUCLEO.danoPorTerco * 100)}% de dano). Cheio + nível ${NIVEL_MAXIMO} = habilidade nível deus`;
+    const subiu = (this.cache.nucT ?? N.tercos) !== N.tercos || (this.cache.nucD === false && N.deus);
+    this.cache.nucT = N.tercos; this.cache.nucD = N.deus;
+    const vazio = !S.ativas.length && !S.passivas.length && !S.mini.length && !N.centro && !N.tercos;
+    $('h-slots').innerHTML =
+      `<div class="lado hab">${S.ativas.map(x => slot(x, 'hab')).join('') || (vazio ? '<span class="hb-vazio">⭐ cada nível:</span>' : '')}</div>` +
+      `<div class="nucleo">${mini(0)}<span class="nuc${N.deus ? ' deus' : ''}${subiu ? ' up' : ''}" title="${esc(titulo)}"><span class="anel" style="background:conic-gradient(${anel});-webkit-mask:radial-gradient(circle,transparent 61%,#000 62%);mask:radial-gradient(circle,transparent 61%,#000 62%)"></span><span class="meio">${N.centro ? esc(N.centro.emoji) : ''}</span>${selo}</span>${mini(1)}</div>` +
+      `<div class="lado pas">${S.passivas.map(x => slot(x, 'pas')).join('') || (vazio ? '<span class="hb-vazio">o chat escolhe</span>' : '')}</div>`;
+    this.cache.slots = k; this.cache.slotsIds = ids;
+  }
+
   banner(texto, sub = '', tipo = '', dur = 2.6) {
     const b = $('h-banner');
     b.className = 'banner ' + tipo;
@@ -120,6 +152,9 @@ export class Hud {
       case 'bau': if (e.raridade === 'lendario') this.banner(`✨ ${ARMAS[e.arma]?.nome.toUpperCase() || 'ARMA LENDÁRIA'}!`, e.quem ? `baú lendário de ${e.quem}` : 'baú lendário', 'ouro', 2.8); break;
       case 'nivel': this.banner(`⭐ NÍVEL ${e.nivel}`, (e.pericias || []).join(' · '), 'ouro', 1.6); break;
       case 'passiva': this.banner(e.texto, '', 'bom', 1.8); break;
+      case 'nucleo': this.banner(`💠 NÚCLEO ${e.tercos}/${e.total}!`, e.bloqueado ? `núcleo cheio! a habilidade nível deus abre no nível ${NIVEL_MAXIMO}` : `+${Math.round(NUCLEO.danoPorTerco * 100 * e.tercos)}% de dano em tudo`, 'ouro', 3); break;
+      case 'deus': this.banner('👑 NÍVEL DEUS!', `${e.emoji} ${e.nome}: luz do céu a cada poucos segundos`, 'ouro', 4); break;
+      case 'nivel_maximo': this.banner(`🏆 NÍVEL ${e.nivel}! NÍVEL MÁXIMO`, '', 'ouro', 3); break;
       // recompensas de presente (recompensas.js)
       case 'drop': this.banner(`🪂 ${e.emoji} ${e.nome.toUpperCase()}${e.pilhas > 1 ? ' x' + e.pilhas : ''}!`, `${e.texto} · 5 quarteirões${e.quem ? ' · presente de ' + e.quem : ''}`, 'bom', 2.2); break;
       case 'inspiracao': this.banner('✨ INSPIRADO!', `${e.nick ? e.nick + ' doou · ' : ''}${e.segundos} s tomando só 20% do dano e machucando quem chega perto`, 'bom', 2.6); break;
@@ -284,17 +319,10 @@ export class Hud {
     if (armaEl.dataset.l !== String(lend)) { armaEl.classList.toggle('lend', lend); armaEl.dataset.l = String(lend); }
     if (this.cache['h-nv'] !== String(h.nivel)) { const el = $('h-nv'); el.classList.remove('up'); void el.offsetWidth; el.classList.add('up'); }
     this.set('h-nv', String(h.nivel));
-    // habilidades do herói (ativas com borda dourada, passivas simples)
-    const habs = habilidadesDoHeroi(h);
-    const hk = habs.map(x => x.emoji + x.nivel).join(',');
-    if (this.cache.habs !== hk) {
-      const antes = new Set((this.cache.habs || '').split(','));
-      this.cache.habs = hk;
-      $('h-habs').innerHTML = habs.length
-        ? habs.map(x => `<span class="hb ${x.tipo}${antes.has(x.emoji + x.nivel) ? '' : ' novo'}" title="${esc(x.nome)}">${esc(x.emoji)}${x.tipo === 'suprema' ? '' : x.tipo === 'combo' ? '<i>★</i>' : `<i>${x.nivel}</i>`}</span>`).join('')
-        : '<span class="hb-vazio">⭐ cada nível: o chat escolhe uma habilidade</span>';
-    }
-    $('h-xp').style.width = (clamp(h.xp / xpParaNivel(h.nivel), 0, 1) * 100).toFixed(0) + '%';
+    this.atualizarSlots(h);
+    const max = h.nivel >= NIVEL_MAXIMO;
+    if (this.cache.xpmax !== max) { this.cache.xpmax = max; $('h-xpb').classList.toggle('max', max); $('h-xpb').title = max ? `Nível máximo (${NIVEL_MAXIMO})` : 'Experiência até o próximo nível'; }
+    $('h-xp').style.width = (max ? 100 : clamp(h.xp / xpParaNivel(h.nivel), 0, 1) * 100).toFixed(0) + '%';
     this.set('h-q', String(g.stats.quarteiroes));
     this.set('h-rec', String(Math.max(g.recorde, g.stats.quarteiroes)));
     this.set('h-abates', String(g.stats.abates));

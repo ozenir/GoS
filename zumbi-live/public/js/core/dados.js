@@ -120,3 +120,6 @@ export const VIDA_POR_NIVEL = 0.1, VIDA_POR_NIVEL_DEPOIS_DO_20 = 0.03;
 export const multVidaNivel = n => 1 + VIDA_POR_NIVEL * Math.min(n - 1, 19) + VIDA_POR_NIVEL_DEPOIS_DO_20 * Math.max(0, n - 20);
 
 export const xpParaNivel = n => Math.round(5 + n * 3 + n * n * 0.45);
+
+// Nível máximo do herói. Lá a experiência para; a habilidade nível deus (habilidades.js → DEUS) só abre aqui.
+export const NIVEL_MAXIMO = 100;

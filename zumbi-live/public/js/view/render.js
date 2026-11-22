@@ -132,6 +132,8 @@ export class Render {
       case 'fa_acertou': this.texto(e.x, e.y, 'acertou! 🛡️💔', '#fe2c55', 0.9); break;
       case 'agarrou': this.tremer(4); for (let i = 0; i < 8; i++) this.particula({ x: e.x + (Math.random() - 0.5) * 0.6, y: e.y + (Math.random() - 0.5) * 0.6, z: 0.1, vz: 1.5, life: 0.5, cor: '#8a8070', tam: 2 }); break;
       case 'atropelou': this.tremer(e.heroi ? 6 : 2); for (let i = 0; i < (e.heroi ? 10 : 5); i++) this.particula({ x: e.x + (Math.random() - 0.5) * 0.5, y: e.y + (Math.random() - 0.5) * 0.5, z: 0.4, vz: 2 + Math.random() * 2, life: 0.5, cor: e.heroi ? '#ffd23f' : '#8a1e1e', tam: 2 }); if (e.heroi) this.piscar('#ff2a2a', 0.2); break;
+      case 'furia_divina': this.piscar('#fff3a0', 0.55); this.tremer(6); this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.7, cor: '#fff3a0' }); this.raios.push({ x: e.x, y: e.y, age: 0, life: 0.6, r: 120 }); for (let i = 0; i < 20; i++) { const a = Math.random() * 6.28, s = 2 + Math.random() * 4; this.particula({ x: e.x, y: e.y, z: 0.5, vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: 3, life: 0.8, cor: i % 2 ? '#ffd23f' : '#fff3a0', tam: 2 }); } break;
+      case 'deus': case 'nucleo': this.piscar('#ffd23f', e.tercos ? 0.25 : 0.4); break;
       case 'inspiracao_pulso': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.35, cor: '#ffd23f' }); break;
       case 'colosso_cansou': this.tremer(4); for (let i = 0; i < 14; i++) this.particula({ x: e.x + (Math.random() - 0.5), y: e.y + (Math.random() - 0.5), z: 1.5, vz: 1, g: 1, life: 1, cor: '#9fd0ff', tam: 2 }); break;
       case 'segundo_folego': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.6 }); this.tremer(4); break;
