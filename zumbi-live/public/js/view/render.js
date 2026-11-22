@@ -420,7 +420,8 @@ export class Render {
     for (let i = 0; i < 4; i++) line(this.ctx, c[i][0], c[i][1], c[(i + 1) % 4][0], c[(i + 1) % 4][1], cor, 2);
   }
 
-  // Setas no chão do próximo cruzamento, com os números da votação
+  // Setas no chão do próximo cruzamento, com os números da votação.
+  // Discretas: finas, curtas e meio transparentes (o quadro da votação já mostra as opções)
   setasVotacao(g) {
     if (g.room || g.fase !== 'jogo') return;
     const v = g.voto;
@@ -435,10 +436,12 @@ export class Render {
       const [dx, dy] = DIRS[o.dir], px = -dy, py = dx;
       const c = { x: n.x + dx * 2.6, y: n.y + dy * 2.6 };
       const pt = (a, l) => this.tela(c.x + dx * a + px * l, c.y + dy * a + py * l);
-      for (const [a0, l0, a1, l1] of [[-0.6, -0.6, 0.6, 0.6], [-0.6, 0.6, 0.6, -0.6]]) {
+      ctx.globalAlpha = 0.45;
+      for (const [a0, l0, a1, l1] of [[-0.45, -0.45, 0.45, 0.45], [-0.45, 0.45, 0.45, -0.45]]) {
         const [x0, y0] = pt(a0, l0), [x1, y1] = pt(a1, l1);
-        line(ctx, x0, y0, x1, y1, '#ff4a3a', 2);
+        line(ctx, x0, y0, x1, y1, '#ff4a3a', 1);
       }
+      ctx.globalAlpha = 1;
     }
     for (const o of v.opcoes) {
       const escolhida = v.resultado ? v.resultado.id === o.id : false;
@@ -448,18 +451,20 @@ export class Render {
       if (o.id === 'entrar') {
         const d = o.praca ? o.praca.entrada : o.shop.door;
         const [sx, sy] = this.tela(d.x, d.y);
-        ctx.globalAlpha = 0.6 + 0.4 * pulso;
-        disc(ctx, sx, sy, 9, cor, 0.5);
+        ctx.globalAlpha = 0.25 + 0.2 * pulso;
+        disc(ctx, sx, sy, 6, cor, 0.5);
+        disc(ctx, sx, sy, 4.5, '#1a1420', 0.5);
         ctx.globalAlpha = 1;
-        disc(ctx, sx, sy, 6, '#1a1420', 0.5);
         this.marcadores.push({ x: d.x, y: d.y, txt: '4', cor, z: 14 });
         continue;
       }
       const [dx, dy] = DIRS[o.dir], px = -dy, py = dx;
-      const a0 = 1.3, a1 = 3.0, a2 = 4.0, w = 0.32, wh = 0.75;
+      const a0 = 1.7, a1 = 2.75, a2 = 3.35, w = 0.12, wh = 0.4;
       const pt = (a, l) => this.tela(n.x + dx * a + px * l, n.y + dy * a + py * l);
+      ctx.globalAlpha = escolhida ? 0.55 : lider ? 0.45 : 0.3;
       fillPoly(ctx, [pt(a0, -w), pt(a1, -w), pt(a1, w), pt(a0, w)], cor);
       fillPoly(ctx, [pt(a1, -wh), pt(a2, 0), pt(a1, wh)], cor);
+      ctx.globalAlpha = 1;
       const m = { x: n.x + dx * 2.2, y: n.y + dy * 2.2 };
       this.marcadores.push({ ...m, txt: String(o.n), cor, z: 10 });
     }
