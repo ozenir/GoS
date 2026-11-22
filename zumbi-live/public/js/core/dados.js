@@ -97,7 +97,9 @@ export const CLASSES = {
 // tipo = tipo de dano (dano.js → TIPOS_DANO). categoria = perícia que melhora a arma (dano.js → PERICIAS).
 // status = efeitos que o tiro pode causar: { id (status.js), chance, duracao?, pilhas? }
 export const ARMAS = {
-  pistola:     { nome: 'Pistola',       emoji: '🔫', dano: 14, cd: 0.42, alcance: 6.5, balas: 1, espalha: 0.05, tipo: 'perfuracao', categoria: 'armas_fogo' },
+  // pistola: pente de 14 tiros; acabou, 3 s recarregando (pente / recarga). Tiro mais lento e mais forte (22),
+  // pro dano por segundo ficar parecido com o de antes (sem pente: 14 a cada 0,42 s)
+  pistola:     { nome: 'Pistola',       emoji: '🔫', dano: 22, cd: 0.5, alcance: 6.5, balas: 1, espalha: 0.05, pente: 14, recarga: 3, tipo: 'perfuracao', categoria: 'armas_fogo' },
   escopeta:    { nome: 'Escopeta',      emoji: '💥', dano: 10, cd: 0.8,  alcance: 4.6, balas: 6, espalha: 0.45, municao: 30, tipo: 'perfuracao', categoria: 'armas_fogo', status: [{ id: 'atordoado', chance: 0.08, duracao: 0.5 }] },
   metralhadora:{ nome: 'Metralhadora',  emoji: '🔥', dano: 11, cd: 0.085, alcance: 7, balas: 1, espalha: 0.09, quarteiroes: 3, lendaria: true, tipo: 'perfuracao', categoria: 'armas_fogo' },
   lanca:       { nome: 'Lança-chamas',  emoji: '🔥', dps: 75,  alcance: 3.3, cone: 0.5, quarteiroes: 3, lendaria: true, chama: true, tipo: 'fogo', categoria: 'explosivos', status: [{ id: 'queimando', chance: 1 }] }

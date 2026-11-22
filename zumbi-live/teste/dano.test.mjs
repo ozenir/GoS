@@ -108,7 +108,7 @@ teste('adrenalina: +25% de dano só abaixo de 25% de vida', () => {
 teste('dano de tiro sem crítico', () => {
   const h = heroi();
   const r = danoDoHeroi(h, ARMAS.pistola, zumbi(), rngFixo(0.99));
-  assert.equal(r.dano, 14); assert.equal(r.critico, false); assert.equal(r.efetividade, null);
+  assert.equal(r.dano, ARMAS.pistola.dano); assert.equal(r.critico, false); assert.equal(r.efetividade, null);
 });
 teste('crítico multiplica pelo dano crítico', () => {
   const r = danoDoHeroi(heroi(), ARMAS.pistola, null, rngFixo(0), { base: 10 });
@@ -129,7 +129,7 @@ teste('resistência do zumbi reduz o dano', () => {
 teste('cadência maior = intervalo menor; corpo a corpo ganha metade', () => {
   const h = heroi('mecanico');
   h.attr.addMod({ attr: 'cadencia', mult: 2 });
-  perto(intervaloTiro(h, ARMAS.pistola), 0.21);
+  perto(intervaloTiro(h, ARMAS.pistola), ARMAS.pistola.cd / 2);
   perto(intervaloCorpo(h, CORPO.taco), 0.55 / 1.5);
 });
 teste('alcance e velocidade', () => {
@@ -206,9 +206,9 @@ teste('perícia: 2 = normal, mais = mais dano, menos = menos', () => {
   assert.equal(multPericia(PERICIA_PADRAO), 1);
   const h = heroi();
   h.pericias = { armas_fogo: 6 };
-  perto(danoDoHeroi(h, ARMAS.pistola, null, rngFixo(0.99)).dano, 14 * (1 + 4 * EFEITO_PERICIA.dano));
+  perto(danoDoHeroi(h, ARMAS.pistola, null, rngFixo(0.99)).dano, ARMAS.pistola.dano * (1 + 4 * EFEITO_PERICIA.dano));
   h.pericias = { armas_fogo: 0 };
-  assert.ok(danoDoHeroi(h, ARMAS.pistola, null, rngFixo(0.99)).dano < 14);
+  assert.ok(danoDoHeroi(h, ARMAS.pistola, null, rngFixo(0.99)).dano < ARMAS.pistola.dano);
 });
 teste('perícia aumenta cadência e chance de efeito', () => {
   const h = heroi();

@@ -256,6 +256,8 @@ function tocar(e, g) {
     case 'golpe_final': som.golpeFinal(); break;
     case 'mochila': som.item(); break;
     case 'mochila_usou': som.cura(); break;
+    case 'recarregando': som.recarregar(); break;
+    case 'recarregou': som.municao(); break;
     case 'novo_heroi': som.novoHeroi(); break;
     case 'recorde': som.recorde(); break;
     case 'noite': som.noite(); break;

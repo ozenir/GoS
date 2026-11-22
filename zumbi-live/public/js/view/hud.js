@@ -337,6 +337,7 @@ export class Hud {
     const cp = CORPO[h.corpo];
     let armaTxt = a ? `${a.emoji} ${a.nome}` : `${cp.emoji} ${cp.nome}`;
     if (a && h.municao != null) armaTxt += ` · ${h.municao}`;
+    if (a?.pente) armaTxt += h.recargaT > 0 ? ' · 🔄 recarregando' : ` · ${h.pente ?? a.pente}/${a.pente}`;   // pente da pistola
     if (a && h.armaQ > 0) armaTxt += ` · 📍${h.armaQ}`;
     const golpes = cp.golpes && Number.isFinite(h.golpes) ? h.golpes : '';
     if (a && h.corpo !== 'empurrao') armaTxt += ` + ${cp.emoji}${golpes}`;

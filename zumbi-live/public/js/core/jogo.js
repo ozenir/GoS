@@ -1032,6 +1032,7 @@ export class Jogo {
   atualizarHeroi(dt) {
     const h = this.hero;
     h.tiroCd -= dt; h.corpoCd -= dt;
+    if (h.recargaT > 0 && (h.recargaT -= dt) <= 0) { h.recargaT = 0; h.pente = ARMAS[h.arma]?.pente ?? null; this.emit('recarregou', { x: h.x, y: h.y }); }
     h.invT = Math.max(0, h.invT - dt);
     h.folegoCd = Math.max(0, (h.folegoCd || 0) - dt);
     for (const m of h.attr.update(dt)) this.emit('buff_acabou', { id: m.id, attr: m.attr });
@@ -1365,6 +1366,11 @@ export class Jogo {
       return true;
     }
     if (h.tiroCd > 0) return true;
+    // arma com pente (pistola): recarregando, não atira (mas continua mirando)
+    if (arma.pente) {
+      if (h.recargaT > 0) return true;
+      if (h.pente == null) h.pente = arma.pente;
+    }
     h.tiroCd = intervaloTiro(h, arma);
     for (let b = 0; b < arma.balas; b++) {
       const a = base + (this.rng.next() - 0.5) * 2 * arma.espalha;
@@ -1390,6 +1396,10 @@ export class Jogo {
         }
       }
       this.emit('tiro', { x: h.x, y: h.y, tx: ex, ty: ey, arma: h.arma, acertou: !!hit, heroi: true });
+    }
+    if (arma.pente && --h.pente <= 0) {   // acabou o pente: recarrega
+      h.recargaT = arma.recarga;
+      this.emit('recarregando', { x: h.x, y: h.y, segundos: arma.recarga });
     }
     if (h.municao != null && --h.municao <= 0) {
       this.emit('arma_acabou', { nome: arma.nome });
@@ -1496,6 +1506,7 @@ export class Jogo {
     const a = ARMAS[id];
     h.arma = id;
     h.municao = a.municao ?? null;
+    h.pente = a.pente ?? null; h.recargaT = 0;   // pente cheio ao pegar a arma
     h.armaQ = a.quarteiroes || 0;      // arma lendária dura alguns quarteirões
     this.emit('arma', { id, nome: a.nome, emoji: a.emoji, lendaria: !!a.lendaria, quem: quem?.nick || null });
   }

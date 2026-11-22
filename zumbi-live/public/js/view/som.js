@@ -503,6 +503,8 @@ export class Som {
       for (let i = 0; i < 3; i++) this.osc('sine', 3200 + Math.random() * 2400, null, 0.05, 0.025, 0.25 + i * 0.12 + Math.random() * 0.08);   // caquinhos tilintando
     });
   }
+  // pente acabou: o pente vazio caindo (estalo + quique metálico)
+  recarregar() { this.noMundo(0.3, 0.6, () => { this.noise(0.03, 0.12, 'bandpass', 2400, 0, 2); this.osc('square', 900, 700, 0.03, 0.03, 0.18); this.osc('square', 820, 640, 0.025, 0.02, 0.3); }); }
   arremesso() { if (this.pode('arr', 0.2)) this.noMundo(0, 0.4, () => this.noise(0.26, 0.12, 'bandpass', 380, 0, 1.4, 950, 0.1)); }
   habilidade() { this.naTela(() => [523, 659, 784, 1047].forEach((f, i) => this.sino(f, i * 0.07, 0.8, 0.07))); }
   escolha() { this.naTela(() => { this.sino(392, 0, 0.6, 0.06); this.sino(523, 0.12, 0.7, 0.06); }); }
