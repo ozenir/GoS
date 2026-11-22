@@ -300,6 +300,7 @@ export class Hud {
     else if (h.invT > 0) st.push(`<span class="chip ok">✨ invencível ${Math.ceil(h.invT)}s</span>`);
     // status do herói (status.js): verde = bom, vermelho = ruim
     // bônus contados em quarteirões aparecem com 📍 (quantos quarteirões ainda faltam); o resto em segundos
+    if (g.fase === 'jogo' && h.noVidro) st.push(`<span class="chip mal">🔸 no vidro: sem cura${h.curaGuardada > 0 ? ` · 💚${Math.round(h.curaGuardada)}% guardada` : ''}</span>`);
     if (g.fase === 'jogo') for (const s of h.estados.ativos()) st.push(`<span class="chip ${s.lado === 'positivo' ? 'ok' : 'mal'}">${s.emoji} ${esc(s.nome.toLowerCase())}${s.pilhas > 1 ? ' x' + s.pilhas : ''} ${s.q != null ? '📍' + s.q : Math.ceil(s.t) + 's'}</span>`);
     if (g.alarmeT > 0) st.push(`<span class="chip mal">🚨 alarme ${Math.ceil(g.alarmeT)}s</span>`);
     for (const al of g.aliados) st.push(`<span class="chip ok">${al.tipo === 'cachorro' ? '🐶' : '🧍'} ${esc(al.nome)} 📍${al.q}</span>`);

@@ -136,4 +136,74 @@ teste('sangramento de mordida no herói não fica fraco por causa do vidro', () 
   assert.equal(h.estados.lista.get('sangramento').mult, 1);
 });
 
+/* ---------------- cacos de vidro: o herói não se cura ---------------- */
+// jogo com o herói parado em cima de uma zona de vidro (e nada mais em volta)
+const noVidro = () => {
+  const j = new Jogo({ seed: 9, classe: 'enfermeira' });
+  j.zumbis = []; j.spawnT = 999; j.cotaRua = 0; j.protecao = 0;
+  const h = j.hero;
+  j.zonas = [{ tipo: 'vidro', x0: h.x - 1, y0: h.y - 1, x1: h.x + 1, y1: h.y + 1, t: 999 }];
+  j.zonasHeroi = j.zonas;
+  j.ambienteNoHeroi(0.01);
+  return j;
+};
+
+teste('pisando nos cacos de vidro: sem regeneração nem cura de status', () => {
+  const j = noVidro(), h = j.hero;
+  assert.ok(h.noVidro);
+  h.attr.addMod({ id: 'teste-regen', attr: 'regen', soma: 10 });
+  j.aplicarStatus(h, 'regenerando', { pilhas: 3 });
+  h.vida = h.vidaMax * 0.5;
+  const x = h.x, y = h.y;
+  for (let i = 0; i < 60; i++) { j.atualizarHeroi(1 / 30); h.x = x; h.y = y; j.ambienteNoHeroi(1 / 30); }   // fica em cima do vidro
+  assert.ok(h.vida <= h.vidaMax * 0.5 + 1e-9, `curou no vidro: ${h.vida}`);
+});
+
+teste('cura de presente no vidro fica guardada e sai quando ele pisa fora', () => {
+  const j = noVidro(), h = j.hero;
+  h.vida = h.vidaMax * 0.4;
+  j.curar(14, { nick: 'Ana' });
+  assert.equal(h.vida, h.vidaMax * 0.4, 'não curou no vidro');
+  assert.equal(h.curaGuardada, 14);
+  j.zonasHeroi = []; j.zonas = [];
+  j.ambienteNoHeroi(0.01);
+  assert.ok(!h.noVidro && h.curaGuardada === 0);
+  assert.ok(h.vida > h.vidaMax * 0.4, 'curou ao sair');
+});
+
+teste('no vidro a mochila espera; mas se a vida zerar, o kit da mochila salva', () => {
+  const j = noVidro(), h = j.hero;
+  h.mochila = [{ valor: 35, quem: null }];
+  h.vida = h.vidaMax * 0.2;
+  j.atualizarHeroi(1 / 30);
+  assert.equal(h.mochila.length, 1, 'não usou no vidro');
+  h.folegoCd = 1e9; h.invT = 0;
+  j.ferirHeroi(h.vida + 5, null, 'teste', 'sangramento');
+  assert.ok(!j.caido && h.vida > 0 && h.mochila.length === 0, 'a mochila salvou');
+});
+
+teste('vida em 30% ou menos em cima do vidro: sai na hora rumo ao objetivo', () => {
+  const j = noVidro(), h = j.hero;
+  h.vida = h.vidaMax * 0.28; h.invT = 999;
+  let fora = false;
+  for (let i = 0; i < 60 && !fora; i++) { j.update(1 / 30); fora = !h.noVidro; }
+  assert.ok(fora, 'saiu do vidro em menos de 2 s');
+});
+
+teste('vida em 30% ou menos: desvia do vidro que está no caminho', () => {
+  const pisou = vida => {
+    const j = new Jogo({ seed: 9, classe: 'policial' });
+    j.zumbis = []; j.spawnT = 999; j.cotaRua = 0; j.protecao = 0;
+    const h = j.hero; h.invT = 999;
+    const [dx, dy] = [[0, -1], [1, 0], [0, 1], [-1, 0]][j.rota.dir];
+    // uma faixa de vidro de 1 casa de largura, 2 casas à frente, cobrindo o meio da rua
+    const cx = h.x + dx * 2.5, cy = h.y + dy * 2.5;
+    j.zonas = [{ tipo: 'vidro', x0: cx - (dx ? 0.5 : 0.6), x1: cx + (dx ? 0.5 : 0.6), y0: cy - (dy ? 0.5 : 0.6), y1: cy + (dy ? 0.5 : 0.6), t: 999 }];
+    let vezes = 0;
+    for (let i = 0; i < 150; i++) { h.vida = h.vidaMax * vida; j.update(1 / 30); if (h.noVidro) vezes++; }
+    return vezes;
+  };
+  assert.equal(pisou(0.25), 0, 'com vida baixa não pisou');
+});
+
 console.log(`\n${ok} testes passaram.`);

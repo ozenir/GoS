@@ -17,7 +17,7 @@ import {
   TORCIDA, aplicarTorcida, aplicarPericias, PERICIAS
 } from './dano.js';
 import { STATUS, Estados, sincronizarAtributos } from './status.js';
-import { AMBIENTE, efeitoDoAmbiente, faixaLivre, machuca } from './ambiente.js';
+import { AMBIENTE, efeitoDoAmbiente, faixaLivre, machuca, dentro } from './ambiente.js';
 import {
   AMEACA, furiaDaHorda, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos,
   multInicio, forcaInicio, cotaQuadra, tamanhoHordaQuadra, NIVEL_INIMIGOS_NOVOS, EXPLOSAO, TOMATEIRO
@@ -291,7 +291,7 @@ export class Jogo {
     if (!h.mochila.length) return false;
     const k = h.mochila.shift();
     if (caindo) h.invT = Math.max(h.invT, 1.5);
-    this.curar(k.valor + (caindo ? 10 : 0), k.quem, true);
+    this.curar(k.valor + (caindo ? 10 : 0), k.quem, true, caindo);   // caindo: salva mesmo no vidro
     this.emit('mochila_usou', { nick: k.quem?.nick || null, caindo, x: h.x, y: h.y, resta: h.mochila.length });
     return true;
   }
@@ -1010,12 +1010,13 @@ export class Jogo {
     for (const m of h.attr.update(dt)) this.emit('buff_acabou', { id: m.id, attr: m.attr });
     this.sincronizarVida();
     const regen = h.attr.get('regen');
-    if (regen > 0 && h.vida < h.vidaMax) h.vida = Math.min(h.vidaMax, h.vida + regen * dt);
+    // pisando em cacos de vidro o herói NÃO se cura (regeneração, status, golpes); presentes e itens ficam guardados
+    if (regen > 0 && h.vida < h.vidaMax && !h.noVidro) h.vida = Math.min(h.vidaMax, h.vida + regen * dt);
     // Status (status.js): dano e cura por segundo
     const st = h.estados.update(dt);
     for (const d of st.danos) this.ferirHeroi(d.valor, d.fonte, STATUS[d.status].nome.toLowerCase(), d.tipo, true);
     if (this.fase !== 'jogo') return;
-    if (st.cura > 0) h.vida = Math.min(h.vidaMax, h.vida + st.cura * h.attr.get('cura'));
+    if (st.cura > 0 && !h.noVidro) h.vida = Math.min(h.vidaMax, h.vida + st.cura * h.attr.get('cura'));
     if (st.acabaram.length) sincronizarAtributos(h.estados, h.attr);
     // inspiração (doação): pulsos de luz que machucam todos os zumbis em volta
     if (h.estados.tem('inspirado')) {
@@ -1039,7 +1040,7 @@ export class Jogo {
       if (h.instintoCd <= 0 && h.vida / h.vidaMax < P.limite) { h.instintoCd = P.recarga; this.aplicarStatus(h, 'instinto'); this.emit('passiva', { texto: '🧡 INSTINTO DE SOBREVIVÊNCIA' }); }
     }
     if (h.vidaBaixa && h.vida / h.vidaMax > 0.5) h.vidaBaixa = false;
-    if (h.mochila.length && h.vida / h.vidaMax < 0.35) this.usarMochila();
+    if (h.mochila.length && h.vida / h.vidaMax < 0.35 && !h.noVidro) this.usarMochila();   // no vidro, a mochila espera
 
     // 1) Pra onde ir
     let obj;
@@ -1136,6 +1137,9 @@ export class Jogo {
       vx = vx * (1 - Math.min(0.75, rm * 0.5)) + rx / rm * k;
       vy = vy * (1 - Math.min(0.75, rm * 0.5)) + ry / rm * k;
     }
+    // Vida em 30% ou menos: vidro é proibido (no vidro ele não se cura)
+    const fugaVidro = this.evitarVidro(obj, vx, vy, dt);
+    if (fugaVidro) { vx = fugaVidro.x; vy = fugaVidro.y; }
     const vm = Math.hypot(vx, vy);
     if (vm > 1) { vx /= vm; vy /= vm; }
     // Perigos do chão (ambiente.js): machucam, causam status e deixam lento
@@ -1224,11 +1228,59 @@ export class Jogo {
     return { x: room.w / 2, y: room.h / 2, esperando: true };
   }
 
+  // Com 30% de vida ou menos, o herói não pisa em cacos de vidro (lá ele não se cura). Devolve a direção nova
+  // (ou null pra seguir normal):
+  //   - em cima do vidro: sai na hora rumo ao objetivo (sem parar pra lutar nem recuar); se o objetivo também está
+  //     no vidro, sai pela borda mais perto, puxando pro lado do objetivo
+  //   - fora: se o próximo passo cai num vidro, desvia pro lado livre; sem lado livre (rua tomada de vidro),
+  //     espera; passados VIDRO_ESPERA segundos, atravessa (pra nunca travar)
+  evitarVidro(obj, vx, vy, dt) {
+    const h = this.hero, VIDRO_ESPERA = 4;
+    if (h.vida / h.vidaMax > 0.3) { h.vidroEspera = 0; h.vidroLiberado = false; return null; }
+    const vidros = (this.zonasHeroi || this.zonasAgora).filter(z => z.tipo === 'vidro');
+    if (!vidros.length) { h.vidroEspera = 0; h.vidroLiberado = false; return null; }
+    const noVidro = vidros.find(z => dentro(z, h.x, h.y));
+    if (noVidro && h.vidroLiberado) return null;   // não tinha outro caminho: atravessa até o fim
+    if (noVidro) {
+      let ax = obj.x - h.x, ay = obj.y - h.y;
+      if (dentro(noVidro, obj.x, obj.y) || Math.hypot(ax, ay) < 0.05) {
+        // o objetivo está no vidro: borda mais perto (preferindo o lado do objetivo) com chão livre
+        const m = 0.45, saidas = [[noVidro.x0 - m, h.y], [noVidro.x1 + m, h.y], [h.x, noVidro.y0 - m], [h.x, noVidro.y1 + m]]
+          .filter(([x, y]) => this.livre(x, y))
+          .map(([x, y]) => ({ x: x - h.x, y: y - h.y, custo: Math.hypot(x - h.x, y - h.y) - 0.3 * ((x - h.x) * ax + (y - h.y) * ay) / (Math.hypot(ax, ay) || 1) }))
+          .sort((p, q) => p.custo - q.custo);
+        if (saidas.length) { ax = saidas[0].x; ay = saidas[0].y; }
+      }
+      const d = Math.hypot(ax, ay) || 1;
+      if (!h.saindoVidro) { h.saindoVidro = true; this.emit('saindo_vidro', { x: h.x, y: h.y }); }
+      return { x: ax / d, y: ay / d };
+    }
+    h.saindoVidro = false;
+    const vm = Math.hypot(vx, vy);
+    if (vm < 0.05) return null;
+    const ux = vx / vm, uy = vy / vm;
+    const pisaria = (x, y) => vidros.some(z => dentro(z, x, y, 0.25));
+    if (!pisaria(h.x + ux * 0.7, h.y + uy * 0.7)) { h.vidroEspera = 0; h.vidroLiberado = false; return null; }
+    // desvia pro lado (diagonal, pra continuar avançando) que não tem vidro
+    for (const [px, py] of [[-uy, ux], [uy, -ux]]) {
+      const dx = (px * 0.8 + ux * 0.6), dy = (py * 0.8 + uy * 0.6);
+      if (!pisaria(h.x + dx * 0.7, h.y + dy * 0.7) && this.livre(h.x + dx * 0.7, h.y + dy * 0.7)) { h.vidroEspera = 0; return { x: dx, y: dy }; }
+      if (!pisaria(h.x + px * 0.7, h.y + py * 0.7) && this.livre(h.x + px * 0.7, h.y + py * 0.7)) { h.vidroEspera = 0; return { x: px, y: py }; }
+    }
+    // rua tomada de vidro: espera um pouco antes de atravessar
+    h.vidroEspera = (h.vidroEspera || 0) + dt;
+    if (h.vidroEspera < VIDRO_ESPERA) return { x: 0, y: 0 };
+    h.vidroLiberado = true;
+    return null;
+  }
+
   itemDesejado() {
     const h = this.hero;
     let best = null, bd = 49;
+    const semVidro = h.vida / h.vidaMax <= 0.3 ? (this.zonasHeroi || this.zonasAgora).filter(z => z.tipo === 'vidro') : [];
     for (const it of this.itens) {
       if (it.z > 0.3) continue;
+      if (semVidro.some(z => dentro(z, it.x, it.y, 0.3))) continue;   // vida baixa: não vai buscar item em cima de vidro
       const d = dist2(h.x, h.y, it.x, it.y);
       if (d < bd && (this.room || this.linhaLivre(h.x, h.y, it.x, it.y, true))) { bd = d; best = it; }
     }
@@ -1347,7 +1399,7 @@ export class Jogo {
     }
     // Cura por acerto (ex.: enfermeira): uma vez por golpe que acerta alguém
     const cpa = h.attr.get('curaPorAcerto');
-    if (acertos && cpa > 0 && h.vida < h.vidaMax) { h.vida = Math.min(h.vidaMax, h.vida + cpa * h.attr.get('cura')); this.curaGolpes = (this.curaGolpes || 0) + cpa; }
+    if (acertos && cpa > 0 && h.vida < h.vidaMax && !h.noVidro) { h.vida = Math.min(h.vidaMax, h.vida + cpa * h.attr.get('cura')); this.curaGolpes = (this.curaGolpes || 0) + cpa; }
     // Arma de perto achada (taco) quebra depois de alguns golpes
     if (corpo.golpes && --h.golpes <= 0) { h.corpo = this.corpoPadrao(); this.emit('arma_acabou', { nome: corpo.nome }); }
     this.emit('golpe', { x: h.x, y: h.y, ang, arma: h.corpo, acertos });
@@ -2017,9 +2069,17 @@ export class Jogo {
     }
   }
 
-  curar(pct, quem, item = false) {
+  // forcar: cura mesmo pisando em cacos de vidro (só a mochila salvando o herói que ia cair)
+  curar(pct, quem, item = false, forcar = false) {
     const h = this.hero;
     if (this.fase !== 'jogo') return;
+    if (h.noVidro && !forcar) {
+      // no vidro não cura: fica guardada e sai quando ele pisar fora (ninguém doa à toa)
+      h.curaGuardada = Math.min(100, (h.curaGuardada || 0) + pct);
+      h.curaGuardadaQuem = quem || h.curaGuardadaQuem || null;
+      this.emit('cura_bloqueada', { x: h.x, y: h.y, guardada: Math.round(h.curaGuardada) });
+      return;
+    }
     const antes = h.vida;
     h.vida = Math.min(h.vidaMax, h.vida + valorCura(h, pct));
     const salvou = antes / h.vidaMax < 0.2;
@@ -2263,7 +2323,7 @@ export class Jogo {
       if (k < 1) continue;
       t.fim = true;
       if (this.fase !== 'jogo') continue;
-      this.ferirHeroi(t.dano, null, 'o tomate', 'esmagar');
+      this.ferirHeroi(Math.min(t.dano, h.vidaMax * 0.05), null, 'o tomate', 'esmagar');   // dano pequeno: no máximo 5% da vida máxima
       this.emit('tomatada', { x: h.x, y: h.y });
     }
     this.tomates = this.tomates.filter(t => !t.fim);
@@ -2374,7 +2434,18 @@ export class Jogo {
 
   ambienteNoHeroi(dt) {
     const h = this.hero;
-    const r = efeitoDoAmbiente(h, this.zonasHeroi || this.zonasAgora, dt, this.t, this.rng);
+    const zonas = this.zonasHeroi || this.zonasAgora;
+    // pisando em cacos de vidro? (não se cura enquanto estiver neles)
+    const noVidro = zonas.some(z => z.tipo === 'vidro' && dentro(z, h.x, h.y));
+    if (noVidro && !h.noVidro) this.emit('vidro_sem_cura', { x: h.x, y: h.y });
+    h.noVidro = noVidro;
+    if (!noVidro && h.curaGuardada > 0) {
+      const pct = h.curaGuardada, quem = h.curaGuardadaQuem;
+      h.curaGuardada = 0; h.curaGuardadaQuem = null;
+      this.curar(pct, quem, true);
+      this.emit('cura_liberada', { x: h.x, y: h.y, valor: Math.round(pct) });
+    }
+    const r = efeitoDoAmbiente(h, zonas, dt, this.t, this.rng);
     for (const z of r.entrou) {
       if (z.lentoAoEntrar) { this.deixarLento(z.lentoAoEntrar); this.aplicarStatus(h, 'sangramento', { pilhas: 2, fonte: z.quem, mult: AMBIENTE.vidro.noHeroi }); this.emit('vidro_pisou', { x: h.x, y: h.y }); }
       if (machuca(z.tipo)) this.emit('ambiente', { tipo: z.tipo, x: h.x, y: h.y });

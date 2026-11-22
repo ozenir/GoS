@@ -125,6 +125,10 @@ export class Render {
       case 'arremesso': this.arremessos.push({ ...e, age: 0, life: e.t }); break;
       case 'raio': this.choques.push({ pts: e.pts, age: 0, life: 0.22 }); for (const p of e.pts.slice(1)) this.raios.push({ x: p[0], y: p[1], age: 0, life: 0.15, r: 22 }); break;
       case 'onda': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.45 }); this.tremer(3); break;
+      case 'saindo_vidro': this.texto(e.x, e.y, '🏃 saindo do vidro!', '#ffd23f', 0.8); break;
+      case 'vidro_sem_cura': this.texto(e.x, e.y, '🚫💚 sem cura no vidro!', '#ff8a64', 0.8); break;
+      case 'cura_bloqueada': if (this.t - (this.ultBloq || -9) > 1) { this.ultBloq = this.t; this.texto(e.x, e.y, `💚 ${e.guardada}% guardada (sai do vidro!)`, '#9dffb0', 0.8); } break;
+      case 'cura_liberada': this.texto(e.x, e.y, `💚 cura liberada +${e.valor}%`, '#9dffb0', 1); break;
       case 'fa_acertou': this.texto(e.x, e.y, 'acertou! 🛡️💔', '#fe2c55', 0.9); break;
       case 'agarrou': this.tremer(4); for (let i = 0; i < 8; i++) this.particula({ x: e.x + (Math.random() - 0.5) * 0.6, y: e.y + (Math.random() - 0.5) * 0.6, z: 0.1, vz: 1.5, life: 0.5, cor: '#8a8070', tam: 2 }); break;
       case 'atropelou': this.tremer(e.heroi ? 6 : 2); for (let i = 0; i < (e.heroi ? 10 : 5); i++) this.particula({ x: e.x + (Math.random() - 0.5) * 0.5, y: e.y + (Math.random() - 0.5) * 0.5, z: 0.4, vz: 2 + Math.random() * 2, life: 0.5, cor: e.heroi ? '#ffd23f' : '#8a1e1e', tam: 2 }); if (e.heroi) this.piscar('#ff2a2a', 0.2); break;
