@@ -959,7 +959,7 @@ export class Render {
       const x = a.x0 + (a.x1 - a.x0) * k, y = a.y0 + (a.y1 - a.y0) * k;
       const [sx, sy] = this.tela(x, y), [ex, ey] = this.tela(a.x1, a.y1), [bx, by] = this.tela(a.x0, a.y0);
       const ang = Math.atan2(ey - by, ex - bx);
-      ctx.save(); ctx.translate(sx, sy); ctx.rotate(ang);
+      ctx.save(); ctx.translate(sx, sy); ctx.rotate(ang); ctx.scale(1.9, 1.9);   // sombra grande: o avião é grande
       ctx.globalAlpha = 0.38; ctx.fillStyle = '#05040a';
       ctx.beginPath(); ctx.ellipse(0, 0, 19, 3.2, 0, 0, Math.PI * 2); ctx.fill();                    // fuselagem
       ctx.beginPath(); ctx.moveTo(4, 0); ctx.lineTo(-3, -22); ctx.lineTo(-9, -22); ctx.lineTo(-5, 0); ctx.lineTo(-9, 22); ctx.lineTo(-3, 22); ctx.closePath(); ctx.fill();   // asas

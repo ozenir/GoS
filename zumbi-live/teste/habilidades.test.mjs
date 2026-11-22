@@ -272,7 +272,7 @@ teste('ataque aéreo derruba um grupo de zumbis', () => {
   aplicarCarta(j, { tipo: 'suprema', id: 'bombardeio' });
   const zs = [];
   for (let k = 0; k < 6; k++) zs.push(zumbi(j, 2 + (k % 3) * 0.3, 2 + Math.floor(k / 3) * 0.3));
-  passar(j, 3);
+  passar(j, 5);   // o avião passa devagar (habilidades.js → AVIAO) e as bombas ainda caem
   assert.ok(zs.filter(z => z.morto).length >= 5, 'quase todo o grupo caiu');
 });
 
@@ -428,8 +428,8 @@ teste(`núcleo: a cada ${NUCLEO.porTerco} fusões, 1 terço que se une à suprem
   const bombas = grau => {
     const k = jogo(); k.hero.suprema = 'bombardeio'; k.hero.fusoes = ids.slice(0, grau * 2);
     for (let a = 0; a < 40; a++) zumbi(k, (a % 8) * 0.9 - 3.5, Math.floor(a / 8) * 0.9 - 2, 'comum');
-    const ex = ouvir(k); S.usar(k, k.hero); rodar(k, 2);
-    return ex.filter(e => e.t === 'explosao').length;
+    const ex = ouvir(k); S.usar(k, k.hero);
+    return ex.find(e => e.t === 'aviao').bombas.length;   // as bombas que o avião solta
   };
   assert.ok(bombas(2) > bombas(0), `bombas: ${bombas(0)} → ${bombas(2)}`);
 });

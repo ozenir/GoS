@@ -333,7 +333,7 @@ export const ARMAS_NOVAS = {
 export const NIVEL_SUPREMA = 10;
 // Avião do Ataque aéreo: passa em linha reta por cima dos alvos (meio = metade do caminho, em casas) em voo segundos;
 // cada bomba demora queda segundos pra cair (a sombra do avião e as bombas aparecem na tela: view/render.js)
-export const AVIAO = { meio: 16, voo: 1.8, queda: 0.55 };
+export const AVIAO = { meio: 18, voo: 3.4, queda: 0.6 };   // passa devagar, pra dar tempo de ver a sombra
 
 export const SUPREMAS = {
   bombardeio: {

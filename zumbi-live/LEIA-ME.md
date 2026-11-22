@@ -248,7 +248,7 @@ Quando falta alguma categoria, a carta é completada com outra. Cada habilidade 
 
 | Suprema | O que faz |
 |---|---|
-| ✈️ Ataque aéreo | a cada 11 s um avião passa por cima (a **sombra dele cruza o chão**, com o ronco do motor e Doppler) e solta 6 bombas nos maiores grupos de zumbis, na ordem em que sobrevoa: cada bomba cai assobiando, com a sombra crescendo no chão, e explode quando bate (75 de dano cada, não machucam o herói) |
+| ✈️ Ataque aéreo | a cada 11 s um avião passa devagar por cima (uns 3,5 s; a **sombra grande dele cruza o chão**, com o ronco do motor e Doppler) e solta 6 bombas nos maiores grupos de zumbis, na ordem em que sobrevoa: cada bomba cai assobiando, com a sombra crescendo no chão, e explode quando bate (75 de dano cada, não machucam o herói) |
 | ☀️ Aura de fogo | anel de fogo em volta do herói: 26 de dano por segundo em quem chega perto e deixa os zumbis lentos |
 | ❤️‍🔥 Coração de ferro | +15% de defesa e +1,2 de vida por segundo; quando ia cair (ou a vida fica abaixo de 25%), explode uma onda que empurra e atordoa, cura 45% e fica 3 s invencível (uma vez a cada 40 s) |
 
@@ -477,7 +477,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.25.1)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.25.2)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.
