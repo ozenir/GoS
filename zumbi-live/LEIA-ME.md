@@ -286,7 +286,7 @@ Quando falta alguma categoria, a carta é completada com outra. Cada habilidade 
 
 Todo presente continua fazendo o que faz (tabela abaixo). Além disso:
 
-- **🪂 Presente de AJUDAR de 1 moeda (Rosa): cai um DROP de paraquedas.** Uma caixa roxa com ❓ desce devagar, balançando, perto do herói (uns 5 segundos, pra todo mundo ver). Quando ele pega, aparece o **bônus sorteado**, que dura **5 quarteirões**. Os bônus **acumulam**: pegar o mesmo de novo soma uma pilha (fica mais forte, até x5) e o tempo volta pros 5 quarteirões; bônus diferentes valem juntos. Presente repetido (Rosa x5) solta uma caixa por unidade (até 5).
+- **🪂 Presente de AJUDAR de 1 moeda (Rosa, Rosa branca, Incrível, Heart Me, Amo você): cai um DROP de paraquedas.** Uma caixa roxa com ❓ desce devagar, balançando, perto do herói (uns 5 segundos, pra todo mundo ver). Quando ele pega, aparece o **bônus sorteado**, que dura **5 quarteirões**. Os bônus **acumulam**: pegar o mesmo de novo soma uma pilha (fica mais forte, até x5) e o tempo volta pros 5 quarteirões; bônus diferentes valem juntos. Presente repetido (Rosa x5) solta uma caixa por unidade (até 5).
 
   | Bônus | Por pilha |
   |---|---|
@@ -298,13 +298,13 @@ Todo presente continua fazendo o que faz (tabela abaixo). Além disso:
   | 👟 Pernas leves | +6% de velocidade |
   | 🍀 Sortudo | +25% de experiência |
 
-- **😈 Presente de ATRAPALHAR de 1 moeda (TikTok, Sorvete):** além do efeito dele, sorteia uma de duas surpresas:
+- **😈 Presente de ATRAPALHAR de 1 moeda (TikTok, Bom jogo, Clássicas, Mantap):** além do efeito dele, sorteia uma de duas surpresas:
   - **🚗 Conversível dos zumbis**: um conversível vermelho cheio de zumbi em pé no banco, de braços pra cima, corta a rua do herói (de frente ou por trás), buzinando. **Quem estiver na frente perde metade da vida ATUAL**: o herói, os zumbis e até chefe (até o colosso!). Todo mundo é jogado pro lado e fica tonto um instante. Metade da vida atual nunca mata. O herói às vezes percebe e pula pro lado, às vezes não. No fim aparece o placar ("🚗 atropelou 9 zumbis e o herói!"). O motor tem Doppler: mais agudo chegando, mais grave indo embora; ele vem **buzinando** várias vezes e com o **alarme do carro disparado** (alarme de carro de verdade, não sirene: bipe agudo pulsando, trinado e "uip-uip", revezando), que passa junto com ele.
   - **🪂🧟 Zumbi paraquedista**: um zumbi desce de paraquedas seguindo o herói e **cai em cima dele, agarrado na perna**: o herói fica **lento só no quarteirão em que foi agarrado**, com o zumbi pendurado. Mais de um pendurado (até 3) deixa ainda mais lento. Assim que ele atravessa o próximo cruzamento (a direção que o chat escolheu), o zumbi solta e vira um zumbi normal no chão (tem que matar pra limpar a área). Se o herói estiver invencível, o zumbi quica e cai do lado.
 
 - **🎵 Zumbis do fã (TikTok):** os 3 zumbis que o TikTok manda levam **o nome e a foto do perfil** de quem mandou numa bolinha em cima da cabeça (sem foto, a inicial), brilham em ciano e rosa e são **mais fortes** (2x a vida, 1,3x o dano) e **mais rápidos** (1,6x). **Cada um consegue acertar o herói pelo menos uma vez**: até o primeiro golpe que entra (ou que bate no colete) ele tem um escudo 🛡️ e não morre, e o herói nem perde tempo atirando nele. Depois do golpe, vira um zumbi forte normal. Pra nunca travar, o escudo some sozinho em 25 s. São sempre 3 por TikTok (não crescem com a ameaça) e eles não levam o reforço do começo do jogo.
 
-- **✨ Doação (presente de 2 moedas ou mais):**
+- **✨ Doação (presente de 2 moedas ou mais, ou seja, os de 5 moedas):** a inspiração vem sempre; o colosso vem um por vez e no máximo **um a cada 2,5 minutos** (`recompensas.js` → `colossoRecarga`), pra não virar fila com presente barato.
   - **Inspiração**: por 10 segundos o herói brilha dourado, **toma só 20% do dano** e solta pulsos de luz que machucam todos os zumbis em volta.
   - Ganha um **drop** também.
   - **👹 Vem um COLOSSO no próximo quarteirão**, com o nome de quem doou ("Colosso de ana.lu"). Tem uns **10 mil de vida** (cresce com o nível do herói) e começa batendo muito forte: cada golpe tira 10% da vida do herói e atravessa armadura, colete e esquiva. É condicional: **quando a vida do herói chega em 30%, o colosso CANSA** (😵 em cima dele): fica lento, **toma 3x mais dano** e bate bem mais fraco, pra o herói virar a luta. Se a luta passar de 75 segundos, ele cansa também. O herói não fica lento. Só um colosso por vez (outras doações enquanto ele está vivo dão inspiração e drop).
@@ -316,25 +316,32 @@ Tudo que **ajuda** acontece na hora (e se adapta à situação, veja "O atraso d
 
 **Bônus duram quarteirões, não segundos.** Tiro rápido, fúria, foco, blindado, arma lendária, cachorro e sobrevivente ajudante e o invencível do helicóptero valem pelos **próximos N quarteirões** que o herói andar (ex.: "tiro rápido nos próximos 3 quarteirões"). Cada cruzamento conta 1; sair de prédio, 1; sair da arena ou da praia, 2. Na tela, o que falta aparece com 📍 (ex.: `⚡ tiro rápido 📍2`). O que não é bônus continua em segundos: proteção de nascimento, sangramento, atordoado, queimando, e os efeitos de quem atrapalha (noite, alarme, vidro).
 
+**Só presentes baratos (1 e 5 moedas).** Pra ter muita interação na live, todos os poderes do jogo ficam em presentes de **1 moeda** e, os mais fortes, de **5 moedas**:
+
 | Presente | Moedas | Lado | O que acontece |
 |---|---|---|---|
 | 🌹 Rosa | 1 | ajuda | cura +14% na hora |
-| 🍦 Sorvete | 1 | atrapalha | cacos de vidro na rua: herói fica lento |
+| 🤍 Rosa branca | 1 | ajuda | colete que segura 4 golpes |
+| 😺 Incrível | 1 | ajuda | munição + **tiro rápido nos próximos 3 quarteirões** (combo soma +1 por presente, até 8). Quem luta de perto ganha fúria |
+| 💗 Heart Me | 1 | ajuda | kit médico (+35%): cura na hora ou vai pra mochila |
+| 🤗 Amo você | 1 | ajuda | cachorro ajudante por **4 quarteirões**, com o nome de quem mandou |
 | 🎵 TikTok | 1 | atrapalha | 3 **zumbis do fã**: nome e foto de quem mandou em cima da cabeça, brilho ciano e rosa, mais fortes e rápidos, e cada um acerta o herói pelo menos uma vez (veja abaixo) |
-| 🫰 Coração com dedos | 5 | ajuda | munição + **tiro rápido nos próximos 3 quarteirões** (combo soma +1 por presente, até 8). Quem luta de perto ganha fúria |
-| 🧴 Perfume | 20 | atrapalha | horda de 8 zumbis |
-| 🍩 Rosquinha | 30 | ajuda | kit médico (+35%): cura na hora ou vai pra mochila |
-| 🎩 Chapéu e Bigode | 99 | atrapalha | zumbi que explode |
-| 🫶 Mãos de coração | 100 | ajuda | colete que segura 4 golpes |
-| 🐶 Corgi | 299 | ajuda | cachorro ajudante por **4 quarteirões**, com o nome de quem mandou |
-| 🔫 Arma de Dinheiro | 500 | ajuda | baú com escopeta ou taco com pregos |
-| 🦢 Cisne | 699 | atrapalha | carro com alarme: horda chegando por 20 s |
-| 🚂 Trem | 899 | atrapalha | 15 corredores e rua bloqueada atrás |
-| 🌌 Galáxia | 1.000 | ajuda | **baú lendário**: metralhadora ou lança-chamas por **3 quarteirões** |
-| 🎆 Fogos | 1.088 | atrapalha | **chefão** com o nome de quem mandou |
-| 🦁 Leão | 29.999 | atrapalha | **Rei Zumbi** gigante + noite por 60 s |
-| 🪐 Universo | 34.999 | ajuda | **helicóptero de resgate**: limpa a tela, cura tudo e invencível até o fim do quarteirão |
-| Outros presentes | – | ajuda | pelo valor: 1 = cura, 5 = munição, 20 = kit, 100 = colete, 299 = cachorro, 500 = baú, 1.000 = baú lendário, 20.000 = helicóptero |
+| 🎮 Bom jogo | 1 | atrapalha | cacos de vidro na rua: herói fica lento |
+| 📻 Clássicas | 1 | atrapalha | carro com alarme: horda chegando por 20 s |
+| 🤙 Mantap | 1 | atrapalha | zumbi que explode |
+| 🫰 Mãos fazendo coração | 5 | ajuda | baú com escopeta ou taco com pregos |
+| 🥥 Bebida de coco | 5 | ajuda | **helicóptero de resgate**: limpa a tela, cura tudo e invencível até o fim do quarteirão ⏳ |
+| 💝 Aroma de amor | 5 | ajuda | **baú lendário**: metralhadora ou lança-chamas por **3 quarteirões** ⏳ |
+| 🤪 Reação exagerada | 5 | atrapalha | horda de 8 zumbis |
+| 🎟️ Ingresso de bis | 5 | atrapalha | 15 corredores e rua bloqueada atrás |
+| 🎆 Fogos de artifício | 5 | atrapalha | **chefão** com o nome de quem mandou ⏳ |
+| 👄 Mencionar o nome | 5 | atrapalha | **Rei Zumbi** gigante + noite por 60 s ⏳ |
+
+**⏳ Poderes fortes recarregam.** Como custam só 5 moedas, o Rei Zumbi (a cada 4 min), o chefão e o helicóptero (a cada 3 min) e o baú lendário (a cada 2,5 min) vêm no máximo uma vez nesse tempo (na live toda). Mandou antes? O presente vale do mesmo jeito (aviso, ranking, cabo de guerra, recompensas) e vira a versão menor: Rei e chefão viram horda de 8, o helicóptero vira kit médico e o baú lendário vira baú comum (o aviso mostra "⏳ o forte recarrega"). Fica em `public/js/core/recompensas.js` → `FORTES`.
+
+**Presente que não está na tabela:**
+- **De 1 a 5 moedas** (ex.: Estilo livre, Bola de futebol giratória): faz um **efeito sorteado** entre os da tabela **com o mesmo preço** (1 moeda → um dos de 1 moeda; 5 → um dos de 5).
+- **Mais caro:** vira **parcelas de 5 moedas**, uma a cada **30 segundos**, cada uma com um efeito sorteado de 5 moedas. Ex.: Mini dino (10) = 2 parcelas; 50 moedas = 10 parcelas (5 minutos); o que sobra (menos de 5) vira uma parcela de 1 moeda no fim. No máximo 120 parcelas (1 hora). O aviso mostra "· parcela 3/10". Fica em `presentes.js`.
 
 **De graça:**
 
@@ -351,7 +358,7 @@ Tudo que **ajuda** acontece na hora (e se adapta à situação, veja "O atraso d
 
 **Presentes com o herói morto** (depois do tempo caído): os que ajudam ficam guardados para o próximo herói. Os que atrapalham esperam a proteção dele acabar.
 
-**Os nomes em inglês** (`Rose`, `Donut`, `Lion`...) são os que o TikTok manda. Se um presente da tabela não existir mais ou tiver outro nome, ele aparece na janela preta quando alguém manda; é só trocar no `config.json`.
+**Os nomes em inglês** (`Rose`, `GG`, `Finger Heart`...) são os que o TikTok costuma mandar; cada presente também tem o nome em português e outros apelidos em `aliases` (sem ligar pra acento e maiúscula). Se um presente da tabela não existir mais ou tiver outro nome, ele aparece na janela preta quando alguém manda; é só trocar no `config.json`.
 
 ## O que aparece na tela
 
@@ -455,7 +462,7 @@ Cada assunto tem o seu arquivo em `public/js/core/`:
 | `habilidades.js` | **as habilidades do roguelike**: ativas, passivas, armas novas, treino, como as 3 cartas são sorteadas e o que a IA escolhe. Habilidade nova = acrescentar em `ATIVAS` ou `PASSIVAS` (instruções no começo do arquivo) |
 | `jogo.js` | o resto: herói, zumbis, arena, herói caído, mochila e presentes inteligentes |
 
-**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/som.test.mjs` (acústica), `node teste/tomate.test.mjs` (física do tomate no vidro), `node teste/grafico.test.mjs` (gráfico de atributos), `node teste/previsao.test.mjs` (o resultado da votação conta o que tem no destino, e acerta), `node teste/cabo.test.mjs` (cabo de guerra e os 10 s do resultado), `node teste/pedra.test.mjs` (zumbi da pedra e a trinca no vidro), `node teste/portal.test.mjs` (portal dos 500, guardião e relíquias), `node teste/fusoes.test.mjs` (tabela do T e o avião do Ataque aéreo), `node teste/recompensas.test.mjs` (drops, inspiração, colosso, runas, conversível, zumbi paraquedista e zumbis do fã), `node teste/catalogo.test.mjs` (a prévia sem o programa usa os mesmos números do config.json), `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade, força por nível, combos, fusões, núcleo, nível deus, nível máximo, suprema, vida por nível, Anti-explosão e inchados instáveis), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (zumbi do tomate, começo puxado, cota da quadra, limpar a área, horda a cada 5 quarteirões, segundo fôlego, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
+**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/som.test.mjs` (acústica), `node teste/tomate.test.mjs` (física do tomate no vidro), `node teste/grafico.test.mjs` (gráfico de atributos), `node teste/previsao.test.mjs` (o resultado da votação conta o que tem no destino, e acerta), `node teste/cabo.test.mjs` (cabo de guerra e os 10 s do resultado), `node teste/pedra.test.mjs` (zumbi da pedra e a trinca no vidro), `node teste/portal.test.mjs` (portal dos 500, guardião e relíquias), `node teste/fusoes.test.mjs` (tabela do T e o avião do Ataque aéreo), `node teste/presentes.test.mjs` (presentes baratos, sorteio do mesmo preço, parcelas e poderes fortes recarregando), `node teste/recompensas.test.mjs` (drops, inspiração, colosso, runas, conversível, zumbi paraquedista e zumbis do fã), `node teste/catalogo.test.mjs` (a prévia sem o programa usa os mesmos números do config.json), `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade, força por nível, combos, fusões, núcleo, nível deus, nível máximo, suprema, vida por nível, Anti-explosão e inchados instáveis), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (zumbi do tomate, começo puxado, cota da quadra, limpar a área, horda a cada 5 quarteirões, segundo fôlego, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
 
 **Para testar o equilíbrio sem live:** `node teste/simular.mjs` roda dezenas de partidas em segundos em 5 cenários (sem interação, só chat, presentes misturados, só presentes que ajudam, só presentes que atrapalham) e mostra quanto cada herói durou. Para testar números sem mexer no `config.json`: `AJUSTES='{"horda_base":8}' node teste/simular.mjs 20 nada`. Também dá pra mexer em `ameaca.js` e na força dos zumbis só na simulação: `AMEACA='{"medioForca":1.5}' ESCALA='{"vida":0.3}' node teste/simular.mjs 20 chat`, e `SEED=1` roda outra sequência de partidas. O simulador mostra em que faixa de nível os heróis caem, a vida mínima em cada faixa, quando chegam no nível 10 e quanto tempo levam pra limpar a área.
 
@@ -479,7 +486,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.26.2)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.27.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.

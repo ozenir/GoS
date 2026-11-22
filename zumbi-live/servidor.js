@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { TikTokLiveConnection, WebcastEvent, ControlEvent, UserOfflineError } from 'tiktok-live-connector';
 import { pessoa, textoDoComentario, curtidasDe } from './leitura.js';
+import { acharRegra, planoDoPresente, PARCELA } from './presentes.js';
 import { lerVoto, lerEscolha, OPCOES } from './public/js/core/votacao.js';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -95,10 +96,13 @@ const top = m => [...m.values()].sort((a, b) => b.coins - a.coins).slice(0, 3);
 const topRank = () => ({ ajuda: top(ranking.ajuda), atrapalha: top(ranking.atrapalha) });
 
 /* ---------- Presente -> efeito no jogo ---------- */
+const avisados = new Set();
 function regraPara(nome, moedas) {
   const p = config.presentes || {};
-  const porNome = p.por_nome || {};
-  if (nome && porNome[nome]) return porNome[nome];
+  const achada = acharRegra(p.por_nome || {}, nome);   // presentes.js: nome, nome em português ou "aliases"
+  if (achada) return achada;
+  // presente fora da tabela: avisa na janela (uma vez por nome), pra dar pra cadastrar no config.json
+  if (nome && !avisados.has(nome)) { avisados.add(nome); log(`🎁 presente sem regra no config.json: "${nome}" (${moedas} moedas) → efeito sorteado do mesmo preço (ou parcelas, se for caro)`); }
   const regras = [...(p.por_moedas || [])].sort((a, b) => a.a_partir_de - b.a_partir_de);
   let r = null;
   for (const x of regras) if (moedas >= x.a_partir_de) r = x;
@@ -133,11 +137,21 @@ function processarPresente(d) {
     if (qtd <= 0) return;
   }
 
-  const regra = regraPara(nome, moedas);
-  const lado = ATRAPALHA.has(regra.efeito) ? 'atrapalha' : 'ajuda';
-  somar(lado, p, moedas * qtd);
-  log(`🎁 ${p.nick} mandou ${qtd}x ${nome} (${moedas} moeda${moedas === 1 ? '' : 's'} cada) → ${regra.efeito} (${lado})`);
-  enviar({ type: 'presente', ...p, giftName: nome, image: imagem, count: qtd, coins: moedas, regra, lado, rank: topRank() });
+  regraPara(nome, moedas);   // (só pra avisar na janela se o presente não está na tabela)
+  // presentes.js: da tabela → efeito dele; fora da tabela (até 5 moedas) → efeito sorteado do mesmo preço;
+  // mais caro → parcelas de 5 moedas, uma a cada 30 s
+  const plano = planoDoPresente(config.presentes?.por_nome || {}, nome, moedas, qtd);
+  if (plano.length > 1 && plano[0].parcela) log(`🎁 ${p.nick} mandou ${qtd}x ${nome} (${moedas} moedas cada) → ${plano.length} parcelas de ${PARCELA.moedas} moedas, uma a cada ${PARCELA.intervalo} s`);
+  for (const parte of plano) {
+    const mandar = () => {
+      const regra = parte.parcela ? { ...parte.regra, parcela: parte.parcela } : parte.regra;
+      const lado = ATRAPALHA.has(regra.efeito) ? 'atrapalha' : 'ajuda';
+      somar(lado, p, parte.coins * parte.count);
+      log(`🎁 ${p.nick} mandou ${parte.count}x ${nome}${parte.parcela ? ` (parcela ${parte.parcela})` : ''} (${parte.coins} moeda${parte.coins === 1 ? '' : 's'}) → ${regra.efeito}${parte.sorteado ? ' sorteado' : ''} (${lado})`);
+      enviar({ type: 'presente', ...p, giftName: nome, image: imagem, count: parte.count, coins: parte.coins, regra, lado, rank: topRank() });
+    };
+    if (parte.atraso > 0) setTimeout(mandar, parte.atraso * 1000).unref?.(); else mandar();
+  }
 }
 
 /* ---------- Comentários, entradas, seguidores, compartilhamentos e curtidas ---------- */

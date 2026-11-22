@@ -72,7 +72,7 @@ export class Hud {
   toast(e) {
     const box = $('h-toasts');
     // mesma pessoa mandando o mesmo presente em seguida: soma no mesmo aviso (combo)
-    const chave = e.nick + '|' + (e.giftName || e.texto);
+    const chave = e.nick + '|' + (e.giftName || '') + '|' + e.texto;   // (mesmo presente com efeito diferente, ex.: o forte recarregando, não junta)
     const u = this.ultimoToast;
     if (u && u.chave === chave && performance.now() - u.t < 3500 && u.el.isConnected) {
       u.qtd += e.qtd || 1; u.t = performance.now();

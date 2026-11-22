@@ -11,7 +11,7 @@ import { EFEITOS, ladoDo } from './efeitos.js';
 import { Votacao, lerVoto, lerEscolha, OPCOES } from './votacao.js';
 import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasSupremas, supremaSegura, NIVEL_SUPREMA, ATIVAS, atualizarNucleo } from './habilidades.js';
 import { pedeGrafico } from './grafico.js';
-import { RECOMPENSA, DROPS, XP_POR_PILHA_SORTE, defesaRuna, CONVERSIVEL, PARAQUEDISTA, ZUMBI_FA } from './recompensas.js';
+import { RECOMPENSA, DROPS, XP_POR_PILHA_SORTE, defesaRuna, CONVERSIVEL, PARAQUEDISTA, ZUMBI_FA, FORTES, chaveForte } from './recompensas.js';
 import {
   atributosDaClasse, danoDoHeroi, intervaloTiro, intervaloCorpo, alcanceArma, velocidadeHeroi,
   danoNoHeroi, valorCura, statsZumbi, danoDoZumbi, danoNoZumbi, chanceDoStatus, danoExplosao, danoAliado, ALIADOS,
@@ -2214,7 +2214,9 @@ export class Jogo {
     h.inspPulso = 0;
     this.emit('inspiracao', { nick: quem?.nick || null, segundos: this.cfg.inspiracaoSeg });
     this.soltarDrop(quem);
-    if (!this.colossoPendente) {
+    // colosso: um por vez e, com presentes de 5 moedas, no máximo um a cada colossoRecarga s (a inspiração vem sempre)
+    if (!this.colossoPendente && this.t - (this.colossoT ?? -1e9) >= RECOMPENSA.colossoRecarga) {
+      this.colossoT = this.t;
       this.colossoPendente = { quem, estado: 'esperando' };
       this.emit('colosso_vem', { nick: quem?.nick || null });
     }
@@ -2762,6 +2764,15 @@ export class Jogo {
   }
 
   receberEfeito(regra, qtd, quem, coins, giftName, emoji, image) {
+    // poder forte (Rei, Chefão, Helicóptero, baú lendário) ainda recarregando: vira a versão menor (recompensas.js → FORTES)
+    const forte = chaveForte(regra);
+    let recarregando = false;
+    if (forte) {
+      this.fortesT = this.fortesT || {};
+      const agora = this.t;   // tempo do jogo (o simulador e os testes contam certo)
+      if (agora - (this.fortesT[forte] ?? -1e9) < FORTES[forte].segundos) { regra = { ...regra, ...FORTES[forte].troca }; recarregando = true; }
+      else this.fortesT[forte] = agora;
+    }
     const ef = EFEITOS[regra.efeito];
     if (!ef) return;
     const lado = ladoDo(regra);
@@ -2772,7 +2783,7 @@ export class Jogo {
       r.coins += coins * qtd; m.set(quem.id, r);
     }
     const espera = lado === 'atrapalha' && this.fase === 'jogo' && this.protecao > 0 ? Math.ceil(this.protecao) : 0;
-    this.emit('presente', { nick: quem.nick, avatar: quem.avatar || '', emoji: emoji || regra.emoji || '🎁', image: image || '', texto: ef.aviso(regra, qtd), lado, coins, qtd, giftName, espera });
+    this.emit('presente', { nick: quem.nick, avatar: quem.avatar || '', emoji: emoji || regra.emoji || '🎁', image: image || '', texto: ef.aviso(regra, qtd) + (recarregando ? ' (⏳ o forte recarrega)' : '') + (regra.parcela ? ` · parcela ${regra.parcela}` : ''), lado, coins, qtd, giftName, espera });
     // Resposta na hora, em cima do herói, com o nome de quem mandou (mesmo que o efeito vá pra fila)
     if (this.fase === 'jogo') this.emit('presente_heroi', { nick: quem.nick, emoji: emoji || regra.emoji || '🎁', lado, x: this.hero.x, y: this.hero.y });
     if (lado === 'ajuda' && (coins > 0 || giftName === 'seguiu')) this.ultimaAjudaT = this.t;

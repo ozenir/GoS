@@ -29,6 +29,17 @@
 //  Os números de quem decide (moedas, segundos, vida do colosso) ficam no config.json → jogo.
 // ============================================================================
 
+// PODERES FORTES EM PRESENTE BARATO: com tudo custando 1 ou 5 moedas, Rei Zumbi, Chefão, Helicóptero e baú lendário
+// podem vir no máximo uma vez a cada `segundos` (na live toda). Fora disso, o presente ainda vale (aviso, ranking,
+// cabo de guerra, recompensas) e vira a versão menor (`troca`).
+export const FORTES = {
+  rei:         { segundos: 240, troca: { efeito: 'horda', qtd: 8 } },
+  chefao:      { segundos: 180, troca: { efeito: 'horda', qtd: 8 } },
+  helicoptero: { segundos: 180, troca: { efeito: 'kit', valor: 35 } },
+  lendario:    { segundos: 150, troca: { efeito: 'bau', raridade: 'medio' } }
+};
+export const chaveForte = regra => (regra?.efeito === 'bau' ? (regra.raridade === 'lendario' ? 'lendario' : null) : FORTES[regra?.efeito] ? regra.efeito : null);
+
 export const RECOMPENSA = {
   dropAteMoedas: 1,
   dropsPorPresente: 5,
@@ -36,6 +47,7 @@ export const RECOMPENSA = {
   dropMaxPilhas: 5,
   dropAltura: 7, dropQueda: 1.4,     // casas de altura e de queda por segundo (cai em ~5 s)
   doacaoAPartirDe: 2,
+  colossoRecarga: 150,  // s: com presentes baratos, no máximo um colosso a cada 2,5 min (a inspiração vem sempre)
   inspiracao: { segundos: 10, danoRecebido: 0.2, raio: 3, pulso: 0.5, dano: 30 },
   chefe: {
     vida: 10000, vidaPorNivel: 0.25,    // vida = 10 mil × (1 + 25% por nível do herói acima de 1): acompanha a força dele
