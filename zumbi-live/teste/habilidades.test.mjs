@@ -2,7 +2,7 @@
 // Rodar:  node teste/habilidades.test.mjs
 import assert from 'node:assert/strict';
 import { Jogo } from '../public/js/core/jogo.js';
-import { ATIVAS, PASSIVAS, SUPREMAS, NIVEL_SUPREMA, COMBOS, COMBO_NIVEL, FORCA, combosDisponiveis, MAX_ATIVAS, sortearCartas, aplicarCarta, atualizarHabilidades, escolhaDaIA, SALVA_DESDE, NUCLEO, DEUS, tercosDoNucleo, slotsDoHeroi, ativasLivres, vagasOcupadas } from '../public/js/core/habilidades.js';
+import { ATIVAS, PASSIVAS, SUPREMAS, NIVEL_SUPREMA, COMBOS, COMBO_NIVEL, FORCA, combosDisponiveis, MAX_ATIVAS, sortearCartas, aplicarCarta, atualizarHabilidades, escolhaDaIA, SALVA_DESDE, NUCLEO, DEUS, tercosDoNucleo, slotsDoHeroi, ativasLivres, vagasOcupadas, MAX_PASSIVAS, vagasPassivas, grauSuprema, cdSuprema, nomeSuprema, ELEVACAO } from '../public/js/core/habilidades.js';
 import { EXPLOSAO } from '../public/js/core/ameaca.js';
 import { lerEscolha, lerVoto } from '../public/js/core/votacao.js';
 import { makeRng } from '../public/js/core/util.js';
@@ -37,9 +37,11 @@ teste('herói novo (nada pra aprimorar): ainda tem 3 cartas (treino conta como a
   assert.equal(c.length, 3);
 });
 
-teste(`no máximo ${MAX_ATIVAS} habilidades ativas`, () => {
+teste(`no máximo ${MAX_ATIVAS} habilidades ativas e ${MAX_PASSIVAS} passivas (os slots do painel)`, () => {
   const j = jogo();
-  for (const id of ['granada', 'raio', 'drone']) aplicarCarta(j, carta('ativa', id));
+  for (const id of Object.keys(ATIVAS).slice(0, MAX_ATIVAS)) aplicarCarta(j, carta('ativa', id));
+  for (const id of Object.keys(PASSIVAS).filter(p => p !== 'explosao').slice(0, MAX_PASSIVAS)) aplicarCarta(j, carta('passiva', id));
+  for (let s = 1; s < 30; s++) for (const c of sortearCartas(j.hero, makeRng(s))) assert.ok(!(c.tipo === 'passiva' && !j.hero.passivas[c.id]), 'nenhuma passiva nova com os slots cheios');
   for (let s = 1; s < 30; s++) for (const c of sortearCartas(j.hero, makeRng(s))) assert.ok(!(c.tipo === 'ativa' && c.cat === 'nova'));
 });
 
@@ -405,25 +407,70 @@ teste('fusão: habilidade e passiva saem das fileiras, a fusão vai pro slot peq
   assert.ok(sortearCartas(j.hero, makeRng(4)).some(c => c.cat === 'nova' && c.tipo === 'ativa'), 'oferece habilidade nova');
 });
 
-teste(`núcleo: a cada ${NUCLEO.porTerco} fusões, 1 terço (+${NUCLEO.danoPorTerco * 100}% de dano); as fusões continuam valendo`, () => {
+teste(`núcleo: a cada ${NUCLEO.porTerco} fusões, 1 terço que se une à suprema e sobe ela de grau`, () => {
   const j = jogo(), h = j.hero, ev = ouvir(j);
+  aplicarCarta(j, { tipo: 'suprema', id: 'bombardeio' });
+  const S = SUPREMAS.bombardeio;
+  assert.equal(grauSuprema(h), 0); assert.equal(nomeSuprema(h), S.nome);
   const ids = Object.keys(COMBOS);
   fundir(j, ids[0]);
   assert.equal(tercosDoNucleo(h), 0); assert.equal(slotsDoHeroi(h).mini.length, 1);
-  const C1 = COMBOS[ids[1]];
-  aplicarCarta(j, carta('ativa', C1.ativa, COMBO_NIVEL)); aplicarCarta(j, carta('passiva', C1.passiva, 1));
-  const d1 = h.attr.get('dano');
-  aplicarCarta(j, { tipo: 'combo', id: ids[1] });
+  assert.equal(vagasPassivas(h), 1, 'a passiva fundida some da fileira, mas a fusão solta ainda gasta a vaga');
+  fundir(j, ids[1]);
   assert.equal(tercosDoNucleo(h), 1);
   assert.equal(slotsDoHeroi(h).mini.length, 0, 'as 2 fusões entraram no núcleo');
-  assert.ok(Math.abs(h.attr.get('dano') / d1 - (1 + NUCLEO.danoPorTerco)) < 1e-6, `dano x${(h.attr.get('dano') / d1).toFixed(3)}`);
+  assert.equal(vagasPassivas(h), 0, 'e liberaram as vagas');
+  assert.equal(grauSuprema(h), 1); assert.equal(nomeSuprema(h), S.nome + ' +1');
+  assert.ok(Math.abs(cdSuprema(S, h) - S.cd * (1 - ELEVACAO.cd)) < 1e-9, 'recarga mais curta');
   assert.equal(h.evo[COMBOS[ids[0]].ativa], ids[0], 'a fusão continua ativa');
-  assert.ok(ev.some(e => e.t === 'nucleo' && e.tercos === 1));
+  assert.ok(ev.some(e => e.t === 'nucleo' && e.tercos === 1 && e.suprema));
+  // o ataque aéreo elevado joga mais bombas, mais fortes
+  const bombas = grau => {
+    const k = jogo(); k.hero.suprema = 'bombardeio'; k.hero.fusoes = ids.slice(0, grau * 2);
+    for (let a = 0; a < 40; a++) zumbi(k, (a % 8) * 0.9 - 3.5, Math.floor(a / 8) * 0.9 - 2, 'comum');
+    const ex = ouvir(k); S.usar(k, k.hero); rodar(k, 2);
+    return ex.filter(e => e.t === 'explosao').length;
+  };
+  assert.ok(bombas(2) > bombas(0), `bombas: ${bombas(0)} → ${bombas(2)}`);
 });
 
-teste(`núcleo cheio antes do nível ${NIVEL_MAXIMO}: trancado; no nível ${NIVEL_MAXIMO}: habilidade nível deus`, () => {
+teste('Coração de ferro elevado: mais defesa e regeneração', () => {
+  const j = jogo(), h = j.hero;
+  aplicarCarta(j, { tipo: 'suprema', id: 'imortal' });
+  const d0 = h.attr.get('defesa'), r0 = h.attr.get('regen');
+  for (const id of Object.keys(COMBOS).slice(0, 4)) fundir(j, id);
+  assert.equal(grauSuprema(h), 2);
+  assert.ok(h.attr.get('defesa') > d0 + 0.05, `defesa ${d0} → ${h.attr.get('defesa')}`);
+  assert.ok(h.attr.get('regen') > r0, 'regen');
+});
+
+teste('terços feitos antes do nível 10: a suprema já nasce elevada', () => {
+  const j = jogo(), h = j.hero;
+  for (const id of Object.keys(COMBOS).slice(0, 2)) fundir(j, id);
+  aplicarCarta(j, { tipo: 'suprema', id: 'aura' });
+  assert.equal(grauSuprema(h), 1);
+  assert.equal(slotsDoHeroi(h).nucleo.centro.nome, SUPREMAS.aura.nome + ' +1');
+});
+
+teste(`Anti-explosão com os ${MAX_PASSIVAS} slots de passiva cheios: entra no lugar da mais fraca`, () => {
+  const j = jogo(), h = j.hero;
+  const pas = Object.keys(PASSIVAS).filter(p => p !== 'explosao').slice(0, MAX_PASSIVAS);
+  pas.forEach((id, k) => aplicarCarta(j, carta('passiva', id, k === 2 ? 1 : 3)));
+  h.nivel = SALVA_DESDE;
+  const c = sortearCartas(h, makeRng(1));
+  const C = c.find(x => x.id === 'explosao');
+  assert.ok(C, 'a Anti-explosão aparece');
+  assert.equal(C.troca, pas[2], 'sai a de menor nível');
+  aplicarCarta(j, C);
+  assert.ok(h.passivas.explosao && !h.passivas[pas[2]]);
+  assert.equal(vagasPassivas(h), MAX_PASSIVAS);
+});
+
+teste(`núcleo cheio antes do nível ${NIVEL_MAXIMO}: trancado; no nível ${NIVEL_MAXIMO}: a suprema vira nível deus`, () => {
   const j = jogo(), h = j.hero, ev = ouvir(j);
+  aplicarCarta(j, { tipo: 'suprema', id: 'bombardeio' });
   for (const id of Object.keys(COMBOS)) fundir(j, id);
+  assert.equal(grauSuprema(h), 3);
   assert.equal(Object.keys(COMBOS).length, NUCLEO.tercos * NUCLEO.porTerco, 'o jogo tem fusões exatas pra encher o núcleo');
   assert.equal(tercosDoNucleo(h), 3);
   const S = slotsDoHeroi(h);
@@ -436,10 +483,15 @@ teste(`núcleo cheio antes do nível ${NIVEL_MAXIMO}: trancado; no nível ${NIVE
   assert.ok(h.deus, 'nível deus liberado');
   assert.ok(ev.some(e => e.t === 'deus'));
   assert.ok(slotsDoHeroi(h).nucleo.deus);
-  assert.equal(slotsDoHeroi(h).nucleo.centro.emoji, DEUS.emoji);
+  assert.equal(grauSuprema(h), 4);
+  assert.equal(slotsDoHeroi(h).nucleo.centro.nome, SUPREMAS.bombardeio.divino);
+  assert.ok(ev.some(e => e.t === 'deus' && e.nome === SUPREMAS.bombardeio.divino));
+  // a Fúria divina é só pra quem não tem suprema: aqui quem age é o Ataque aéreo divino
+  const fe = ouvir(j); zumbi(j, 2, 0); rodar(j, 2);
+  assert.ok(!fe.some(e => e.t === 'furia_divina'));
 });
 
-teste('nível deus: a Fúria divina derruba os zumbis em volta, fere o chefe e cura', () => {
+teste('nível deus sem suprema: a Fúria divina derruba os zumbis em volta, fere o chefe e cura', () => {
   const j = jogo(), h = j.hero, ev = ouvir(j);
   h.deus = true; h.deusT = 0.01; h.vida = h.vidaMax * 0.5;
   const zs = [zumbi(j, 2, 0), zumbi(j, -3, 1, 'corredor'), zumbi(j, 0, 4)];

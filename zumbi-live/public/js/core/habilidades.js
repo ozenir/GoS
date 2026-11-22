@@ -22,7 +22,8 @@ import { danoNoZumbi, aplicarPericias, PERICIAS } from './dano.js';
 import { dist, dist2 } from './util.js';
 import { multRunaDano } from './recompensas.js';
 
-export const MAX_ATIVAS = 3;     // quantas habilidades ativas o herói pode ter ao mesmo tempo
+export const MAX_ATIVAS = 5;     // slots de habilidade (esquerda do núcleo) — fusão solta ainda gasta a vaga
+export const MAX_PASSIVAS = 5;   // slots de passiva (direita do núcleo) — idem
 
 // Zumbis que dá pra acertar (vivos e já de pé)
 // (zumbi do fã com escudo fica de fora: ainda não pode morrer)
@@ -332,67 +333,71 @@ export const ARMAS_NOVAS = {
 export const NIVEL_SUPREMA = 10;
 export const SUPREMAS = {
   bombardeio: {
-    nome: 'Ataque aéreo', emoji: '✈️', cd: 11, bombas: 6, dano: 75, raio: 1.9,
+    nome: 'Ataque aéreo', divino: 'Ataque aéreo divino', emoji: '✈️', cd: 11, bombas: 6, dano: 75, raio: 1.9,
     desc: () => 'a cada 11s caem 6 bombas nos maiores grupos de zumbis (75 de dano cada)',
     usar(g, h) {
+      const G = grauSuprema(h), raio = this.raio + 0.15 * G, dano = this.dano * multSuprema(h);
       const vivos = alvos(g).filter(z => dist2(z.x, z.y, h.x, h.y) < 49);
       if (vivos.length < 4) return false;
       const ja = [];
-      for (let k = 0; k < this.bombas; k++) {
+      for (let k = 0; k < this.bombas + 2 * G; k++) {
         // centro do maior grupo que ainda não levou bomba (longe das bombas já marcadas)
         let melhor = null, mq = 0;
         for (const z of vivos) {
           if (ja.some(p => dist2(p[0], p[1], z.x, z.y) < 1.6 * 1.6)) continue;
           let q = 0;
-          for (const o of vivos) if (dist2(z.x, z.y, o.x, o.y) < this.raio * this.raio) q++;
+          for (const o of vivos) if (dist2(z.x, z.y, o.x, o.y) < raio * raio) q++;
           if (ZUMBIS[z.tipo].chefe) q += 3;
           if (q > mq) { mq = q; melhor = z; }
         }
         if (!melhor) break;
         ja.push([melhor.x, melhor.y]);
       }
-      g.emit('aviso', { texto: '✈️ ATAQUE AÉREO!', tipo: 'bom' });
-      ja.forEach(([x, y], k) => g.agendar(0.35 + k * 0.14, () => explosaoAmiga(g, x, y, this.raio, this.dano, 'explosao', 5)));
+      g.emit('aviso', { texto: `✈️ ${nomeSuprema(h).toUpperCase()}!`, tipo: 'bom' });
+      ja.forEach(([x, y], k) => g.agendar(0.35 + k * 0.12, () => explosaoAmiga(g, x, y, raio, dano, 'explosao', 5)));
       return true;
     }
   },
   aura: {
-    nome: 'Aura de fogo', emoji: '☀️', continua: true, raio: 2.3, dano: 13, intervalo: 0.5,
+    nome: 'Aura de fogo', divino: 'Aura divina', emoji: '☀️', continua: true, raio: 2.3, dano: 13, intervalo: 0.5,
     desc: () => 'queima tudo que chega perto: 26 de dano por segundo em volta do herói e deixa os zumbis lentos',
     atualizar(g, h, dt) {
       h.auraT = (h.auraT ?? 0) - dt;
       if (h.auraT > 0) return;
       h.auraT = this.intervalo;
+      const raio = this.raio + 0.3 * grauSuprema(h), dano = this.dano * multSuprema(h);
       for (const z of alvos(g)) {
-        const r = this.raio + ZUMBIS[z.tipo].raio;
+        const r = raio + ZUMBIS[z.tipo].raio;
         if (dist2(z.x, z.y, h.x, h.y) > r * r) continue;
-        ferir(g, z, this.dano, 'fogo');
+        ferir(g, z, dano, 'fogo');
         if (!z.morto) g.aplicarStatus(z, 'lento', { duracao: 1 });
       }
     }
   },
   imortal: {
-    nome: 'Coração de ferro', emoji: '❤️‍🔥', cd: 40, defesa: 0.15, regen: 1.2, cura: 45, raio: 3,
+    nome: 'Coração de ferro', divino: 'Coração divino', emoji: '❤️‍🔥', cd: 40, defesa: 0.15, regen: 1.2, cura: 45, raio: 3,
     desc: () => '+15% de defesa e regenera; quase caindo, explode uma onda, cura 45% e fica 3s invencível (a cada 40s)',
-    mods: () => [{ attr: 'defesa', soma: 0.15 }, { attr: 'regen', soma: 1.2 }],
+    // G = grau da suprema (0 = como veio; cada terço do núcleo sobe 1; nível deus = 4)
+    mods: (G = 0) => [{ attr: 'defesa', soma: 0.15 + 0.03 * G }, { attr: 'regen', soma: 1.2 * (1 + ELEVACAO.mult * G) }],
     // chamado quando a vida fica baixa (ou o golpe ia derrubar). Devolve true se salvou.
     salvar(g, h) {
       if ((h.supremaT ?? 0) > 0) return false;
-      h.supremaT = this.cd;
+      const G = grauSuprema(h), raio = this.raio + 0.5 * G, cura = this.cura + 5 * G;
+      h.supremaT = cdSuprema(this, h);
       h.vida = Math.max(h.vida, 1);
-      h.invT = Math.max(h.invT, 3);
-      g.emit('onda', { x: h.x, y: h.y, raio: this.raio });
+      h.invT = Math.max(h.invT, 3 + 0.5 * G);
+      g.emit('onda', { x: h.x, y: h.y, raio });
       for (const z of alvos(g)) {
         const d = dist(z.x, z.y, h.x, h.y) || 0.01;
-        if (d > this.raio) continue;
-        ferir(g, z, 40, 'impacto');
+        if (d > raio) continue;
+        ferir(g, z, 40 * multSuprema(h), 'impacto');
         if (z.morto) continue;
         g.aplicarStatus(z, 'atordoado', { duracao: 1.2 });
         if (!ZUMBIS[z.tipo].chefe) { z.kx += (z.x - h.x) / d * 9; z.ky += (z.y - h.y) / d * 9; }
       }
-      h.vida = Math.min(h.vidaMax, h.vida + h.vidaMax * this.cura / 100);
-      g.emit('cura', { valor: this.cura, x: h.x, y: h.y, salvou: false, item: false });
-      g.emit('aviso', { texto: '❤️‍🔥 CORAÇÃO DE FERRO! O herói se levantou na marra!', tipo: 'bom' });
+      h.vida = Math.min(h.vidaMax, h.vida + h.vidaMax * cura / 100);
+      g.emit('cura', { valor: cura, x: h.x, y: h.y, salvou: false, item: false });
+      g.emit('aviso', { texto: `❤️‍🔥 ${nomeSuprema(h).toUpperCase()}! O herói se levantou na marra!`, tipo: 'bom' });
       return true;
     }
   }
@@ -445,7 +450,12 @@ export function sortearCartas(h, rng) {
   }
   if (vagasOcupadas(h) < MAX_ATIVAS) for (const id of Object.keys(ATIVAS)) if (!habs[id]) nova.push({ ...cartaAtiva(id, 1), cat: 'nova', peso: 1 });
   for (const [id, A] of Object.entries(ARMAS_NOVAS)) if (A.pode(h)) nova.push({ tipo: 'arma', id, nivel: 1, nome: A.nome, emoji: A.emoji, desc: A.desc(), cat: 'nova', peso: 0.8 });
-  for (const id of Object.keys(PASSIVAS)) if (!pas[id]) passiva.push({ ...cartaPassiva(id, 1), cat: 'passiva', peso: id === 'explosao' ? 0.5 : 1 });
+  if (vagasPassivas(h) < MAX_PASSIVAS) { for (const id of Object.keys(PASSIVAS)) if (!pas[id]) passiva.push({ ...cartaPassiva(id, 1), cat: 'passiva', peso: id === 'explosao' ? 0.5 : 1 }); }
+  else if (!pas.explosao && salva(h, 'explosao')) {
+    // slots cheios, mas a Anti-explosão é a que salva: entra no lugar da passiva mais fraca
+    const troca = passivaMaisFraca(h);
+    if (troca) passiva.push({ ...cartaPassiva('explosao', 1), troca, desc: `${cartaPassiva('explosao', 1).desc} (sai ${PASSIVAS[troca].emoji} ${PASSIVAS[troca].nome})`, cat: 'passiva', peso: 1 });
+  }
 
   const tirar = lista => {
     if (!lista.length) return null;
@@ -491,6 +501,13 @@ export function aplicarCarta(g, carta) {
     h.habT[carta.id] = Math.min(h.habT[carta.id] ?? 0.5, 0.5);   // já dispara logo
   } else if (carta.tipo === 'passiva') {
     const P = PASSIVAS[carta.id];
+    // slots de passiva cheios: a carta diz qual passiva sai pra essa entrar (só a Anti-explosão faz isso)
+    if (carta.troca && h.passivas[carta.troca]) {
+      const Q = PASSIVAS[carta.troca];
+      delete h.passivas[carta.troca];
+      h.attr.removeMod('pas:' + carta.troca);
+      g.emit('aviso', { texto: `${Q.emoji} ${Q.nome} saiu pra ${P.emoji} ${P.nome} entrar`, tipo: 'info' });
+    }
     const antes = h.attr.get('vidaMax');
     h.passivas[carta.id] = carta.nivel;
     h.attr.addMod({ ...P.mod(carta.nivel), id: 'pas:' + carta.id, fonte: P.nome });
@@ -516,8 +533,7 @@ export function aplicarCarta(g, carta) {
     h.suprema = carta.id;
     h.supremaT = 1;   // ataque aéreo já sai logo
     h.vida = Math.min(h.vidaMax, h.vida + h.vidaMax * 0.3);   // chega com fôlego pra horda grande
-    for (const [k, m] of (S.mods ? S.mods() : []).entries()) h.attr.addMod({ ...m, id: `sup:${carta.id}:${k}`, fonte: S.nome });
-    g.sincronizarVida();
+    aplicarModsSuprema(g);
   } else if (carta.tipo === 'arma') {
     if (carta.id === 'escopeta') { h.armaFixa = 'escopeta'; g.trocarArma('escopeta', null); }
     if (carta.id === 'taco') { h.corpoFixo = 'taco'; h.corpo = 'taco'; h.golpes = Infinity; }
@@ -531,8 +547,8 @@ export function atualizarHabilidades(g, dt) {
   atualizarSuprema(g, h, dt);
   if (!h.habs) return;
   h.habT = h.habT || {};
-  // nível deus (núcleo cheio no nível máximo)
-  if (h.deus && (h.deusT = (h.deusT ?? 1) - dt) <= 0) h.deusT = DEUS.usar(g, h) ? DEUS.cd : 0.5;
+  // nível deus sem suprema (não deveria acontecer: a suprema vem no nível 10): Fúria divina no lugar
+  if (h.deus && !h.suprema && (h.deusT = (h.deusT ?? 1) - dt) <= 0) h.deusT = DEUS.usar(g, h) ? DEUS.cd : 0.5;
   if (h.habs.laminas) girarAngulo(h, dt);
   for (const [id, n0] of Object.entries(h.habs)) {
     // habilidade evoluída por combo: roda a versão do combo; o nível dela é o da passiva do combo
@@ -561,7 +577,7 @@ function atualizarSuprema(g, h, dt) {
   if (!S) return;
   if (S.continua) { S.atualizar(g, h, dt); return; }
   h.supremaT = (h.supremaT ?? 0) - dt;
-  if (S.usar) { if (h.supremaT <= 0) h.supremaT = S.usar(g, h) ? S.cd : 0.5; return; }
+  if (S.usar) { if (h.supremaT <= 0) h.supremaT = S.usar(g, h) ? cdSuprema(S, h) : 0.5; return; }
   if (S.salvar && h.vida / h.vidaMax < 0.25) S.salvar(g, h);
 }
 
@@ -581,8 +597,8 @@ export function habilidadesDoHeroi(h) {
   }
   for (const [id, n] of Object.entries(h.passivas || {})) l.push({ emoji: PASSIVAS[id].emoji, nome: PASSIVAS[id].nome, nivel: n, tipo: 'passiva' });
   if (h.treino) l.push({ emoji: '🎓', nome: 'Treino', nivel: h.treino, tipo: 'passiva' });
-  if (h.suprema) { const S = SUPREMAS[h.suprema]; l.unshift({ emoji: S.emoji, nome: S.nome, nivel: 1, tipo: 'suprema', pronta: S.continua || (h.supremaT ?? 0) <= 0.2 }); }
-  if (h.deus) l.unshift({ emoji: DEUS.emoji, nome: DEUS.nome, nivel: 1, tipo: 'deus', pronta: true });
+  if (h.suprema) { const S = SUPREMAS[h.suprema]; l.unshift({ emoji: S.emoji, nome: nomeSuprema(h), nivel: 1 + grauSuprema(h), tipo: h.deus ? 'deus' : 'suprema', pronta: S.continua || (h.supremaT ?? 0) <= 0.2 }); }
+  else if (h.deus) l.unshift({ emoji: DEUS.emoji, nome: DEUS.nome, nivel: 1, tipo: 'deus', pronta: true });
   // runas do colosso: 🔮 + o que ela faz, no número a quantidade
   for (const [id, r] of Object.entries(h.runas || {})) {
     const hab = id === 'principal' ? 'ataque principal' : ATIVAS[id]?.nome;
@@ -592,29 +608,54 @@ export function habilidadesDoHeroi(h) {
   return l;
 }
 
-/* ---------------- Núcleo: fusões → terços → nível deus ---------------- */
+/* ---------------- Núcleo: fusões → terços → suprema elevada → nível deus ---------------- */
 // Cada COMBO (habilidade nível 3+ com a passiva certa) é uma FUSÃO: no painel, a habilidade e a passiva somem das
 // fileiras e a fusão ocupa um dos 2 slots pequenos do lado do NÚCLEO (o slot redondo grande), ainda gastando a
-// vaga de ativa. Duas fusões viram 1/3 do núcleo e liberam as 2 vagas (dá pra pegar outras habilidades e fazer
-// as próximas fusões). Cada terço dá
-// +15% de dano em tudo. As 6 fusões do jogo enchem o núcleo (3 terços) e liberam a habilidade NÍVEL DEUS,
-// mas só no nível máximo do herói (dados.js → NIVEL_MAXIMO, 100). As fusões continuam funcionando.
-export const NUCLEO = { tercos: 3, porTerco: 2, danoPorTerco: 0.15 };
+// vaga de habilidade e a de passiva. Duas fusões viram 1/3 do núcleo e liberam as vagas.
+// No meio do núcleo fica a HABILIDADE SUPREMA do nível 10 (a que veio sem fusão). Cada terço se une a ela e
+// ELEVA a suprema um grau (mais dano, mais alcance, recarga mais curta). As 6 fusões do jogo enchem o núcleo
+// (3 terços); no nível máximo (dados.js → NIVEL_MAXIMO, 100) a suprema vira a versão NÍVEL DEUS (grau 4).
+// Os terços feitos antes do nível 10 ficam guardados: a suprema já nasce elevada. As fusões continuam funcionando.
+export const NUCLEO = { tercos: 3, porTerco: 2 };
+export const ELEVACAO = { mult: 0.4, cd: 0.12 };   // por grau: +40% de força e -12% de recarga (nível deus: x2,6 e -48%)
 export const tercosDoNucleo = h => Math.min(NUCLEO.tercos, Math.floor((h.fusoes?.length || 0) / NUCLEO.porTerco));
 export const fusoesSoltas = h => (h.fusoes || []).slice(tercosDoNucleo(h) * NUCLEO.porTerco);   // as que estão nos slots pequenos
+const passivasFundidas = h => new Set((h.fusoes || []).map(c => COMBOS[c].passiva));
 export const ativasLivres = h => Object.keys(h.habs || {}).filter(id => !h.evo?.[id]);           // as que aparecem na fileira
+export const passivasLivres = h => { const f = passivasFundidas(h); return Object.keys(h.passivas || {}).filter(id => !f.has(id)); };
 export const vagasOcupadas = h => ativasLivres(h).length + fusoesSoltas(h).length;                 // fusão solta ainda gasta a vaga
+export const vagasPassivas = h => passivasLivres(h).length + fusoesSoltas(h).length;
+export const grauSuprema = h => tercosDoNucleo(h) + (h.deus ? 1 : 0);
+export const multSuprema = h => 1 + ELEVACAO.mult * grauSuprema(h);
+export const cdSuprema = (S, h) => S.cd * (1 - ELEVACAO.cd * grauSuprema(h));
+export const nomeSuprema = h => { const S = SUPREMAS[h.suprema]; if (!S) return ''; const G = grauSuprema(h); return h.deus ? S.divino : G ? `${S.nome} +${G}` : S.nome; };
 
-// Habilidade nível deus: a cada cd segundos, uma luz do céu derruba todo zumbi em volta (chefe perde 25% da vida),
-// cura 20% e deixa o herói invencível por 2 s
+// Passiva que sai quando a Anti-explosão precisa entrar e os slots estão cheios: a de menor nível,
+// fugindo das que ainda podem virar fusão com uma habilidade que o herói tem
+function passivaMaisFraca(h) {
+  const util = new Set(Object.values(COMBOS).filter(C => h.habs?.[C.ativa] && !h.evo?.[C.ativa]).map(C => C.passiva));
+  return passivasLivres(h).sort((a, b) => (util.has(a) - util.has(b)) || (h.passivas[a] - h.passivas[b]))[0] || null;
+}
+
+// Bônus fixos da suprema (Coração de ferro), no grau atual
+function aplicarModsSuprema(g) {
+  const h = g.hero, S = h.suprema && SUPREMAS[h.suprema];
+  if (!S?.mods) return;
+  for (const [k, m] of S.mods(grauSuprema(h)).entries()) h.attr.addMod({ ...m, id: `sup:${h.suprema}:${k}`, fonte: nomeSuprema(h) });
+  g.sincronizarVida();
+}
+
+// Se o herói chegar no nível deus sem suprema (só em teste), ganha a Fúria divina: a cada cd segundos uma luz do
+// céu derruba todo zumbi em volta (chefe perde 25% da vida), cura 20% e deixa invencível por 2 s
 export const DEUS = {
   nome: 'Fúria divina', emoji: '👑', cd: 12, raio: 10, chefe: 0.25, cura: 20, invencivel: 2,
   desc() { return `a cada ${this.cd}s uma luz do céu derruba todos os zumbis em volta (chefes perdem ${Math.round(this.chefe * 100)}% da vida), cura ${this.cura}% e deixa invencível por ${this.invencivel}s`; },
   usar(g, h) {
     const perto = g.zumbis.filter(z => !z.morto && !(z.nascendo > 0) && dist2(z.x, z.y, h.x, h.y) < this.raio * this.raio);
     for (const z of perto) {
-      if (ZUMBIS[z.tipo].chefe) { if (z.fa) z.fa.escudo = 0; g.ferirZumbi(z, z.vidaMax * this.chefe, null, true); }
-      else { if (z.fa) z.fa.escudo = 0; g.matarZumbi(z, null); }
+      if (z.fa) z.fa.escudo = 0;
+      if (ZUMBIS[z.tipo].chefe) g.ferirZumbi(z, z.vidaMax * this.chefe, null, true);
+      else g.matarZumbi(z, null);
     }
     g.curar(this.cura, null, true);
     h.invT = Math.max(h.invT, this.invencivel);
@@ -623,35 +664,34 @@ export const DEUS = {
   }
 };
 
-// Recalcula o bônus do núcleo e libera o nível deus (núcleo cheio + nível máximo). Chame depois de fusão e ao subir de nível.
+// Recalcula o grau da suprema e libera o nível deus (núcleo cheio + nível máximo). Chame depois de fusão e ao subir de nível.
 export function atualizarNucleo(g) {
-  const h = g.hero, t = tercosDoNucleo(h);
-  if (t > 0) h.attr.addMod({ id: 'nucleo', attr: 'dano', mult: 1 + NUCLEO.danoPorTerco * t, fonte: 'núcleo' });
+  const h = g.hero, t = tercosDoNucleo(h), S = h.suprema && SUPREMAS[h.suprema];
   if (t > (h.nucleoVisto || 0)) {
     h.nucleoVisto = t;
-    g.emit('nucleo', { tercos: t, total: NUCLEO.tercos, bloqueado: t >= NUCLEO.tercos && h.nivel < NIVEL_MAXIMO });
+    g.emit('nucleo', { tercos: t, total: NUCLEO.tercos, bloqueado: t >= NUCLEO.tercos && h.nivel < NIVEL_MAXIMO, suprema: S ? { emoji: S.emoji, nome: nomeSuprema(h) } : null });
   }
   if (!h.deus && t >= NUCLEO.tercos && h.nivel >= NIVEL_MAXIMO) {
     h.deus = true; h.deusT = 1;
-    g.emit('deus', { nome: DEUS.nome, emoji: DEUS.emoji });
+    g.emit('deus', S ? { nome: S.divino, emoji: S.emoji } : { nome: DEUS.nome, emoji: DEUS.emoji });
   }
+  aplicarModsSuprema(g);
 }
 
-// O painel do herói: fileiras de habilidades (pra esquerda) e passivas (pra direita), os 2 slots pequenos e o núcleo
+// O painel do herói: fileiras de habilidades (pra esquerda) e passivas (pra direita), cada uma com 5 slots
+// (usados, presos por fusão solta, vazios), os 2 slots pequenos e o núcleo
 export function slotsDoHeroi(h) {
   const comRuna = id => !!(h.runas?.[id]?.dano || h.runas?.[id]?.resistencia);
   const ativas = ativasLivres(h).map(id => ({ emoji: ATIVAS[id].emoji, nome: ATIVAS[id].nome, nivel: h.habs[id], runa: comRuna(id) }));
-  const fundidas = new Set((h.fusoes || []).map(c => COMBOS[c].passiva));
-  const passivas = Object.entries(h.passivas || {}).filter(([id]) => !fundidas.has(id)).map(([id, n]) => ({ emoji: PASSIVAS[id].emoji, nome: PASSIVAS[id].nome, nivel: n }));
-  if (h.treino) passivas.push({ emoji: '🎓', nome: 'Treino', nivel: h.treino });
-  if (comRuna('principal')) passivas.push({ emoji: '🔮', nome: 'Runa do ataque principal', nivel: (h.runas.principal.dano || 0) + (h.runas.principal.resistencia || 0) });
-  const mini = fusoesSoltas(h).map(c => ({ emoji: COMBOS[c].emoji, nome: COMBOS[c].nome, nivel: h.passivas?.[COMBOS[c].passiva] || 1 }));
+  const passivas = passivasLivres(h).map(id => ({ emoji: PASSIVAS[id].emoji, nome: PASSIVAS[id].nome, nivel: h.passivas[id] }));
+  const soltas = fusoesSoltas(h);
+  const mini = soltas.map(c => ({ emoji: COMBOS[c].emoji, nome: COMBOS[c].nome, nivel: h.passivas?.[COMBOS[c].passiva] || 1 }));
   const t = tercosDoNucleo(h), S = h.suprema && SUPREMAS[h.suprema];
   return {
-    ativas, passivas, mini,
+    ativas, passivas, mini, maxAtivas: MAX_ATIVAS, maxPassivas: MAX_PASSIVAS, presas: soltas.length,
     nucleo: {
-      tercos: t, total: NUCLEO.tercos, deus: !!h.deus, bloqueado: t >= NUCLEO.tercos && !h.deus,
-      centro: h.deus ? { emoji: DEUS.emoji, nome: DEUS.nome } : S ? { emoji: S.emoji, nome: S.nome } : null
+      tercos: t, total: NUCLEO.tercos, deus: !!h.deus, bloqueado: t >= NUCLEO.tercos && !h.deus, grau: grauSuprema(h),
+      centro: S ? { emoji: S.emoji, nome: nomeSuprema(h) } : h.deus ? { emoji: DEUS.emoji, nome: DEUS.nome } : null
     }
   };
 }

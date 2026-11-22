@@ -112,6 +112,13 @@ export class Hud {
       const id = cls + x.emoji + x.nivel; ids.push(id);
       return `<span class="sl ${cls}${antes.has(id) || !this.cache.slots ? '' : ' novo'}" title="${esc(x.nome)}">${esc(x.emoji)}<i>${x.nivel}</i>${x.runa ? '<u>🔮</u>' : ''}</span>`;
     };
+    // 5 slots de cada lado: usados, presos pela fusão solta (até ela entrar no núcleo) e vazios
+    const fileira = (lista, max, cls) => {
+      const presos = Math.min(S.presas, Math.max(0, max - lista.length));
+      return lista.slice(0, max).map(x => slot(x, cls)).join('') +
+        '<span class="sl presa" title="Vaga presa pela fusão até ela entrar no núcleo"></span>'.repeat(presos) +
+        '<span class="sl vazio"></span>'.repeat(Math.max(0, max - lista.length - presos));
+    };
     const mini = i => {
       const x = S.mini[i];
       if (!x) return '<span class="sm" title="Fusão: habilidade nível 3 + a passiva certa"></span>';
@@ -121,15 +128,14 @@ export class Hud {
     // anel do núcleo: 3 terços com uma folguinha entre eles; cheios em dourado
     const parte = 360 / N.total, folga = 6, cor = i => (N.deus ? '#fff3a0' : i < N.tercos ? '#ffd23f' : 'rgba(255,255,255,.12)');
     const anel = Array.from({ length: N.total }, (_, i) => `${cor(i)} ${i * parte + folga / 2}deg ${(i + 1) * parte - folga / 2}deg, transparent ${(i + 1) * parte - folga / 2}deg ${(i + 1) * parte + folga / 2}deg`).join(',');
-    const selo = N.deus ? '<em>DEUS</em>' : N.bloqueado ? `<em class="lock">🔒${NIVEL_MAXIMO}</em>` : N.tercos ? `<em>${N.tercos}/${N.total}</em>` : '';
-    const titulo = N.deus ? 'Nível deus: Fúria divina' : `Núcleo ${N.tercos}/${N.total}: a cada ${NUCLEO.porTerco} fusões, 1 terço (+${Math.round(NUCLEO.danoPorTerco * 100)}% de dano). Cheio + nível ${NIVEL_MAXIMO} = habilidade nível deus`;
+    const selo = N.deus ? '<em>DEUS</em>' : N.bloqueado ? `<em class="lock">🔒${NIVEL_MAXIMO}</em>` : N.tercos ? `<em>${N.centro ? '+' + N.grau : N.tercos + '/' + N.total}</em>` : '';
+    const titulo = (N.centro ? N.centro.nome + ' · ' : '') + (N.deus ? 'nível deus' : `núcleo ${N.tercos}/${N.total}: a cada ${NUCLEO.porTerco} fusões, 1 terço se une à suprema e eleva ela. Cheio + nível ${NIVEL_MAXIMO} = nível deus`);
     const subiu = (this.cache.nucT ?? N.tercos) !== N.tercos || (this.cache.nucD === false && N.deus);
     this.cache.nucT = N.tercos; this.cache.nucD = N.deus;
-    const vazio = !S.ativas.length && !S.passivas.length && !S.mini.length && !N.centro && !N.tercos;
     $('h-slots').innerHTML =
-      `<div class="lado hab">${S.ativas.map(x => slot(x, 'hab')).join('') || (vazio ? '<span class="hb-vazio">⭐ cada nível:</span>' : '')}</div>` +
+      `<div class="lado hab">${fileira(S.ativas, S.maxAtivas, 'hab')}</div>` +
       `<div class="nucleo">${mini(0)}<span class="nuc${N.deus ? ' deus' : ''}${subiu ? ' up' : ''}" title="${esc(titulo)}"><span class="anel" style="background:conic-gradient(${anel});-webkit-mask:radial-gradient(circle,transparent 61%,#000 62%);mask:radial-gradient(circle,transparent 61%,#000 62%)"></span><span class="meio">${N.centro ? esc(N.centro.emoji) : ''}</span>${selo}</span>${mini(1)}</div>` +
-      `<div class="lado pas">${S.passivas.map(x => slot(x, 'pas')).join('') || (vazio ? '<span class="hb-vazio">o chat escolhe</span>' : '')}</div>`;
+      `<div class="lado pas">${fileira(S.passivas, S.maxPassivas, 'pas')}</div>`;
     this.cache.slots = k; this.cache.slotsIds = ids;
   }
 
@@ -155,8 +161,8 @@ export class Hud {
       case 'bau': if (e.raridade === 'lendario') this.banner(`✨ ${ARMAS[e.arma]?.nome.toUpperCase() || 'ARMA LENDÁRIA'}!`, e.quem ? `baú lendário de ${e.quem}` : 'baú lendário', 'ouro', 2.8); break;
       case 'nivel': this.banner(`⭐ NÍVEL ${e.nivel}`, (e.pericias || []).join(' · '), 'ouro', 1.6); break;
       case 'passiva': this.banner(e.texto, '', 'bom', 1.8); break;
-      case 'nucleo': this.banner(`💠 NÚCLEO ${e.tercos}/${e.total}!`, e.bloqueado ? `núcleo cheio! a habilidade nível deus abre no nível ${NIVEL_MAXIMO}` : `+${Math.round(NUCLEO.danoPorTerco * 100 * e.tercos)}% de dano em tudo`, 'ouro', 3); break;
-      case 'deus': this.banner('👑 NÍVEL DEUS!', `${e.emoji} ${e.nome}: luz do céu a cada poucos segundos`, 'ouro', 4); break;
+      case 'nucleo': this.banner(`💠 NÚCLEO ${e.tercos}/${e.total}!`, (e.suprema ? `${e.suprema.emoji} ${e.suprema.nome}: a suprema subiu de grau` : 'a suprema do nível 10 já vai nascer elevada') + (e.bloqueado ? ` · nível deus no ${NIVEL_MAXIMO}` : ''), 'ouro', 3.2); break;
+      case 'deus': this.banner('👑 NÍVEL DEUS!', `${e.emoji} ${e.nome}`, 'ouro', 4); break;
       case 'nivel_maximo': this.banner(`🏆 NÍVEL ${e.nivel}! NÍVEL MÁXIMO`, '', 'ouro', 3); break;
       // recompensas de presente (recompensas.js)
       case 'drop': this.banner(`🪂 ${e.emoji} ${e.nome.toUpperCase()}${e.pilhas > 1 ? ' x' + e.pilhas : ''}!`, `${e.texto} · 5 quarteirões${e.quem ? ' · presente de ' + e.quem : ''}`, 'bom', 2.2); break;
@@ -318,6 +324,9 @@ export class Hud {
     const golpes = cp.golpes && Number.isFinite(h.golpes) ? h.golpes : '';
     if (a && h.corpo !== 'empurrao') armaTxt += ` + ${cp.emoji}${golpes}`;
     else if (!a && golpes !== '') armaTxt += ` · ${golpes}`;
+    // treino e runa são do ataque principal: aparecem do lado da arma
+    if (h.treino) armaTxt += ` 🎓${h.treino}`;
+    if (h.runas?.principal?.dano || h.runas?.principal?.resistencia) armaTxt += ' 🔮';
     this.set('h-arma', armaTxt);
     const armaEl = $('h-arma'), lend = !!a?.lendaria;
     if (armaEl.dataset.l !== String(lend)) { armaEl.classList.toggle('lend', lend); armaEl.dataset.l = String(lend); }
