@@ -78,6 +78,11 @@ export const CONTROLE_IMUNE = 1.2;
 // Quantas curas/kits cabem na mochila do herói (guardados quando chegam com a vida alta)
 export const MOCHILA_MAX = 5;
 
+// Helicóptero (presente): invencível por N quarteirões, mas no máximo segPorQuarteirao segundos por quarteirão
+// (bem mais que o normal pra andar um quarteirão e limpar a área, que acaba em AMEACA.limpandoMax).
+// Sem esse teto, um herói preso no cruzamento (limpando a área sem fim) ficava invencível pra sempre.
+export const HELI = { segPorQuarteirao: 120, maxQuarteiroes: 4 };
+
 // Segundo fôlego do começo (ver segundoFolego)
 export const FOLEGO = { ateNivel: 10, limite: 0.2, cura: 0.2, invencivel: 3, raio: 4, empurra: 7, atordoa: 1.5, recarga: 50 };
 
@@ -142,7 +147,7 @@ export class Jogo {
       arma: C.arma || null, municao: C.arma ? (C.municao ?? ARMAS[C.arma].municao ?? null) : null, armaQ: 0,   // armaQ: quarteirões que a arma lendária ainda dura
       corpo: C.corpo || 'empurrao', golpes: CORPO[C.corpo || 'empurrao'].golpes || 0,
       pericias: { ...(C.pericias || {}) }, instintoCd: 0, folegoCd: 0,
-      colete: 0, tiroCd: 0, corpoCd: 0, invT: 0, invQ: 0,   // invT: invencível por segundos; invQ: por quarteirões (helicóptero)
+      colete: 0, tiroCd: 0, corpoCd: 0, invT: 0, invQ: 0, invQT: 0,   // invT: invencível por segundos; invQ: por quarteirões (helicóptero), no máximo invQT segundos
       nivel: 1, xp: 0, fx: DIRS[dir][0], fy: DIRS[dir][1], andando: false, mira: null, animT: 0,
       parado: 0, ultimaPos: { x: start.x, y: start.y }, vidaBaixa: false,
       mochila: [],     // curas e kits que chegaram com a vida alta: ele usa sozinho quando precisar
@@ -824,6 +829,7 @@ export class Jogo {
     const r = this.rota, op = this.decisao;
     this.decisao = null;
     this.voto = null;
+    this.limpando = null;
     this.stats.cruzamentos++;
     if (op.id === 'entrar') {
       if (op.praca) this.indoPraca = op.praca; else this.indoPorta = op.shop;
@@ -998,7 +1004,7 @@ export class Jogo {
   // Limpando a área: vai atrás do zumbi mais perto (sem se afastar muito do cruzamento) pra acabar logo.
   // Quem atira chega só até uns 70% do alcance da arma; quem luta de perto vai até o zumbi.
   // Faltando poucos (AMEACA.cacarPoucos), vai bem mais longe (cacarLonge) e quem atira caça até os explosivos.
-  poucosPraLimpar() { return !!this.limpando && this.limpando.restam <= this.A.cacarPoucos; }
+  poucosPraLimpar() { return !!this.limpando && !this.limpando.liberado && this.limpando.restam <= this.A.cacarPoucos; }
   cacarZumbi(no) {
     const h = this.hero, R = this.A.areaRaio, poucos = this.poucosPraLimpar();
     let melhor = null, md = Infinity;
@@ -1018,13 +1024,20 @@ export class Jogo {
   // O herói chegou no cruzamento com a decisão do chat: só atravessa quando a área estiver limpa.
   // Enquanto espera, não nasce zumbi da rua (a cota acabou). Zumbi preso longe que não chega some depois de um
   // tempo sem abate, e por segurança, passado limpandoMax segundos, ele atravessa de qualquer jeito.
-  areaLimpa(dt) {
+  // O relógio conta onde quer que o herói esteja (caçando zumbi longe do cruzamento ou empurrado por eles):
+  // com presentes mandando zumbi sem parar a área nunca fica vazia, e o relógio é o que garante a saída.
+  // Passado o tempo a área fica "liberada": ele para de caçar, volta pro cruzamento e atravessa.
+  // perto = em cima do cruzamento. Se a área esvazia com ele longe (caçando), ela também fica "liberada" até ele
+  // voltar e atravessar: senão chegava zumbi novo de presente antes de ele voltar e a limpeza recomeçava do zero.
+  areaLimpa(dt, perto = true) {
     const A = this.A;
     if (A.areaRaio <= 0) return true;
+    if (this.limpando?.liberado) return true;
     const restam = this.zumbisNaArea();
     if (!restam) {
       if (this.limpando) this.emit('area_limpa', { segundos: Math.round(this.limpando.t) });
-      this.limpando = null;
+      if (this.limpando && !perto) { this.limpando.liberado = true; this.limpando.restam = 0; }
+      else this.limpando = null;
       return true;
     }
     const l = this.limpando ||= { t: 0, abates: this.stats.abates, semAbate: 0, restam };
@@ -1046,7 +1059,7 @@ export class Jogo {
         else { z.morto = true; z.sumiu = true; }
       }
     }
-    if (l.t > A.limpandoMax) { this.limpando = null; return true; }
+    if (l.t > A.limpandoMax) { l.liberado = true; return true; }
     return false;
   }
 
@@ -1088,23 +1101,29 @@ export class Jogo {
     const alvo = this.city.nodePos(r.alvo.i, r.alvo.j);
     const [dx, dy] = DIRS[r.dir];
     const falta = (alvo.x - h.x) * dx + (alvo.y - h.y) * dy;
+    // só atravessa com a área limpa: todos os zumbis em volta mortos. O relógio da limpeza conta também com o
+    // herói longe do cruzamento (caçando ou empurrado), senão ele podia ficar caçando pra sempre sem atravessar.
+    // Passado limpandoMax, a área fica "liberada" (limpando.liberado): ele para de caçar, volta e atravessa.
+    const perto = falta < 0.5 && dist(h.x, h.y, alvo.x, alvo.y) < 1.4;
+    // esperava as escolhas, o chat já escolheu tudo (e chegou zumbi de novo, ou ele foi caçar): não espera mais
+    if (this.esperandoEscolha && !this.escolhasPendentes()) this.esperandoEscolha = false;
+    const limpa = this.decisao && (falta < 0.5 || this.limpando) ? this.areaLimpa(dt, perto) : false;
+    const cacando = this.limpando && !this.limpando.liberado;
     // limpando a área: vai atrás dos zumbis que faltam pra qualquer lado (inclusive pra trás, pela rua de onde
     // veio); sem nenhum pra caçar, volta pro cruzamento
-    // (os relógios da limpeza continuam correndo: zumbi preso some e, no máximo em limpandoMax, ele segue)
-    if (this.limpando && this.decisao && !(falta < 0.5 && dist(h.x, h.y, alvo.x, alvo.y) < 1.4) && !this.areaLimpa(dt)) { const caca = this.cacarZumbi(alvo); if (caca) return caca; }
+    if (cacando && !perto) { const caca = this.cacarZumbi(alvo); if (caca) return caca; }
     if (falta < 0.5) {
-      if (dist(h.x, h.y, alvo.x, alvo.y) < 1.4) {
-        // só atravessa com a área limpa (todos os zumbis em volta mortos) e com todas as habilidades da fila
-        // escolhidas pelo chat (subiu de nível no quarteirão: as escolhas acabam antes de seguir)
-        if (this.decisao && this.areaLimpa(dt)) {
+      if (perto) {
+        // só atravessa com a área limpa e com todas as habilidades da fila escolhidas pelo chat
+        // (subiu de nível no quarteirão: as escolhas acabam antes de seguir)
+        if (limpa) {
           if (!this.escolhasPendentes()) { this.esperandoEscolha = false; this.aplicarDecisao(); return this.objetivoRota(0); }
           if (!this.esperandoEscolha) { this.esperandoEscolha = true; this.emit('esperando_escolha', { faltam: this.niveisPendentes + (this.escolha ? 1 : 0) }); }
         }
-        if (this.limpando) { const caca = this.cacarZumbi(alvo); if (caca) return caca; }
+        if (cacando) { const caca = this.cacarZumbi(alvo); if (caca) return caca; }
         return { x: alvo.x, y: alvo.y, esperando: true };
       }
-      // Passou do cruzamento (foi empurrado por zumbis ou foi caçar os que faltam): volta até ele
-      if (this.limpando) { const caca = this.cacarZumbi(alvo); if (caca) return caca; }
+      // Passou do cruzamento (foi empurrado por zumbis ou foi caçar os que faltam e não tem mais nenhum perto): volta até ele
       return { x: alvo.x, y: alvo.y };
     }
     // Segue o meio da rua, olhando um pouco à frente; se tem perigo no chão, desvia pela faixa livre
@@ -1134,6 +1153,7 @@ export class Jogo {
     h.tiroCd -= dt; h.corpoCd -= dt;
     if (h.recargaT > 0 && (h.recargaT -= dt) <= 0) { h.recargaT = 0; h.pente = ARMAS[h.arma]?.pente ?? null; this.emit('recarregou', { x: h.x, y: h.y }); }
     h.invT = Math.max(0, h.invT - dt);
+    if (h.invQ > 0 && (h.invQT = (h.invQT || 0) - dt) <= 0) { h.invQ = 0; h.invQT = 0; }   // teto de tempo do helicóptero
     h.folegoCd = Math.max(0, (h.folegoCd || 0) - dt);
     for (const m of h.attr.update(dt)) this.emit('buff_acabou', { id: m.id, attr: m.attr });
     this.sincronizarVida();
@@ -1328,7 +1348,7 @@ export class Jogo {
   vigiarProgresso(dt) {
     const h = this.hero;
     h.focoRota = Math.max(0, (h.focoRota || 0) - dt);
-    if (this.room || this.arena || this.limpando || this.esperandoEscolha) { h.semProgresso = 0; h.semCruzar = 0; return; }
+    if (this.room || this.arena || (this.limpando && !this.limpando.liberado) || (this.esperandoEscolha && this.escolhasPendentes())) { h.semProgresso = 0; h.semCruzar = 0; return; }
     const r = this.rota, no = this.city.nodePos(r.alvo.i, r.alvo.j);
     const d = dist(h.x, h.y, no.x, no.y);
     const chave = r.alvo.i + ',' + r.alvo.j;
@@ -1819,7 +1839,7 @@ export class Jogo {
     if (fim.includes('agarrado')) this.soltarPerna();
     if (fim.length) { sincronizarAtributos(h.estados, h.attr); for (const id of fim) this.emit('buff_acabou', { id }); }
     if (h.armaQ > 0 && (h.armaQ -= n) <= 0) { h.armaQ = 0; this.trocarArma(this.armaPadrao(), null); }
-    if (h.invQ > 0) h.invQ = Math.max(0, h.invQ - n);
+    if (h.invQ > 0) { h.invQ = Math.max(0, h.invQ - n); h.invQT = Math.min(h.invQT || 0, h.invQ * HELI.segPorQuarteirao); }
     if (this.aliados.length) {
       for (const a of this.aliados) a.q -= n;
       const antes = this.aliados.length;
@@ -2895,7 +2915,8 @@ export class Jogo {
   helicoptero(q, quem) {
     const h = this.hero;
     this.heliT = 4;
-    h.invQ = Math.min(4, Math.max(h.invQ || 0, q));
+    h.invQ = Math.min(HELI.maxQuarteiroes, Math.max(h.invQ || 0, q));
+    h.invQT = Math.max(h.invQT || 0, h.invQ * HELI.segPorQuarteirao);
     this.emit('helicoptero', { quem: quem?.nick || null });
     const alvos = this.zumbis.filter(z => !z.morto && dist2(z.x, z.y, h.x, h.y) < 16 * 16);
     alvos.forEach((z, k) => this.agendar(0.8 + k * 0.06, () => {

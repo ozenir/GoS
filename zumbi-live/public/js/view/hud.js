@@ -415,7 +415,7 @@ export class Hud {
     else if (g.room) st.push(`<span class="chip">${g.room.shop.emoji} ${g.room.shop.nome} · ${Math.max(0, Math.ceil(g.cfg.predioT - g.salaT))}s</span>`);
     if (g.torcidaN > 0 && g.fase === 'jogo') st.push(`<span class="chip ok" title="Quem comentou nos últimos 30 s dá força ao herói">📣 torcida ${g.torcidaN} · +${Math.round(g.torcidaN * 3)}% dano</span>`);
     if (g.trecho?.livre && !g.room && g.fase === 'jogo') st.push(`<span class="chip ok">${g.trecho.tipo === 'historia' ? '📜 rua da pista' : '🍃 rua tranquila'}</span>`);
-    if (g.limpando && g.decisao && g.fase === 'jogo') st.push(`<span class="chip mal">🧟 limpe a área · faltam ${g.limpando.restam ?? '?'}</span>`);
+    if (g.limpando && !g.limpando.liberado && g.decisao && g.fase === 'jogo') st.push(`<span class="chip mal">🧟 limpe a área · faltam ${g.limpando.restam ?? '?'}</span>`);
     if (g.cabo?.lado === 'ajuda' && g.fase === 'jogo') st.push(`<span class="chip ok" title="O top ajudante está ganhando o cabo de guerra">🍀 sorte · suprimento nos cadáveres</span>`);
     if (g.cabo?.lado === 'atrapalha' && g.fase === 'jogo') st.push(`<span class="chip mal" title="O top atrapalhante está ganhando o cabo de guerra">😈 zumbis +${Math.round(CABO.forcaMax * g.cabo.forca * 100)}% fortes</span>`);
     if (h.mochila?.length) st.push(`<span class="chip ok" title="Curas e kits guardados: ele usa sozinho quando a vida cair">💼 mochila ${h.mochila.length}</span>`);
