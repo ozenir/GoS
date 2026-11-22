@@ -136,7 +136,8 @@ body.foco .app{padding-block:8px}
 /* Votação da direção */
 /* Votação: aviso com as opções + relógio (barra que some das pontas pro meio); votos viram bolinhas;
    no resultado o quadro some, o relógio sobe pro lugar dele e o resultado aparece embaixo */
-.voto{position:relative;--qh:14cqw;--ch:10.4cqw}
+.voto{position:relative;--qh:14cqw;--ch:var(--cabo-h,10.4cqw)}
+.voto.podio1{--cabo-h:13cqw}.voto.podio2{--cabo-h:15.6cqw}
 .voto.modo-voto{height:var(--qh)}
 .voto.modo-cabo{height:var(--ch)}
 .voto.modo-res{padding-top:calc(var(--ch) + .4cqw)}
@@ -189,6 +190,11 @@ body.foco .app{padding-block:8px}
 .cb-pessoa.b .cb-lado{right:-.8cqw;border-color:#ff5a4f}
 .cb-nome{max-width:24cqw;font-size:2.1cqw;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 .25cqw 0 rgba(0,0,0,.75),0 0 1.4cqw rgba(0,0,0,.8)}
 .cb-pessoa.a .cb-nome{align-self:flex-start}.cb-pessoa.b .cb-nome{align-self:flex-end}
+.cb-pod{display:flex;align-items:center;gap:.6cqw;max-width:26cqw;font-size:2cqw;font-weight:600;white-space:nowrap;text-shadow:0 .25cqw 0 rgba(0,0,0,.75),0 0 1.4cqw rgba(0,0,0,.8)}
+.cb-pod span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.cb-pod em{font-style:normal;opacity:.8;font-variant-numeric:tabular-nums}
+.cb-pessoa.a .cb-pod{align-self:flex-start}
+.cb-pessoa.b .cb-pod{align-self:flex-end;flex-direction:row-reverse}
 .cb-pessoa.hop .cb-foto{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
 .v-quadro.contando .v-bolas{transform:translateY(-1.4cqw)}
 .v-espera{position:absolute;left:0;right:0;bottom:.5cqw;text-align:center;font-size:2.2cqw;font-weight:600;opacity:.8}

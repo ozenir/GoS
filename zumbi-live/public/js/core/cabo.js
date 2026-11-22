@@ -22,7 +22,9 @@ export function caboDeGuerra(rank) {
   const vant = Math.abs(pct - 0.5) * 2;
   const forca = Math.max(0, Math.min(1, (vant - CABO.empate) / (1 - CABO.empate)));
   const lado = forca > 0 ? (pct > 0.5 ? 'ajuda' : 'atrapalha') : null;
-  return { ajuda: a, atrapalha: b, pct, lado, forca };
+  // segundo e terceiro de cada lado (aparecem embaixo do top, com medalha de prata e de bronze)
+  const resto = l => (l || []).slice(1, 3);
+  return { ajuda: a, atrapalha: b, pct, lado, forca, ajudaResto: resto(rank?.ajuda), atrapalhaResto: resto(rank?.atrapalha) };
 }
 
 // Multiplicadores que o jogo usa (1 = sem efeito)

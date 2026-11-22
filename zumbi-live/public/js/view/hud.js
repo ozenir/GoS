@@ -540,9 +540,12 @@ export class Hud {
       const icone = lado === 'a' ? '🛡️' : '😈';
       const foto = p && urlOk(p.avatar) ? `<img src="${esc(p.avatar)}" alt="" referrerpolicy="no-referrer">` : `<span class="vazio">${p ? esc(String(p.nick || '?').slice(0, 1).toUpperCase()) : '?'}</span>`;
       const nome = p ? `${esc(p.nick)} · ${p.coins}🪙` : (lado === 'a' ? 'mande 🌹 pra ajudar' : 'mande 🎵 pra atrapalhar');
-      return `<div class="cb-foto">${foto}${p ? '<span class="cb-coroa">👑</span>' : ''}<span class="cb-lado">${icone}</span></div><div class="cb-nome">${nome}</div>`;
+      // 2º e 3º do lado: medalha de prata e de bronze (ajudantes com a medalha à esquerda, atrapalhantes à direita)
+      const resto = (lado === 'a' ? c.ajudaResto : c.atrapalhaResto) || [];
+      const podio = resto.map((r, i) => `<div class="cb-pod">${['🥈', '🥉'][i]}<span>${esc(r.nick)}</span><em>${r.coins}🪙</em></div>`).join('');
+      return `<div class="cb-foto">${foto}${p ? '<span class="cb-coroa">👑</span>' : ''}<span class="cb-lado">${icone}</span></div><div class="cb-nome">${nome}</div>${podio}`;
     };
-    const k = JSON.stringify([c.ajuda?.nick, c.ajuda?.coins, c.ajuda?.avatar, c.atrapalha?.nick, c.atrapalha?.coins, c.atrapalha?.avatar, c.lado]);
+    const k = JSON.stringify([c.ajuda, c.atrapalha, c.ajudaResto, c.atrapalhaResto, c.lado]);
     if (this.cache.cabo === k) return;
     const antes = this.cache.caboTop || [];
     this.cache.cabo = k; this.cache.caboTop = [c.ajuda?.nick, c.atrapalha?.nick];
@@ -552,6 +555,9 @@ export class Hud {
       el.classList.toggle('lider', c.lado === (lado === 'a' ? 'ajuda' : 'atrapalha'));
       if (antes.length && antes[i] !== (p?.nick)) { el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); }
     }
+    // o cabo cresce pra baixo quando tem 2º e 3º colocados
+    const pod = Math.max(c.ajudaResto?.length || 0, c.atrapalhaResto?.length || 0);
+    $('h-voto').classList.toggle('podio1', pod === 1); $('h-voto').classList.toggle('podio2', pod >= 2);
     const pct = clamp(c.pct, 0.04, 0.96) * 100;
     $('cb-a').style.width = pct.toFixed(1) + '%';
     $('cb-no').style.left = pct.toFixed(1) + '%';
