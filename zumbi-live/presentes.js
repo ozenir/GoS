@@ -54,3 +54,12 @@ export function planoDoPresente(porNome, nome, moedas, qtd = 1, rnd = Math.rando
   if (resto > 0) lista.push({ regra: regraAleatoria(porNome, 1, rnd), coins: resto, count: 1, atraso: n * PARCELA.intervalo, sorteado: true, parcela: `${partes}/${partes}` });
   return lista;
 }
+
+// Moedas de um presente quando o TikTok não manda o valor (vem 0): o preço da tabela, ou 1 se não estiver nela.
+// Devolve { moedas, completou } (completou = true se teve que adivinhar)
+export function moedasDoPresente(porNome, nome, moedas) {
+  const m = Number(moedas) || 0;
+  if (m > 0) return { moedas: m, completou: false };
+  const r = acharRegra(porNome, nome);
+  return { moedas: Number(r?.moedas) || 1, completou: true };
+}

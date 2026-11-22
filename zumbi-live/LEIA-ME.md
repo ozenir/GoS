@@ -363,6 +363,8 @@ Tudo que **ajuda** acontece na hora (e se adapta à situação, veja "O atraso d
 
 **Presentes com o herói morto** (depois do tempo caído): os que ajudam ficam guardados para o próximo herói. Os que atrapalham esperam a proteção dele acabar.
 
+**Se o TikTok não mandar o valor do presente** (às vezes vem 0), o programa usa o preço da tabela (ou 1 moeda, se o presente não estiver nela), pra ele contar no ranking, no cabo de guerra e nos bônus, e avisa na janela preta: "⚠️ o TikTok não mandou o valor de …". Presente de sequência (Rosa, TikTok...) conta um por clique, também quando o TikTok marca a sequência só pelo campo `combo`.
+
 **Os nomes em inglês** (`Rose`, `GG`, `Finger Heart`...) são os que o TikTok costuma mandar; cada presente também tem o nome em português e outros apelidos em `aliases` (sem ligar pra acento e maiúscula). Se um presente da tabela não existir mais ou tiver outro nome, ele aparece na janela preta quando alguém manda; é só trocar no `config.json`.
 
 ## O que aparece na tela
@@ -491,7 +493,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.31.3)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.31.4)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.

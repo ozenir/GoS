@@ -4,7 +4,9 @@
 // Rodar:  node teste/live.test.mjs
 import assert from 'node:assert/strict';
 import * as proto from 'tiktok-live-proto/v3';
-import { pessoa, textoDoComentario, curtidasDe } from '../leitura.js';
+import { pessoa, textoDoComentario, curtidasDe, lerPresente } from '../leitura.js';
+import { moedasDoPresente, planoDoPresente } from '../presentes.js';
+import fs from 'node:fs';
 import { Jogo } from '../public/js/core/jogo.js';
 import { xpParaNivel } from '../public/js/core/dados.js';
 import { lerVoto, lerEscolha } from '../public/js/core/votacao.js';
@@ -96,6 +98,51 @@ teste('jeitos comuns de votar na direção: 2️⃣, #3, 22, "vai 2", "bora no 3
 teste('jeitos comuns de escolher habilidade: a, A!, aaa, a), letra b, opção c, 🅰️', () => {
   for (const [t, l] of [['a', 'a'], ['A!', 'a'], ['aaa', 'a'], ['a)', 'a'], ['letra b', 'b'], ['opção c', 'c'], ['hab a', 'a'], ['🅰️', 'a'], ['🅱️', 'b']]) assert.equal(lerEscolha(t), l, t);
   for (const t of ['a gente vai', 'b2', 'abc']) assert.equal(lerEscolha(t), null, t);
+});
+
+// Presente no formato novo (v3), codificado e decodificado como chega da internet
+function presente({ nome = 'Rose', moedas = 1, tipo = 1, combo = true, repeticoes = 1, fim = 0 } = {}, u = dono) {
+  const g = proto.Gift.decode(vazio);
+  g.name = nome; g.diamondCount = moedas; g.type = tipo; g.combo = combo;
+  const m = proto.WebcastGiftMessage.decode(vazio);
+  m.gift = g; m.user = u; m.repeatCount = repeticoes; m.repeatEnd = fim; m.giftId = '5655'; m.groupId = '1';
+  return proto.WebcastGiftMessage.decode(proto.WebcastGiftMessage.encode(m).finish());
+}
+const tabela = JSON.parse(fs.readFileSync(new URL('../config.json', import.meta.url), 'utf8')).presentes.por_nome;
+
+teste('presente no formato novo: nome, moedas e sequência vêm em "gift"', () => {
+  const r = lerPresente(presente());
+  assert.equal(r.nome, 'Rose'); assert.equal(r.moedas, 1); assert.equal(r.combo, true); assert.equal(r.total, 1);
+  const r2 = lerPresente(presente({ nome: 'Coconut Drink', moedas: 5, tipo: 0, combo: false }));
+  assert.equal(r2.moedas, 5); assert.equal(r2.combo, false);
+});
+
+teste('presente de sequência marcado só por "combo" (type 0) também conta como sequência', () => {
+  assert.equal(lerPresente(presente({ tipo: 0, combo: true })).combo, true);
+});
+
+teste('o TikTok não mandou o valor (0): usa o preço da tabela (ou 1), pra contar no cabo de guerra e nos bônus', () => {
+  const r = lerPresente(presente({ moedas: 0 }));
+  assert.equal(r.moedas, 0);
+  assert.deepEqual(moedasDoPresente(tabela, r.nome, r.moedas), { moedas: 1, completou: true });
+  assert.equal(moedasDoPresente(tabela, 'Bebida de coco', 0).moedas, 5);
+  assert.equal(moedasDoPresente(tabela, 'Presente desconhecido', 0).moedas, 1);
+});
+
+teste('Rosa da live: vira cura, conta no cabo de guerra e solta o drop pro herói', () => {
+  const r = lerPresente(presente());
+  const [parte] = planoDoPresente(tabela, r.nome, moedasDoPresente(tabela, r.nome, r.moedas).moedas, r.total);
+  const j = new Jogo({ seed: 5, classe: 'policial' }); j.hero.invT = 1e9;
+  for (let i = 0; i < 30; i++) j.update(1 / 30);
+  const ev = []; const e0 = j.emit.bind(j); j.emit = (t, d) => { ev.push(t); return e0(t, d); };
+  const p = pessoa(presente().user);
+  j.hero.vida = j.hero.vidaMax * 0.5;   // ferido (com a vida cheia, a Rosa vira 🛡️ blindado)
+  j.handle({ type: 'presente', ...p, giftName: r.nome, count: parte.count, coins: parte.coins, regra: parte.regra, rank: { ajuda: [{ ...p, coins: parte.coins }], atrapalha: [] } });
+  for (let i = 0; i < 2 * 30; i++) j.update(1 / 30);
+  assert.equal(parte.regra.efeito, 'cura');
+  assert.ok(j.cabo.ajuda && j.cabo.ajuda.coins === 1 && j.cabo.pct > 0.5, 'cabo de guerra puxou pro ajudante');
+  assert.ok(ev.includes('presente') && ev.includes('cura'), 'curou');
+  assert.ok(j.itens.some(it => it.kind === 'drop') || ev.includes('item_caindo'), 'drop caindo pro herói');
 });
 
 console.log(`\n${ok} testes passaram.`);

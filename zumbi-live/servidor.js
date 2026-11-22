@@ -12,8 +12,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { TikTokLiveConnection, WebcastEvent, ControlEvent, UserOfflineError } from 'tiktok-live-connector';
-import { pessoa, textoDoComentario, curtidasDe } from './leitura.js';
-import { acharRegra, planoDoPresente, PARCELA } from './presentes.js';
+import { pessoa, textoDoComentario, curtidasDe, lerPresente } from './leitura.js';
+import { acharRegra, planoDoPresente, moedasDoPresente, PARCELA } from './presentes.js';
 import { lerVoto, lerEscolha, OPCOES } from './public/js/core/votacao.js';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -96,7 +96,7 @@ const top = m => [...m.values()].sort((a, b) => b.coins - a.coins).slice(0, 3);
 const topRank = () => ({ ajuda: top(ranking.ajuda), atrapalha: top(ranking.atrapalha) });
 
 /* ---------- Presente -> efeito no jogo ---------- */
-const avisados = new Set();
+const avisados = new Set(), avisadosValor = new Set();
 function regraPara(nome, moedas) {
   const p = config.presentes || {};
   const achada = acharRegra(p.por_nome || {}, nome);   // presentes.js: nome, nome em português ou "aliases"
@@ -118,16 +118,17 @@ setInterval(() => {
 }, 60000).unref();
 
 function processarPresente(d) {
-  const g = d.gift || {}, det = d.giftDetails || {}, ext = d.extendedGiftInfo || {};
-  const tipo = Number(g.type ?? det.giftType ?? ext.type ?? 0);
-  const nome = String(g.name || det.giftName || ext.name || 'Presente');
-  const moedas = Number(g.diamondCount ?? det.diamondCount ?? ext.diamond_count ?? 0) || 0;
+  // leitura.js → lerPresente: nome, moedas, se é de sequência, imagem e quantidade (formato novo e antigo)
+  const lido = lerPresente(d);
+  const nome = lido.nome || 'Presente', imagem = lido.imagem, total = lido.total;
   const p = pessoa(d.user);
-  const imagem = g.image?.urlList?.[0] || det.giftImage?.giftPictureUrl || ext.image?.url_list?.[0] || '';
-  const total = Math.max(1, Number(d.repeatCount) || 1);
+  // o TikTok às vezes não manda o valor: usa o preço da tabela (ou 1), pra contar no ranking, no cabo de guerra e nos bônus
+  const val = moedasDoPresente(config.presentes?.por_nome || {}, nome, lido.moedas);
+  const moedas = val.moedas;
+  if (val.completou && !avisadosValor.has(nome)) { avisadosValor.add(nome); log(`⚠️  o TikTok não mandou o valor de "${nome}": contei ${moedas} moeda${moedas === 1 ? '' : 's'} (pela tabela)`); }
 
   let qtd = total;
-  if (tipo === 1) {
+  if (lido.combo) {
     const chave = `${p.id}|${d.giftId ?? nome}|${d.groupId ?? ''}`;
     const c = combos.get(chave);
     const jaContado = c ? c.ultimo : 0;

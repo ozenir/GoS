@@ -28,3 +28,18 @@ export const textoDoComentario = d => String(d?.content ?? d?.comment ?? '').sli
 
 // Quantas curtidas vieram nesta mensagem
 export const curtidasDe = d => Math.max(0, Number(d?.count ?? d?.likeCount) || 0);
+
+// Presente que chegou: nome, moedas (por unidade), se é de sequência (combo), imagem e quantas unidades
+// (no formato novo o presente vem em `gift`: name, diamondCount, type, combo, image.urlList;
+//  no antigo, em `giftDetails` ou `extendedGiftInfo`). O que não vier fica vazio/0: o servidor completa
+//  pela tabela do config.json (presentes.js → moedasDoPresente).
+export function lerPresente(d = {}) {
+  const g = d.gift || {}, det = d.giftDetails || {}, ext = d.extendedGiftInfo || {};
+  const nome = String(g.name || det.giftName || ext.name || g.describe || '').trim();
+  const moedas = Number(g.diamondCount || det.diamondCount || ext.diamond_count || ext.diamondCount || 0) || 0;
+  const tipo = Number(g.type || det.giftType || ext.type || 0);
+  const combo = !!g.combo || tipo === 1;   // Rosa, TikTok...: chegam várias mensagens, uma por clique, até "repeatEnd"
+  const imagem = g.image?.urlList?.[0] || g.image?.url_list?.[0] || det.giftImage?.giftPictureUrl || ext.image?.url_list?.[0] || '';
+  const total = Math.max(1, Number(d.repeatCount || d.comboCount) || 1);
+  return { nome, moedas, combo, imagem, total };
+}
