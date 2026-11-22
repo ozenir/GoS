@@ -35,7 +35,8 @@ import { Historia, HISTORIA } from './historia.js';
 
 export const PADRAO = {
   votoDur: 10, relNum: 10, relDest: 12, protecao: 15, likesPor: 300, maxZ: 90,
-  velHeroi: 1.1, noiteCada: 150, noiteDur: 35, predioT: 70, torcidaMax: TORCIDA.maxPessoas,
+  velHeroi: 1.1, periodoDia: 150, predioT: 70,   // periodoDia: segundos de cada período (manhã, tarde, noite, madrugada)
+  torcidaMax: TORCIDA.maxPessoas,
   atraso: 6,        // atraso da live (s): quanto tempo a tela do TikTok chega atrasada pra quem assiste
   escolhaDur: 12,   // tempo da contagem da escolha de habilidade (A, B, C) ao subir de nível
   caidoDur: 12,     // quanto tempo o herói fica caído esperando presente antes de morrer (0 = morre na hora)
@@ -47,7 +48,7 @@ const CHAVES = {
   segundos_de_votacao: 'votoDur', segundos_do_relatorio: 'relNum', segundos_dos_destaques: 'relDest',
   protecao_ao_nascer_segundos: 'protecao', curtidas_por_suprimento: 'likesPor', maximo_zumbis: 'maxZ',
   velocidade_do_heroi: 'velHeroi',
-  noite_a_cada_segundos: 'noiteCada', noite_dura_segundos: 'noiteDur', segundos_dentro_do_predio: 'predioT',
+  periodo_do_dia_segundos: 'periodoDia', segundos_dentro_do_predio: 'predioT',
   torcida_maximo_pessoas: 'torcidaMax', atraso_da_live_segundos: 'atraso', segundos_caido: 'caidoDur',
   segundos_escolha_habilidade: 'escolhaDur',
   drop_ate_moedas: 'dropAteMoedas', doacao_a_partir_de_moedas: 'doacaoAPartirDe', inspiracao_segundos: 'inspiracaoSeg',
@@ -174,8 +175,9 @@ export class Jogo {
     this.fase = 'jogo';
     this.faseT = 0;
     this.protecao = this.cfg.protecao;
-    this.noiteT = 0;
-    this.proxNoite = this.cfg.noiteCada;
+    this.noiteT = 0;          // noite extra (Rei Zumbi, rua escura), por cima do ciclo do dia
+    this.cicloT = 0;          // relógio do dia: todo herói começa de manhã
+    this.periodo = 'manha';
     this.spawnT = 3;
     this.nivelAmeaca = 1;
     this.ameacaBonus = 0;
@@ -356,6 +358,8 @@ export class Jogo {
     this.atualizarTorcida(dt);
     this.atualizarZonas(dt);
     this.noiteT = Math.max(0, this.noiteT - dt);
+    this.cicloT = (this.cicloT || 0) + dt;
+    this.atualizarPeriodo();
     this.heliT = Math.max(0, this.heliT - dt);
     this.diretor(dt);
     this.processarFila(dt);
@@ -387,10 +391,6 @@ export class Jogo {
       }
     }
     if (n > this.nivelAmeaca) { this.nivelAmeaca = n; this.emit('ameaca', { nivel: n }); }
-    if (this.cfg.noiteCada > 0) {
-      this.proxNoite -= dt;
-      if (this.proxNoite <= 0) { this.proxNoite = this.cfg.noiteCada; this.noite(this.cfg.noiteDur); }
-    }
     if (this.exHeroiT > 0 && (this.exHeroiT -= dt) <= 0) {
       // espera sair do prédio; antes do nível 10 só aparece como chefe da arena (iniciarArena)
       if (this.room || this.arena || this.hero.nivel < this.A.medioAteNivel) this.exHeroiT = 5;
@@ -414,7 +414,7 @@ export class Jogo {
     }
 
     const h = this.hero;
-    const noite = this.noiteT > 0;
+    const noite = this.ehNoite();
     const vidaPct = h.vida / h.vidaMax;
     const nv = this.nivelAmeaca;
     // Caminho livre: nenhum zumbi novo até o próximo cruzamento (no máximo 40 s, por segurança)
@@ -477,21 +477,65 @@ export class Jogo {
     if (!antes) { this.noiteIni = this.t; this.emit('noite', { segundos: seg }); }
   }
 
-  // Quanto está escuro agora (0 a 1) e em que parte do dia: a noite não chega de repente. Primeiro a TARDE
-  // (escurece aos poucos, com luz alaranjada), depois a NOITE, e no fim a MADRUGADA (clareia aos poucos, azulada).
+  // Ciclo do dia: MANHÃ → TARDE → NOITE → MADRUGADA, cada um com cfg.periodoDia segundos (2:30; 0 = sempre manhã).
+  // O relógio anda na rua e no prédio; pausa no herói caído e no portal. Todo herói novo começa de manhã.
+  periodoDoDia() {
+    const P = this.cfg.periodoDia;
+    if (!(P > 0)) return { ...Jogo.PERIODOS[0], k: 0, resta: Infinity };
+    const t = this.cicloT || 0, i = Math.floor(t / P) % 4;
+    return { ...Jogo.PERIODOS[i], k: (t % P) / P, resta: P - (t % P) };
+  }
+
+  atualizarPeriodo() {
+    const p = this.periodoDoDia();
+    if (p.id === this.periodo) return;
+    this.periodo = p.id;
+    this.emit('periodo', { id: p.id, nome: p.nome, emoji: p.emoji });
+    if (p.id === 'noite') this.emit('noite', { segundos: Math.round(p.resta) });
+  }
+
+  // Quanto está escuro agora (0 a 1) e em que parte do dia. Pelo ciclo: de manhã claro; na TARDE a luz fica
+  // alaranjada e, na segunda metade, escurece aos poucos; a NOITE é escura; na MADRUGADA continua escuro e,
+  // dos 40% em diante, clareia aos poucos (azulada). Por cima, a noite extra (Rei Zumbi, rua escura) chega
+  // e vai embora com uma tarde e uma madrugada curtas (Jogo.CICLO). Vale a que estiver mais escura.
   luzDoDia() {
-    if (!(this.noiteT > 0)) return { noite: 0, fase: 'dia', k: 0 };
+    const sm = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
+    const p = this.periodoDoDia();
+    // tom: força da cor do céu (laranja na tarde, azul na madrugada); no ciclo é mais suave, porque dura minutos
+    const ciclo = p.id === 'tarde' ? { noite: sm((p.k - 0.5) / 0.5), fase: 'tarde', k: p.k, tom: 0.6 * Math.sin(p.k * Math.PI) }
+      : p.id === 'noite' ? { noite: 1, fase: 'noite', k: 1 }
+      : p.id === 'madrugada' ? { noite: 1 - sm((p.k - 0.4) / 0.6), fase: 'madrugada', k: p.k, tom: 0.8 * Math.sin(p.k * Math.PI) }
+      : { noite: 0, fase: 'dia', k: 0 };
+    if (!(this.noiteT > 0)) return ciclo;
     const T = Jogo.CICLO, passou = this.t - (this.noiteIni ?? this.t), resta = this.noiteT;
     const tarde = Math.min(T.tarde, (passou + resta) / 3), madrugada = Math.min(T.madrugada, (passou + resta) / 3);
-    if (passou < tarde) { const k = passou / tarde; return { noite: k * k * (3 - 2 * k), fase: 'tarde', k }; }
-    if (resta < madrugada) { const k = 1 - resta / madrugada; return { noite: 1 - k * k * (3 - 2 * k), fase: 'madrugada', k }; }
-    return { noite: 1, fase: 'noite', k: 1 };
+    let extra;
+    if (passou < tarde) { const k = passou / tarde; extra = { noite: sm(k), fase: 'tarde', k }; }
+    else if (resta < madrugada) { const k = 1 - resta / madrugada; extra = { noite: 1 - sm(k), fase: 'madrugada', k }; }
+    else extra = { noite: 1, fase: 'noite', k: 1 };
+    return extra.noite > ciclo.noite ? extra : ciclo;
   }
+
+  // De noite os zumbis vêm em maior número e mais depressa: no período NOITE do ciclo ou na noite extra
+  // (Rei Zumbi, rua escura). O escuro da tarde e da madrugada é só visual.
+  ehNoite() {
+    if (this.periodoDoDia().id === 'noite') return true;
+    if (!(this.noiteT > 0)) return false;
+    const passou = this.t - (this.noiteIni ?? this.t);
+    return passou >= Math.min(Jogo.CICLO.tarde, (passou + this.noiteT) / 3) * 0.5;
+  }
+
+  static PERIODOS = [
+    { id: 'manha', nome: 'manhã', emoji: '☀️' },
+    { id: 'tarde', nome: 'tarde', emoji: '🌇' },
+    { id: 'noite', nome: 'noite', emoji: '🌙' },
+    { id: 'madrugada', nome: 'madrugada', emoji: '🌌' }
+  ];
 
   // zumbis de quem entra na live: um a cada `intervalo` s, até `fila` esperando
   static ENTRADA = { intervalo: 2, fila: 20 };
 
-  // tarde e madrugada: quantos segundos cada uma leva (escurecendo / clareando)
+  // noite extra (Rei Zumbi, rua escura): quantos segundos a tarde e a madrugada dela levam (escurecendo / clareando)
   static CICLO = { tarde: 8, madrugada: 8 };
 
   /* =================== Sala (dentro do prédio) =================== */
@@ -1827,7 +1871,7 @@ export class Jogo {
       const k = (Math.floor(z.x) * 92821) ^ Math.floor(z.y);
       let l = grade.get(k); if (!l) grade.set(k, l = []); l.push(z);
     }
-    const noite = this.noiteT > 0;
+    const noite = this.ehNoite();
     for (const z of this.zumbis) {
       if (z.morto) continue;
       const T = ZUMBIS[z.tipo];

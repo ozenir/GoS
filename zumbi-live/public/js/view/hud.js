@@ -400,9 +400,16 @@ export class Hud {
     if (!g.room && g.bairroAtual) { const B = BAIRROS[g.bairroAtual]; st.push(`<span class="chip">${B.emoji} ${esc(B.nome)}</span>`); }
     if (g.protecao > 0 && g.fase === 'jogo') st.push(`<span class="chip ok">🛡️ proteção ${Math.ceil(g.protecao)}s</span>`);
     if (g.fila.length && g.protecao > 0) st.push(`<span class="chip mal">😈 ${g.fila.length} na fila</span>`);
-    if (g.noiteT > 0) {
+    // período do dia (manhã, tarde, noite, madrugada) e quanto falta pro próximo
+    const per = g.periodoDoDia();
+    if (Number.isFinite(per.resta)) {
+      const r = Math.ceil(per.resta);
+      st.push(`<span class="chip${per.id === 'noite' ? ' mal' : ''}" title="Cada período do dia dura ${Math.round(g.cfg.periodoDia / 60 * 10) / 10} min">${per.emoji} ${per.nome} ${Math.floor(r / 60)}:${String(r % 60).padStart(2, '0')}</span>`);
+    }
+    // noite extra (Rei Zumbi, rua escura) fora da noite do ciclo
+    if (g.noiteT > 0 && per.id !== 'noite') {
       const fase = g.luzDoDia?.().fase;
-      st.push(fase === 'tarde' ? '<span class="chip mal">🌇 entardecendo</span>' : fase === 'madrugada' ? '<span class="chip ok">🌅 amanhecendo</span>' : `<span class="chip mal">🌙 noite ${Math.ceil(g.noiteT)}s</span>`);
+      st.push(fase === 'tarde' ? '<span class="chip mal">🌇 escurecendo</span>' : fase === 'madrugada' ? '<span class="chip ok">🌅 clareando</span>' : `<span class="chip mal">🌙 noite ${Math.ceil(g.noiteT)}s</span>`);
     }
     if (g.room?.praia && g.praia) st.push(g.praia.vencida ? '<span class="chip ok">🏖️ praia · sobreviveu!</span>' : `<span class="chip mal">🏖️ praia · sobreviva ${Math.max(0, Math.ceil(60 - g.praia.t))}s</span>`);
     else if (g.room) st.push(`<span class="chip">${g.room.shop.emoji} ${g.room.shop.nome} · ${Math.max(0, Math.ceil(g.cfg.predioT - g.salaT))}s</span>`);

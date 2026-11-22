@@ -535,7 +535,7 @@ export class Render {
     this.nomes = [];
     // de noite: janelas acesas numa camada própria, na mesma ordem dos prédios (o prédio da frente apaga as janelas
     // do de trás); depois ela brilha por cima do escuro (luz)
-    const noite = g.noiteT > 0 && !g.room;
+    const noite = (g.luzDoDia ? g.luzDoDia().noite > 0 : g.noiteT > 0) && !g.room;
     // três camadas da noite, todas na ordem de profundidade: janelas (em), cor da luz dos postes (emL) e o buraco
     // que os postes abrem no escuro (emM). Um prédio desenhado depois (na frente) apaga o que ficou atrás dele.
     if (noite) {
@@ -1158,7 +1158,7 @@ export class Render {
     const noite = dia.noite;   // escurece e clareia aos poucos (tarde e madrugada: core/jogo.js → luzDoDia)
     // cor do céu na passagem: tarde alaranjada, madrugada azulada (mais forte no meio da passagem)
     if (!g.room && (dia.fase === 'tarde' || dia.fase === 'madrugada')) {
-      const forca = Math.sin(dia.k * Math.PI);
+      const forca = dia.tom ?? Math.sin(dia.k * Math.PI);
       ctx.fillStyle = dia.fase === 'tarde' ? `rgba(255,120,40,${0.2 * forca})` : `rgba(120,130,255,${0.16 * forca})`;
       ctx.fillRect(0, 0, W, H);
     }
