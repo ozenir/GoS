@@ -124,6 +124,7 @@ export function spriteZumbi(tipo, roupa) {
   if (tipo === 'explosivo') o = { ...o, largura: 2, pele: '#b8c860', camisa: '#7a8a3a', cabelo: '#6a7a30' };
   if (tipo === 'chefao') o = { ...o, largura: 1, pele: '#8a6a6a', camisa: '#4a2a2a', calca: '#2a1a1a', cabelo: '#2a1010' };
   if (tipo === 'rei') o = { ...o, largura: 1, pele: '#7a8aa0', camisa: '#5a2a7a', calca: '#2a1a3a', capa: '#8a1e3a', chapeu: { tipo: 'coroa' } };
+  if (tipo === 'pedreiro') o = { ...o, camisa: '#e8742a', calca: '#3a5a8a', cabelo: '#2a2018', chapeu: { tipo: 'capacete', cor: '#f2c230' } };   // peão de obra: colete laranja, jeans, capacete amarelo
   if (tipo === 'tomateiro') o = { ...o, camisa: '#c83a2a', calca: '#3a4a2a', cabelo: '#4a3a20', chapeu: { tipo: 'bone', cor: '#3f7f2c' } };   // feirante: camisa vermelha, boné verde
   if (tipo === 'colosso') o = { ...o, largura: 2, pele: '#7a6a5a', camisa: '#2e2a4a', calca: '#1a1826', cabelo: '#2a2018', capa: '#c8a030' };
   if (tipo === 'esticado') o = { ...o, largura: -1, pele: '#9aa07a', camisa: '#3a4656', calca: '#262a32', cabelo: '#3a3a2a' };

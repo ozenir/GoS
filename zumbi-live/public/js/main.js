@@ -221,6 +221,8 @@ function tocar(e, g) {
     case 'paraquedista': som.paraquedista(); break;
     case 'tomate_lancado': som.arremesso(); break;
     case 'tomatada': sujeira.tomatada(); som.tomatada(); break;
+    case 'pedra_lancada': som.arremesso(); break;
+    case 'pedrada': sujeira.pedrada(); som.pedrada(); break;
     case 'agarrou': case 'paraquedista_quicou': som.agarrou(); break;
     case 'soltou_perna': som.soltouPerna(); break;
     case 'colosso_cansou': som.cansou(longe(e, g)); break;

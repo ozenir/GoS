@@ -21,7 +21,7 @@ import { STATUS, Estados, sincronizarAtributos } from './status.js';
 import { AMBIENTE, efeitoDoAmbiente, faixaLivre, machuca, dentro } from './ambiente.js';
 import {
   AMEACA, furiaDaHorda, nivelAmeaca, alvoNaturais, intervaloAparecer, tamanhoGrupo, tamanhoHorda, multPresente, multPredio, pesosTipos,
-  multInicio, forcaInicio, cotaQuadra, tamanhoHordaQuadra, NIVEL_INIMIGOS_NOVOS, EXPLOSAO, TOMATEIRO
+  multInicio, forcaInicio, cotaQuadra, tamanhoHordaQuadra, NIVEL_INIMIGOS_NOVOS, EXPLOSAO, TOMATEIRO, PEDREIRO
 } from './ameaca.js';
 import { CHANCES_PADRAO, PERIGOS, AMEACA_POR_PERIGO, ATRASO_PERIGO, sortearCaminho } from './caminhos.js';
 import { preverDestino } from './previsao.js';
@@ -182,7 +182,7 @@ export class Jogo {
     this.cabo = this.cabo || caboDeGuerra(null);   // cabo de guerra: top ajudante x top atrapalhante (cabo.js)
     this.carros = [];               // conversíveis dos zumbis passando (presente de atrapalhar de 1 moeda)
     this.paraquedistas = [];        // zumbis descendo de paraquedas em cima do herói (idem)
-    this.tomates = [];              // tomates voando do zumbi do tomate até o herói
+    this.tomates = [];              // tomates (e pedras) voando do zumbi do tomate (e da pedra) até o herói
     this.proxHordaQ = this.A.hordaCadaQuarteiroes;   // quarteirão da próxima horda gigante
     this.alarmeT = 0;
     this.alarmeCarro = null;
@@ -1601,6 +1601,8 @@ export class Jogo {
     this.cotaRua = null;
     // zumbi do tomate: um por vez, às vezes, num quarteirão novo
     if (h.nivel >= TOMATEIRO.desdeNivel && !this.zumbis.some(z => !z.morto && z.tipo === 'tomateiro') && this.rng.chance(TOMATEIRO.chance)) this.agendar(3, () => this.surgirTomateiro());
+    // zumbi da pedra: também um por vez, um pouco mais tarde
+    if (h.nivel >= PEDREIRO.desdeNivel && !this.zumbis.some(z => !z.morto && z.tipo === 'pedreiro') && this.rng.chance(PEDREIRO.chance)) this.agendar(5, () => this.surgirTomateiro('pedreiro'));
     // doação: o colosso aparece no quarteirão seguinte
     if (this.colossoPendente?.estado === 'esperando') { this.colossoPendente.estado = 'chamado'; this.agendar(2.5, () => this.surgirColosso()); }
     this.limpando = null;
@@ -1836,10 +1838,10 @@ export class Jogo {
       const chamado = this.limpando && d > 6 ? 1.7 : 1;
       const vel = z.vel * z.velMult * z.estados.lentidao() * lentidaoChao * (noite ? 1.12 : 1) * (vivo ? 1 : 0.25) * chamado;
       const perto = d < T.alcance + 0.12;
-      // zumbi do tomate: fica de longe (recua se o herói chega perto, para quando está na distância boa) e joga tomate
+      // zumbi do tomate e da pedra: fica de longe (recua se o herói chega perto, para quando está na distância boa) e joga
       let quieto = false;
-      if (T.tomate && vivo && !alvoAliado) {
-        const Tm = T.tomate;
+      const Tm = T.tomate || T.pedra;
+      if (Tm && vivo && !alvoAliado) {
         z.tomateCd = (z.tomateCd ?? 1.5 + this.rng.next()) - dt;
         if (d < Tm.min) { mx = -mx; my = -my; }
         else if (d <= Tm.max) quieto = true;
@@ -2328,18 +2330,19 @@ export class Jogo {
   }
 
   /* =================== Zumbi do tomate (dados.js → tomateiro; ameaca.js → TOMATEIRO) =================== */
-  surgirTomateiro() {
-    if (this.fase !== 'jogo' || this.room || this.arena || this.zumbis.some(z => !z.morto && z.tipo === 'tomateiro')) return;
+  // (também o zumbi da pedra: tipo = 'pedreiro')
+  surgirTomateiro(tipo = 'tomateiro') {
+    if (this.fase !== 'jogo' || this.room || this.arena || this.zumbis.some(z => !z.morto && z.tipo === tipo)) return;
     const p = this.pontoNaRua(this.hero, 8, 11, 1);
     if (!p) return;
-    this.criarZumbi('tomateiro', p.x, p.y, null, { nascendo: 0.8 });
-    this.emit('tomateiro', { x: p.x, y: p.y });
+    this.criarZumbi(tipo, p.x, p.y, null, { nascendo: 0.8 });
+    this.emit(tipo, { x: p.x, y: p.y });
   }
 
   lancarTomate(z) {
-    const Tm = ZUMBIS.tomateiro.tomate;
-    this.tomates.push({ id: proxId++, x0: z.x, y0: z.y, x: z.x, y: z.y, alt: 0, t: 0, voo: Tm.voo, dano: z.dano });
-    this.emit('tomate_lancado', { x: z.x, y: z.y });
+    const T = ZUMBIS[z.tipo], pedra = !!T.pedra, Tm = T.pedra || T.tomate;
+    this.tomates.push({ id: proxId++, tipo: pedra ? 'pedra' : 'tomate', x0: z.x, y0: z.y, x: z.x, y: z.y, alt: 0, t: 0, voo: Tm.voo, dano: z.dano, danoMax: Tm.danoMax ?? 0.05 });
+    this.emit(pedra ? 'pedra_lancada' : 'tomate_lancado', { x: z.x, y: z.y });
   }
 
   // O tomate voa em arco e vai atrás do herói: sempre acerta. Dano pequeno (passa direto, é tomate na cara)
@@ -2355,7 +2358,13 @@ export class Jogo {
       if (k < 1) continue;
       t.fim = true;
       if (this.fase !== 'jogo') continue;
-      this.ferirHeroi(Math.min(t.dano, h.vidaMax * 0.05), null, 'o tomate', 'esmagar');   // dano pequeno: no máximo 5% da vida máxima
+      if (t.tipo === 'pedra') {
+        // pedra: machuca um pouco mais (até 7% da vida máxima) e trinca a tela (view/sujeira.js)
+        this.ferirHeroi(Math.min(t.dano, h.vidaMax * t.danoMax), null, 'a pedra', 'impacto');
+        this.emit('pedrada', { x: h.x, y: h.y });
+        continue;
+      }
+      this.ferirHeroi(Math.min(t.dano, h.vidaMax * t.danoMax), null, 'o tomate', 'esmagar');   // dano pequeno: no máximo 5% da vida máxima
       this.emit('tomatada', { x: h.x, y: h.y });
     }
     this.tomates = this.tomates.filter(t => !t.fim);

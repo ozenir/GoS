@@ -134,6 +134,7 @@ export class Render {
       case 'atropelou': this.tremer(e.heroi ? 6 : 2); for (let i = 0; i < (e.heroi ? 10 : 5); i++) this.particula({ x: e.x + (Math.random() - 0.5) * 0.5, y: e.y + (Math.random() - 0.5) * 0.5, z: 0.4, vz: 2 + Math.random() * 2, life: 0.5, cor: e.heroi ? '#ffd23f' : '#8a1e1e', tam: 2 }); if (e.heroi) this.piscar('#ff2a2a', 0.2); break;
       case 'furia_divina': this.piscar('#fff3a0', 0.55); this.tremer(6); this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.7, cor: '#fff3a0' }); this.raios.push({ x: e.x, y: e.y, age: 0, life: 0.6, r: 120 }); for (let i = 0; i < 20; i++) { const a = Math.random() * 6.28, s = 2 + Math.random() * 4; this.particula({ x: e.x, y: e.y, z: 0.5, vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: 3, life: 0.8, cor: i % 2 ? '#ffd23f' : '#fff3a0', tam: 2 }); } break;
       case 'deus': case 'nucleo': this.piscar('#ffd23f', e.tercos ? 0.25 : 0.4); break;
+      case 'pedrada': this.tremer(5); this.piscar('#ffffff', 0.25); for (let i = 0; i < 6; i++) this.particula({ x: e.x + (Math.random() - 0.5) * 0.4, y: e.y + (Math.random() - 0.5) * 0.4, z: 0.8, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, vz: 2, life: 0.4, cor: Math.random() < 0.5 ? '#6a6a74' : '#a8a8b2', tam: 1 }); break;
       case 'inspiracao_pulso': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.35, cor: '#ffd23f' }); break;
       case 'colosso_cansou': this.tremer(4); for (let i = 0; i < 14; i++) this.particula({ x: e.x + (Math.random() - 0.5), y: e.y + (Math.random() - 0.5), z: 1.5, vz: 1, g: 1, life: 1, cor: '#9fd0ff', tam: 2 }); break;
       case 'segundo_folego': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.6 }); this.tremer(4); break;
@@ -546,7 +547,7 @@ export class Render {
       else if (o.tipo === 'aliado') this.desenharAliado(o.a);
       else if (o.tipo === 'conversivel') this.desenharConversivel(o);
       else if (o.tipo === 'paraquedista') this.desenharParaquedista(o.p);
-      else if (o.tipo === 'tomate') this.desenharTomate(o.t);
+      else if (o.tipo === 'tomate') (o.t.tipo === 'pedra' ? this.desenharPedra(o.t) : this.desenharTomate(o.t));
       else if (o.tipo === 'figurante') this.desenharFigurante(o.f, g);
       else if (o.tipo === 'heroi') this.desenharHeroi(g);
     }
@@ -615,6 +616,12 @@ export class Render {
     if (z.fa?.escudo > 0 && nasc >= 1) { this.ctx.globalAlpha = 0.18 + 0.08 * Math.sin(this.t * 8); disc(this.ctx, sx, sy - 10, 13, '#bff8ff', 0.9); this.ctx.globalAlpha = 1; }
     if (z.flash > 0.04) { this.ctx.globalAlpha = 0.6; this.ctx.drawImage(this.branco(spr), sx - S.PE_X * esc, sy - S.PE_Y * esc, S.SPR_W * esc, S.SPR_H * esc); this.ctx.globalAlpha = 1; }
     // zumbi do tomate: um tomate na mão, balançando, pronto pra jogar
+    // zumbi da pedra: uma pedra cinza na mão, pesando
+    if (z.tipo === 'pedreiro' && nasc >= 1 && (z.tomateCd ?? 0) < ZUMBIS.pedreiro.pedra.recarga - 0.8) {
+      const b = Math.round(Math.sin(this.t * 4 + z.id) * 0.6);
+      this.ctx.fillStyle = '#4a4a52'; this.ctx.fillRect(sx + 2, sy - 13 + b, 4, 3); this.ctx.fillRect(sx + 3, sy - 14 + b, 2, 1);
+      this.ctx.fillStyle = '#8a8a94'; this.ctx.fillRect(sx + 3, sy - 13 + b, 2, 1);
+    }
     if (z.tipo === 'tomateiro' && nasc >= 1 && (z.tomateCd ?? 0) < ZUMBIS.tomateiro.tomate.recarga - 0.8) {
       const b = Math.round(Math.sin(this.t * 5 + z.id));
       this.ctx.fillStyle = '#d7261c'; this.ctx.fillRect(sx + 3, sy - 13 + b, 3, 3);
@@ -834,6 +841,19 @@ export class Render {
   }
 
   // Tomate voando: sombra no chão e o tomate no alto, girando
+  // Pedra voando: sombra no chão e uma pedra cinza irregular, girando
+  desenharPedra(t) {
+    const ctx = this.ctx;
+    const [sx, sy] = this.tela(t.x, t.y);
+    const z = Math.round(t.alt * 14);
+    const sh = S.sombra(4);
+    ctx.globalAlpha = 0.6; ctx.drawImage(sh, sx - Math.floor(sh.width / 2), sy - 2); ctx.globalAlpha = 1;
+    const y = sy - 8 - z, gira = Math.floor(this.t * 10) % 4;
+    ctx.fillStyle = '#2e2e34'; ctx.fillRect(sx - 2, y - 1, 5, 4); ctx.fillRect(sx - 1, y - 2, 3, 6);
+    ctx.fillStyle = '#6a6a74'; ctx.fillRect(sx - 1, y - 1, 3, 3); ctx.fillRect(sx - 2, y + (gira % 2), 4, 2);
+    ctx.fillStyle = '#a8a8b2'; ctx.fillRect(sx - 1 + (gira > 1 ? 1 : 0), y - 1 + (gira % 2), 1, 1);
+  }
+
   desenharTomate(t) {
     const ctx = this.ctx;
     const [sx, sy] = this.tela(t.x, t.y);

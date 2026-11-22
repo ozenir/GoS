@@ -445,6 +445,16 @@ export class Som {
   }
   zap() { if (this.pode('zap', 0.1)) this.noMundo(2, 0.3, () => { this.noise(0.15, 0.25, 'highpass', 3000); this.osc('sawtooth', 900, 200, 0.15, 0.08); }); }
   // jogar granada/molotov: só o "fffu" do braço, entrando suave (sem estalo, pra não parecer tiro)
+  // pedra no vidro da câmera: estalo seco do vidro, a pancada surda da pedra e a trinca correndo (estalinhos)
+  pedrada() {
+    this.noMundo(0, 1.4, () => {
+      this.noise(0.03, 0.32, 'highpass', 2600, 0, 0.9);                                // o estalo do vidro
+      this.nota('sine', 95, 0, 0.14, 0.26, 0.002, 380, 55);                           // a pancada da pedra
+      this.noise(0.16, 0.12, 'bandpass', 1800, 0.01, 2.2, 3800, 0.003);               // a trinca correndo
+      for (let i = 0; i < 7; i++) this.noise(0.012, 0.05 + Math.random() * 0.04, 'highpass', 3000 + Math.random() * 2500, 0.03 + i * 0.035 + Math.random() * 0.02, 1.5);   // estalinhos
+      for (let i = 0; i < 3; i++) this.osc('sine', 3200 + Math.random() * 2400, null, 0.05, 0.025, 0.25 + i * 0.12 + Math.random() * 0.08);   // caquinhos tilintando
+    });
+  }
   arremesso() { if (this.pode('arr', 0.2)) this.noMundo(0, 0.4, () => this.noise(0.26, 0.12, 'bandpass', 380, 0, 1.4, 950, 0.1)); }
   habilidade() { this.naTela(() => [523, 659, 784, 1047].forEach((f, i) => this.sino(f, i * 0.07, 0.8, 0.07))); }
   escolha() { this.naTela(() => { this.sino(392, 0, 0.6, 0.06); this.sino(523, 0.12, 0.7, 0.06); }); }

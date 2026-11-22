@@ -12,9 +12,16 @@
 //  E os filetes de caldo escorrendo na frente (também com a física de core/tomate.js).
 //  Onde o tomate bate e gruda é sorteado a cada vez (qualquer ponto da tela, com espaço pra escorregar).
 //  Depois que a massa cai, o resto seca: some em SECA + SOME segundos. Tudo é sorteado: cada tomatada é diferente.
+//
+//  PEDRA NO VIDRO (zumbi da pedra): a pedra trinca o vidro da câmera. A forma da trinca vem de core/pedra.js
+//  (estrela de trincas radiais, anéis de teia e o miolo esmigalhado, pela energia do impacto); aqui ela é
+//  desenhada em pixel art: linha escura de 1 px com um fio de brilho do lado (a borda do vidro pegando luz),
+//  mais grossa perto do impacto e afinando na ponta. Espalha em PEDRA.propaga segundos, fica PEDRA.dura e some.
+//  A trinca fica no vidro, por baixo do tomate (o tomate está na frente do vidro).
 // ============================================================================
 import { W, H } from './render.js';
 import { FISICA, CALDO, velocidadeTomate, perdaPorMetro, velocidadeFilete, alcanceFilete, comprimentoFilete } from '../core/tomate.js';
+import { PEDRA, gerarTrinca } from '../core/pedra.js';
 
 const SECA = 8, SOME = 4, MAX = 4;
 const COR = {
@@ -28,6 +35,84 @@ export class Sujeira {
     this.c = canvas; this.x = canvas.getContext('2d');
     this.x.imageSmoothingEnabled = false;   // a massa encolhendo continua pixel art
     this.manchas = [];
+    this.trincas = [];
+  }
+
+  // pedra nova: trinca num ponto sorteado da tela
+  pedrada() {
+    const t = gerarTrinca(Math.random, W, H);
+    t.t = 0; t.img = this.desenharTrinca(t);
+    this.trincas.push(t);
+    if (this.trincas.length > PEDRA.max) this.trincas.shift();
+  }
+
+  // a trinca em pixel art, num canvas do tamanho da tela
+  desenharTrinca(t) {
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const px = this.pincel(c), r = Math.random;
+    const ESCURO = '#12161e', BRILHO = '#eef6ff';
+    // linha de pixels entre dois pontos (passos de meio pixel, sem repetir)
+    const linha = (a, b, cor, alpha, grossa = false, ja = new Set()) => {
+      const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) * 2));
+      for (let i = 0; i <= n; i++) {
+        const X = Math.round(a[0] + (b[0] - a[0]) * i / n), Y = Math.round(a[1] + (b[1] - a[1]) * i / n), k = X + ',' + Y;
+        if (ja.has(k)) continue; ja.add(k);
+        px(X, Y, cor, alpha);
+        if (grossa) px(X + 1, Y, cor, alpha * 0.7);
+      }
+    };
+    // névoa do impacto: o vidro fica leitoso em volta do miolo
+    const M = t.miolo;
+    for (let y = -M * 4; y <= M * 4; y++) for (let X = -M * 4; X <= M * 4; X++) {
+      const d = Math.hypot(X, y);
+      if (d < M * 4 && (X + y) % 2 === 0) px(t.cx + X, t.cy + y, BRILHO, 0.1 * (1 - d / (M * 4)));
+    }
+    // radiais: escuras, com um fio de brilho do lado de cima/esquerda; grossas perto do impacto, finas na ponta
+    for (const pts of t.radiais) {
+      const ja = new Set(), jb = new Set();
+      for (let i = 1; i < pts.length; i++) {
+        const f = i / pts.length, alpha = 0.85 * (1 - 0.55 * f);
+        linha(pts[i - 1], pts[i], ESCURO, alpha, f < 0.22, ja);
+        if (r() < 0.8) linha([pts[i - 1][0] - 1, pts[i - 1][1] - 1], [pts[i][0] - 1, pts[i][1] - 1], BRILHO, 0.45 * (1 - f), false, jb);
+      }
+    }
+    // anéis da teia: mais finos e claros
+    for (const arco of t.aneis) {
+      const ja = new Set(), jb = new Set();
+      for (let i = 1; i < arco.length; i++) {
+        linha(arco[i - 1], arco[i], ESCURO, 0.55, false, ja);
+        linha([arco[i - 1][0], arco[i - 1][1] - 1], [arco[i][0], arco[i][1] - 1], BRILHO, 0.3, false, jb);
+      }
+    }
+    // miolo esmigalhado: pó de vidro branco e azulado, com lasquinhas escuras
+    for (let y = -M - 2; y <= M + 2; y++) for (let X = -M - 2; X <= M + 2; X++) {
+      const d = Math.hypot(X, y) + (r() - 0.5) * 1.6;
+      if (d > M + 1) continue;
+      const q = r();
+      px(t.cx + X, t.cy + y, q < 0.18 ? ESCURO : q < 0.6 ? '#ffffff' : '#bcd8f0', q < 0.18 ? 0.7 : 0.55 + r() * 0.35);
+    }
+    // brilhos: uns pontinhos de luz nas trincas perto do impacto
+    for (let i = 0; i < 6; i++) {
+      const pts = t.radiais[Math.floor(r() * t.radiais.length)], p = pts[Math.floor(r() * Math.min(pts.length, 10))];
+      px(p[0], p[1] - 1, '#ffffff', 0.95); px(p[0] + 1, p[1] - 1, '#ffffff', 0.5); px(p[0], p[1] - 2, '#ffffff', 0.5);
+    }
+    return c;
+  }
+
+  // trincas: se espalham do ponto do impacto (recorte em círculo crescendo), ficam e somem
+  desenharTrincas(dt) {
+    const x = this.x;
+    for (const t of this.trincas) t.t += dt;
+    this.trincas = this.trincas.filter(t => t.t < PEDRA.dura + PEDRA.some);
+    for (const t of this.trincas) {
+      x.globalAlpha = t.t > PEDRA.dura ? 1 - (t.t - PEDRA.dura) / PEDRA.some : 1;
+      const k = Math.min(1, t.t / PEDRA.propaga);
+      if (k < 1) {
+        x.save(); x.beginPath(); x.arc(t.cx, t.cy, t.raio * k * (2 - k), 0, Math.PI * 2); x.clip();
+        x.drawImage(t.img, 0, 0); x.restore();
+      } else x.drawImage(t.img, 0, 0);
+    }
+    x.globalAlpha = 1;
   }
 
   // nova tomatada: bate e gruda num ponto sorteado da tela (de um canto a outro, de cima até uns 70% da altura,
@@ -177,6 +262,7 @@ export class Sujeira {
   desenhar(dt) {
     const x = this.x;
     x.clearRect(0, 0, W, H);
+    if (this.trincas.length) this.desenharTrincas(dt);   // a trinca fica no vidro, por baixo do tomate
     if (!this.manchas.length) return;
     for (const m of this.manchas) { m.t += dt; this.escorregar(m, dt); }
     this.manchas = this.manchas.filter(m => m.caiuEm == null || m.t - m.caiuEm < SECA + SOME);

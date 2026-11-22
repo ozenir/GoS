@@ -15,6 +15,10 @@ export const ZUMBIS = {
   // acerta: dano pequeno e suja a tela da live (view/sujeira.js). tomate = { min, max: distância que ele gosta, recarga }
   tomateiro: { nome: 'Zumbi do tomate', vida: 45, vel: 0.5,  dano: 5,  cd: 1.0, raio: 0.32, xp: 4,  alcance: 0.62,
                tomate: { min: 4.5, max: 7.5, recarga: 8, voo: 0.9 }, ataque: { tipo: 'impacto' } },   // um tomate a cada 8 s
+  // Zumbi da pedra: mesmo jeito do tomate (um por vez, fica de longe), mas joga PEDRA: a pedra sempre acerta,
+  // machuca um pouco mais (até 7% da vida máxima) e TRINCA a tela da live (core/pedra.js, view/sujeira.js)
+  pedreiro:  { nome: 'Zumbi da pedra',  vida: 60, vel: 0.5,  dano: 8,  cd: 1.1, raio: 0.34, xp: 5,  alcance: 0.62,
+               pedra: { min: 5, max: 8.5, recarga: 11, voo: 1.0, danoMax: 0.07 }, ataque: { tipo: 'impacto' } },   // uma pedra a cada 11 s
   // Colosso: o chefão que aparece depois de uma doação (recompensas.js). A vida vem de lá (uns 10 mil).
   colosso:   { nome: 'Colosso',      vida: 10000, vel: 0.5,  dano: 30, cd: 1.4, raio: 0.8,  xp: 120, alcance: 1.3, chefe: true, ataque: { tipo: 'impacto' } },   // não atordoa nem deixa o herói lento
   exheroi:   { nome: 'Ex-herói',     vida: 300,  vel: 0.78,  dano: 9,  cd: 1.0, raio: 0.45, xp: 15, alcance: 0.8,  chefe: true, ataque: { tipo: 'mordida', status: [{ id: 'sangramento', chance: 0.25 }, { id: 'infectado', chance: 0.1 }] } },

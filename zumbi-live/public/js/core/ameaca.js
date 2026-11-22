@@ -131,6 +131,8 @@ export const NIVEL_INIMIGOS_NOVOS = 20;
 // Zumbi do tomate (dados.js → ZUMBIS.tomateiro): do nível desdeNivel do herói em diante, a cada quarteirão
 // novo tem `chance` de aparecer um, se não tiver nenhum vivo (é um por vez).
 export const TOMATEIRO = { desdeNivel: 3, chance: 0.35 };
+// Zumbi da pedra (dados.js → ZUMBIS.pedreiro): igual, mais tarde e um pouco mais raro. Também é um por vez.
+export const PEDREIRO = { desdeNivel: 6, chance: 0.28 };
 
 // O estouro do inchado também atordoa o herói (atordoa s), a não ser que a resistência a explosão dele seja de pelo
 // menos resSemAtordoar (Anti-explosão nível 2, ou o mecânico e a bombeira, que já nascem resistentes).
