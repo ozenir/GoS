@@ -26,6 +26,7 @@ import {
 import { CHANCES_PADRAO, PERIGOS, AMEACA_POR_PERIGO, ATRASO_PERIGO, sortearCaminho } from './caminhos.js';
 import { preverDestino } from './previsao.js';
 import { caboDeGuerra, multSpawnCabo, multForcaCabo, sorteCabo, CABO } from './cabo.js';
+import { PORTAL, RELIQUIAS, sortearRodadas, forcaGuardiao, escolhaPortalIA, revelar, aplicarEfeito, poderComPresente, darReliquia, atualizarReliquia, reliquiaSalva } from './portal.js';
 
 // Quanto tempo o resultado da votação fica na tela; a próxima votação só abre depois disso
 export const RESULTADO_SEG = 10;
@@ -316,6 +317,8 @@ export class Jogo {
 
   /* =================== Laço principal =================== */
   update(dt) {
+    // portal dos 500 aberto: a rua fica PAUSADA (nem o tempo da ameaça corre); só o minijogo anda
+    if (this.portal) { this.atualizarPortal(dt); return; }
     this.t += dt;
     this.faseT += dt;
     for (let i = this.agendados.length - 1; i >= 0; i--) {
@@ -338,7 +341,7 @@ export class Jogo {
     this.diretor(dt);
     this.processarFila(dt);
     this.atualizarHeroi(dt);
-    if (this.fase === 'jogo' && !this.caido) { this.atualizarEscolha(dt); atualizarHabilidades(this, dt); }
+    if (this.fase === 'jogo' && !this.caido) { this.atualizarEscolha(dt); atualizarHabilidades(this, dt); atualizarReliquia(this, dt); this.checarPortal(); }
     this.atualizarFigurantes(dt);
     this.atualizarAliados(dt);
     this.atualizarZumbis(dt);
@@ -1513,7 +1516,7 @@ export class Jogo {
     if (!silencioso) this.emit('dano_heroi', { dano, x: h.x, y: h.y });
     this.stats.matador = quem ? { nick: quem.nick, avatar: quem.avatar || '', causa } : { nick: null, causa };
     if (!h.vidaBaixa && h.vida > 0 && h.vida / h.vidaMax < 0.3) { h.vidaBaixa = true; this.emit('vida_baixa'); }
-    if (h.vida <= 0 && !supremaSegura(this, h)) this.cair();
+    if (h.vida <= 0 && !supremaSegura(this, h) && !reliquiaSalva(this, h)) this.cair();
     return true;
   }
 
@@ -2329,6 +2332,115 @@ export class Jogo {
     this.emit('soltou_perna', { x: h.x, y: h.y, qtd: Math.max(1, quem.length) });
   }
 
+  /* =================== Portal dos 500 (core/portal.js) =================== */
+  // Abre sozinho quando o herói chega em PORTAL.abates zumbis (uma vez por herói), num momento calmo:
+  // fora de loja, arena, praia, beco, sem escolha de habilidade nem votação de rua aberta.
+  checarPortal() {
+    const h = this.hero;
+    if (h.portalFeito || this.stats.abates < PORTAL.abates) return;
+    if (this.room || this.arena || this.caido || this.rota?.beco || this.escolha || this.voto?.aberta || this.limpando) return;
+    this.abrirPortal();
+  }
+
+  // forcar: o botão de teste abre na hora, sem os 500 zumbis
+  abrirPortal(forcar = false) {
+    if (this.fase !== 'jogo' || this.portal || this.caido) return false;
+    if (!forcar) this.hero.portalFeito = true;
+    const rodadas = sortearRodadas(this.rng);
+    this.portal = { fase: 'entrando', t: 0, rodada: 0, rodadas, poder: PORTAL.poder, guardiao: forcaGuardiao(rodadas), escolhas: [], voto: null, forcado: forcar };
+    this.emit('portal_abriu', { guardiao: this.portal.guardiao });
+    return true;
+  }
+
+  votacaoPortal(ops, premio = false) {
+    const ids = ['esquerda', 'frente', 'direita'];
+    const v = new Votacao(ops.map((o, i) => ({ id: ids[i], n: i + 1, nome: o.nome, seta: o.seta })), this.cfg.votoDur, this.cfg.atraso);
+    v.portal = true; v.premio = premio;
+    return v;
+  }
+
+  atualizarPortal(dt) {
+    const P = this.portal, C = PORTAL, ids = ['esquerda', 'frente', 'direita'];
+    P.t += dt;
+    if (P.mostrado !== undefined) P.mostrado += (P.poder - P.mostrado) * Math.min(1, dt * 4);   // o número do poder corre até o valor novo
+    else P.mostrado = P.poder;
+    switch (P.fase) {
+      case 'entrando':
+        if (P.t >= C.entrar) this.portalRodada();
+        break;
+      case 'votando': {
+        P.voto.update(dt);
+        if (P.voto.t > 0) break;
+        const ops = P.rodadas[P.rodada];
+        const res = P.voto.fechar(() => ids[escolhaPortalIA(P.poder, ops, this.rng)], this.rng);
+        const k = ids.indexOf(res.id), efeito = revelar(ops[k], this.rng);
+        const antes = P.poder;
+        P.poder = aplicarEfeito(P.poder, efeito);
+        P.escolhas.push(k);
+        P.passou = { k, antes, depois: P.poder, rotulo: ops[k].misterio ? `? = ${efeito.tipo === 'mult' ? (efeito.v >= 1 ? '×' + efeito.v : '÷' + Math.round(1 / efeito.v)) : (efeito.v > 0 ? '+' + efeito.v : '−' + -efeito.v)}` : ops[k].rotulo, bom: P.poder >= antes, votos: res.votos, auto: res.auto };
+        P.fase = 'atravessando'; P.t = 0;
+        this.emit('portal_passou', { ...P.passou });
+        break;
+      }
+      case 'atravessando':
+        if (P.t < C.atravessar) break;
+        P.rodada++;
+        if (P.rodada < P.rodadas.length) this.portalRodada();
+        else { P.fase = 'duelo'; P.t = 0; P.voto = null; this.emit('portal_duelo', { poder: P.poder, guardiao: P.guardiao }); }
+        break;
+      case 'duelo':
+        if (P.t < C.duelo) break;
+        P.venceu = P.poder > P.guardiao;
+        P.t = 0;
+        if (P.venceu) {
+          // prêmio: 3 relíquias sorteadas, o chat escolhe
+          const todas = Object.keys(RELIQUIAS);
+          for (let i = todas.length - 1; i > 0; i--) { const j = Math.floor(this.rng.next() * (i + 1)); [todas[i], todas[j]] = [todas[j], todas[i]]; }
+          P.premio = todas.slice(0, 3);
+          P.voto = this.votacaoPortal(P.premio.map(id => ({ nome: RELIQUIAS[id].nome, seta: RELIQUIAS[id].emoji })), true);
+          P.fase = 'premio';
+        } else P.fase = 'perdeu';
+        this.emit(P.venceu ? 'portal_venceu' : 'portal_perdeu', { poder: P.poder, guardiao: P.guardiao });
+        break;
+      case 'premio': {
+        P.voto.update(dt);
+        if (P.voto.t > 0) break;
+        const res = P.voto.fechar(() => ids[Math.floor(this.rng.next() * 3)], this.rng);
+        P.reliquia = P.premio[ids.indexOf(res.id)];
+        if (this.hero.reliquia) { const ant = RELIQUIAS[this.hero.reliquia]; (ant.mods || []).forEach((m, k) => this.hero.attr.removeMod(`rel:${this.hero.reliquia}:${k}`)); }
+        darReliquia(this, P.reliquia);
+        P.voto = null; P.fase = 'ganhou'; P.t = 0;
+        this.emit('portal_reliquia', { id: P.reliquia, nome: RELIQUIAS[P.reliquia].nome, emoji: RELIQUIAS[P.reliquia].emoji, votos: res.votos });
+        break;
+      }
+      case 'ganhou': case 'perdeu':
+        if (P.t >= C.fim) { P.fase = 'saindo'; P.t = 0; this.emit('portal_saindo', {}); }
+        break;
+      case 'saindo':
+        if (P.t >= C.sair) {
+          this.portal = null;
+          this.hero.invT = Math.max(this.hero.invT, 3);   // volta pra rua com uns segundos de folga
+          this.emit('portal_fechou', { reliquia: this.hero.reliquia || null });
+        }
+        break;
+    }
+  }
+
+  portalRodada() {
+    const P = this.portal;
+    P.fase = 'votando'; P.t = 0;
+    P.voto = this.votacaoPortal(P.rodadas[P.rodada].map(o => ({ nome: o.rotulo, seta: o.lado === 'bom' ? '🔵' : o.lado === 'ruim' ? '🔴' : '🟣' })));
+    this.emit('portal_rodada', { rodada: P.rodada + 1, total: P.rodadas.length });
+  }
+
+  presenteNoPortal(lado, moedas, quem) {
+    const P = this.portal;
+    if (P.fase === 'saindo' || P.fase === 'ganhou' || P.fase === 'perdeu') return;
+    const antes = P.poder;
+    P.poder = poderComPresente(P.poder, lado, moedas);
+    this.emit('portal_presente', { lado, antes, depois: P.poder, nick: quem?.nick || '' });
+  }
+
   /* =================== Zumbi do tomate (dados.js → tomateiro; ameaca.js → TOMATEIRO) =================== */
   // (também o zumbi da pedra: tipo = 'pedreiro')
   surgirTomateiro(tipo = 'tomateiro') {
@@ -2607,13 +2719,14 @@ export class Jogo {
         this.lembrarNome(m.id, m.nick);
         this.torcida.set(m.id, this.t);
         const op = lerVoto(m.texto);
-        if (op && this.voto && this.voto.aberta && this.fase === 'jogo') {
-          if (this.voto.votar(m.id, op)) this.emit('voto', { nick: nomeSeguro(m.nick), op });
+        const V = this.portal ? this.portal.voto : this.voto;   // no portal, 1 2 3 votam no portal
+        if (op && V && V.aberta && this.fase === 'jogo') {
+          if (V.votar(m.id, op)) this.emit('voto', { nick: nomeSeguro(m.nick), op });
         }
         // "G" (ou "gráfico", "status"...): abre o gráfico de atributos do herói (core/grafico.js)
         if (pedeGrafico(m.texto)) this.emit('grafico', { nick: nomeSeguro(m.nick) });
         const letra = lerEscolha(m.texto);
-        if (letra && this.escolha?.voto.aberta && this.fase === 'jogo') {
+        if (letra && this.escolha?.voto.aberta && this.fase === 'jogo' && !this.portal) {   // no portal, não tem roleta
           if (this.escolha.voto.votar(m.id, letra)) this.emit('voto', { nick: nomeSeguro(m.nick), op: letra, habilidade: true });
         }
         break;
@@ -2659,6 +2772,8 @@ export class Jogo {
     // Resposta na hora, em cima do herói, com o nome de quem mandou (mesmo que o efeito vá pra fila)
     if (this.fase === 'jogo') this.emit('presente_heroi', { nick: quem.nick, emoji: emoji || regra.emoji || '🎁', lado, x: this.hero.x, y: this.hero.y });
     if (lado === 'ajuda' && (coins > 0 || giftName === 'seguiu')) this.ultimaAjudaT = this.t;
+    // no portal, presente mexe no poder do herói (ajuda sobe, atrapalha desce); a rua está pausada
+    if (this.portal) { this.presenteNoPortal(lado, coins * qtd, quem); return; }
     // recompensas de presente (recompensas.js): drop de paraquedas (1 moeda) e doação (inspiração + colosso)
     if (coins > 0 && quem.id !== '__curtidas' && this.fase === 'jogo') this.recompensaDePresente(coins, qtd, quem, lado);
     if (lado === 'ajuda') {

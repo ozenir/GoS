@@ -9,6 +9,7 @@ import { slotsDoHeroi, NUCLEO } from '../core/habilidades.js';
 import { Letreiro } from './letreiro.js';
 import { RESULTADO_SEG } from '../core/jogo.js';
 import { CABO } from '../core/cabo.js';
+import { RELIQUIAS } from '../core/portal.js';
 import { graficoDoHeroi, GRAFICO_SEGUNDOS, BLOCOS } from '../core/grafico.js';
 
 const $ = id => document.getElementById(id);
@@ -327,6 +328,9 @@ export class Hud {
     if (this.cache['h-nv'] !== String(h.nivel)) { const el = $('h-nv'); el.classList.remove('up'); void el.offsetWidth; el.classList.add('up'); }
     this.set('h-nv', String(h.nivel));
     this.atualizarSlots(h);
+    // relíquia do portal dos 500: selo brilhando no avatar
+    const rel = h.reliquia ? RELIQUIAS[h.reliquia] : null;
+    if (this.cache.rel !== (rel?.emoji || '')) { this.cache.rel = rel?.emoji || ''; const el = $('h-rel'); el.hidden = !rel; el.textContent = rel?.emoji || ''; el.title = rel ? `${rel.nome}: ${rel.desc}` : ''; }
     const max = h.nivel >= NIVEL_MAXIMO;
     if (this.cache.xpmax !== max) { this.cache.xpmax = max; $('h-xpb').classList.toggle('max', max); $('h-xpb').title = max ? `Nível máximo (${NIVEL_MAXIMO})` : 'Experiência até o próximo nível'; }
     $('h-xp').style.width = (max ? 100 : clamp(h.xp / xpParaNivel(h.nivel), 0, 1) * 100).toFixed(0) + '%';
@@ -373,6 +377,7 @@ export class Hud {
     // banner, intro, relatório
     if (this.bannerT > 0 && (this.bannerT -= dt) <= 0) { const b = $('h-banner'); b.classList.add('out'); setTimeout(() => { if (this.bannerT <= 0) b.hidden = true; }, 500); }
     if (this.histT > 0 && (this.histT -= dt) <= 0) { const el = $('h-hist'); el.classList.add('out'); setTimeout(() => { if (this.histT <= 0) el.hidden = true; }, 500); }
+    if (g.portal && this.introT > 0) this.introT = Math.min(this.introT, 0.01);   // no portal, o cartão do herói sai da frente
     if (this.introT > 0 && (this.introT -= dt) <= 0) { const el = $('intro'); el.classList.add('out'); setTimeout(() => { el.hidden = true; }, 420); }
     if (g.fase === 'morto' && this.rel) {
       this.relT += dt;
@@ -387,7 +392,8 @@ export class Hud {
   atualizarEscolha(g) {
     const box = $('h-escolha'), e = g.escolha;
     const res = !e && g.escolhaRes && g.t < g.escolhaRes.ate ? g.escolhaRes : null;
-    const ativo = g.fase === 'jogo' && !!(e || res);
+    // no portal não tem roleta de habilidade (a escolha lá é a dos portais); a que estava aberta espera ele voltar
+    const ativo = g.fase === 'jogo' && !g.portal && !!(e || res);
     if (this.cache.eAtivo !== ativo) { this.cache.eAtivo = ativo; $('h-bottom').classList.toggle('escolhendo', ativo); box.hidden = !ativo; }
     if (!ativo) { this.cache.ekey = null; return; }
     if (e) this.eCartas = e.cartas;
@@ -452,10 +458,11 @@ export class Hud {
   // embaixo (votos, pra onde vai e o que tem lá: previsao.js) por RESULTADO_SEG segundos. Depois só o cabo de
   // guerra fica, até abrir a próxima votação.
   atualizarVoto(g) {
-    const box = $('h-voto'), v = g.voto, agora = performance.now();
+    // no portal dos 500, o mesmo quadro mostra a votação dos portais (e da relíquia)
+    const box = $('h-voto'), v = g.portal ? g.portal.voto : g.voto, agora = performance.now();
     const R = this.resultado;
-    const votando = !!(v && v.aberta && (!g.room || g.room.praia));
-    const comResultado = !!R && agora < R.ate && !votando;
+    const votando = !!(v && v.aberta && (g.portal || !g.room || g.room.praia));
+    const comResultado = !!R && agora < R.ate && !votando && !g.portal;
     if (R && agora >= R.ate) this.resultado = null;
     const mostrar = g.fase === 'jogo' && !g.caido;
     if (!mostrar) { if (!box.hidden) box.hidden = true; this.cache.vkey = null; this.cache.vmodo = null; return; }
@@ -488,6 +495,7 @@ export class Hud {
       const icone = o => o.id === 'entrar' ? (o.praca ? '⚔️' : esc(o.shop.emoji)) : o.seta;
       const nome = o => o.id === 'entrar' ? (o.praca ? 'arena' : 'entrar') : o.nome.toLowerCase();
       const titulo = v.contandoAtrasados ? '⏳ contando os votos da live <small>· ainda dá tempo</small>'
+        : v.portal ? (v.premio ? '🏆 Escolha a relíquia com' : '🌀 Escolha o portal com')
         : v.praia ? '🏖️ Saia da praia com' : v.loja ? `🗳️ Escolha a direção com <small>· ${esc(v.loja.emoji)} ${esc(v.loja.nome)} aqui!</small>` : '🗳️ Escolha a direção com';
       $('v-info').innerHTML = `<div class="vi-t">${titulo}</div><div class="vi-ops">${v.opcoes.map(o => `<span><b>${o.n}</b>${icone(o)} ${nome(o)}${o.semSaida ? ' 📦' : ''}</span>`).join('')}</div>`;
       $('v-bolas').innerHTML = v.opcoes.map(o => `<span class="vb" data-op="${o.id}"><b>${o.n}</b><small>${icone(o)} 0</small></span>`).join('');

@@ -446,6 +446,22 @@ export class Som {
   zap() { if (this.pode('zap', 0.1)) this.noMundo(2, 0.3, () => { this.noise(0.15, 0.25, 'highpass', 3000); this.osc('sawtooth', 900, 200, 0.15, 0.08); }); }
   // jogar granada/molotov: só o "fffu" do braço, entrando suave (sem estalo, pra não parecer tiro)
   // pedra no vidro da câmera: estalo seco do vidro, a pancada surda da pedra e a trinca correndo (estalinhos)
+  // portal: um "vuuum" subindo (abrindo) ou descendo (fechando), com brilho de sinos
+  portalAbriu(fechando = false) {
+    this.naTela(() => {
+      this.nota('sine', fechando ? 520 : 90, 0, 1.4, 0.12, 0.3, 900, fechando ? 90 : 520);
+      this.noise(1.2, 0.08, 'bandpass', fechando ? 2400 : 300, 0, 2, fechando ? 300 : 2400, 0.4);
+      [523, 659, 784, 1047].forEach((f, i) => this.sino(fechando ? f / 2 : f, 0.5 + i * 0.12, 1.2, 0.045));
+    });
+  }
+  // passou pelo portal: bom sobe (acorde maior), ruim desce
+  portalPassou(bom) {
+    this.naTela(() => {
+      const fs = bom ? [392, 494, 587, 784] : [440, 370, 311, 262];
+      fs.forEach((f, i) => this.sino(f, i * 0.07, 0.8, 0.06));
+      this.noise(0.35, 0.08, 'bandpass', bom ? 1800 : 500, 0, 1.4, bom ? 3200 : 200, 0.02);
+    });
+  }
   pedrada() {
     this.noMundo(0, 1.4, () => {
       this.noise(0.03, 0.32, 'highpass', 2600, 0, 0.9);                                // o estalo do vidro

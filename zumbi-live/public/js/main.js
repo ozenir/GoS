@@ -127,12 +127,14 @@ function montarBotoes() {
   }
 }
 montarBotoes();
+$('b-portal').addEventListener('click', () => jogo.abrirPortal(true));   // portal dos 500 na hora (teste)
 document.querySelectorAll('[data-voto]').forEach(b => b.addEventListener('click', () => chatTeste(b.dataset.voto, 'você ' + Math.floor(Math.random() * 1000))));
 document.querySelectorAll('[data-evento]').forEach(b => b.addEventListener('click', () => eventoTeste(b.dataset.evento)));
 $('b-matar').addEventListener('click', () => { if (jogo.fase === 'jogo') jogo.ferirHeroi(9999, { nick: 'você (teste)' }, 'o botão de teste'); });
 window.addEventListener('keydown', e => {
   if (e.target.closest('input')) return;
   if (['1', '2', '3', '4', '5', 'a', 'b', 'c', 'g'].includes(e.key.toLowerCase())) chatTeste(e.key.toLowerCase(), 'você ' + Math.floor(Math.random() * 1000));   // g = gráfico de atributos
+  if (e.key.toLowerCase() === 'p') jogo.abrirPortal(true);   // p = abre o portal dos 500 na hora (teste)
 });
 
 /* ---------- modo "só o jogo": esconde os botões de teste ---------- */
@@ -223,6 +225,17 @@ function tocar(e, g) {
     case 'tomatada': sujeira.tomatada(); som.tomatada(); break;
     case 'pedra_lancada': som.arremesso(); break;
     case 'pedrada': sujeira.pedrada(); som.pedrada(); break;
+    case 'portal_abriu': som.portalAbriu(); break;
+    case 'portal_rodada': som.escolha(); break;
+    case 'portal_passou': som.portalPassou(e.bom); break;
+    case 'portal_presente': som.portalPassou(e.lado === 'ajuda'); break;
+    case 'portal_duelo': som.chefe(true); break;
+    case 'portal_venceu': som.recorde(); break;
+    case 'portal_perdeu': som.morteHeroi(); break;
+    case 'portal_reliquia': som.runa(); break;
+    case 'portal_saindo': som.portalAbriu(true); break;
+    case 'eclipse': som.onda(); break;
+    case 'fenix': som.levantou(); break;
     case 'agarrou': case 'paraquedista_quicou': som.agarrou(); break;
     case 'soltou_perna': som.soltouPerna(); break;
     case 'colosso_cansou': som.cansou(longe(e, g)); break;

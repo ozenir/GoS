@@ -70,6 +70,7 @@ body.foco .app{padding-block:8px}
 .av em{position:absolute;right:-1.2cqw;bottom:-1cqw;min-width:5.2cqw;height:5.2cqw;padding:0 .8cqw;box-sizing:border-box;border-radius:99px;display:grid;place-items:center;font-style:normal;font-size:3cqw;font-weight:700;color:#1a1420;background:var(--ouro);border:.4cqw solid #1a1420}
 .av img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover}
 .av.foto #h-emoji{position:absolute;left:-1.2cqw;bottom:-1cqw;width:5.2cqw;height:5.2cqw;display:grid;place-items:center;font-size:3.2cqw;border-radius:50%;background:#1a1524;border:.4cqw solid #1a1420}
+.av .rel{position:absolute;left:-1.2cqw;top:-1.2cqw;width:5.4cqw;height:5.4cqw;border-radius:50%;display:grid;place-items:center;font-size:3cqw;text-decoration:none;background:radial-gradient(circle,#fff3a0,#b06bff 70%);border:.4cqw solid #1a1420;box-shadow:0 0 2.2cqw #b06bff;animation:pisca 1s infinite alternate}   /* relíquia do portal */
 .av em.up{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
 .hm{flex:1;min-width:0;display:flex;flex-direction:column;gap:.8cqw}
 .hn{display:flex;align-items:baseline;justify-content:space-between;gap:2cqw;min-width:0}
@@ -364,7 +365,7 @@ body.foco .app{padding-block:8px}
       <div class="hud">
         <div class="top">
           <div class="head card">
-            <div class="av" id="h-av"><img id="h-foto" alt="" referrerpolicy="no-referrer" hidden><span id="h-emoji">👮</span><em id="h-nv" title="Nível">1</em></div>
+            <div class="av" id="h-av"><img id="h-foto" alt="" referrerpolicy="no-referrer" hidden><span id="h-emoji">👮</span><em id="h-nv" title="Nível">1</em><u class="rel" id="h-rel" hidden></u></div>
             <div class="hm">
               <div class="hn"><b id="h-heroi">Policial #1</b><span class="arma" id="h-arma">🔫 Pistola</span></div>
               <div class="vbar" id="h-vbar"><i id="h-vfill"></i><b><span>❤️ <span id="h-vida">100</span></span><span id="h-colete"></span></b></div>
@@ -459,6 +460,7 @@ body.foco .app{padding-block:8px}
       <button class="btn" data-voto="b">B ⭐</button>
       <button class="btn" data-voto="c">C ⭐</button>
       <button class="btn" data-voto="g" title="Comenta G no chat: abre o gráfico de atributos">📊 Gráfico <kbd>G</kbd></button>
+      <button class="btn" id="b-portal" title="Abre o portal dos 500 agora (sem esperar os 500 zumbis)">🌀 Portal <kbd>P</kbd></button>
       <button class="btn" data-evento="seguiu">➕ Seguir</button>
       <button class="btn" data-evento="compartilhou">🔁 Compartilhar</button>
       <button class="btn" data-evento="curtidas">❤️ +100 curtidas</button>

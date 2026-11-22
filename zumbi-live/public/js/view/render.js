@@ -8,6 +8,7 @@ import { AMBIENTE, ligado as ligadoZona } from '../core/ambiente.js';
 import { posDrone } from '../core/habilidades.js';
 import { fillPoly, line, disc, canvas as novoCanvas } from './pixel.js';
 import * as S from './sprites.js';
+import { CenaPortal } from './portal.js';
 
 export const W = 216, H = 384;
 const AX = 114, AY = 226;           // onde fica o ponto da câmera na tela (um pouco abaixo do centro: o HUD de cima fica livre)
@@ -135,6 +136,8 @@ export class Render {
       case 'furia_divina': this.piscar('#fff3a0', 0.55); this.tremer(6); this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.7, cor: '#fff3a0' }); this.raios.push({ x: e.x, y: e.y, age: 0, life: 0.6, r: 120 }); for (let i = 0; i < 20; i++) { const a = Math.random() * 6.28, s = 2 + Math.random() * 4; this.particula({ x: e.x, y: e.y, z: 0.5, vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: 3, life: 0.8, cor: i % 2 ? '#ffd23f' : '#fff3a0', tam: 2 }); } break;
       case 'deus': case 'nucleo': this.piscar('#ffd23f', e.tercos ? 0.25 : 0.4); break;
       case 'pedrada': this.tremer(5); this.piscar('#ffffff', 0.25); for (let i = 0; i < 6; i++) this.particula({ x: e.x + (Math.random() - 0.5) * 0.4, y: e.y + (Math.random() - 0.5) * 0.4, z: 0.8, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, vz: 2, life: 0.4, cor: Math.random() < 0.5 ? '#6a6a74' : '#a8a8b2', tam: 1 }); break;
+      case 'eclipse': this.choques.push({ pts: [[e.x, e.y], [e.x2, e.y2]], age: 0, life: 0.35, cor: '#b06bff' }); for (let i = 0; i < 16; i++) { const k = Math.random(); this.particula({ x: e.x + (e.x2 - e.x) * k, y: e.y + (e.y2 - e.y) * k, z: 0.6, vz: 1, g: -0.5, life: 0.6, cor: Math.random() < 0.5 ? '#b06bff' : '#2a0f45', tam: 2 }); } this.tremer(3); break;
+      case 'fenix': this.piscar('#ff8a2a', 0.45); this.tremer(5); for (let i = 0; i < 24; i++) { const a = Math.random() * 6.28, s = 2 + Math.random() * 3; this.particula({ x: e.x, y: e.y, z: 0.4, vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: 2.5, life: 0.7, cor: ['#ffd23f', '#ff8a2a', '#ff4a2a'][i % 3], tam: 2, fogo: true }); } break;
       case 'inspiracao_pulso': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.35, cor: '#ffd23f' }); break;
       case 'colosso_cansou': this.tremer(4); for (let i = 0; i < 14; i++) this.particula({ x: e.x + (Math.random() - 0.5), y: e.y + (Math.random() - 0.5), z: 1.5, vz: 1, g: 1, life: 1, cor: '#9fd0ff', tam: 2 }); break;
       case 'segundo_folego': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.6 }); this.tremer(4); break;
@@ -186,7 +189,15 @@ export class Render {
 
   /* ---------- desenho ---------- */
   draw(g, dt) {
-    this.t += dt;
+    this.t += dt; this.dtUlt = dt;
+    // portal dos 500: cena própria (câmera atrás do herói, view/portal.js)
+    if (g.portal) {
+      this.shake = Math.max(0, this.shake - dt * 18);
+      (this.cenaPortal ||= new CenaPortal()).desenhar(this, g, dt);
+      this.estavaNoPortal = true;
+      return;
+    }
+    if (this.estavaNoPortal) { this.estavaNoPortal = false; this.cenaPortal = null; this.fade = 1; this.flash = { cor: '#f0e0ff', a: 0.9 }; }
     const ctx = this.ctx, h = g.hero;
     // rotação e câmera
     let rAlvo = g.room ? 0 : g.rota.dir;
