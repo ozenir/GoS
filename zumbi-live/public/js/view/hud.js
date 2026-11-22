@@ -13,6 +13,9 @@ import { graficoDoHeroi, GRAFICO_SEGUNDOS, BLOCOS } from '../core/grafico.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Narração no meio da tela ("AMEAÇA 2", "LIMPE A ÁREA", "NÍVEL 5"...): desligada pra não poluir o jogo.
+// O que a live faz aparece só nos avisos discretos de baixo (nome + o que fez). true liga de novo.
+export const AVISOS_NO_MEIO = false;
 const urlOk = u => /^https:\/\//.test(String(u || ''));
 const AVATAR_VAZIO = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#2a2238"/><circle cx="5" cy="4" r="2" fill="#6a5a88"/><rect x="2" y="7" width="6" height="3" rx="1.5" fill="#6a5a88"/></svg>');
 
@@ -20,14 +23,13 @@ export class Hud {
   constructor() {
     this.cache = {};
     this.legenda = [];
-    this.legIdx = 0;
-    this.legT = 0;
     this.bannerT = 0;
     this.introT = 0;
     this.resultado = null;   // o último resultado de votação (fica RESULTADO_SEG na tela)
     this.toastsVivos = [];
     // linhas que viram letreiro quando não cabem
     this.letreiros = ['h-stats', 'h-linha-status'].map(id => $(id)).filter(Boolean).map(el => new Letreiro(el));
+    this.letreiros.push(new Letreiro($('h-leg-linha'), { sempre: true }));   // presentes: rola sempre, como letreiro de jornal
   }
 
   set(id, valor) {
@@ -55,16 +57,14 @@ export class Hud {
     this.legenda = itens;
     // presente de ajuda mais barato: é o que o painel de "caído" pede
     this.ajudaBarata = itens.find(l => l.lado === 'ajuda' && l.moedas > 0) || null;
-    this.legIdx = 0; this.legT = 0;
     this.mostrarLegenda();
   }
 
   mostrarLegenda() {
     const el = $('h-legenda');
     if (!this.legenda.length) { el.innerHTML = ''; return; }
-    const pagina = [];
-    for (let i = 0; i < 4; i++) pagina.push(this.legenda[(this.legIdx + i) % this.legenda.length]);
-    el.innerHTML = pagina.map(l => `<span class="leg ${l.lado}">${esc(l.emoji)} ${esc(l.texto)}</span>`).join('');
+    // letreiro de jornal com todos os presentes: "🌹 Rosa 1🪙: cura..." (escorrega da direita pra esquerda sem parar)
+    el.innerHTML = this.legenda.map(l => `<span class="leg ${l.lado}">${esc(l.emoji)} <b>${esc(l.nome)}</b>${l.moedas ? ` <small>${l.moedas}🪙</small>` : ''}: ${esc(l.texto)}</span>`).join('');
   }
 
   toast(e) {
@@ -132,6 +132,7 @@ export class Hud {
   }
 
   banner(texto, sub = '', tipo = '', dur = 2.6) {
+    if (!AVISOS_NO_MEIO) return;
     const b = $('h-banner');
     b.className = 'banner ' + tipo;
     $('b-t').textContent = texto; $('b-s').textContent = sub;
@@ -379,13 +380,6 @@ export class Hud {
       this.set('o-count', String(Math.max(1, Math.ceil(g.cfg.relNum + g.cfg.relDest - g.faseT))));
     }
 
-    // legenda gira a cada 5 s
-    this.legT += dt;
-    if (this.legT > 5 && this.legenda.length > 4) {
-      this.legT = 0;
-      const el = $('h-legenda'); el.classList.add('fade');
-      setTimeout(() => { this.legIdx = (this.legIdx + 4) % this.legenda.length; this.mostrarLegenda(); el.classList.remove('fade'); }, 360);
-    }
   }
 
   // Escolha de habilidade ao subir de nível (embaixo, no lugar da legenda e dos rankings).

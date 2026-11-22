@@ -13,8 +13,10 @@ export const LETREIRO = {
 };
 
 export class Letreiro {
-  constructor(caixa) {
+  // sempre: rola mesmo se couber (a legenda dos presentes)
+  constructor(caixa, { sempre = false } = {}) {
     this.caixa = caixa;
+    this.sempre = sempre;
     this.trilho = caixa.querySelector('.trilho');
     this.grupo = caixa.querySelector('.grupo:not(.eco)');
     this.eco = caixa.querySelector('.grupo.eco');
@@ -48,7 +50,7 @@ export class Letreiro {
     if (!this.caixa.offsetParent) return;   // escondida
     const { util, conteudo } = this.medir();
     // histerese: começa a rolar quando passa da largura, só para quando sobra um pouco
-    const rolar = this.rola ? conteudo > util - 6 : conteudo > util + 1;
+    const rolar = this.sempre ? conteudo > 0 : this.rola ? conteudo > util - 6 : conteudo > util + 1;
     if (rolar !== this.rola) {
       this.rola = rolar;
       this.caixa.classList.toggle('rola', rolar);
