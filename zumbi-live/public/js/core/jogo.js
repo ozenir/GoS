@@ -1078,6 +1078,12 @@ export class Jogo {
     const st = h.estados.update(dt);
     for (const d of st.danos) this.ferirHeroi(d.valor, d.fonte, STATUS[d.status].nome.toLowerCase(), d.tipo, true);
     if (this.fase !== 'jogo') return;
+    // arremesso da explosão: voa pra longe (desliza nas paredes) e vai freando
+    if (h.kx || h.ky) {
+      this.mover(h, h.kx * dt, h.ky * dt, 0.22);
+      h.kx *= Math.pow(0.02, dt); h.ky *= Math.pow(0.02, dt);
+      if (Math.abs(h.kx) + Math.abs(h.ky) < 0.05) h.kx = h.ky = 0;
+    }
     if (st.cura > 0 && !h.noVidro) h.vida = Math.min(h.vidaMax, h.vida + st.cura * h.attr.get('cura'));
     if (st.acabaram.length) sincronizarAtributos(h.estados, h.attr);
     // inspiração (doação): pulsos de luz que machucam todos os zumbis em volta
@@ -2025,6 +2031,11 @@ export class Jogo {
     // machuca o herói; as outras no intervalo só empurram os zumbis
     if (danoHeroi > 0 && dh < raio && !(this.t - (h.explosaoT ?? -1e9) < EXPLOSAO.janela)) {
       h.explosaoT = this.t;
+      // arremessado pra longe do estouro (no centro exato, pra trás de onde ele olha)
+      const ax = dh > 0.05 ? (h.x - x) / dh : -(h.fx || 0) || 1, ay = dh > 0.05 ? (h.y - y) / dh : -(h.fy || 0);
+      const am = Math.hypot(ax, ay) || 1;
+      h.kx = ax / am * EXPLOSAO.arremesso; h.ky = ay / am * EXPLOSAO.arremesso;
+      this.emit('arremessado', { x: h.x, y: h.y });
       const entrou = this.ferirHeroi(danoExplosao(danoHeroi, dh, raio), quem, causa, 'explosao');
       // o estouro do inchado instável derruba o herói (atordoa), a não ser que ele aguente explosão (Anti-explosão)
       if (entrou && cadeia && h.attr.get('resExplosao') < EXPLOSAO.resSemAtordoar) this.aplicarStatus(h, 'atordoado', { duracao: EXPLOSAO.atordoa });

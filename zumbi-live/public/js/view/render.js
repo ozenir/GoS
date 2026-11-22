@@ -153,6 +153,7 @@ export class Render {
       }
       case 'presente_heroi': this.texto(e.x, e.y, `${e.emoji} ${e.nick}`, e.lado === 'ajuda' ? '#ffd23f' : '#ff8ae0', 1.15); break;
       case 'adaptado': this.texto(e.x, e.y, e.texto, '#9fe8ff', 1); break;
+      case 'arremessado': this.texto(e.x, e.y, '💥 arremessado!', '#ffb36b', 1); break;
       case 'mochila': this.texto(e.x, e.y, e.tipo === 'cura' ? '💼 +cura guardada' : '💼 +kit na mochila', '#9dffb0', 1); break;
       case 'caiu': this.tremer(8); this.piscar('#ff2a2a', 0.5); break;
       case 'golpe_final': this.tremer(5); this.piscar('#a020ff', 0.35); break;

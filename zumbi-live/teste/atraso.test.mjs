@@ -251,6 +251,18 @@ teste('várias explosões em até 2 s: só a primeira machuca o herói', () => {
   assert.equal(golpes, 2);
 });
 
+teste('explosão arremessa o herói pra longe (fora do alcance das próximas)', () => {
+  const j = jogo();
+  const h = j.hero;
+  const x = h.x - 0.6, y = h.y;   // estouro do lado esquerdo: ele voa pra direita
+  const d0 = Math.hypot(h.x - x, h.y - y);
+  j.explodir(x, y, 2.4, 18, 80, null, 'explosão');
+  passar(j, 1.5);
+  const d1 = Math.hypot(h.x - x, h.y - y);
+  assert.ok(d1 > d0 + 1.5, `voou de ${d0.toFixed(2)} pra ${d1.toFixed(2)} casas`);
+  assert.ok(!h.kx && !h.ky, 'e parou');
+});
+
 teste('munição pra quem luta de perto vira fúria', () => {
   const j = jogo('enfermeira');
   presente(j, 'municao', 'Ana', { segundos: 10 });

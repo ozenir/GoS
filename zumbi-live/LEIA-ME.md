@@ -74,7 +74,7 @@ Quem luta de perto vai pra cima dos zumbis que estão à frente, não ataca os e
 | 🍅 Zumbi do tomate (nível 3+) | – | – |
 | 🪨 Zumbi da pedra (nível 6+) | – | – |
 
-O herói também tem resistências por tipo (a bombeira aguenta fogo; o mecânico, explosão). **Explosões em sequência não somam:** se várias explosões pegam o herói em até **2 s** (cadeia de inchados, horda de explosivos), só a primeira machuca (e atordoa); as outras só afetam os zumbis (`public/js/core/ameaca.js` → `EXPLOSAO.janela`). Sangramento e infecção vêm "de dentro": atravessam armadura, colete e resistência.
+O herói também tem resistências por tipo (a bombeira aguenta fogo; o mecânico, explosão). **Explosões em sequência não somam:** se várias explosões pegam o herói em até **2 s** (cadeia de inchados, horda de explosivos), só a primeira machuca (e atordoa); as outras só afetam os zumbis. E a explosão que pega o herói **arremessa ele pra longe** (umas 3 casas, deslizando nas paredes), pra fora do alcance das próximas (`public/js/core/ameaca.js` → `EXPLOSAO.janela` e `EXPLOSAO.arremesso`). Sangramento e infecção vêm "de dentro": atravessam armadura, colete e resistência.
 
 **Status (efeitos que duram um tempo).** Valem para o herói e para os zumbis e aparecem em cima de cada um:
 
@@ -494,7 +494,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.34.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.35.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.
