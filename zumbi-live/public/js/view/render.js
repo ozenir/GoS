@@ -16,6 +16,7 @@ const ROT = [(x, y) => [x, y], (x, y) => [y, -x], (x, y) => [-x, -y], (x, y) => 
 const ROTI = [(u, v) => [u, v], (u, v) => [-v, u], (u, v) => [-u, -v], (u, v) => [v, -u]];
 
 const CORES_SANGUE = ['#4f7a2e', '#3c5e22', '#6b8f3a', '#5a2a22'];
+const ROXO_ATRAPALHA = '#c27cf0';   // o roxo do 😈 (cabo de guerra), um pouco mais claro pra ler no mapa
 
 export class Render {
   constructor(cv, texto) {
@@ -678,7 +679,8 @@ export class Render {
       for (const s of z.estados.lista.values()) { ic += STATUS[s.id].emoji; if (ic.length > 6) break; }
       this.nomes.push({ x: sx, y: sy - S.PE_Y * esc - (z.nome ? (T.chefe ? 16 : 9) : (T.chefe ? 8 : 1)), txt: ic, cor: '#fff', tam: 4.5 });
     }
-    if (z.nome && nasc >= 1) this.nomes.push({ x: sx, y: sy - S.PE_Y * esc - (T.chefe ? 8 : 2), txt: z.nome, chefe: T.chefe, cor: z.fa ? '#25f4ee' : z.tipo === 'exheroi' ? '#9fd0ff' : T.chefe ? '#ff6a4a' : '#ffd8a8' });
+    // nome roxo (o roxo do 😈) = zumbi mandado por quem atrapalha na live (presente); bege = só o nome de alguém do chat
+    if (z.nome && nasc >= 1) this.nomes.push({ x: sx, y: sy - S.PE_Y * esc - (T.chefe ? 8 : 2), txt: z.nome, chefe: T.chefe, cor: z.dono ? ROXO_ATRAPALHA : z.tipo === 'exheroi' ? '#9fd0ff' : T.chefe ? '#ff6a4a' : '#ffd8a8' });
     // foto de quem mandou, em cima da cabeça (sem foto: a inicial do nome)
     if (z.fa && nasc >= 1) this.nomes.push({ foto: z.fa.avatar, inicial: (z.nome || '?')[0].toUpperCase(), escudo: z.fa.escudo > 0, x: sx, y: sy - S.PE_Y * esc - 22 });
   }
@@ -746,7 +748,7 @@ export class Render {
     if (z.flash > 0.04) { ctx.globalAlpha = 0.6; ctx.drawImage(this.branco(q), sx - 10, sy - 12); }
     ctx.globalAlpha = 1;
     if (z.estados.lista.size) { let ic = ''; for (const st of z.estados.lista.values()) { ic += STATUS[st.id].emoji; if (ic.length > 6) break; } this.nomes.push({ x: sx, y: sy - 14, txt: ic, cor: '#fff', tam: 4.5 }); }
-    if (z.nome) this.nomes.push({ x: sx, y: sy - (z.estados.lista.size ? 21 : 14), txt: z.nome, cor: '#ffd8a8' });
+    if (z.nome) this.nomes.push({ x: sx, y: sy - (z.estados.lista.size ? 21 : 14), txt: z.nome, cor: z.dono ? ROXO_ATRAPALHA : '#ffd8a8' });
   }
 
   desenharHeroi(g) {
