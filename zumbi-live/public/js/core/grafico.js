@@ -25,16 +25,17 @@ export const BLOCOS = 5;
 export const NIVEL_REFERENCIA = 40;   // nível do "herói perfeito" (perícias e vida máxima crescem até aqui)
 export const GRAFICO_SEGUNDOS = 15;   // quanto tempo o painel fica aberto depois de um "G"
 
-// O que aparece no gráfico (na ordem). attr = atributo (dano.js → ATRIBUTOS); forca = dano × perícia da arma.
+// O que aparece no gráfico (na ordem). sigla = o que aparece em cima dos blocos.
+// id = atributo (dano.js → ATRIBUTOS); forca = dano × perícia da arma.
 export const LINHAS = [
-  { id: 'forca', nome: 'Força', emoji: '💪', cor: '#ff6a4a', fmt: v => `x${v.toFixed(1)}` },
-  { id: 'critChance', nome: 'Crítico', emoji: '🎯', cor: '#ffd23f', fmt: v => `${Math.round(v * 100)}%` },
-  { id: 'cadencia', nome: 'Ataque', emoji: '⚡', cor: '#ffb02a', fmt: v => `x${v.toFixed(1)}` },
-  { id: 'velocidade', nome: 'Velocidade', emoji: '👟', cor: '#9fd0ff', fmt: v => `x${v.toFixed(2)}` },
-  { id: 'defesa', nome: 'Defesa', emoji: '🛡️', cor: '#8b9bff', fmt: v => `${Math.round(v * 100)}%` },
-  { id: 'esquiva', nome: 'Esquiva', emoji: '💨', cor: '#c8a8ff', fmt: v => `${Math.round(v * 100)}%` },
-  { id: 'vidaMax', nome: 'Vida', emoji: '❤️', cor: '#ff5a7a', fmt: v => `${Math.round(v)}` },
-  { id: 'regen', nome: 'Regeneração', emoji: '💚', cor: '#39c47a', fmt: v => `${v.toFixed(1)}/s` }
+  { id: 'forca', sigla: 'FOR', nome: 'Força', emoji: '💪', cor: '#ff6a4a', fmt: v => `x${v.toFixed(1)}` },
+  { id: 'critChance', sigla: 'CRI', nome: 'Crítico', emoji: '🎯', cor: '#ffd23f', fmt: v => `${Math.round(v * 100)}%` },
+  { id: 'cadencia', sigla: 'ATQ', nome: 'Ataque', emoji: '⚡', cor: '#ffb02a', fmt: v => `x${v.toFixed(1)}` },
+  { id: 'velocidade', sigla: 'VEL', nome: 'Velocidade', emoji: '👟', cor: '#9fd0ff', fmt: v => `x${v.toFixed(2)}` },
+  { id: 'defesa', sigla: 'DEF', nome: 'Defesa', emoji: '🛡️', cor: '#8b9bff', fmt: v => `${Math.round(v * 100)}%` },
+  { id: 'esquiva', sigla: 'ESQ', nome: 'Esquiva', emoji: '💨', cor: '#c8a8ff', fmt: v => `${Math.round(v * 100)}%` },
+  { id: 'vidaMax', sigla: 'VID', nome: 'Vida', emoji: '❤️', cor: '#ff5a7a', fmt: v => `${Math.round(v)}` },
+  { id: 'regen', sigla: 'REG', nome: 'Regeneração', emoji: '💚', cor: '#39c47a', fmt: v => `${v.toFixed(1)}/s` }
 ];
 
 // Blocos cheios: valor dividido pelo máximo, em 5 partes, arredondado pra baixo (entre 0 e 5)

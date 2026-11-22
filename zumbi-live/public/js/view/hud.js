@@ -123,7 +123,7 @@ export class Hud {
       // recompensas de presente (recompensas.js)
       case 'drop': this.banner(`🪂 ${e.emoji} ${e.nome.toUpperCase()}${e.pilhas > 1 ? ' x' + e.pilhas : ''}!`, `${e.texto} · 5 quarteirões${e.quem ? ' · presente de ' + e.quem : ''}`, 'bom', 2.2); break;
       case 'inspiracao': this.banner('✨ INSPIRADO!', `${e.nick ? e.nick + ' doou · ' : ''}${e.segundos} s tomando só 20% do dano e machucando quem chega perto`, 'bom', 2.6); break;
-      case 'grafico': this.graficoAte = performance.now() + GRAFICO_SEGUNDOS * 1000; this.graficoQuem = e.nick || null; this.cache.gk = null; break;
+      case 'grafico': this.graficoAte = performance.now() + GRAFICO_SEGUNDOS * 1000; this.cache.gk = null; break;
       case 'tomateiro': this.banner('🍅 ZUMBI DO TOMATE!', 'joga tomate de longe e suja a tela', 'perigo', 2); break;
       case 'paraquedista': this.banner(`🪂🧟 ZUMBI PARAQUEDISTA${e.nick ? ' DE ' + e.nick.toUpperCase() : ''}!`, 'vai cair bem em cima do herói', 'perigo', 2); break;
       case 'agarrou': this.banner('🧟 AGARROU A PERNA!', `lento até o próximo cruzamento${e.pilhas > 1 ? ` · ${e.pilhas} zumbis pendurados` : ''}${e.nick ? ' · presente de ' + e.nick : ''}`, 'perigo', 2.2); break;
@@ -239,16 +239,13 @@ export class Hud {
     if (painel.hidden === aberto) painel.hidden = !aberto;
     if (pill.hidden !== aberto) pill.hidden = aberto;
     if (!aberto) return;
-    const h = g.hero, C = CLASSES[h.classe];
-    const linhas = graficoDoHeroi(h);
-    const chave = h.classe + h.nivel + linhas.map(l => l.blocos + l.texto).join('|');
+    // só a sigla e os 5 blocos de cada atributo (sem moldura)
+    const linhas = graficoDoHeroi(g.hero);
+    const chave = linhas.map(l => l.blocos).join('');
     if (this.cache.gk !== chave) {
       this.cache.gk = chave;
-      $('g-heroi').textContent = `${C.emoji} ${h.viewer?.nick || C.nome} · nível ${h.nivel}`;
-      $('g-linhas').innerHTML = linhas.map(l => `<div class="g-l" style="--c:${l.cor}" title="${esc(l.nome)}: ${esc(l.texto)} de ${esc(l.fmt(l.max))}"><span class="ic">${l.emoji}</span><span class="nm">${esc(l.nome)}<em>${esc(l.texto)}</em></span><span class="g-b">${Array.from({ length: BLOCOS }, (_, k) => `<i${k < l.blocos ? ' class="on"' : ''}></i>`).join('')}</span></div>`).join('');
+      painel.innerHTML = linhas.map(l => `<div class="g-l" style="--c:${l.cor}" title="${esc(l.nome)}: ${esc(l.texto)} de ${esc(l.fmt(l.max))}"><b>${l.sigla}</b><span class="g-b">${Array.from({ length: BLOCOS }, (_, k) => `<i${k < l.blocos ? ' class="on"' : ''}></i>`).join('')}</span></div>`).join('');
     }
-    const resta = Math.ceil(((this.graficoAte || 0) - performance.now()) / 1000);
-    this.set('g-pe', `${this.graficoQuem ? 'pedido por ' + this.graficoQuem + ' · ' : ''}${resta}s`);
   }
 
   update(g, dt) {
