@@ -230,7 +230,7 @@ export class Render {
     this.fantasmaHeroi(g);
     this.desenharParticulas();
     this.desenharHabilidades(g);
-    this.desenharAvioes();
+    if (!(g.noiteT > 0)) this.desenharAvioes();   // de noite não dá pra ver o avião nem as bombas: só o som
     this.desenharTracers();
     this.luz(g);
     this.desenharHeli(g, dt);
@@ -1121,12 +1121,13 @@ export class Render {
     const gr = M.createRadialGradient(0, 0, 0, 0, 0, 30);
     gr.addColorStop(0, 'rgba(0,0,0,0.95)'); gr.addColorStop(0.7, 'rgba(0,0,0,0.6)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
     M.fillStyle = gr; M.fillRect(-30, -30, 60, 60); M.restore();
+    // o cone da luz: 70% forte lá em cima, na lâmpada, e vai sumindo até ficar transparente perto do chão
     const cone = M.createLinearGradient(0, ly, 0, sy);
-    cone.addColorStop(0, 'rgba(0,0,0,0.55)'); cone.addColorStop(1, 'rgba(0,0,0,0.3)');
+    cone.addColorStop(0, 'rgba(0,0,0,0.7)'); cone.addColorStop(0.85, 'rgba(0,0,0,0.04)'); cone.addColorStop(1, 'rgba(0,0,0,0)');
     M.fillStyle = cone; M.beginPath(); M.moveTo(lx - 1.5, ly); M.lineTo(lx + 1.5, ly); M.lineTo(lx + 24, sy); M.lineTo(lx - 24, sy); M.closePath(); M.fill();
     // cor da luz
     const c2 = L.createLinearGradient(0, ly, 0, sy);
-    c2.addColorStop(0, 'rgba(255,214,140,0.22)'); c2.addColorStop(1, 'rgba(255,190,100,0.07)');
+    c2.addColorStop(0, 'rgba(255,214,140,0.7)'); c2.addColorStop(0.85, 'rgba(255,200,120,0.03)'); c2.addColorStop(1, 'rgba(255,190,100,0)');
     L.fillStyle = c2; L.beginPath(); L.moveTo(lx - 1.5, ly); L.lineTo(lx + 1.5, ly); L.lineTo(lx + 24, sy); L.lineTo(lx - 24, sy); L.closePath(); L.fill();
     L.save(); L.translate(lx, sy); L.scale(1, 0.5);
     const poca = L.createRadialGradient(0, 0, 0, 0, 0, 28);
@@ -1160,7 +1161,8 @@ export class Render {
     };
     const [hx, hy] = this.tela(g.hero.x, g.hero.y, 10);
     buraco(hx, hy, noite ? 60 : 120, 0.95);
-    for (const r of this.raios) { const [sx, sy] = this.tela(r.x, r.y, 8); buraco(sx, sy, r.r * (1 - r.age / r.life * 0.5), 0.9); }
+    // explosões e raios abrem luz no escuro; de noite a explosão ilumina bem mais longe
+    for (const r of this.raios) { const [sx, sy] = this.tela(r.x, r.y, 8); buraco(sx, sy, r.r * (1 - r.age / r.life * 0.5) * (noite > 0 ? 1.7 : 1), 0.95); }
     for (const p of this.parts) if (p.fogo && Math.random() < 0.3) { const [sx, sy] = this.tela(p.x, p.y, p.z * 12); buraco(sx, sy, 16, 0.5); }
     // postes: o buraco no escuro já vem na ordem de profundidade (emM, desenhado em objetos)
     if (noite > 0 && !g.room && this.emMc) ex.drawImage(this.emMc, 0, 0);
@@ -1181,6 +1183,16 @@ export class Render {
         this.em.clearRect(px - 9, py - 27, 18, 29);   // o herói na frente de uma janela não fica coberto pela luz
         ctx.globalAlpha = noite; ctx.drawImage(this.emc, 0, 0); ctx.globalAlpha = 1;
       }
+      // clarão laranja das explosões, por cima do escuro
+      ctx.globalCompositeOperation = 'lighter';
+      for (const r of this.raios) {
+        if (r.r < 40) continue;   // só explosão (os raios elétricos são menores)
+        const [sx, sy] = this.tela(r.x, r.y, 8), k = 1 - r.age / r.life, rr = r.r * 1.5;
+        const gr = ctx.createRadialGradient(sx, sy, 0, sx, sy, rr);
+        gr.addColorStop(0, `rgba(255,170,80,${0.45 * k * noite})`); gr.addColorStop(1, 'rgba(255,120,40,0)');
+        ctx.fillStyle = gr; ctx.fillRect(sx - rr, sy - rr, rr * 2, rr * 2);
+      }
+      ctx.globalCompositeOperation = 'source-over';
       // a cor da luz dos postes (cone, poça e a lâmpada), também na ordem de profundidade
       if (this.emLc) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = noite; ctx.drawImage(this.emLc, 0, 0); ctx.globalAlpha = 1; }
       ctx.globalCompositeOperation = 'source-over';
