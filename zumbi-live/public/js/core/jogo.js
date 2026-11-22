@@ -240,10 +240,11 @@ export class Jogo {
   //   presente de AJUDA     → levanta o herói (vida, invencível por 3 s, empurra os zumbis) e o presente vale normal
   //   presente de ATRAPALHAR → golpe final: morre em 2,5 s (se ninguém ajudar antes) e quem mandou leva o crédito
   //   kit guardado na mochila → levanta sozinho, sem precisar cair
-  cair() {
+  // semMochila: o botão de teste "derrubar herói" (a mochila não segura)
+  cair(semMochila = false) {
     const h = this.hero;
     h.vida = 0;
-    if (this.usarMochila(true)) return;
+    if (!semMochila && this.usarMochila(true)) return;
     if (!(this.cfg.caidoDur > 0)) { this.morrer(); return; }
     this.caido = { t: this.cfg.caidoDur, dur: this.cfg.caidoDur, finalizador: null };
     h.andando = false; h.mira = null;
@@ -1586,6 +1587,15 @@ export class Jogo {
     this.stats.matador = quem ? { nick: quem.nick, avatar: quem.avatar || '', causa } : { nick: null, causa };
     if (!h.vidaBaixa && h.vida > 0 && h.vida / h.vidaMax < 0.3) { h.vidaBaixa = true; this.emit('vida_baixa'); }
     if (h.vida <= 0 && !supremaSegura(this, h) && !reliquiaSalva(this, h)) this.cair();
+    return true;
+  }
+
+  // Botão de teste "derrubar herói": derruba na hora, sem esquiva, colete, invencibilidade, segundo fôlego,
+  // mochila, suprema ou relíquia segurando (um golpe de 9999 podia ser esquivado ou segurado por eles)
+  derrubar(quem = null, causa = 'o botão de teste') {
+    if (this.fase !== 'jogo' || this.caido || this.portal) return false;
+    this.stats.matador = quem ? { nick: quem.nick, avatar: quem.avatar || '', causa } : { nick: null, causa };
+    this.cair(true);
     return true;
   }
 

@@ -263,6 +263,20 @@ teste('explosão arremessa o herói pra longe (fora do alcance das próximas)', 
   assert.ok(!h.kx && !h.ky, 'e parou');
 });
 
+teste('botão de teste "derrubar herói" derruba mesmo (esquiva, colete, invencível, mochila não seguram)', () => {
+  const j = jogo();
+  const h = j.hero;
+  h.folegoCd = 0; h.invT = 5; h.colete = 6;
+  h.attr.addMod({ id: 'esquiva-total', attr: 'esquiva', soma: 1 });
+  h.mochila = [{ valor: 35, quem: null, tipo: 'kit' }];
+  assert.ok(j.derrubar({ nick: 'você (teste)' }));
+  assert.ok(j.caido, 'caiu');
+  assert.equal(h.vida, 0);
+  assert.equal(h.mochila.length, 1, 'a mochila não gastou');
+  assert.equal(j.stats.matador.nick, 'você (teste)');
+  assert.ok(!j.derrubar(), 'já caído: nada');
+});
+
 teste('munição pra quem luta de perto vira fúria', () => {
   const j = jogo('enfermeira');
   presente(j, 'municao', 'Ana', { segundos: 10 });

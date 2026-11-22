@@ -131,7 +131,7 @@ montarBotoes();
 $('b-portal').addEventListener('click', () => jogo.abrirPortal(true));   // portal dos 500 na hora (teste)
 document.querySelectorAll('[data-voto]').forEach(b => b.addEventListener('click', () => chatTeste(b.dataset.voto, 'você ' + Math.floor(Math.random() * 1000))));
 document.querySelectorAll('[data-evento]').forEach(b => b.addEventListener('click', () => eventoTeste(b.dataset.evento, b.dataset.evento === 'entrou' ? pick(NOMES) + Math.floor(Math.random() * 100) : undefined)));
-$('b-matar').addEventListener('click', () => { if (jogo.fase === 'jogo') jogo.ferirHeroi(9999, { nick: 'você (teste)' }, 'o botão de teste'); });
+$('b-matar').addEventListener('click', () => jogo.derrubar({ nick: 'você (teste)' }));   // derruba mesmo (sem esquiva, colete, mochila...)
 window.addEventListener('keydown', e => {
   if (e.target.closest('input')) return;
   if (['1', '2', '3', '4', '5', 'a', 'b', 'c', 'g', 't'].includes(e.key.toLowerCase())) chatTeste(e.key.toLowerCase(), 'você ' + Math.floor(Math.random() * 1000));   // g = gráfico de atributos
