@@ -201,7 +201,7 @@ function testarEvento(evento, nome) {
 }
 
 const NOMES = ['ana.lu', 'pedrinho_gamer', 'mari.flor', 'joaovictor', 'bia.santos', 'lucas_rs', 'tia.cida', 'rafa99', 'gabi.oliveira', 'duda.m', 'caio.zl', 'leticia_br', 'thiaguinho', 'nanda.s'];
-const FALAS = ['kkkkk', 'corre!!', 'atira nele', 'vai herói', 'nãooo', 'que isso', 'boa!', 'socorro', '🔥🔥', 'manda o leão'];
+const FALAS = ['kkkkk', 'corre!!', 'atira nele', 'vai herói', 'nãooo', 'que isso', 'boa!', 'socorro', '🔥🔥', 'manda o leão', 'g'];   // 'g' abre o gráfico de atributos
 const VOTOS = ['1', '2', '3', '4', '5', 'esquerda', 'direita', 'frente', 'entrar', 'voltar', 'e', 'd', 'f', 'a', 'b', 'c'];
 function iniciarDemo() {
   const pick = a => a[Math.floor(Math.random() * a.length)];

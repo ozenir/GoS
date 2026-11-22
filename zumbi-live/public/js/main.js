@@ -150,7 +150,8 @@ simEl.checked = !isLocal && !live;
   setTimeout(() => {
     if (simEl.checked && !document.hidden) {
       const r = Math.random();
-      if (r < 0.55) chatTeste(jogo.escolha && Math.random() < 0.5 ? pick(['a', 'b', 'c']) : pick(['1', '2', '3', '4', '1', '2']), pick(NOMES));
+      if (r < 0.03) chatTeste('g', pick(NOMES));   // de vez em quando alguém pede o gráfico de atributos
+      else if (r < 0.55) chatTeste(jogo.escolha && Math.random() < 0.5 ? pick(['a', 'b', 'c']) : pick(['1', '2', '3', '4', '1', '2']), pick(NOMES));
       else if (r < 0.85) {
         const lista = Object.entries(catalogo);
         const pesos = lista.map(([, x]) => 1 / Math.pow(Math.max(1, x.moedas || 1), 0.6));

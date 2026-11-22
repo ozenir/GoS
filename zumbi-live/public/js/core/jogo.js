@@ -10,6 +10,7 @@ import { ZUMBIS, CLASSES, ARMAS, CORPO, xpParaNivel, multVidaNivel } from './dad
 import { EFEITOS, ladoDo } from './efeitos.js';
 import { Votacao, lerVoto, lerEscolha, OPCOES } from './votacao.js';
 import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasSupremas, supremaSegura, NIVEL_SUPREMA, ATIVAS } from './habilidades.js';
+import { pedeGrafico } from './grafico.js';
 import { RECOMPENSA, DROPS, XP_POR_PILHA_SORTE, defesaRuna, CONVERSIVEL, PARAQUEDISTA, ZUMBI_FA } from './recompensas.js';
 import {
   atributosDaClasse, danoDoHeroi, intervaloTiro, intervaloCorpo, alcanceArma, velocidadeHeroi,
@@ -2560,6 +2561,8 @@ export class Jogo {
         if (op && this.voto && this.voto.aberta && this.fase === 'jogo') {
           if (this.voto.votar(m.id, op)) this.emit('voto', { nick: nomeSeguro(m.nick), op });
         }
+        // "G" (ou "gráfico", "status"...): abre o gráfico de atributos do herói (core/grafico.js)
+        if (pedeGrafico(m.texto)) this.emit('grafico', { nick: nomeSeguro(m.nick) });
         const letra = lerEscolha(m.texto);
         if (letra && this.escolha?.voto.aberta && this.fase === 'jogo') {
           if (this.escolha.voto.votar(m.id, letra)) this.emit('voto', { nick: nomeSeguro(m.nick), op: letra, habilidade: true });
