@@ -456,8 +456,22 @@ export class Jogo {
   noite(seg) {
     const antes = this.noiteT > 0;
     this.noiteT = Math.max(this.noiteT, seg);
-    if (!antes) this.emit('noite', { segundos: seg });
+    if (!antes) { this.noiteIni = this.t; this.emit('noite', { segundos: seg }); }
   }
+
+  // Quanto está escuro agora (0 a 1) e em que parte do dia: a noite não chega de repente. Primeiro a TARDE
+  // (escurece aos poucos, com luz alaranjada), depois a NOITE, e no fim a MADRUGADA (clareia aos poucos, azulada).
+  luzDoDia() {
+    if (!(this.noiteT > 0)) return { noite: 0, fase: 'dia', k: 0 };
+    const T = Jogo.CICLO, passou = this.t - (this.noiteIni ?? this.t), resta = this.noiteT;
+    const tarde = Math.min(T.tarde, (passou + resta) / 3), madrugada = Math.min(T.madrugada, (passou + resta) / 3);
+    if (passou < tarde) { const k = passou / tarde; return { noite: k * k * (3 - 2 * k), fase: 'tarde', k }; }
+    if (resta < madrugada) { const k = 1 - resta / madrugada; return { noite: 1 - k * k * (3 - 2 * k), fase: 'madrugada', k }; }
+    return { noite: 1, fase: 'noite', k: 1 };
+  }
+
+  // tarde e madrugada: quantos segundos cada uma leva (escurecendo / clareando)
+  static CICLO = { tarde: 8, madrugada: 8 };
 
   /* =================== Sala (dentro do prédio) =================== */
   entrarPredio(shop) {

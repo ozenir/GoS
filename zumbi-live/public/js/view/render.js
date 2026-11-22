@@ -230,7 +230,7 @@ export class Render {
     this.fantasmaHeroi(g);
     this.desenharParticulas();
     this.desenharHabilidades(g);
-    if (!(g.noiteT > 0)) this.desenharAvioes();   // de noite não dá pra ver o avião nem as bombas: só o som
+    if (!(g.luzDoDia && g.luzDoDia().noite > 0.5)) this.desenharAvioes();   // de noite não dá pra ver o avião nem as bombas: só o som
     this.desenharTracers();
     this.luz(g);
     this.desenharHeli(g, dt);
@@ -1146,7 +1146,14 @@ export class Render {
 
   luz(g) {
     const ctx = this.ctx, ex = this.ex;
-    const noite = g.noiteT > 0 ? clamp(Math.min(g.noiteT, 3) / 3, 0, 1) : 0;
+    const dia = g.luzDoDia ? g.luzDoDia() : { noite: g.noiteT > 0 ? 1 : 0, fase: 'dia' };
+    const noite = dia.noite;   // escurece e clareia aos poucos (tarde e madrugada: core/jogo.js → luzDoDia)
+    // cor do céu na passagem: tarde alaranjada, madrugada azulada (mais forte no meio da passagem)
+    if (!g.room && (dia.fase === 'tarde' || dia.fase === 'madrugada')) {
+      const forca = Math.sin(dia.k * Math.PI);
+      ctx.fillStyle = dia.fase === 'tarde' ? `rgba(255,120,40,${0.2 * forca})` : `rgba(120,130,255,${0.16 * forca})`;
+      ctx.fillRect(0, 0, W, H);
+    }
     const base = g.room ? 0.2 : 0.12;
     const a = base + noite * 0.74;   // noite: bem mais escuro (a visão fica reduzida)
     ex.globalCompositeOperation = 'source-over';
@@ -1160,7 +1167,7 @@ export class Render {
       ex.fillStyle = gr; ex.fillRect(x - r, y - r, r * 2, r * 2);
     };
     const [hx, hy] = this.tela(g.hero.x, g.hero.y, 10);
-    buraco(hx, hy, noite ? 60 : 120, 0.95);
+    buraco(hx, hy, 120 - 60 * noite, 0.95);   // a visão vai fechando junto com o escuro
     // explosões e raios abrem luz no escuro; de noite a explosão ilumina bem mais longe
     for (const r of this.raios) { const [sx, sy] = this.tela(r.x, r.y, 8); buraco(sx, sy, r.r * (1 - r.age / r.life * 0.5) * (noite > 0 ? 1.7 : 1), 0.95); }
     for (const p of this.parts) if (p.fogo && Math.random() < 0.3) { const [sx, sy] = this.tela(p.x, p.y, p.z * 12); buraco(sx, sy, 16, 0.5); }
@@ -1268,13 +1275,21 @@ export class Render {
       if (n.inicial) { this.fotoNaCabeca(n, k); continue; }
       if (n.placa) {
         const s = n.shop;
+        // placa em perspectiva isométrica: inclinada na mesma diagonal da fachada (sobe 1 a cada 2 pra esquerda),
+        // com a espessura da chapa embaixo e o texto inclinado junto
         tx.globalAlpha = n.tampa ? 0.4 : 1;
         tx.font = `700 ${Math.round(7 * k)}px "Fredoka", system-ui, sans-serif`;
         const txt = `${s.emoji} ${s.nome.toUpperCase()}`;
         const w = tx.measureText(txt).width / k + 8;
-        tx.fillStyle = s.placa; tx.fillRect((n.x - w / 2) * k, (n.y - 9) * k, w * k, 11 * k);
-        tx.fillStyle = 'rgba(255,255,255,0.25)'; tx.fillRect((n.x - w / 2) * k, (n.y - 9) * k, w * k, 1.2 * k);
-        tx.fillStyle = '#ffffff'; tx.fillText(txt, n.x * k, (n.y + 1) * k);
+        tx.save();
+        tx.setTransform(k, 0.5 * k, 0, k, n.x * k, (n.y - 4) * k);
+        tx.fillStyle = 'rgba(0,0,0,0.45)'; tx.fillRect(-w / 2, 5.5, w, 1.6);            // espessura da chapa
+        tx.fillStyle = s.placa; tx.fillRect(-w / 2, -5.5, w, 11);
+        tx.fillStyle = 'rgba(255,255,255,0.25)'; tx.fillRect(-w / 2, -5.5, w, 1.2);     // brilho em cima
+        tx.fillStyle = 'rgba(0,0,0,0.25)'; tx.fillRect(w / 2 - 1, -5.5, 1, 11);        // borda do lado
+        tx.font = '700 7px "Fredoka", system-ui, sans-serif'; tx.textAlign = 'center'; tx.textBaseline = 'middle';
+        tx.fillStyle = '#ffffff'; tx.fillText(txt, 0, 0.5);
+        tx.restore();
         tx.globalAlpha = 1;
         continue;
       }
@@ -1282,10 +1297,13 @@ export class Render {
     }
     for (const m of this.marcadores || []) {
       if (g.room || !g.voto) continue;
+      // discretos: pequenos e meio transparentes (o quadro de votação já mostra as opções)
       const [sx, sy] = this.tela(m.x, m.y, m.z);
-      tx.beginPath(); tx.arc(sx * k, (sy - 5) * k, 7 * k, 0, Math.PI * 2);
-      tx.fillStyle = 'rgba(10,8,16,0.85)'; tx.fill(); tx.lineWidth = 1.4 * k; tx.strokeStyle = m.cor; tx.stroke();
-      tx.textBaseline = 'middle'; escrever(m.txt, sx, sy - 5, 9, m.cor, 'rgba(0,0,0,0)'); tx.textBaseline = 'bottom';
+      tx.globalAlpha = 0.42;
+      tx.beginPath(); tx.arc(sx * k, (sy - 5) * k, 5.2 * k, 0, Math.PI * 2);
+      tx.fillStyle = 'rgba(10,8,16,0.55)'; tx.fill(); tx.lineWidth = 0.9 * k; tx.strokeStyle = m.cor; tx.stroke();
+      tx.textBaseline = 'middle'; escrever(m.txt, sx, sy - 5, 6.5, m.cor, 'rgba(0,0,0,0)'); tx.textBaseline = 'bottom';
+      tx.globalAlpha = 1;
     }
     for (const t of this.textos) {
       const [sx, sy] = this.tela(t.x, t.y, 26 + t.age * 18 + (t.dz || 0));
