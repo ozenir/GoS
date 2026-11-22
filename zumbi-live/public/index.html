@@ -225,7 +225,7 @@ body.foco .app{padding-block:8px}
    moldura (só a sigla e os blocos); blocos em paralelogramo de cantos arredondados */
 .acima-leg{display:flex;align-items:flex-end;justify-content:space-between;gap:1.6cqw;min-width:0}
 .g-pill{flex:none;font:600 2.3cqw var(--font-display);padding:.6cqw 1.6cqw;background:rgba(16,13,24,.55);border:.35cqw solid rgba(255,255,255,.22);border-radius:.6cqw;color:#fff;box-shadow:0 0 0 .3cqw rgba(10,8,16,.5)}
-.grafico{position:absolute;right:2.4cqw;top:80cqw;width:31cqw;display:flex;flex-direction:column;gap:1.5cqw;animation:gIn .3s steps(4)}
+.grafico{flex:none;width:31cqw;display:flex;flex-direction:column;gap:1.5cqw;animation:gIn .3s steps(4)}
 @keyframes gIn{from{opacity:0;transform:translateX(6cqw)}to{opacity:1;transform:none}}
 .g-l{display:flex;flex-direction:column;gap:.5cqw}
 .g-l b{font-size:2.2cqw;font-weight:700;letter-spacing:.14em;line-height:1;padding-left:.55cqw;color:#fff;text-shadow:0 .3cqw 0 rgba(0,0,0,.75),0 0 1.6cqw rgba(0,0,0,.6)}
@@ -384,14 +384,13 @@ body.foco .app{padding-block:8px}
           <div class="caido" id="h-caido" hidden><b id="c-tit">💀 HERÓI CAÍDO!</b><span class="cd" id="c-cd">8</span><span class="ct" id="c-txt"></span><small id="c-sub"></small></div>
         </div>
 
-        <div class="grafico" id="g-painel" hidden></div>
 
         <div class="cta" id="h-cta" hidden>🌹 Mande uma Rosa pra curar!</div>
         <div class="banner" id="h-banner" hidden><div class="bt" id="b-t"></div><div class="bs" id="b-s"></div></div>
 
         <div class="bottom" id="h-bottom">
-          <!-- linha logo acima do letreiro: notificações à esquerda, "Digite G" à direita -->
-          <div class="acima-leg"><div class="toasts" id="h-toasts"></div><div class="g-pill" id="g-pill">📊 Digite G</div></div>
+          <!-- linha logo acima do letreiro: notificações à esquerda, "Digite G" (ou o gráfico aberto) à direita -->
+          <div class="acima-leg"><div class="toasts" id="h-toasts"></div><div class="g-pill" id="g-pill">📊 Digite G</div><div class="grafico" id="g-painel" hidden></div></div>
           <!-- letreiro dos presentes: entre as notificações (em cima) e a escolha de habilidade (embaixo) -->
           <div class="legenda letreiro" id="h-leg-linha"><div class="trilho"><div class="grupo" id="h-legenda"></div><div class="grupo eco" aria-hidden="true"></div></div></div>
           <div class="escolha card" id="h-escolha" hidden>
