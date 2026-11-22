@@ -24,6 +24,7 @@ import {
   multInicio, forcaInicio, cotaQuadra, tamanhoHordaQuadra, NIVEL_INIMIGOS_NOVOS, EXPLOSAO, TOMATEIRO
 } from './ameaca.js';
 import { CHANCES_PADRAO, PERIGOS, AMEACA_POR_PERIGO, ATRASO_PERIGO, sortearCaminho } from './caminhos.js';
+import { preverDestino } from './previsao.js';
 import { Historia, HISTORIA } from './historia.js';
 
 export const PADRAO = {
@@ -569,8 +570,8 @@ export class Jogo {
   }
 
   /* =================== Praia (nível 30+, praia.js) =================== */
-  podePraia() {
-    return this.hero.nivel >= PRAIA.desdeNivel && this.stats.cruzamentos - (this.ultimaPraia ?? -99) >= PRAIA.intervalo && this.rng.chance(PRAIA.chance);
+  podePraia(extra = 0) {
+    return this.hero.nivel >= PRAIA.desdeNivel && this.stats.cruzamentos + extra - (this.ultimaPraia ?? -99) >= PRAIA.intervalo && this.rng.chance(PRAIA.chance);
   }
 
   // A rua deu na praia: uma horda maior sai do mar; sobreviver 1 minuto
@@ -683,9 +684,19 @@ export class Jogo {
     const res = this.voto.fechar(ops => this.escolhaIA(ops), this.rng);
     const op = this.voto.opcoes.find(o => o.id === res.id);
     this.decisao = op;
+    // o que tem lá já fica sorteado agora, pro resultado poder contar (previsao.js)
+    this.preparo = op.id !== 'entrar' && !op.semSaida ? this.prepararDestino() : null;
+    const previsao = preverDestino(this, op, this.preparo);
+    this.voto.previsao = previsao;
     const quem = [];
     for (const [id, v] of this.voto.votantes) if (v === res.id && quem.length < 3) quem.push(this.nickDe(id));
-    this.emit('decisao', { id: op.id, nome: op.nome, seta: op.seta, votos: res.votos, total: this.voto.total, auto: res.auto, empate: !!res.empate, quem, loja: op.shop ? op.shop.nome : null });
+    this.emit('decisao', { id: op.id, n: op.n, nome: op.nome, seta: op.seta, votos: res.votos, total: this.voto.total, auto: res.auto, empate: !!res.empate, quem, loja: op.shop ? op.shop.nome : null, praca: !!op.praca, previsao });
+  }
+
+  // Sorteia o que vai ter na rua escolhida (praia? que caminho?) na hora que a votação fecha
+  prepararDestino() {
+    if (this.podePraia(1)) return { praia: true, caminho: null };
+    return { praia: false, caminho: sortearCaminho(this.rng, this.chances, !!this.historia.proximo(), this.hero.nivel) };
   }
 
   escolhaIA(ops) {
@@ -724,11 +735,12 @@ export class Jogo {
     this.votoAbreT = 0.8;
     if (virou) this.emit('virou', { dir: r.dir, voltou: op.id === 'voltar' });
     this.checarRecorde();
-    // nível 30+: às vezes a rua dá na praia
-    if (this.podePraia()) { this.entrarPraia(); return; }
+    const prep = this.preparo; this.preparo = null;
+    // nível 30+: às vezes a rua dá na praia (já sorteado quando a votação fechou)
+    if (prep ? prep.praia : this.podePraia()) { this.entrarPraia(); return; }
     const t = this.city.trecho(r.i, r.j, r.dir);
     if (t.s.semSaida) this.entrarBeco(t);
-    else this.iniciarTrecho();
+    else this.iniciarTrecho(prep?.caminho);
   }
 
   /* =================== Arena (praça com chefe) =================== */
@@ -855,9 +867,10 @@ export class Jogo {
   }
 
   // Sorteia o que vai acontecer na rua escolhida (caminhos.js)
-  iniciarTrecho() {
+  iniciarTrecho(sorteado = null) {
     const frag = this.historia.proximo();
-    const s = sortearCaminho(this.rng, this.chances, !!frag, this.hero.nivel);
+    let s = sorteado || sortearCaminho(this.rng, this.chances, !!frag, this.hero.nivel);
+    if (s.tipo === 'historia' && !frag) s = { tipo: 'livre' };
     this.trecho = { tipo: s.tipo, livre: s.tipo !== 'perigoso', perigo: s.perigo || null };
     this.stats.caminhos[s.tipo]++;
     if (s.tipo === 'perigoso') {

@@ -10,6 +10,8 @@ import { Letreiro } from './letreiro.js';
 import { graficoDoHeroi, GRAFICO_SEGUNDOS, BLOCOS } from '../core/grafico.js';
 
 const $ = id => document.getElementById(id);
+// quanto tempo o resultado da votação fica na tela (s)
+export const RESULTADO_SEG = 4.5;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const urlOk = u => /^https:\/\//.test(String(u || ''));
 const AVATAR_VAZIO = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#2a2238"/><circle cx="5" cy="4" r="2" fill="#6a5a88"/><rect x="2" y="7" width="6" height="3" rx="1.5" fill="#6a5a88"/></svg>');
@@ -22,7 +24,7 @@ export class Hud {
     this.legT = 0;
     this.bannerT = 0;
     this.introT = 0;
-    this.resultadoAte = 0;
+    this.resultado = null;   // o último resultado de votação (fica RESULTADO_SEG na tela)
     this.toastsVivos = [];
     // linhas que viram letreiro quando não cabem
     this.letreiros = ['h-stats', 'h-linha-status'].map(id => $(id)).filter(Boolean).map(el => new Letreiro(el));
@@ -214,7 +216,7 @@ export class Hud {
       case 'mochila': this.banner('💼 KIT NA MOCHILA', `${e.nick ? 'de ' + e.nick + ' · ' : ''}ele usa quando precisar`, 'bom', 1.8); break;
       case 'mochila_usou': if (e.caindo) this.banner('💼 A MOCHILA SALVOU!', e.nick ? `kit de ${e.nick}` : '', 'bom', 2.4); break;
       case 'vida_baixa': this.banner('⚠️ VIDA BAIXA!', 'mande 🌹 ou 🍩 pra salvar o herói', 'perigo', 2.2); break;
-      case 'decisao': this.resultadoAte = performance.now() + 2600; break;
+      case 'decisao': this.resultado = { ...e, ate: performance.now() + RESULTADO_SEG * 1000, chave: `${e.id}:${performance.now()}`, no: g.voto?.no }; this.cache.vmodo = null; break;
       case 'novo_heroi': this.intro(e, g); $('over').hidden = true; this.histT = 0; $('h-hist').hidden = true; break;
       case 'heroi_morreu': this.relatorio(e.relatorio, e.hall, g); break;
       case 'arma': if (e.id === 'escopeta' && e.quem) this.banner('💥 ESCOPETA!', `presente de ${e.quem}`, 'bom', 1.8); if (e.id === 'taco') this.banner('🏏 TACO COM PREGOS!', e.quem ? `presente de ${e.quem}` : '', 'bom', 1.8); break;
@@ -456,63 +458,84 @@ export class Hud {
     this.set('c-sub', final ? '' : 'qualquer presente de ajuda ou seguir levanta · presente de atrapalhar = golpe final');
   }
 
+  // Votação. Aberta: quadro com o aviso "escolha a direção com ..." e o relógio (barra que some das pontas pro
+  // meio); chegando votos, o aviso vira bolinhas (uma por opção, com os votos). Fechou: o quadro some, o relógio
+  // sobe pro lugar dele e aparece o resultado (votos, pra onde vai e o que tem lá: previsao.js). O resultado fica
+  // RESULTADO_SEG segundos (mais, se o herói ainda não atravessou); nesse tempo o relógio continua contando a
+  // próxima votação, que já está aberta.
   atualizarVoto(g) {
-    const box = $('h-voto');
-    const v = g.voto;
-    const mostrar = g.fase === 'jogo' && !g.caido && (!g.room || g.room.praia) && v && (v.aberta || performance.now() < this.resultadoAte || g.decisao);
-    if (!mostrar) { if (!box.hidden) box.hidden = true; this.cache.vkey = null; return; }
+    const box = $('h-voto'), v = g.voto, agora = performance.now();
+    const R = this.resultado;
+    const comResultado = !!R && (agora < R.ate || (g.decisao && g.voto?.no && R.no === g.voto.no));
+    if (R && !comResultado) this.resultado = null;
+    const mostrar = g.fase === 'jogo' && !g.caido && (!g.room || g.room.praia) && ((v && v.aberta) || comResultado);
+    if (!mostrar) { if (!box.hidden) box.hidden = true; this.cache.vkey = null; this.cache.vmodo = null; return; }
     if (box.hidden) box.hidden = false;
-    const bloq = v.bloqueadas || [];
-    const key = v.opcoes.map(o => o.id).join(',') + '|' + bloq.map(o => o.id).join(',') + (v.aberta ? 'a' : 'f');
+    const modo = comResultado ? 'res' : 'voto';
+    if (this.cache.vmodo !== modo) {
+      this.cache.vmodo = modo;
+      box.classList.toggle('modo-voto', modo === 'voto'); box.classList.toggle('modo-res', modo === 'res');
+      if (modo === 'voto') { const q = $('v-quadro'); q.style.animation = 'none'; void q.offsetWidth; q.style.animation = ''; }
+      $('v-res').hidden = modo !== 'res';
+      this.cache.vres = null; this.cache.vkey = null;
+    }
+    // relógio: a contagem da votação aberta (a de agora, ou a próxima enquanto o resultado está na tela)
+    const relogio = $('v-relogio');
+    if (v && v.aberta) {
+      const resta = v.restanteNaTela ?? v.restante;
+      $('v-barra').style.width = (clamp(resta / v.duracao, 0, 1) * 100).toFixed(1) + '%';
+      relogio.classList.toggle('urg', resta < 3.5);
+    } else { $('v-barra').style.width = '100%'; relogio.classList.remove('urg'); }
+
+    if (modo === 'res') { this.mostrarResultado(g, R); return; }
+
+    // ---- votação aberta ----
+    const total = v.opcoes.reduce((a, o) => a + o.votos, 0);
+    const key = v.opcoes.map(o => o.id).join(',') + (v.contandoAtrasados ? '|c' : '') + (total ? '|b' : '');
     if (this.cache.vkey !== key) {
       this.cache.vkey = key;
-      const ops = $('v-ops');
-      // opções na ordem dos números; rua bloqueada aparece riscada no lugar dela
-      const todas = [...v.opcoes, ...bloq.map(o => ({ ...o, bloqueada: true }))].sort((a, b) => a.n - b.n);
-      ops.style.setProperty('--n', todas.length);
-      ops.innerHTML = todas.map(o => {
-        if (o.bloqueada) return `<div class="op bloq"><span class="num">${o.n}</span><span class="nome"><small>🚧</small> ${o.nome}</span><span class="cnt">bloqueada</span></div>`;
-        const icone = o.id === 'entrar' ? (o.praca ? '⚔️' : esc(o.shop.emoji)) : o.seta;
-        const extra = o.semSaida ? ' <small>📦</small>' : '';
-        return `<div class="op${o.semSaida ? ' beco' : ''}" data-op="${o.id}"><i class="fill"></i><span class="num">${o.n}</span><span class="nome"><small>${icone}</small> ${o.id === 'entrar' ? (o.praca ? 'ARENA' : 'ENTRAR') : o.nome}${extra}</span><span class="cnt">${o.semSaida ? 'sem saída' : '0 votos'}</span></div>`;
-      }).join('');
-      this.cache.vt = null;
+      const icone = o => o.id === 'entrar' ? (o.praca ? '⚔️' : esc(o.shop.emoji)) : o.seta;
+      const nome = o => o.id === 'entrar' ? (o.praca ? 'arena' : 'entrar') : o.nome.toLowerCase();
+      const titulo = v.contandoAtrasados ? '⏳ contando os votos da live <small>· ainda dá tempo</small>'
+        : v.praia ? '🏖️ Saia da praia com' : v.loja ? `🗳️ Escolha a direção com <small>· ${esc(v.loja.emoji)} ${esc(v.loja.nome)} aqui!</small>` : '🗳️ Escolha a direção com';
+      $('v-info').innerHTML = `<div class="vi-t">${titulo}</div><div class="vi-ops">${v.opcoes.map(o => `<span><b>${o.n}</b>${icone(o)} ${nome(o)}${o.semSaida ? ' 📦' : ''}</span>`).join('')}</div>`;
+      $('v-bolas').innerHTML = v.opcoes.map(o => `<span class="vb" data-op="${o.id}"><b>${o.n}</b><small>${icone(o)} 0</small></span>`).join('');
+      // sem votos: aviso; com votos: bolinhas no lugar dele. Relógio zerado: "contando os votos da live" no lugar dele
+      $('v-info').hidden = total > 0;
+      $('v-bolas').hidden = total === 0;
+      $('v-espera').hidden = !(v.contandoAtrasados && total > 0);
+      $('v-quadro').classList.toggle('contando', !!v.contandoAtrasados && total > 0);
+      this.cache.vb = {};
     }
-    const max = Math.max(1, ...v.opcoes.map(o => o.votos));
-    for (const o of v.opcoes) {
-      const el = document.querySelector(`.op[data-op="${o.id}"]`); if (!el) continue;
-      el.querySelector('.cnt').textContent = `${o.votos} voto${o.votos === 1 ? '' : 's'}${o.semSaida ? ' · sem saída' : ''}`;
-      el.querySelector('.fill').style.height = (o.votos / max * 100).toFixed(0) + '%';
-      const lider = v.aberta && o.votos > 0 && o.votos === max;
-      el.classList.toggle('lider', lider);
-      el.classList.toggle('venceu', !v.aberta && v.resultado?.id === o.id);
-      el.classList.toggle('perdeu', !v.aberta && v.resultado?.id !== o.id);
-    }
-    const res = $('v-res'), tempo = $('v-tempo');
-    if (v.aberta) {
-      res.hidden = true; tempo.hidden = false;
-      // a contagem termina "atraso" segundos antes de fechar: é o tempo dos votos de quem assiste atrasado chegarem
-      const resta = v.restanteNaTela ?? v.restante;
-      const frac = clamp(resta / v.duracao, 0, 1);
-      $('v-barra').style.width = (frac * 100).toFixed(1) + '%';
-      tempo.classList.toggle('urg', resta < 3.5);
-      if (v.contandoAtrasados) {
-        this.set('v-titulo', '⏳ CONTANDO VOTOS DA LIVE...');
-        this.set('v-sub', 'ainda dá tempo de votar');
-      } else {
-        this.set('v-titulo', v.praia ? `🏖️ SAIR DA PRAIA POR ONDE? · ${Math.ceil(resta)}s` : `🗳️ PRÓXIMO CRUZAMENTO · ${Math.ceil(resta)}s`);
-        this.set('v-sub', v.loja ? `${v.loja.emoji} ${v.loja.nome} aqui!` : 'comente o número');
+    if (total > 0) {
+      const max = Math.max(...v.opcoes.map(o => o.votos));
+      for (const o of v.opcoes) {
+        const el = $('v-bolas').querySelector(`[data-op="${o.id}"]`); if (!el) continue;
+        if (this.cache.vb[o.id] !== o.votos) {
+          if (this.cache.vb[o.id] != null) { el.classList.remove('pulo'); void el.offsetWidth; el.classList.add('pulo'); }
+          this.cache.vb[o.id] = o.votos;
+          el.querySelector('small').textContent = `${o.id === 'entrar' ? (o.praca ? '⚔️' : o.shop.emoji) : o.seta} ${o.votos}`;
+          el.style.setProperty('--k', (1 + 0.35 * o.votos / total).toFixed(2));
+        }
+        el.classList.toggle('lider', o.votos > 0 && o.votos === max);
+        el.classList.toggle('zero', o.votos === 0);
       }
-    } else {
-      tempo.hidden = true; res.hidden = false;
-      const r = v.resultado, op = v.opcoes.find(o => o.id === r.id);
-      const nome = op.id === 'entrar' ? (op.praca ? 'ARENA DA PRAÇA' : `ENTRAR NA ${op.shop.nome.toUpperCase()}`) : op.nome;
-      const txt = r.auto ? `🤖 ninguém votou · a IA escolheu <b>${esc(nome)}</b>` : `➜ <b>${esc(nome)}</b> com ${r.votos} voto${r.votos === 1 ? '' : 's'}${r.empate ? ' (desempate no sorteio)' : ''}`;
-      this.html('v-res', txt);
-      // decidido, mas o herói só atravessa com a área limpa
-      const l = g.limpando;
-      this.set('v-titulo', l ? `🧟 LIMPE A ÁREA · faltam ${l.restam}` : '🗳️ O CHAT DECIDIU');
-      this.set('v-sub', l ? 'pra atravessar' : '');
     }
   }
+
+  // Resultado da votação: pra onde vai, com quantos votos, e o que tem lá
+  mostrarResultado(g, R) {
+    const l = g.decisao && g.limpando;
+    const key = R.chave + (l ? '|' + l.restam : '');
+    if (this.cache.vres === key) return;
+    this.cache.vres = key;
+    const P = R.previsao;
+    const dest = R.id === 'entrar' ? (R.praca ? 'ARENA DA PRAÇA' : `ENTRAR NA ${String(R.loja || '').toUpperCase()}`) : R.nome;
+    $('v-res').innerHTML =
+      `<div class="vr-dest"><span class="num">${R.n ?? ''}</span>${esc(R.seta || '')} ${esc(dest)}${R.auto ? '' : ` <small>· ${R.votos} voto${R.votos === 1 ? '' : 's'}${R.empate ? ' (sorteio)' : ''}</small>`}</div>` +
+      (R.auto ? '<div class="vr-ia">🤖 ninguém votou: a IA escolheu</div>' : '') +
+      (P ? `<div class="vr-risco ${P.risco}">${P.emoji} ${P.rotulo}</div><div class="vr-itens">${P.itens.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : '') +
+      (l ? `<div class="vr-limpa">🧟 limpe a área pra atravessar · faltam ${l.restam}</div>` : '');
+  }
+
 }

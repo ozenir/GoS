@@ -134,29 +134,45 @@ body.foco .app{padding-block:8px}
 .chip.mal{border-color:rgba(255,90,79,.6)}
 
 /* Votação da direção */
-.voto{padding:1.2cqw 1.8cqw 1.4cqw;display:flex;flex-direction:column;gap:1cqw;animation:pop .35s cubic-bezier(.2,1.5,.4,1);background:rgba(16,13,24,.74)}
-.v-top{display:flex;align-items:center;justify-content:space-between;gap:2cqw;font-size:3.1cqw;font-weight:700}
-.v-top span{font-weight:500;opacity:.8;font-size:2.6cqw;white-space:nowrap}
-.v-tempo{height:1.1cqw;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
-.v-tempo i{display:block;height:100%;background:var(--ouro);transition:width .2s linear}
-.v-tempo.urg i{background:var(--atrapalha)}
-.v-ops{display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:1.2cqw}
-.op{position:relative;display:flex;flex-direction:column;align-items:center;gap:.2cqw;padding:.8cqw .4cqw .7cqw;border-radius:2.2cqw;background:rgba(255,255,255,.06);border:.4cqw solid rgba(255,255,255,.12);overflow:hidden}
-.op .fill{position:absolute;left:0;right:0;bottom:0;background:rgba(255,210,63,.18);transition:height .25s}
-.op .num{position:relative;width:5.4cqw;height:5.4cqw;border-radius:50%;display:grid;place-items:center;background:#0d0b14;border:.4cqw solid rgba(255,255,255,.5);font-size:3.5cqw;font-weight:700}
-.op .nome{position:relative;font-size:2.4cqw;font-weight:700;letter-spacing:.02em;white-space:nowrap}
-.op .nome small{font-size:3cqw}
-.op .cnt{position:relative;font-size:2.3cqw;opacity:.8;font-variant-numeric:tabular-nums}
-.op.lider{border-color:var(--ouro)}
-.op.lider .num{border-color:var(--ouro);color:var(--ouro)}
-.op.venceu{border-color:var(--ajuda);background:rgba(57,196,122,.18)}
-.op.venceu .num{border-color:var(--ajuda);color:#9dffb0}
-.op.perdeu{opacity:.35}
-.op.bloq{opacity:.45;border-style:dashed;background:repeating-linear-gradient(135deg,rgba(255,90,79,.12) 0 1.2cqw,transparent 1.2cqw 2.4cqw)}
-.op.bloq .nome{text-decoration:line-through}
-.op.beco{border-color:rgba(242,194,48,.55)}
-.v-res{font-size:3cqw;text-align:center;font-weight:600}
-.v-res b{color:#9dffb0}
+/* Votação: aviso com as opções + relógio (barra que some das pontas pro meio); votos viram bolinhas;
+   no resultado o quadro some, o relógio sobe pro lugar dele e o resultado aparece embaixo */
+.voto{position:relative;--qh:14cqw}
+.voto.modo-voto{height:var(--qh)}
+.voto.modo-res{padding-top:2.6cqw}
+.v-quadro{position:absolute;left:0;right:0;top:0;height:var(--qh);box-sizing:border-box;padding:1.4cqw 2cqw 3.6cqw;display:grid;place-items:center;background:rgba(16,13,24,.74);transition:opacity .35s,transform .35s}
+.modo-voto .v-quadro{animation:pop .35s cubic-bezier(.2,1.5,.4,1)}
+.modo-res .v-quadro{opacity:0;transform:scale(.94);pointer-events:none}
+.v-info{display:flex;flex-direction:column;align-items:center;gap:1cqw;text-align:center}
+.vi-t{font-size:3.1cqw;font-weight:700}
+.vi-t small{font-weight:500;opacity:.75;font-size:2.5cqw}
+.vi-ops{display:flex;flex-wrap:wrap;justify-content:center;gap:.6cqw 2cqw;font-size:2.7cqw;font-weight:600}
+.vi-ops span{display:inline-flex;align-items:center;gap:.6cqw;white-space:nowrap}
+.vi-ops b{width:3.9cqw;height:3.9cqw;border-radius:50%;display:grid;place-items:center;background:#0d0b14;border:.35cqw solid rgba(255,255,255,.5);font-size:2.5cqw}
+.v-bolas{display:flex;justify-content:center;align-items:flex-end;gap:3cqw}
+.vb{display:flex;flex-direction:column;align-items:center;gap:.4cqw}
+.vb b{width:5.8cqw;height:5.8cqw;border-radius:50%;display:grid;place-items:center;background:#0d0b14;border:.4cqw solid rgba(255,255,255,.45);font-size:3.4cqw;transform:scale(var(--k,1));transition:transform .25s,border-color .25s,color .25s}
+.vb small{font-size:2.3cqw;font-weight:600;opacity:.85;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vb.zero{opacity:.45}
+.vb.lider b{border-color:var(--ouro);color:var(--ouro);box-shadow:0 0 2cqw rgba(255,210,63,.35)}
+.vb.pulo b{animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+.v-relogio{position:absolute;left:5cqw;right:5cqw;top:calc(var(--qh) - 2.4cqw);height:1.1cqw;display:flex;justify-content:center;transition:top .5s cubic-bezier(.3,1.2,.4,1),left .5s,right .5s}
+.modo-res .v-relogio{top:0;left:0;right:0}
+.v-relogio i{display:block;height:100%;width:100%;border-radius:99px;background:var(--ouro);transition:width .2s linear}
+.v-relogio.urg i{background:var(--atrapalha)}
+.v-quadro.contando .v-bolas{transform:translateY(-1.4cqw)}
+.v-espera{position:absolute;left:0;right:0;bottom:.5cqw;text-align:center;font-size:2.2cqw;font-weight:600;opacity:.8}
+.v-res{display:flex;flex-direction:column;align-items:center;gap:.7cqw;padding:1cqw 0 2cqw;text-align:center;background:radial-gradient(ellipse 60% 70% at 50% 50%,rgba(10,8,16,.62),rgba(10,8,16,.3) 60%,transparent 80%);text-shadow:0 .3cqw 0 rgba(0,0,0,.7),0 0 2.4cqw rgba(0,0,0,.85);animation:popUp .4s cubic-bezier(.2,1.5,.4,1)}
+.vr-dest{display:flex;align-items:center;gap:1.4cqw;font-size:4.6cqw;font-weight:700;letter-spacing:.02em}
+.vr-dest .num{width:6cqw;height:6cqw;border-radius:50%;display:grid;place-items:center;font-size:3.6cqw;background:#0d0b14;border:.45cqw solid var(--ajuda);color:#9dffb0;text-shadow:none}
+.vr-dest small{font-size:3cqw;font-weight:600;opacity:.9}
+.vr-ia{font-size:2.6cqw;font-weight:600;opacity:.85}
+.vr-risco{font-size:3.4cqw;font-weight:700;letter-spacing:.06em}
+.vr-risco.tranquilo{color:#9dffb0}
+.vr-risco.perigoso{color:#ffb347}
+.vr-risco.morte{color:#ff6a5a;animation:pisca .6s infinite alternate}
+.vr-itens{display:flex;flex-wrap:wrap;justify-content:center;gap:.4cqw 2cqw;font-size:2.8cqw;font-weight:600;max-width:86cqw}
+.vr-itens span{white-space:nowrap}
+.vr-limpa{font-size:3cqw;font-weight:700;color:var(--ouro)}
 
 /* Herói caído: ocupa o lugar da votação (no topo), o herói fica visível no meio */
 .caido{display:flex;flex-direction:column;align-items:center;gap:.6cqw;padding:2cqw 3cqw;border-radius:3.4cqw;background:rgba(40,6,10,.86);border:.6cqw solid #ff4a3a;box-shadow:0 0 6cqw rgba(255,30,30,.5);text-align:center;animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
@@ -330,10 +346,9 @@ body.foco .app{padding-block:8px}
             <span title="Curtidas até o próximo suprimento">❤️ <i class="mini lk"><i id="h-likes"></i></i></span>
           </div><div class="grupo eco" aria-hidden="true"></div></div></div>
           <div class="status letreiro" id="h-linha-status"><div class="trilho"><div class="grupo" id="h-status"></div><div class="grupo eco" aria-hidden="true"></div></div></div>
-          <div class="voto card" id="h-voto" hidden>
-            <div class="v-top"><div id="v-titulo">🗳️ PRÓXIMO CRUZAMENTO</div><span id="v-sub">comente o número</span></div>
-            <div class="v-tempo" id="v-tempo"><i id="v-barra"></i></div>
-            <div class="v-ops" id="v-ops"></div>
+          <div class="voto modo-voto" id="h-voto" hidden>
+            <div class="v-quadro card" id="v-quadro"><div class="v-info" id="v-info"></div><div class="v-bolas" id="v-bolas" hidden></div><div class="v-espera" id="v-espera" hidden>⏳ contando os votos da live · ainda dá tempo</div></div>
+            <div class="v-relogio" id="v-relogio"><i id="v-barra"></i></div>
             <div class="v-res" id="v-res" hidden></div>
           </div>
           <div class="caido" id="h-caido" hidden><b id="c-tit">💀 HERÓI CAÍDO!</b><span class="cd" id="c-cd">8</span><span class="ct" id="c-txt"></span><small id="c-sub"></small></div>
