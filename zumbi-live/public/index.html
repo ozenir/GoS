@@ -270,11 +270,13 @@ body.foco .app{padding-block:8px}
 
 /* --- BAIXO --- */
 .toasts{display:flex;flex-direction:column-reverse;align-items:flex-start;gap:.9cqw;max-width:80cqw}
-.toast{display:flex;align-items:center;gap:1.2cqw;padding:.5cqw 2.4cqw .5cqw .5cqw;border-radius:99px;font-size:2.8cqw;font-weight:500;white-space:nowrap;max-width:80cqw;overflow:hidden;background:rgba(16,13,24,.86);border:.4cqw solid var(--lado,var(--card-line));animation:popUp .4s cubic-bezier(.2,1.6,.4,1)}
+.toast{display:flex;align-items:center;gap:1.2cqw;padding:.6cqw 2.4cqw .6cqw .6cqw;border-radius:3.6cqw;font-size:2.6cqw;font-weight:500;white-space:nowrap;max-width:80cqw;overflow:hidden;background:rgba(16,13,24,.86);border:.4cqw solid var(--lado,var(--card-line));animation:popUp .4s cubic-bezier(.2,1.6,.4,1)}
 .toast.ajuda{--lado:var(--ajuda)}
 .toast.atrapalha{--lado:var(--atrapalha)}
-.toast .tava{width:5cqw;height:5cqw;border-radius:50%;object-fit:cover;flex:none;background:#2a2238;border:.35cqw solid var(--lado,#fff)}
-.toast .tt{overflow:hidden;text-overflow:ellipsis}
+.toast .tava{width:6cqw;height:6cqw;border-radius:50%;object-fit:cover;flex:none;background:#2a2238;border:.35cqw solid var(--lado,#fff)}
+.toast .tt{display:flex;flex-direction:column;align-items:flex-start;gap:.15cqw;min-width:0;overflow:hidden;line-height:1.15}
+.toast .tt>b{font-size:2.8cqw;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.toast .tf{max-width:100%;overflow:hidden;text-overflow:ellipsis;font-size:2.5cqw}
 .toast b{font-weight:700}
 .toast em{font-style:normal;font-weight:700;color:var(--lado)}
 .toast small{opacity:.7;font-size:2.4cqw}

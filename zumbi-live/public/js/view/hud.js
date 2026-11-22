@@ -88,7 +88,8 @@ export class Hud {
     const presente = urlOk(e.image) ? `<img class="gimg" src="${esc(e.image)}" alt="" referrerpolicy="no-referrer">` : esc(e.emoji);
     const vezes = `<span class="vezes">${e.qtd > 1 ? ` x${e.qtd}` : ''}</span>`;
     const espera = e.espera ? ` <small>(em ${e.espera}s)</small>` : '';
-    t.innerHTML = `<img class="tava" src="${img}" alt="" referrerpolicy="no-referrer"><span class="tt"><b>${esc(e.nick)}</b> ${presente}${vezes} <em>${esc(e.texto)}</em>${espera}</span>`;
+    // duas linhas: o nome de quem mandou em cima; embaixo, alinhado à esquerda, o presente e o que ele fez
+    t.innerHTML = `<img class="tava" src="${img}" alt="" referrerpolicy="no-referrer"><span class="tt"><b>${esc(e.nick)}</b><span class="tf">${presente}${vezes} <em>${esc(e.texto)}</em>${espera}</span></span>`;
     box.prepend(t);
     while (box.children.length > 3) box.lastChild.remove();
     const timer = setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 460); }, 3800);
