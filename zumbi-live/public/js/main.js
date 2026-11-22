@@ -27,7 +27,6 @@ const sujeira = new Sujeira($('sujeira'));   // tomate no vidro (zumbi do tomate
 let catalogo = PRESENTES_PADRAO;
 let regraSeguir = SEGUIR_PADRAO, regraCompartilhar = COMPARTILHAR_PADRAO;
 hud.setLegenda(catalogo, regraSeguir, regraCompartilhar, jogo.cfg.likesPor);
-hud.rank({ ajuda: [], atrapalha: [] });
 window.jogo = jogo; // para testes
 
 /* ---------- tamanho da tela ---------- */
@@ -79,12 +78,11 @@ function conectar() {
       // o programa foi atualizado com esta janela aberta: recarrega pra pegar a versão nova do jogo
       if (versaoPrograma && m.versao && m.versao !== versaoPrograma) { location.reload(); return; }
       versaoPrograma = m.versao || versaoPrograma;
-      aplicarEstado(m); hud.rank(m.rank); mostrarStatus(m);
+      aplicarEstado(m); jogo.definirRanking(m.rank); mostrarStatus(m);
     }
     else if (m.type === 'status') mostrarStatus(m);
     else {
-      if (m.rank) hud.rank(m.rank);
-      jogo.handle(m);
+      jogo.handle(m);   // (m.rank, quando vem, move o cabo de guerra)
     }
   };
   ws.onclose = () => { ws = null; setConn('off', 'Programa desligado. Tentando de novo...'); setTimeout(conectar, 3000); };
@@ -103,8 +101,7 @@ function presenteTeste(nome, quem = 'você (teste)', vezes = 1) {
   const r = rankLocal[lado].get(quem) || { nick: quem, coins: 0, avatar: '' };
   r.coins += (regra.moedas || 1) * vezes; rankLocal[lado].set(quem, r);
   const top = m => [...m.values()].sort((a, b) => b.coins - a.coins).slice(0, 3);
-  hud.rank({ ajuda: top(rankLocal.ajuda), atrapalha: top(rankLocal.atrapalha) });
-  jogo.handle({ type: 'presente', id: 'local_' + quem, nick: quem, avatar: '', giftName: nome, count: vezes, coins: regra.moedas || 1, regra });
+  jogo.handle({ rank: { ajuda: top(rankLocal.ajuda), atrapalha: top(rankLocal.atrapalha) }, type: 'presente', id: 'local_' + quem, nick: quem, avatar: '', giftName: nome, count: vezes, coins: regra.moedas || 1, regra });
 }
 function chatTeste(texto, quem) {
   quem = quem || pick(NOMES);

@@ -7,11 +7,11 @@ import { EFEITOS, ladoDo } from '../core/efeitos.js';
 import { progressoAmeaca } from '../core/ameaca.js';
 import { slotsDoHeroi, NUCLEO } from '../core/habilidades.js';
 import { Letreiro } from './letreiro.js';
+import { RESULTADO_SEG } from '../core/jogo.js';
+import { CABO } from '../core/cabo.js';
 import { graficoDoHeroi, GRAFICO_SEGUNDOS, BLOCOS } from '../core/grafico.js';
 
 const $ = id => document.getElementById(id);
-// quanto tempo o resultado da votação fica na tela (s)
-export const RESULTADO_SEG = 4.5;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const urlOk = u => /^https:\/\//.test(String(u || ''));
 const AVATAR_VAZIO = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#2a2238"/><circle cx="5" cy="4" r="2" fill="#6a5a88"/><rect x="2" y="7" width="6" height="3" rx="1.5" fill="#6a5a88"/></svg>');
@@ -65,16 +65,6 @@ export class Hud {
     const pagina = [];
     for (let i = 0; i < 4; i++) pagina.push(this.legenda[(this.legIdx + i) % this.legenda.length]);
     el.innerHTML = pagina.map(l => `<span class="leg ${l.lado}">${esc(l.emoji)} ${esc(l.texto)}</span>`).join('');
-  }
-
-  rank(r) {
-    for (const lado of ['ajuda', 'atrapalha']) {
-      const lista = (r && r[lado]) || [];
-      const html = lista.length
-        ? lista.map((p, i) => `<div class="rk-l">${urlOk(p.avatar) ? `<img src="${esc(p.avatar)}" alt="" referrerpolicy="no-referrer">` : '<i class="ph"></i>'}<span>${i === 0 ? (lado === 'ajuda' ? '👑 ' : '😈 ') : ''}${esc(p.nick)}</span><em>${p.coins}🪙</em></div>`).join('')
-        : `<div class="rk-vazio">${lado === 'ajuda' ? 'mande 🌹 pra ajudar' : 'mande 🎵 pra atrapalhar'}</div>`;
-      this.html('rk-' + lado, html);
-    }
   }
 
   toast(e) {
@@ -216,7 +206,8 @@ export class Hud {
       case 'mochila': this.banner('💼 KIT NA MOCHILA', `${e.nick ? 'de ' + e.nick + ' · ' : ''}ele usa quando precisar`, 'bom', 1.8); break;
       case 'mochila_usou': if (e.caindo) this.banner('💼 A MOCHILA SALVOU!', e.nick ? `kit de ${e.nick}` : '', 'bom', 2.4); break;
       case 'vida_baixa': this.banner('⚠️ VIDA BAIXA!', 'mande 🌹 ou 🍩 pra salvar o herói', 'perigo', 2.2); break;
-      case 'decisao': this.resultado = { ...e, ate: performance.now() + RESULTADO_SEG * 1000, chave: `${e.id}:${performance.now()}`, no: g.voto?.no }; this.cache.vmodo = null; break;
+      case 'decisao': this.resultado = { ...e, ate: performance.now() + RESULTADO_SEG * 1000, chave: `${e.id}:${performance.now()}` }; this.cache.vmodo = null; break;
+      case 'cabo_virou': if (e.lado) this.banner(e.lado === 'ajuda' ? '🛡️ AJUDANTES NA FRENTE!' : '😈 ATRAPALHANTES NA FRENTE!', e.lado === 'ajuda' ? `${e.ajuda || 'o top ajudante'} puxou o cabo: sorte, suprimentos nos cadáveres` : `${e.atrapalha || 'o top atrapalhante'} puxou o cabo: mais zumbis e mais fortes`, e.lado === 'ajuda' ? 'bom' : 'perigo', 2.6); break;
       case 'novo_heroi': this.intro(e, g); $('over').hidden = true; this.histT = 0; $('h-hist').hidden = true; break;
       case 'heroi_morreu': this.relatorio(e.relatorio, e.hall, g); break;
       case 'arma': if (e.id === 'escopeta' && e.quem) this.banner('💥 ESCOPETA!', `presente de ${e.quem}`, 'bom', 1.8); if (e.id === 'taco') this.banner('🏏 TACO COM PREGOS!', e.quem ? `presente de ${e.quem}` : '', 'bom', 1.8); break;
@@ -357,6 +348,9 @@ export class Hud {
     else if (g.room) st.push(`<span class="chip">${g.room.shop.emoji} ${g.room.shop.nome} · ${Math.max(0, Math.ceil(g.cfg.predioT - g.salaT))}s</span>`);
     if (g.torcidaN > 0 && g.fase === 'jogo') st.push(`<span class="chip ok" title="Quem comentou nos últimos 30 s dá força ao herói">📣 torcida ${g.torcidaN} · +${Math.round(g.torcidaN * 3)}% dano</span>`);
     if (g.trecho?.livre && !g.room && g.fase === 'jogo') st.push(`<span class="chip ok">${g.trecho.tipo === 'historia' ? '📜 rua da pista' : '🍃 rua tranquila'}</span>`);
+    if (g.limpando && g.decisao && g.fase === 'jogo') st.push(`<span class="chip mal">🧟 limpe a área · faltam ${g.limpando.restam ?? '?'}</span>`);
+    if (g.cabo?.lado === 'ajuda' && g.fase === 'jogo') st.push(`<span class="chip ok" title="O top ajudante está ganhando o cabo de guerra">🍀 sorte · suprimento nos cadáveres</span>`);
+    if (g.cabo?.lado === 'atrapalha' && g.fase === 'jogo') st.push(`<span class="chip mal" title="O top atrapalhante está ganhando o cabo de guerra">😈 zumbis +${Math.round(CABO.forcaMax * g.cabo.forca * 100)}% fortes</span>`);
     if (h.mochila?.length) st.push(`<span class="chip ok" title="Kits guardados: ele usa sozinho quando a vida cair">💼 mochila ${h.mochila.length}</span>`);
     if (h.invQ > 0) st.push(`<span class="chip ok" title="Quarteirões que ainda faltam">✨ invencível 📍${h.invQ}</span>`);
     else if (h.invT > 0) st.push(`<span class="chip ok">✨ invencível ${Math.ceil(h.invT)}s</span>`);
@@ -458,35 +452,38 @@ export class Hud {
     this.set('c-sub', final ? '' : 'qualquer presente de ajuda ou seguir levanta · presente de atrapalhar = golpe final');
   }
 
-  // Votação. Aberta: quadro com o aviso "escolha a direção com ..." e o relógio (barra que some das pontas pro
-  // meio); chegando votos, o aviso vira bolinhas (uma por opção, com os votos). Fechou: o quadro some, o relógio
-  // sobe pro lugar dele e aparece o resultado (votos, pra onde vai e o que tem lá: previsao.js). O resultado fica
-  // RESULTADO_SEG segundos (mais, se o herói ainda não atravessou); nesse tempo o relógio continua contando a
-  // próxima votação, que já está aberta.
+  // Votação. Aberta: quadro com o aviso "escolha a direção com ..." e o relógio (a linha amarela, que some das
+  // pontas pro meio); chegando votos, o aviso vira bolinhas (uma por opção, com os votos). Fechou: o quadro some,
+  // a linha sobe pro lugar dele e vira o CABO DE GUERRA (top ajudante x top atrapalhante), e o resultado aparece
+  // embaixo (votos, pra onde vai e o que tem lá: previsao.js) por RESULTADO_SEG segundos. Depois só o cabo de
+  // guerra fica, até abrir a próxima votação.
   atualizarVoto(g) {
     const box = $('h-voto'), v = g.voto, agora = performance.now();
     const R = this.resultado;
-    const comResultado = !!R && (agora < R.ate || (g.decisao && g.voto?.no && R.no === g.voto.no));
-    if (R && !comResultado) this.resultado = null;
-    const mostrar = g.fase === 'jogo' && !g.caido && (!g.room || g.room.praia) && ((v && v.aberta) || comResultado);
+    const votando = !!(v && v.aberta && (!g.room || g.room.praia));
+    const comResultado = !!R && agora < R.ate && !votando;
+    if (R && agora >= R.ate) this.resultado = null;
+    const mostrar = g.fase === 'jogo' && !g.caido;
     if (!mostrar) { if (!box.hidden) box.hidden = true; this.cache.vkey = null; this.cache.vmodo = null; return; }
     if (box.hidden) box.hidden = false;
-    const modo = comResultado ? 'res' : 'voto';
+    const modo = votando ? 'voto' : comResultado ? 'res' : 'cabo';
     if (this.cache.vmodo !== modo) {
       this.cache.vmodo = modo;
-      box.classList.toggle('modo-voto', modo === 'voto'); box.classList.toggle('modo-res', modo === 'res');
+      for (const m of ['voto', 'res', 'cabo']) box.classList.toggle('modo-' + m, modo === m);
       if (modo === 'voto') { const q = $('v-quadro'); q.style.animation = 'none'; void q.offsetWidth; q.style.animation = ''; }
       $('v-res').hidden = modo !== 'res';
+      $('h-banner').classList.toggle('baixo', modo === 'res');
       this.cache.vres = null; this.cache.vkey = null;
     }
-    // relógio: a contagem da votação aberta (a de agora, ou a próxima enquanto o resultado está na tela)
+    this.atualizarCabo(g.cabo);
+    // relógio da votação aberta
     const relogio = $('v-relogio');
-    if (v && v.aberta) {
+    if (votando) {
       const resta = v.restanteNaTela ?? v.restante;
       $('v-barra').style.width = (clamp(resta / v.duracao, 0, 1) * 100).toFixed(1) + '%';
       relogio.classList.toggle('urg', resta < 3.5);
-    } else { $('v-barra').style.width = '100%'; relogio.classList.remove('urg'); }
-
+    } else relogio.classList.remove('urg');
+    if (modo === 'cabo') return;
     if (modo === 'res') { this.mostrarResultado(g, R); return; }
 
     // ---- votação aberta ----
@@ -525,8 +522,7 @@ export class Hud {
 
   // Resultado da votação: pra onde vai, com quantos votos, e o que tem lá
   mostrarResultado(g, R) {
-    const l = g.decisao && g.limpando;
-    const key = R.chave + (l ? '|' + l.restam : '');
+    const key = R.chave;
     if (this.cache.vres === key) return;
     this.cache.vres = key;
     const P = R.previsao;
@@ -534,8 +530,33 @@ export class Hud {
     $('v-res').innerHTML =
       `<div class="vr-dest"><span class="num">${R.n ?? ''}</span>${esc(R.seta || '')} ${esc(dest)}${R.auto ? '' : ` <small>· ${R.votos} voto${R.votos === 1 ? '' : 's'}${R.empate ? ' (sorteio)' : ''}</small>`}</div>` +
       (R.auto ? '<div class="vr-ia">🤖 ninguém votou: a IA escolheu</div>' : '') +
-      (P ? `<div class="vr-risco ${P.risco}">${P.emoji} ${P.rotulo}</div><div class="vr-itens">${P.itens.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : '') +
-      (l ? `<div class="vr-limpa">🧟 limpe a área pra atravessar · faltam ${l.restam}</div>` : '');
+      (P ? `<div class="vr-risco ${P.risco}">${P.emoji} ${P.rotulo}</div><div class="vr-itens">${P.itens.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : '');
+  }
+
+  // Cabo de guerra: foto de cada top com coroa, a barra dividida pela parte de cada um (cabo.js)
+  atualizarCabo(c) {
+    if (!c) return;
+    const pessoa = (p, lado) => {
+      const icone = lado === 'a' ? '🛡️' : '😈';
+      const foto = p && urlOk(p.avatar) ? `<img src="${esc(p.avatar)}" alt="" referrerpolicy="no-referrer">` : `<span class="vazio">${p ? esc(String(p.nick || '?').slice(0, 1).toUpperCase()) : '?'}</span>`;
+      const nome = p ? `${esc(p.nick)} · ${p.coins}🪙` : (lado === 'a' ? 'mande 🌹 pra ajudar' : 'mande 🎵 pra atrapalhar');
+      return `<div class="cb-foto">${foto}${p ? '<span class="cb-coroa">👑</span>' : ''}<span class="cb-lado">${icone}</span></div><div class="cb-nome">${nome}</div>`;
+    };
+    const k = JSON.stringify([c.ajuda?.nick, c.ajuda?.coins, c.ajuda?.avatar, c.atrapalha?.nick, c.atrapalha?.coins, c.atrapalha?.avatar, c.lado]);
+    if (this.cache.cabo === k) return;
+    const antes = this.cache.caboTop || [];
+    this.cache.cabo = k; this.cache.caboTop = [c.ajuda?.nick, c.atrapalha?.nick];
+    for (const [id, p, lado, i] of [['cb-pa', c.ajuda, 'a', 0], ['cb-pb', c.atrapalha, 'b', 1]]) {
+      const el = $(id);
+      el.innerHTML = pessoa(p, lado);
+      el.classList.toggle('lider', c.lado === (lado === 'a' ? 'ajuda' : 'atrapalha'));
+      if (antes.length && antes[i] !== (p?.nick)) { el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); }
+    }
+    const pct = clamp(c.pct, 0.04, 0.96) * 100;
+    $('cb-a').style.width = pct.toFixed(1) + '%';
+    $('cb-no').style.left = pct.toFixed(1) + '%';
+    this.set('cb-pcta', `${Math.round(c.pct * 100)}%`);
+    this.set('cb-pctb', `${100 - Math.round(c.pct * 100)}%`);
   }
 
 }

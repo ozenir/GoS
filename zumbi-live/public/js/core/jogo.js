@@ -25,6 +25,10 @@ import {
 } from './ameaca.js';
 import { CHANCES_PADRAO, PERIGOS, AMEACA_POR_PERIGO, ATRASO_PERIGO, sortearCaminho } from './caminhos.js';
 import { preverDestino } from './previsao.js';
+import { caboDeGuerra, multSpawnCabo, multForcaCabo, sorteCabo, CABO } from './cabo.js';
+
+// Quanto tempo o resultado da votação fica na tela; a próxima votação só abre depois disso
+export const RESULTADO_SEG = 10;
 import { Historia, HISTORIA } from './historia.js';
 
 export const PADRAO = {
@@ -175,6 +179,7 @@ export class Jogo {
     this.cotaRua = null;            // zumbis da rua que ainda nascem neste quarteirão (null = calcula na hora)
     this.limpando = null;           // esperando no cruzamento a área ficar limpa
     this.colossoPendente = null;    // doação: o colosso que vem no próximo quarteirão (recompensas.js)
+    this.cabo = this.cabo || caboDeGuerra(null);   // cabo de guerra: top ajudante x top atrapalhante (cabo.js)
     this.carros = [];               // conversíveis dos zumbis passando (presente de atrapalhar de 1 moeda)
     this.paraquedistas = [];        // zumbis descendo de paraquedas em cima do herói (idem)
     this.tomates = [];              // tomates voando do zumbi do tomate até o herói
@@ -412,12 +417,12 @@ export class Jogo {
     let naturais = 0;
     for (const z of this.zumbis) if (!z.dono) naturais++;
     // cota da quadra: cada quarteirão tem um tanto fixo de zumbis da rua; esperando no cruzamento, não nasce mais
-    if (this.cotaRua == null) this.cotaRua = cotaQuadra(nv, this.multInicio(), this.A);
+    if (this.cotaRua == null) this.cotaRua = Math.round(cotaQuadra(nv, this.multInicio(), this.A) * multSpawnCabo(this.cabo));   // atrapalhante na frente: mais zumbis
     if (this.limpando) { this.cotaRua = 0; this.limpando.restam = this.zumbisNaArea(); }   // (o painel mostra quantos faltam)
     this.spawnT -= dt;
     if (this.spawnT <= 0 && naturais < alvo && this.cotaRua > 0) {
       // na rua eles chegam em bandos (grupoRuaExtra a mais por grupo), com mais tempo entre um bando e outro
-      this.spawnT = intervaloAparecer(nv, this.A) * this.A.intervaloRuaMult * (noite ? 0.7 : 1);
+      this.spawnT = intervaloAparecer(nv, this.A) * this.A.intervaloRuaMult * (noite ? 0.7 : 1) / multSpawnCabo(this.cabo);
       const grupo = Math.min(this.cotaRua, Math.max(1, Math.round((tamanhoGrupo(nv, this.A) + this.A.grupoRuaExtra) * this.multInicio())));
       this.cotaRua -= grupo;
       const p = this.pontoNaRua(h, 8, 13, 0);   // de todos os lados (estilo Vampire Survivors), não só da frente
@@ -684,6 +689,7 @@ export class Jogo {
     const res = this.voto.fechar(ops => this.escolhaIA(ops), this.rng);
     const op = this.voto.opcoes.find(o => o.id === res.id);
     this.decisao = op;
+    this.decididoEm = this.t;
     // o que tem lá já fica sorteado agora, pro resultado poder contar (previsao.js)
     this.preparo = op.id !== 'entrar' && !op.semSaida ? this.prepararDestino() : null;
     const previsao = preverDestino(this, op, this.preparo);
@@ -732,7 +738,8 @@ export class Jogo {
     r.dir = op.dir;
     r.alvo = { i: r.i + DIRS[r.dir][0], j: r.j + DIRS[r.dir][1] };
     this.andouQuarteirao(1);
-    this.votoAbreT = 0.8;
+    // a próxima votação só abre depois do resultado sair da tela (RESULTADO_SEG depois do anúncio)
+    this.votoAbreT = Math.max(0.8, (this.decididoEm ?? -1e9) + RESULTADO_SEG - this.t);
     if (virou) this.emit('virou', { dir: r.dir, voltou: op.id === 'voltar' });
     this.checarRecorde();
     const prep = this.preparo; this.preparo = null;
@@ -1661,7 +1668,8 @@ export class Jogo {
     const f = furiaDaHorda((this.t - Math.max(this.stats.inicio, this.ultimaAjudaT ?? 0)) / 60, this.A);
     // começo puxado (antes do nível 10): zumbis mais fortes
     const ini = semInicio ? 1 : forcaInicio(this.esperandoSuprema() ? NIVEL_SUPREMA - 1 : this.hero.nivel, this.A);
-    const s = statsZumbi(T, this.ameaca(), vidaMult * (1 + (f - 1) * this.A.furiaVida) * ini, f * ini);
+    const cabo = multForcaCabo(this.cabo);   // atrapalhante na frente no cabo de guerra: zumbis um pouco mais fortes
+    const s = statsZumbi(T, this.ameaca(), vidaMult * (1 + (f - 1) * this.A.furiaVida) * ini * cabo, f * ini * cabo);
     s.vel *= 1 + Math.min(this.A.furiaVelMax, (f - 1) * this.A.furiaVel);
     return s;
   }
@@ -1884,6 +1892,13 @@ export class Jogo {
     this.stats.abates++;
     if (this.fase === 'jogo') this.ganharXp(T.xp * (1 + (this.nivelAmeaca - 1) * 0.1));   // zumbi mais forte dá mais XP
     this.emit('morte_zumbi', { x: z.x, y: z.y, tipo: z.tipo, chefe: !!T.chefe, nome: z.nome, dono: z.dono?.nick || null, roupa: z.roupa });
+    // ajudante na frente no cabo de guerra: sorte, às vezes o cadáver tem um suprimento
+    const sorte = this.fase === 'jogo' && !T.chefe ? sorteCabo(this.cabo) : 0;
+    if (sorte > 0 && this.rng.chance(sorte)) {
+      const it = this.soltarItemEm(this.rng.weighted(CABO.suprimentos), {}, null, z.x, z.y);
+      if (it) it.ima = 6;   // vem até o herói de mais longe
+      this.emit('sorte_cadaver', { x: z.x, y: z.y, kind: it?.kind });
+    }
     if (z.tipo === 'explosivo') this.explodir(z.x, z.y, z.estouroRaio ?? EXPLOSAO.raio, z.estouro ?? EXPLOSAO.base, EXPLOSAO.danoZumbi, z.dono, z.instavel ? 'o inchado instável' : 'explosão', z.instavel);
     if (T.chefe) {
       this.explodir(z.x, z.y, 1.4, 0, 60, null, '');
@@ -2023,8 +2038,9 @@ export class Jogo {
       if (this.fase !== 'jogo' || this.caido) continue;
       const d2 = dist2(h.x, h.y, it.x, it.y);
       // ímã: item perto vem sozinho até o herói (não fica preso atrás de zumbi ou carro)
-      if (d2 < 2.2 * 2.2 && d2 > 0.01) {
-        const d = Math.sqrt(d2), v = Math.min(d, (2 + (2.2 - d) * 3) * dt);
+      const ima = it.ima || 2.2;
+      if (d2 < ima * ima && d2 > 0.01) {
+        const d = Math.sqrt(d2), v = Math.min(d, (2 + Math.max(0, 2.2 - d) * 3) * dt);
         it.x += (h.x - it.x) / d * v; it.y += (h.y - it.y) / d * v;
       }
       if (d2 < 0.7 * 0.7) { this.pegar(it); it.pego = true; }
@@ -2566,8 +2582,17 @@ export class Jogo {
   }
 
   /* =================== Público =================== */
+  // Ranking da live (top ajudantes e atrapalhantes): move o cabo de guerra
+  definirRanking(rank) {
+    if (!rank) return;
+    const antes = this.cabo?.lado;
+    this.cabo = caboDeGuerra(rank);
+    if (this.cabo.lado !== antes) this.emit('cabo_virou', { lado: this.cabo.lado, ajuda: this.cabo.ajuda?.nick || null, atrapalha: this.cabo.atrapalha?.nick || null });
+  }
+
   handle(m) {
     if (!m || typeof m !== 'object') return;
+    if (m.rank) this.definirRanking(m.rank);
     switch (m.type) {
       case 'chat': {
         this.lembrarNome(m.id, m.nick);

@@ -136,12 +136,13 @@ body.foco .app{padding-block:8px}
 /* Votação da direção */
 /* Votação: aviso com as opções + relógio (barra que some das pontas pro meio); votos viram bolinhas;
    no resultado o quadro some, o relógio sobe pro lugar dele e o resultado aparece embaixo */
-.voto{position:relative;--qh:14cqw}
+.voto{position:relative;--qh:14cqw;--ch:10.4cqw}
 .voto.modo-voto{height:var(--qh)}
-.voto.modo-res{padding-top:2.6cqw}
+.voto.modo-cabo{height:var(--ch)}
+.voto.modo-res{padding-top:calc(var(--ch) + .4cqw)}
 .v-quadro{position:absolute;left:0;right:0;top:0;height:var(--qh);box-sizing:border-box;padding:1.4cqw 2cqw 3.6cqw;display:grid;place-items:center;background:rgba(16,13,24,.74);transition:opacity .35s,transform .35s}
 .modo-voto .v-quadro{animation:pop .35s cubic-bezier(.2,1.5,.4,1)}
-.modo-res .v-quadro{opacity:0;transform:scale(.94);pointer-events:none}
+.modo-res .v-quadro,.modo-cabo .v-quadro{opacity:0;transform:scale(.94);pointer-events:none}
 .v-info{display:flex;flex-direction:column;align-items:center;gap:1cqw;text-align:center}
 .vi-t{font-size:3.1cqw;font-weight:700}
 .vi-t small{font-weight:500;opacity:.75;font-size:2.5cqw}
@@ -155,10 +156,40 @@ body.foco .app{padding-block:8px}
 .vb.zero{opacity:.45}
 .vb.lider b{border-color:var(--ouro);color:var(--ouro);box-shadow:0 0 2cqw rgba(255,210,63,.35)}
 .vb.pulo b{animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
-.v-relogio{position:absolute;left:5cqw;right:5cqw;top:calc(var(--qh) - 2.4cqw);height:1.1cqw;display:flex;justify-content:center;transition:top .5s cubic-bezier(.3,1.2,.4,1),left .5s,right .5s}
-.modo-res .v-relogio{top:0;left:0;right:0}
-.v-relogio i{display:block;height:100%;width:100%;border-radius:99px;background:var(--ouro);transition:width .2s linear}
-.v-relogio.urg i{background:var(--atrapalha)}
+/* a linha amarela: na votação é o relógio (some das pontas pro meio); fora dela é o CABO DE GUERRA entre o
+   top ajudante (esquerda) e o top atrapalhante (direita), com a foto de cada um de coroa */
+.v-relogio{position:absolute;left:5cqw;right:5cqw;top:calc(var(--qh) - 2.4cqw);height:1.1cqw;display:flex;justify-content:center;transition:top .5s cubic-bezier(.3,1.2,.4,1),left .5s,right .5s,height .4s}
+.modo-res .v-relogio,.modo-cabo .v-relogio{top:2.6cqw;left:10.6cqw;right:10.6cqw;height:2.6cqw}
+.v-relogio>i{display:block;height:100%;width:100%;border-radius:99px;background:var(--ouro);transition:width .2s linear,opacity .3s}
+.v-relogio.urg>i{background:var(--atrapalha)}
+.modo-res .v-relogio>i,.modo-cabo .v-relogio>i{opacity:0}
+.cabo{position:absolute;inset:0;display:flex;border-radius:99px;background:linear-gradient(180deg,#ff6a5a,#c8281e);box-shadow:0 0 0 .35cqw rgba(10,8,16,.75),0 .5cqw 1.4cqw rgba(0,0,0,.5);opacity:0;transition:opacity .4s}
+.modo-res .cabo,.modo-cabo .cabo{opacity:1}
+.modo-voto .cabo{opacity:0}
+.cb-a{display:block;height:100%;width:50%;border-radius:99px 0 0 99px;background:linear-gradient(180deg,#5fe08a,#2fa85e);transition:width .8s cubic-bezier(.3,1.3,.4,1)}
+.cabo b{position:absolute;top:50%;transform:translateY(-50%);font-size:1.8cqw;font-weight:700;text-shadow:0 .2cqw 0 rgba(0,0,0,.6);font-variant-numeric:tabular-nums}
+.cb-pa{left:1.4cqw}.cb-pb{right:1.4cqw}
+.cb-no{position:absolute;top:-.9cqw;bottom:-.9cqw;width:1.5cqw;left:50%;transform:translateX(-50%);border-radius:99px;background:var(--ouro);box-shadow:0 0 1.6cqw rgba(255,210,63,.8);transition:left .8s cubic-bezier(.3,1.3,.4,1)}
+.cb-pessoa{position:absolute;top:0;width:7.8cqw;display:flex;flex-direction:column;align-items:center;gap:.3cqw;transition:opacity .4s,transform .4s}
+.cb-pessoa.a{left:0}.cb-pessoa.b{right:0}
+.modo-voto .cb-pessoa{opacity:0;transform:translateY(-1cqw) scale(.8);pointer-events:none}
+.cb-foto{position:relative;width:7.8cqw;height:7.8cqw;border-radius:50%;display:grid;place-items:center;font-size:3.6cqw;background:radial-gradient(circle at 35% 30%,#3a3150,#1a1524);border:.5cqw solid rgba(255,255,255,.25);box-sizing:border-box}
+.cb-pessoa.a .cb-foto{border-color:#39c47a}.cb-pessoa.b .cb-foto{border-color:#ff5a4f}
+.cb-pessoa.lider.a .cb-foto{box-shadow:0 0 2.4cqw rgba(57,196,122,.85)}
+.cb-pessoa.lider.b .cb-foto{box-shadow:0 0 2.4cqw rgba(255,90,79,.85)}
+.cb-foto img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover}
+.cb-foto .vazio{opacity:.5;font-size:3cqw;font-weight:700}
+/* coroa de lado, como uma cartola jogada na cabeça */
+.cb-coroa{position:absolute;top:-2.6cqw;font-size:4cqw;line-height:1;filter:drop-shadow(0 .3cqw 0 rgba(0,0,0,.55))}
+.cb-pessoa.a .cb-coroa{left:-.4cqw;transform:rotate(-24deg)}
+.cb-pessoa.b .cb-coroa{right:-.4cqw;transform:rotate(24deg) scaleX(-1)}
+/* ícone do lado, no canto de fora (beirada da tela) */
+.cb-lado{position:absolute;bottom:-.6cqw;width:3.6cqw;height:3.6cqw;border-radius:50%;display:grid;place-items:center;font-size:2.2cqw;background:#0d0b14;border:.35cqw solid}
+.cb-pessoa.a .cb-lado{left:-.8cqw;border-color:#39c47a}
+.cb-pessoa.b .cb-lado{right:-.8cqw;border-color:#ff5a4f}
+.cb-nome{max-width:24cqw;font-size:2.1cqw;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 .25cqw 0 rgba(0,0,0,.75),0 0 1.4cqw rgba(0,0,0,.8)}
+.cb-pessoa.a .cb-nome{align-self:flex-start}.cb-pessoa.b .cb-nome{align-self:flex-end}
+.cb-pessoa.hop .cb-foto{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
 .v-quadro.contando .v-bolas{transform:translateY(-1.4cqw)}
 .v-espera{position:absolute;left:0;right:0;bottom:.5cqw;text-align:center;font-size:2.2cqw;font-weight:600;opacity:.8}
 .v-res{display:flex;flex-direction:column;align-items:center;gap:.7cqw;padding:1cqw 0 2cqw;text-align:center;background:radial-gradient(ellipse 60% 70% at 50% 50%,rgba(10,8,16,.62),rgba(10,8,16,.3) 60%,transparent 80%);text-shadow:0 .3cqw 0 rgba(0,0,0,.7),0 0 2.4cqw rgba(0,0,0,.85);animation:popUp .4s cubic-bezier(.2,1.5,.4,1)}
@@ -172,7 +203,6 @@ body.foco .app{padding-block:8px}
 .vr-risco.morte{color:#ff6a5a;animation:pisca .6s infinite alternate}
 .vr-itens{display:flex;flex-wrap:wrap;justify-content:center;gap:.4cqw 2cqw;font-size:2.8cqw;font-weight:600;max-width:86cqw}
 .vr-itens span{white-space:nowrap}
-.vr-limpa{font-size:3cqw;font-weight:700;color:var(--ouro)}
 
 /* Herói caído: ocupa o lugar da votação (no topo), o herói fica visível no meio */
 .caido{display:flex;flex-direction:column;align-items:center;gap:.6cqw;padding:2cqw 3cqw;border-radius:3.4cqw;background:rgba(40,6,10,.86);border:.6cqw solid #ff4a3a;box-shadow:0 0 6cqw rgba(255,30,30,.5);text-align:center;animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
@@ -197,6 +227,8 @@ body.foco .app{padding-block:8px}
 .g-b i.on{background:var(--c);box-shadow:inset 0 .5cqw 0 rgba(255,255,255,.35),inset 0 -.5cqw 0 rgba(0,0,0,.25),0 .3cqw 0 rgba(0,0,0,.45)}
 @media (prefers-reduced-motion:reduce){.grafico{animation:none}}
 .banner{position:absolute;left:4cqw;right:4cqw;top:63cqw;display:flex;flex-direction:column;align-items:center;gap:.4cqw;text-align:center;pointer-events:none}
+.banner{transition:top .3s}
+.banner.baixo{top:82cqw}   /* com o resultado da votação na tela, o aviso desce pra não cobrir */
 .banner .bt{font-size:6cqw;font-weight:700;line-height:1.05;text-shadow:0 .5cqw 0 rgba(0,0,0,.65),0 0 3cqw rgba(0,0,0,.7);animation:bannerIn .45s cubic-bezier(.2,1.6,.4,1)}
 .banner .bs{font-size:3.1cqw;font-weight:600;text-shadow:0 .3cqw 0 rgba(0,0,0,.75),0 0 2cqw rgba(0,0,0,.7);opacity:.95}
 .banner.perigo .bt{color:#ff6a5a}
@@ -226,18 +258,7 @@ body.foco .app{padding-block:8px}
 .leg{display:inline-flex;align-items:center;gap:.7cqw;padding:.5cqw 1.8cqw;border-radius:99px;background:var(--card);border:.3cqw solid var(--lado);font-size:2.5cqw;font-weight:600;white-space:nowrap}
 .leg.ajuda{--lado:rgba(57,196,122,.7)}
 .leg.atrapalha{--lado:rgba(255,90,79,.7)}
-.ranks{display:grid;grid-template-columns:1fr 1fr;gap:1.4cqw}
-.rk{padding:1.2cqw 1.6cqw;display:flex;flex-direction:column;gap:.6cqw;min-height:15cqw;box-sizing:border-box}
-.rk h4{margin:0;font-size:2.6cqw;font-weight:700;letter-spacing:.03em}
-.rk.ajuda h4{color:#9dffb0}
-.rk.atrapalha h4{color:#ff9a90}
-.rk-l{display:flex;align-items:center;gap:1.1cqw;font-size:2.6cqw;min-width:0}
-.rk-l img,.rk-l .ph{width:4.2cqw;height:4.2cqw;border-radius:50%;object-fit:cover;flex:none;background:#2a2238}
-.rk-l span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
-.rk-l em{font-style:normal;font-size:2.3cqw;opacity:.75;font-variant-numeric:tabular-nums}
-.rk-vazio{font-size:2.4cqw;opacity:.6}
-.rk-l.hop{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
-.bottom.escolhendo .legenda,.bottom.escolhendo .ranks{display:none}
+.bottom.escolhendo .legenda{display:none}
 
 /* Escolha de habilidade (roguelike): A, B ou C no chat */
 .escolha{padding:1.4cqw 1.8cqw 1.6cqw;display:flex;flex-direction:column;gap:1cqw;background:rgba(20,14,34,.9);border-color:rgba(255,210,63,.55);box-shadow:0 0 4cqw rgba(255,210,63,.18),0 .8cqw 2.4cqw rgba(0,0,0,.5);animation:popUp .4s cubic-bezier(.2,1.5,.4,1)}
@@ -346,9 +367,10 @@ body.foco .app{padding-block:8px}
             <span title="Curtidas até o próximo suprimento">❤️ <i class="mini lk"><i id="h-likes"></i></i></span>
           </div><div class="grupo eco" aria-hidden="true"></div></div></div>
           <div class="status letreiro" id="h-linha-status"><div class="trilho"><div class="grupo" id="h-status"></div><div class="grupo eco" aria-hidden="true"></div></div></div>
-          <div class="voto modo-voto" id="h-voto" hidden>
+          <div class="voto modo-cabo" id="h-voto" hidden>
             <div class="v-quadro card" id="v-quadro"><div class="v-info" id="v-info"></div><div class="v-bolas" id="v-bolas" hidden></div><div class="v-espera" id="v-espera" hidden>⏳ contando os votos da live · ainda dá tempo</div></div>
-            <div class="v-relogio" id="v-relogio"><i id="v-barra"></i></div>
+            <div class="cb-pessoa a" id="cb-pa"></div><div class="cb-pessoa b" id="cb-pb"></div>
+            <div class="v-relogio" id="v-relogio"><i id="v-barra"></i><div class="cabo" id="v-cabo"><i class="cb-a" id="cb-a"></i><b class="cb-pa" id="cb-pcta"></b><b class="cb-pb" id="cb-pctb"></b><i class="cb-no" id="cb-no"></i></div></div>
             <div class="v-res" id="v-res" hidden></div>
           </div>
           <div class="caido" id="h-caido" hidden><b id="c-tit">💀 HERÓI CAÍDO!</b><span class="cd" id="c-cd">8</span><span class="ct" id="c-txt"></span><small id="c-sub"></small></div>
@@ -368,10 +390,6 @@ body.foco .app{padding-block:8px}
             <div class="e-ops" id="e-ops"></div>
           </div>
           <div class="legenda" id="h-legenda"></div>
-          <div class="ranks">
-            <div class="rk ajuda card"><h4>🛡️ AJUDARAM</h4><div id="rk-ajuda"></div></div>
-            <div class="rk atrapalha card"><h4>😈 ATRAPALHARAM</h4><div id="rk-atrapalha"></div></div>
-          </div>
         </div>
 
         <div class="hist" id="h-hist" hidden><small id="hs-cap"></small><b id="hs-tit"></b><p id="hs-txt"></p><em id="hs-ass"></em><div class="barra"><i id="hs-bar"></i></div></div>
