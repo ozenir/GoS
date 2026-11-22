@@ -266,7 +266,6 @@ body.foco .app{padding-block:8px}
 .leg{display:inline-flex;align-items:center;gap:.7cqw;padding:.5cqw 1.8cqw;border-radius:99px;background:var(--card);border:.3cqw solid var(--lado);font-size:2.5cqw;font-weight:600;white-space:nowrap}
 .leg.ajuda{--lado:rgba(57,196,122,.7)}
 .leg.atrapalha{--lado:rgba(255,90,79,.7)}
-.bottom.escolhendo .legenda{display:none}
 
 /* Escolha de habilidade (roguelike): A, B ou C no chat */
 .escolha{padding:1.4cqw 1.8cqw 1.6cqw;display:flex;flex-direction:column;gap:1cqw;background:rgba(20,14,34,.9);border-color:rgba(255,210,63,.55);box-shadow:0 0 4cqw rgba(255,210,63,.18),0 .8cqw 2.4cqw rgba(0,0,0,.5);animation:popUp .4s cubic-bezier(.2,1.5,.4,1)}
@@ -392,12 +391,13 @@ body.foco .app{padding-block:8px}
 
         <div class="bottom" id="h-bottom">
           <div class="toasts" id="h-toasts"></div>
+          <!-- letreiro dos presentes: entre as notificações (em cima) e a escolha de habilidade (embaixo) -->
+          <div class="legenda letreiro" id="h-leg-linha"><div class="trilho"><div class="grupo" id="h-legenda"></div><div class="grupo eco" aria-hidden="true"></div></div></div>
           <div class="escolha card" id="h-escolha" hidden>
             <div class="e-top"><div id="e-titulo">⭐ NÍVEL 2 · ESCOLHAM</div><span id="e-sub">digite A, B ou C</span></div>
             <div class="v-tempo" id="e-tempo"><i id="e-barra"></i></div>
             <div class="e-ops" id="e-ops"></div>
           </div>
-          <div class="legenda letreiro" id="h-leg-linha"><div class="trilho"><div class="grupo" id="h-legenda"></div><div class="grupo eco" aria-hidden="true"></div></div></div>
         </div>
 
         <div class="hist" id="h-hist" hidden><small id="hs-cap"></small><b id="hs-tit"></b><p id="hs-txt"></p><em id="hs-ass"></em><div class="barra"><i id="hs-bar"></i></div></div>
