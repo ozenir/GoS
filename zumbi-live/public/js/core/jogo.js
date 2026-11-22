@@ -65,6 +65,9 @@ const CHAVES_CAMINHO = { caminho_perigoso_porcento: 'perigoso', caminho_livre_po
 
 let proxId = 1;
 
+// Quantas curas/kits cabem na mochila do herói (guardados quando chegam com a vida alta)
+export const MOCHILA_MAX = 5;
+
 // Segundo fôlego do começo (ver segundoFolego)
 export const FOLEGO = { ateNivel: 10, limite: 0.2, cura: 0.2, invencivel: 3, raio: 4, empurra: 7, atordoa: 1.5, recarga: 50 };
 
@@ -132,7 +135,7 @@ export class Jogo {
       colete: 0, tiroCd: 0, corpoCd: 0, invT: 0, invQ: 0,   // invT: invencível por segundos; invQ: por quarteirões (helicóptero)
       nivel: 1, xp: 0, fx: DIRS[dir][0], fy: DIRS[dir][1], andando: false, mira: null, animT: 0,
       parado: 0, ultimaPos: { x: start.x, y: start.y }, vidaBaixa: false,
-      mochila: [],     // kits que chegaram com a vida alta: ele usa sozinho quando precisar
+      mochila: [],     // curas e kits que chegaram com a vida alta: ele usa sozinho quando precisar
       habs: {}, passivas: {}, treino: 0, habT: {}   // habilidades escolhidas pelo chat (habilidades.js)
     };
     this.praia = null;            // praia em andamento (praia.js)
@@ -286,13 +289,26 @@ export class Jogo {
     this.emit('levantou', { x: h.x, y: h.y, nick: quem?.nick || null, vez: this.levantadas });
   }
 
-  // Mochila: kits de presente que chegaram com a vida alta ficam guardados (até 3)
-  guardarNaMochila(valor, quem) {
+  // Mochila: curas e kits que chegaram com a vida alta ficam guardados (até MOCHILA_MAX) em vez de
+  // serem gastos à toa. tipo: 'kit' ou 'cura' (só muda o texto). item = pegou do chão (sem faixa na tela).
+  guardarNaMochila(valor, quem, tipo = 'kit', item = false) {
     const h = this.hero;
-    if (h.mochila.length >= 3) return false;
-    h.mochila.push({ valor, quem });
-    this.emit('mochila', { qtd: h.mochila.length, nick: quem?.nick || null, x: h.x, y: h.y });
+    if (h.mochila.length >= MOCHILA_MAX) return false;
+    h.mochila.push({ valor, quem, tipo });
+    this.emit('mochila', { qtd: h.mochila.length, nick: quem?.nick || null, tipo, item, x: h.x, y: h.y });
     return true;
+  }
+
+  // A cura ia ser desperdiçada? (mais da metade dela passaria da vida cheia) → vale guardar na mochila
+  curaSobrando(pct) {
+    const h = this.hero;
+    return h.vidaMax - h.vida < valorCura(h, pct) / 2;
+  }
+
+  // Cura pega do chão: com a vida alta vai pra mochila; se não couber (ou se precisa), usa na hora
+  curarOuGuardar(pct, quem, tipo) {
+    if (this.curaSobrando(pct) && this.guardarNaMochila(pct, quem, tipo, true)) return;
+    this.curar(pct, quem, true);
   }
 
   // Usa um kit da mochila. caindo = a vida acabou de zerar (o kit segura o herói de pé).
@@ -302,7 +318,7 @@ export class Jogo {
     const k = h.mochila.shift();
     if (caindo) h.invT = Math.max(h.invT, 1.5);
     this.curar(k.valor + (caindo ? 10 : 0), k.quem, true, caindo);   // caindo: salva mesmo no vidro
-    this.emit('mochila_usou', { nick: k.quem?.nick || null, caindo, x: h.x, y: h.y, resta: h.mochila.length });
+    this.emit('mochila_usou', { nick: k.quem?.nick || null, tipo: k.tipo || 'kit', caindo, x: h.x, y: h.y, resta: h.mochila.length });
     return true;
   }
 
@@ -2120,8 +2136,8 @@ export class Jogo {
     const h = this.hero;
     const quem = it.quem;
     switch (it.kind) {
-      case 'kit': this.curar(it.data.valor || 35, quem, true); break;
-      case 'cura_pequena': this.curar(18, quem, true); break;
+      case 'kit': this.curarOuGuardar(it.data.valor || 35, quem, 'kit'); break;
+      case 'cura_pequena': this.curarOuGuardar(18, quem, 'cura'); break;
       case 'municao': this.darMunicao(1, quem, true); break;
       case 'colete': this.darColete(4, quem, true); break;
       case 'suprimento': if (h.vida / h.vidaMax < 0.7) this.curar(30, quem, true); else this.darMunicao(1, quem, true); break;
@@ -2218,10 +2234,13 @@ export class Jogo {
   // Mensagem em cima do herói dizendo no que o presente virou
   adaptado(texto) { const h = this.hero; this.emit('adaptado', { texto, x: h.x, y: h.y }); }
 
-  // Cura de presente: o que passar da vida cheia vira blindado
-  curarPresente(pct, quem) {
+  // Cura de presente: com a vida alta vai pra mochila (usa quando precisar);
+  // mochila cheia ou vida mais baixa: cura, e o que passar da vida cheia vira blindado.
+  // naMochila = false: não tenta a mochila (o kit que já não coube nela)
+  curarPresente(pct, quem, naMochila = true) {
     const h = this.hero;
     if (this.fase !== 'jogo') return;
+    if (naMochila && this.curaSobrando(pct) && this.guardarNaMochila(pct, quem, 'cura')) return;
     const falta = h.vidaMax - h.vida, sobra = valorCura(h, pct) - falta;
     if (falta > 0.5) this.curar(pct, quem);
     if (sobra > h.vidaMax * 0.05) {
@@ -2237,7 +2256,7 @@ export class Jogo {
     for (let i = 0; i < qtd; i++) {
       const h = this.hero;
       if (h.vida / h.vidaMax < 0.6) this.curar(valor, quem, true);
-      else if (!this.guardarNaMochila(valor, quem)) this.curarPresente(valor, quem);
+      else if (!this.guardarNaMochila(valor, quem)) this.curarPresente(valor, quem, false);
     }
   }
 

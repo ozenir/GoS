@@ -274,9 +274,10 @@ Quando falta alguma categoria, a carta é completada com outra. Cada habilidade 
 
 | Presente chega quando... | Vira |
 |---|---|
-| cura com a vida cheia | o que sobra vira 🛡️ **blindado** (menos dano por 1 ou 2 quarteirões) |
+| cura com a vida alta (mais da metade ia sobrar) | vai pra 💼 **mochila** e fica guardada. Mochila cheia: o que sobra vira 🛡️ **blindado** (menos dano por 1 ou 2 quarteirões) |
 | kit com a vida baixa (menos de 60%) | cura **na hora**, direto no herói |
-| kit com a vida alta | vai pra 💼 **mochila** (até 3). Ele usa sozinho quando a vida cai pra menos de 35%, e o kit da mochila **segura o herói de pé** quando a vida zera |
+| kit com a vida alta | vai pra 💼 **mochila** (até 5 curas e kits). Ele usa sozinho quando a vida cai pra menos de 35%, e o que está na mochila **segura o herói de pé** quando a vida zera |
+| cura ou kit **pego do chão** com a vida alta | também vai pra 💼 **mochila** (aparece "💼 +cura guardada" em cima dele), em vez de ser gasto à toa |
 | munição pra quem luta de perto (sem arma de fogo) | 😤 **fúria** |
 | colete com o colete cheio | 🛡️ **blindado** |
 
@@ -493,7 +494,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.31.4)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.32.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.

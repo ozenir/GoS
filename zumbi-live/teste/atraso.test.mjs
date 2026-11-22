@@ -2,7 +2,7 @@
 // Rodar:  node teste/atraso.test.mjs
 import assert from 'node:assert/strict';
 import { Votacao } from '../public/js/core/votacao.js';
-import { Jogo } from '../public/js/core/jogo.js';
+import { Jogo, MOCHILA_MAX } from '../public/js/core/jogo.js';
 
 let ok = 0;
 const teste = (nome, fn) => { fn(); ok++; console.log('  ✔', nome); };
@@ -134,11 +134,46 @@ teste('o que estava agendado espera o herói levantar', () => {
   assert.ok(rodou);
 });
 
-teste('cura com vida cheia vira blindado', () => {
+teste('cura de presente com vida cheia vai pra mochila (não é gasta à toa)', () => {
   const j = jogo();
   presente(j, 'cura', 'Ana', { valor: 20 });
+  assert.equal(j.hero.mochila.length, 1);
+  assert.equal(j.hero.mochila[0].tipo, 'cura');
+  assert.ok(!j.hero.estados.tem('blindado'));
+  assert.ok(j.drainEvents().some(e => e.type === 'mochila' && !e.item));
+});
+
+teste('cura com vida cheia e mochila cheia vira blindado', () => {
+  const j = jogo();
+  j.hero.mochila = Array.from({ length: MOCHILA_MAX }, () => ({ valor: 18, quem: null, tipo: 'cura' }));
+  presente(j, 'cura', 'Ana', { valor: 20 });
+  assert.equal(j.hero.mochila.length, MOCHILA_MAX);
   assert.ok(j.hero.estados.tem('blindado'));
   assert.ok(j.drainEvents().some(e => e.type === 'adaptado'));
+});
+
+teste('cura pega do chão com vida cheia vai pra mochila; com pouca vida cura na hora', () => {
+  const j = jogo();
+  j.pegar({ kind: 'cura_pequena', data: {}, quem: null, x: j.hero.x, y: j.hero.y });
+  j.pegar({ kind: 'kit', data: { valor: 35 }, quem: null, x: j.hero.x, y: j.hero.y });
+  assert.equal(j.hero.mochila.length, 2);
+  assert.equal(j.hero.vida, j.hero.vidaMax);
+  assert.ok(j.drainEvents().some(e => e.type === 'mochila' && e.item));
+  j.hero.mochila = [];
+  j.hero.vida = j.hero.vidaMax * 0.5;
+  j.pegar({ kind: 'cura_pequena', data: {}, quem: null, x: j.hero.x, y: j.hero.y });
+  assert.equal(j.hero.mochila.length, 0);
+  assert.ok(j.hero.vida > j.hero.vidaMax * 0.6);
+});
+
+teste('cura guardada é usada sozinha quando a vida cai', () => {
+  const j = jogo();
+  j.pegar({ kind: 'cura_pequena', data: {}, quem: null, x: j.hero.x, y: j.hero.y });
+  assert.equal(j.hero.mochila.length, 1);
+  j.hero.vida = j.hero.vidaMax * 0.3;
+  passar(j, 0.1);
+  assert.equal(j.hero.mochila.length, 0);
+  assert.ok(j.hero.vida > j.hero.vidaMax * 0.4);
 });
 
 teste('cura com pouca vida cura normal (sem blindado)', () => {
@@ -177,10 +212,11 @@ teste('kit na mochila segura o herói quando a vida zera (nem chega a cair)', ()
   assert.equal(j.fase, 'jogo');
 });
 
-teste('mochila guarda no máximo 3 kits (o resto cura ou blinda)', () => {
+teste(`mochila guarda no máximo ${MOCHILA_MAX} (o resto cura ou blinda)`, () => {
   const j = jogo();
-  j.handle({ type: 'presente', regra: { efeito: 'kit', valor: 25 }, count: 5, id: 'a', nick: 'Ana', coins: 1 });
-  assert.equal(j.hero.mochila.length, 3);
+  for (let i = 0; i < 3; i++) j.handle({ type: 'presente', regra: { efeito: 'kit', valor: 25 }, count: 4, id: 'a', nick: 'Ana', coins: 1 });
+  assert.equal(j.hero.mochila.length, MOCHILA_MAX);
+  assert.ok(j.hero.estados.tem('blindado'));
 });
 
 teste('munição pra quem luta de perto vira fúria', () => {

@@ -209,8 +209,8 @@ export class Hud {
       case 'recorde': this.banner('🏆 NOVO RECORDE!', `${e.quarteiroes} quarteirões`, 'ouro', 2.6); break;
       case 'entrou_predio': this.banner(`${e.emoji} ${e.nome.toUpperCase()}`, 'pegue o que der e saia pelos fundos', '', 2.2); break;
       case 'levantou': this.banner(`🙌 ${e.nick ? e.nick.toUpperCase() : 'ALGUÉM'} LEVANTOU O HERÓI!`, e.vez > 1 ? `de pé pela ${e.vez}ª vez` : 'de volta à luta', 'bom', 2.6); break;
-      case 'mochila': this.banner('💼 KIT NA MOCHILA', `${e.nick ? 'de ' + e.nick + ' · ' : ''}ele usa quando precisar`, 'bom', 1.8); break;
-      case 'mochila_usou': if (e.caindo) this.banner('💼 A MOCHILA SALVOU!', e.nick ? `kit de ${e.nick}` : '', 'bom', 2.4); break;
+      case 'mochila': if (!e.item) this.banner(e.tipo === 'cura' ? '💼 CURA GUARDADA' : '💼 KIT NA MOCHILA', `${e.nick ? 'de ' + e.nick + ' · ' : ''}ele usa quando precisar`, 'bom', 1.8); break;   // pegou do chão: só o texto em cima dele
+      case 'mochila_usou': if (e.caindo) this.banner('💼 A MOCHILA SALVOU!', e.nick ? `${e.tipo === 'cura' ? 'cura' : 'kit'} de ${e.nick}` : '', 'bom', 2.4); break;
       case 'vida_baixa': this.banner('⚠️ VIDA BAIXA!', 'mande 🌹 ou 🍩 pra salvar o herói', 'perigo', 2.2); break;
       case 'decisao': this.resultado = { ...e, ate: performance.now() + RESULTADO_SEG * 1000, chave: `${e.id}:${performance.now()}` }; this.cache.vmodo = null; break;
       case 'cabo_virou': if (e.lado) this.banner(e.lado === 'ajuda' ? '🛡️ AJUDANTES NA FRENTE!' : '😈 ATRAPALHANTES NA FRENTE!', e.lado === 'ajuda' ? `${e.ajuda || 'o top ajudante'} puxou o cabo: sorte, suprimentos nos cadáveres` : `${e.atrapalha || 'o top atrapalhante'} puxou o cabo: mais zumbis e mais fortes`, e.lado === 'ajuda' ? 'bom' : 'perigo', 2.6); break;
@@ -324,7 +324,7 @@ export class Hud {
     this.set('h-colete', h.colete > 0 ? `🛡️${h.colete}` : '');
     const C = CLASSES[h.classe];
     this.set('h-emoji', C.emoji);
-    // herói com nome de espectador: a foto dele aparece no lugar do emoji (o emoji da classe vira um selinho)
+    // herói com nome de espectador: a foto dele aparece no lugar do emoji (sem selinho da classe: só a foto e o nível)
     const foto = urlOk(h.viewer?.avatar) ? h.viewer.avatar : '';
     if (this.cache['h-foto'] !== foto) {
       this.cache['h-foto'] = foto;
@@ -383,7 +383,7 @@ export class Hud {
     if (g.limpando && g.decisao && g.fase === 'jogo') st.push(`<span class="chip mal">🧟 limpe a área · faltam ${g.limpando.restam ?? '?'}</span>`);
     if (g.cabo?.lado === 'ajuda' && g.fase === 'jogo') st.push(`<span class="chip ok" title="O top ajudante está ganhando o cabo de guerra">🍀 sorte · suprimento nos cadáveres</span>`);
     if (g.cabo?.lado === 'atrapalha' && g.fase === 'jogo') st.push(`<span class="chip mal" title="O top atrapalhante está ganhando o cabo de guerra">😈 zumbis +${Math.round(CABO.forcaMax * g.cabo.forca * 100)}% fortes</span>`);
-    if (h.mochila?.length) st.push(`<span class="chip ok" title="Kits guardados: ele usa sozinho quando a vida cair">💼 mochila ${h.mochila.length}</span>`);
+    if (h.mochila?.length) st.push(`<span class="chip ok" title="Curas e kits guardados: ele usa sozinho quando a vida cair">💼 mochila ${h.mochila.length}</span>`);
     if (h.invQ > 0) st.push(`<span class="chip ok" title="Quarteirões que ainda faltam">✨ invencível 📍${h.invQ}</span>`);
     else if (h.invT > 0) st.push(`<span class="chip ok">✨ invencível ${Math.ceil(h.invT)}s</span>`);
     // status do herói (status.js): verde = bom, vermelho = ruim

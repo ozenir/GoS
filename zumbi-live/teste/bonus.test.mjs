@@ -53,6 +53,7 @@ teste('munição pra quem luta de perto: fúria pelos mesmos quarteirões', () =
 
 teste('blindado do presente adaptado conta quarteirões', () => {
   const j = jogo();
+  j.hero.mochila = Array.from({ length: 5 }, () => ({ valor: 18, quem: null, tipo: 'cura' }));   // mochila cheia: a cura que sobra vira blindado
   presente(j, 'cura', { valor: 60 });
   assert.ok(j.hero.estados.lista.get('blindado').q >= 1);
 });
