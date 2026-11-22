@@ -225,7 +225,8 @@ body.foco .app{padding-block:8px}
    moldura (só a sigla e os blocos); blocos em paralelogramo de cantos arredondados */
 .acima-leg{display:flex;align-items:flex-end;justify-content:space-between;gap:1.6cqw;min-width:0}
 .g-pill{flex:none;font:600 2.3cqw var(--font-display);padding:.6cqw 1.6cqw;background:rgba(16,13,24,.55);border:.35cqw solid rgba(255,255,255,.22);border-radius:.6cqw;color:#fff;box-shadow:0 0 0 .3cqw rgba(10,8,16,.5)}
-.grafico{flex:none;width:31cqw;display:flex;flex-direction:column;gap:1.5cqw;animation:gIn .3s steps(4)}
+/* gráfico do G: camada acima de todo o HUD (z 15); só o tomate no vidro (#sujeira, z 20) fica por cima */
+.grafico{position:relative;z-index:15;flex:none;width:31cqw;display:flex;flex-direction:column;gap:1.5cqw;animation:gIn .3s steps(4)}
 @keyframes gIn{from{opacity:0;transform:translateX(6cqw)}to{opacity:1;transform:none}}
 .g-l{display:flex;flex-direction:column;gap:.5cqw}
 .g-l b{font-size:2.2cqw;font-weight:700;letter-spacing:.14em;line-height:1;padding-left:.55cqw;color:#fff;text-shadow:0 .3cqw 0 rgba(0,0,0,.75),0 0 1.6cqw rgba(0,0,0,.6)}
