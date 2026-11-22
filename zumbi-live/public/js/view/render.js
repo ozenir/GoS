@@ -490,6 +490,7 @@ export class Render {
     for (const it of g.itens) { const [u, v] = this.view(it.x, it.y); lista.push({ key: u + v, tipo: 'item', it }); }
     for (const z of g.zumbis) { if (z.morto) continue; const [u, v] = this.view(z.x, z.y); lista.push({ key: u + v, tipo: 'zumbi', z }); }
     for (const a of g.aliados) { const [u, v] = this.view(a.x, a.y); lista.push({ key: u + v, tipo: 'aliado', a }); }
+    for (const t of g.tomates || []) { const [u, v] = this.view(t.x, t.y); lista.push({ key: u + v + 0.3, tipo: 'tomate', t }); }
     for (const p of g.paraquedistas || []) { const [u, v] = this.view(p.x, p.y); lista.push({ key: u + v + 0.5, tipo: 'paraquedista', p }); }
     for (const c of g.carros || []) {
       // retângulo do carro (2 casas no sentido em que anda, 1 de largura), igual aos carros parados
@@ -539,6 +540,7 @@ export class Render {
       else if (o.tipo === 'aliado') this.desenharAliado(o.a);
       else if (o.tipo === 'conversivel') this.desenharConversivel(o);
       else if (o.tipo === 'paraquedista') this.desenharParaquedista(o.p);
+      else if (o.tipo === 'tomate') this.desenharTomate(o.t);
       else if (o.tipo === 'figurante') this.desenharFigurante(o.f, g);
       else if (o.tipo === 'heroi') this.desenharHeroi(g);
     }
@@ -606,6 +608,12 @@ export class Render {
     const [sx, sy] = this.pessoa(spr, z.x, z.y, esc, 1, Math.max(0.05, nasc));
     if (z.fa?.escudo > 0 && nasc >= 1) { this.ctx.globalAlpha = 0.18 + 0.08 * Math.sin(this.t * 8); disc(this.ctx, sx, sy - 10, 13, '#bff8ff', 0.9); this.ctx.globalAlpha = 1; }
     if (z.flash > 0.04) { this.ctx.globalAlpha = 0.6; this.ctx.drawImage(this.branco(spr), sx - S.PE_X * esc, sy - S.PE_Y * esc, S.SPR_W * esc, S.SPR_H * esc); this.ctx.globalAlpha = 1; }
+    // zumbi do tomate: um tomate na mão, balançando, pronto pra jogar
+    if (z.tipo === 'tomateiro' && nasc >= 1 && (z.tomateCd ?? 0) < ZUMBIS.tomateiro.tomate.recarga - 0.8) {
+      const b = Math.round(Math.sin(this.t * 5 + z.id));
+      this.ctx.fillStyle = '#d7261c'; this.ctx.fillRect(sx + 3, sy - 13 + b, 3, 3);
+      this.ctx.fillStyle = '#3f7f2c'; this.ctx.fillRect(sx + 4, sy - 14 + b, 1, 1);
+    }
     if (z.tipo === 'explosivo') {
       const rapido = z.pavio >= 0;
       if (Math.floor(this.t * (rapido ? 12 : 3)) % 2) { this.ctx.fillStyle = '#ff3a2a'; this.ctx.fillRect(sx - 1, sy - 18, 3, 2); }
@@ -817,6 +825,20 @@ export class Render {
       disc(ctx, fx, fy, 3, '#fff3a0', 0.6);
     }
     if (Math.random() < 0.7) this.particula({ x: c.x - c.dx * 1.1 + (Math.random() - 0.5) * 0.6, y: c.y - c.dy * 1.1 + (Math.random() - 0.5) * 0.6, z: 0.1, vz: 0.6, life: 0.5, cor: '#8a8070', tam: 2 });
+  }
+
+  // Tomate voando: sombra no chão e o tomate no alto, girando
+  desenharTomate(t) {
+    const ctx = this.ctx;
+    const [sx, sy] = this.tela(t.x, t.y);
+    const z = Math.round(t.alt * 14);
+    const sh = S.sombra(4);
+    ctx.globalAlpha = 0.6; ctx.drawImage(sh, sx - Math.floor(sh.width / 2), sy - 2); ctx.globalAlpha = 1;
+    const y = sy - 8 - z, gira = Math.floor(this.t * 12) % 4;
+    ctx.fillStyle = '#8e1410'; ctx.fillRect(sx - 2, y - 1, 5, 4); ctx.fillRect(sx - 1, y - 2, 3, 6);
+    ctx.fillStyle = '#d7261c'; ctx.fillRect(sx - 1, y - 1, 3, 4); ctx.fillRect(sx - 2, y, 5, 2);
+    ctx.fillStyle = '#ff7a5c'; ctx.fillRect(sx - 1 + (gira % 2), y - 1, 1, 1);
+    ctx.fillStyle = '#3f7f2c'; ctx.fillRect(sx - 1 + (gira > 1 ? 1 : 0), y - 2, 2, 1);
   }
 
   // Zumbi descendo de paraquedas: sombra no chão crescendo, o zumbi balançando e o paraquedas listrado

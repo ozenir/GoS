@@ -11,6 +11,10 @@ export const ZUMBIS = {
   explosivo: { nome: 'Explosivo',    vida: 40,   vel: 0.54, dano: 0,  cd: 1.0, raio: 0.42, xp: 3,  alcance: 0.9,  ataque: { tipo: 'explosao' } },
   chefao:    { nome: 'Chefão',       vida: 480,  vel: 0.55, dano: 11, cd: 1.3, raio: 0.6,  xp: 25, alcance: 1.05, chefe: true, ataque: { tipo: 'impacto', status: [{ id: 'atordoado', chance: 0.2, duracao: 0.6 }] } },
   rei:       { nome: 'Rei Zumbi',    vida: 1400, vel: 0.48, dano: 16, cd: 1.5, raio: 0.85, xp: 60, alcance: 1.35, chefe: true, ataque: { tipo: 'impacto', status: [{ id: 'atordoado', chance: 0.2, duracao: 0.7 }, { id: 'lento', chance: 0.3 }] } },
+  // Zumbi do tomate: aparece um por vez (ameaca.js → TOMATEIRO), fica de longe e joga tomate. O tomate sempre
+  // acerta: dano pequeno e suja a tela da live (view/sujeira.js). tomate = { min, max: distância que ele gosta, recarga }
+  tomateiro: { nome: 'Zumbi do tomate', vida: 45, vel: 0.5,  dano: 5,  cd: 1.0, raio: 0.32, xp: 4,  alcance: 0.62,
+               tomate: { min: 4.5, max: 7.5, recarga: 5, voo: 0.9 }, ataque: { tipo: 'impacto' } },
   // Colosso: o chefão que aparece depois de uma doação (recompensas.js). A vida vem de lá (uns 10 mil).
   colosso:   { nome: 'Colosso',      vida: 10000, vel: 0.5,  dano: 30, cd: 1.4, raio: 0.8,  xp: 120, alcance: 1.3, chefe: true, ataque: { tipo: 'impacto' } },   // não atordoa nem deixa o herói lento
   exheroi:   { nome: 'Ex-herói',     vida: 300,  vel: 0.78,  dano: 9,  cd: 1.0, raio: 0.45, xp: 15, alcance: 0.8,  chefe: true, ataque: { tipo: 'mordida', status: [{ id: 'sangramento', chance: 0.25 }, { id: 'infectado', chance: 0.1 }] } },

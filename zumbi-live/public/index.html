@@ -25,6 +25,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size
 .frame{position:relative;border-radius:20px;overflow:hidden;background:#1a1820;box-shadow:0 20px 50px -20px rgba(0,0,0,.8),0 0 0 1px var(--line);container-type:inline-size}
 .frame canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 #game{image-rendering:pixelated;image-rendering:crisp-edges}
+#sujeira{image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none;z-index:20}   /* tomate no vidro: por cima de tudo */
 
 .controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-height:34vh;overflow:auto}
 .grupo{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;align-items:center}
@@ -270,6 +271,7 @@ body.foco .app{padding-block:8px}
     <div class="frame" id="frame">
       <canvas id="game" width="216" height="384" aria-label="Herói contra Hordas"></canvas>
       <canvas id="texto"></canvas>
+      <canvas id="sujeira" width="216" height="384" aria-hidden="true"></canvas>
       <div class="hud">
         <div class="top">
           <div class="head card">

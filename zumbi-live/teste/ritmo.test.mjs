@@ -2,7 +2,7 @@
 // Rodar:  node teste/ritmo.test.mjs
 import assert from 'node:assert/strict';
 import { Jogo, FOLEGO } from '../public/js/core/jogo.js';
-import { AMEACA, multInicio, forcaInicio, cotaQuadra, tamanhoHordaQuadra, pesosTipos, NIVEL_INIMIGOS_NOVOS } from '../public/js/core/ameaca.js';
+import { AMEACA, multInicio, forcaInicio, cotaQuadra, tamanhoHordaQuadra, pesosTipos, NIVEL_INIMIGOS_NOVOS, TOMATEIRO } from '../public/js/core/ameaca.js';
 import { sortearCaminho } from '../public/js/core/caminhos.js';
 import { statsZumbi } from '../public/js/core/dano.js';
 import { ZUMBIS, xpParaNivel } from '../public/js/core/dados.js';
@@ -117,6 +117,39 @@ teste('segundo fôlego: antes do nível 10, com a vida quase no fim, empurra a h
   k.hero.invT = 0; k.hero.attr.addMod({ id: 'sem-esquiva', attr: 'esquiva', mult: 0 });
   k.ferirHeroi(k.hero.vida + 50, null, 'teste', 'sangramento');
   assert.ok(k.caido, `no nível ${FOLEGO.ateNivel} não tem mais`);
+});
+
+teste(`zumbi do tomate: só a partir do nível ${TOMATEIRO.desdeNivel} e um por vez`, () => {
+  const conta = nivel => {
+    const j = jogo(nivel); j.cotaRua = 0; j.spawnT = 999;
+    let max = 0;
+    // (o nível é fixado a cada quarteirão: matando zumbi ele subiria)
+    for (let q = 0; q < 30; q++) { j.hero.nivel = nivel; j.andouQuarteirao(1); passar(j, 3.5, () => { j.hero.vida = j.hero.vidaMax; }); max = Math.max(max, j.zumbis.filter(z => !z.morto && z.tipo === 'tomateiro').length); }
+    return max;
+  };
+  assert.equal(conta(TOMATEIRO.desdeNivel - 1), 0, 'antes do nível: nenhum');
+  assert.equal(conta(TOMATEIRO.desdeNivel), 1, 'depois: aparece, mas só um por vez');
+});
+
+teste('zumbi do tomate: fica de longe e o tomate sempre acerta (dano e tela suja)', () => {
+  const j = jogo(5);
+  j.hero.invT = 0; j.cotaRua = 0; j.spawnT = 999; j.zumbis = [];
+  const z = j.criarZumbi('tomateiro', j.hero.x + 2, j.hero.y, null, { nascendo: 0 });
+  z.tomateCd = 0;
+  let tomatadas = 0;
+  const v = j.hero.vida;
+  passar(j, 4, ev => { for (const e of ev) if (e.type === 'tomatada') tomatadas++; });
+  assert.ok(tomatadas >= 1, 'acertou');
+  assert.ok(j.hero.vida < v, 'machucou');
+  const d = Math.hypot(z.x - j.hero.x, z.y - j.hero.y);
+  assert.ok(z.morto || d > 3, `recuou (${d.toFixed(1)} casas)`);
+  // o herói andando não escapa: o tomate vai atrás
+  const k = jogo(5); k.hero.invT = 0; k.zumbis = []; k.spawnT = 999; k.cotaRua = 0;
+  const w = k.criarZumbi('tomateiro', k.hero.x + 6, k.hero.y, null, { nascendo: 0 });
+  k.lancarTomate(w);
+  let acertou = false;
+  for (let i = 0; i < 40; i++) { k.hero.x += 0.05; k.atualizarCarros(DT); for (const e of k.drainEvents()) if (e.type === 'tomatada') acertou = true; }
+  assert.ok(acertou);
 });
 
 teste('chefe de rua só a partir do nível 10', () => {

@@ -128,6 +128,10 @@ export const NIVEL_INIMIGOS_NOVOS = 20;
 // INCHADOS INSTÁVEIS: aparecem muito mais (na rua e no meio das hordas, naHorda = parte da horda), o estouro
 // cresce com a ameaça como o dano dos outros zumbis, é maior e mais forte (multNovo, raioNovo) e um estouro faz
 // os explosivos em volta estourarem junto (reação em cadeia). É a fase em que a passiva Anti-explosão salva.
+// Zumbi do tomate (dados.js → ZUMBIS.tomateiro): do nível desdeNivel do herói em diante, a cada quarteirão
+// novo tem `chance` de aparecer um, se não tiver nenhum vivo (é um por vez).
+export const TOMATEIRO = { desdeNivel: 3, chance: 0.35 };
+
 // O estouro do inchado também atordoa o herói (atordoa s), a não ser que a resistência a explosão dele seja de pelo
 // menos resSemAtordoar (Anti-explosão nível 2, ou o mecânico e a bombeira, que já nascem resistentes).
 export const EXPLOSAO = {

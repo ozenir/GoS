@@ -238,6 +238,15 @@ export class Som {
     if (!heroi && !this.pode('atrop', 0.08)) return;
     this.noMundo(d, 0.5, () => { this.nota('sine', heroi ? 85 : 110, 0, 0.25, heroi ? 0.3 : 0.12, 0.003, 300, 40); this.noise(0.15, heroi ? 0.2 : 0.08, 'lowpass', 500, 0, 0.7, 120); });
   }
+  // tomate batendo no vidro: "splosh" molhado e grave, e o caldo escorrendo baixinho
+  tomatada() {
+    this.noMundo(0, 1.6, () => {
+      this.nota('sine', 120, 0, 0.12, 0.2, 0.002, 400, 60);                          // a pancada
+      this.noise(0.22, 0.22, 'bandpass', 700, 0, 1.6, 220, 0.004);                   // o esmagar molhado
+      this.noise(0.1, 0.1, 'bandpass', 1100, 0.05, 2.5, 500, 0.004);
+      for (let i = 0; i < 4; i++) this.noise(0.05, 0.03, 'bandpass', 500 + Math.random() * 300, 0.35 + i * 0.22 + Math.random() * 0.1, 3, 300, 0.01);   // pinga
+    });
+  }
   // zumbi paraquedista descendo: o pano abrindo lá em cima e um gemido vindo do alto
   paraquedista() {
     this.noMundo(4, 3, () => {

@@ -122,6 +122,7 @@ export class Hud {
       // recompensas de presente (recompensas.js)
       case 'drop': this.banner(`🪂 ${e.emoji} ${e.nome.toUpperCase()}${e.pilhas > 1 ? ' x' + e.pilhas : ''}!`, `${e.texto} · 5 quarteirões${e.quem ? ' · presente de ' + e.quem : ''}`, 'bom', 2.2); break;
       case 'inspiracao': this.banner('✨ INSPIRADO!', `${e.nick ? e.nick + ' doou · ' : ''}${e.segundos} s tomando só 20% do dano e machucando quem chega perto`, 'bom', 2.6); break;
+      case 'tomateiro': this.banner('🍅 ZUMBI DO TOMATE!', 'joga tomate de longe e suja a tela', 'perigo', 2); break;
       case 'paraquedista': this.banner(`🪂🧟 ZUMBI PARAQUEDISTA${e.nick ? ' DE ' + e.nick.toUpperCase() : ''}!`, 'vai cair bem em cima do herói', 'perigo', 2); break;
       case 'agarrou': this.banner('🧟 AGARROU A PERNA!', `lento até o próximo cruzamento${e.pilhas > 1 ? ` · ${e.pilhas} zumbis pendurados` : ''}${e.nick ? ' · presente de ' + e.nick : ''}`, 'perigo', 2.2); break;
       case 'soltou_perna': this.banner('🦵 SOLTOU A PERNA!', e.qtd > 1 ? `os ${e.qtd} zumbis caíram no chão: agora é matar` : 'o zumbi caiu no chão: agora é matar', 'bom', 2); break;

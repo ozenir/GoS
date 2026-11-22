@@ -6,6 +6,7 @@ import { ladoDo } from './core/efeitos.js';
 import { Render } from './view/render.js';
 import { Hud } from './view/hud.js';
 import { Som } from './view/som.js';
+import { Sujeira } from './view/sujeira.js';
 import { PRESENTES_PADRAO, SEGUIR_PADRAO, COMPARTILHAR_PADRAO, JOGO_PADRAO } from './catalogo.js';
 
 const $ = id => document.getElementById(id);
@@ -22,6 +23,7 @@ jogo.configurar(JOGO_PADRAO);
 const render = new Render($('game'), $('texto'));
 const hud = new Hud();
 const som = new Som();
+const sujeira = new Sujeira($('sujeira'));   // tomate no vidro (zumbi do tomate)
 let catalogo = PRESENTES_PADRAO;
 let regraSeguir = SEGUIR_PADRAO, regraCompartilhar = COMPARTILHAR_PADRAO;
 hud.setLegenda(catalogo, regraSeguir, regraCompartilhar, jogo.cfg.likesPor);
@@ -219,6 +221,8 @@ function tocar(e, g) {
     case 'conversivel': som.conversivel(e.distancia, e.vel); break;
     case 'atropelou': som.atropelou(e.heroi, longe(e, g)); break;
     case 'paraquedista': som.paraquedista(); break;
+    case 'tomate_lancado': som.arremesso(); break;
+    case 'tomatada': sujeira.tomatada(); som.tomatada(); break;
     case 'agarrou': case 'paraquedista_quicou': som.agarrou(); break;
     case 'soltou_perna': som.soltouPerna(); break;
     case 'colosso_cansou': som.cansou(longe(e, g)); break;
@@ -262,6 +266,7 @@ function loop(agora) {
     } catch (err) { console.error('evento', e.type, err); }
   }
   render.draw(jogo, dt);
+  sujeira.desenhar(dt);
   hud.update(jogo, dt);
   // som de perigo
   const h = jogo.hero;
