@@ -546,9 +546,11 @@ export class Render {
         ctx.drawImage(s.c, x0, y0);
         ctx.globalAlpha = 1;
         if (noite) {
-          for (const c of [this.emL, this.emM]) { c.globalCompositeOperation = 'destination-out'; c.drawImage(s.c, x0, y0); c.globalCompositeOperation = 'source-over'; }   // tapa a luz dos postes de trás
+          // prédio de verdade tapa a luz dos postes e as janelas de trás; prédio TRANSPARENTE (na frente do herói)
+          // não tapa a luz dos postes (ela fica por cima dele) e só apaga um pouco as janelas de trás
+          if (!tampa) for (const c of [this.emL, this.emM]) { c.globalCompositeOperation = 'destination-out'; c.drawImage(s.c, x0, y0); c.globalCompositeOperation = 'source-over'; }
           const e = this.em;
-          e.globalCompositeOperation = 'destination-out'; e.drawImage(s.c, x0, y0);   // tapa as janelas de trás
+          e.globalCompositeOperation = 'destination-out'; e.globalAlpha = tampa ? 0.65 : 1; e.drawImage(s.c, x0, y0); e.globalAlpha = 1;
           e.globalCompositeOperation = 'source-over';
           if (s.luzes && !o.b.fogo) { e.globalAlpha = tampa ? 0.35 : 1; e.drawImage(s.luzes, x0, y0); e.globalAlpha = 1; }
         }

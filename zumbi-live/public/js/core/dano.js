@@ -231,6 +231,12 @@ export function danoNoHeroi(h, bruto, tipo = 'mordida', rng = null) {
   return { bloqueado: null, dano: Math.max(0, bruto * (1 - h.attr.get('defesa')) * (1 - res)) };
 }
 
+// DANO POR TOQUE: cada zumbi encostado no herói tira porSegundo de vida por segundo (além da mordida/golpe de
+// sempre), multiplicado pela força do zumbi (cresce com a ameaça: z.dano / dano base do tipo). Com a vida do
+// herói em vidaBaixa (30%) ou menos, cai pra porSegundoBaixa. A defesa reduz; esquiva e colete não (é encostar,
+// não golpe). Invencível não toma; inspirado toma só uma parte.
+export const TOQUE = { porSegundo: 2, porSegundoBaixa: 0.5, vidaBaixa: 0.3, folga: 0.12 };
+
 // Quanto uma cura (em % da vida máxima) devolve de vida
 export const valorCura = (h, pct) => h.attr.get('vidaMax') * pct / 100 * h.attr.get('cura');
 

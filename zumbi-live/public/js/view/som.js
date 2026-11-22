@@ -226,40 +226,17 @@ export class Som {
     g.gain.linearRampToValueAtTime(0.0001, t0 + T + 0.2);
     o.start(t0); am.start(t0); o.stop(t0 + T + 0.3); am.stop(t0 + T + 0.3);
     setTimeout(() => { g.disconnect(); lp.disconnect(); ronco.disconnect(); }, (T + 1) * 1000);
-    // buzina: fom-fom... fooom, várias vezes enquanto vem (na distância de cada momento)
-    for (const [q, longa] of [[0, false], [0.26, false], [0.9, true], [T * 0.42, false], [T * 0.42 + 0.24, false], [T * 0.55, true]]) {
-      setTimeout(() => this.noMundo(Math.abs(D - vel * q), 1, () => {
-        const dur = longa ? 0.55 : 0.18;
-        this.nota('square', 233, 0, dur, 0.055, 0.01, 900); this.nota('square', 294, 0, dur, 0.045, 0.01, 900);
+    // buzina de carro: paaam... paaam... paaam (três buzinadas longas quando ele está chegando perto).
+    // Buzina de verdade: dois tons juntos (uns 400 e 500 Hz), timbre áspero, cada uma ~0,45 s
+    const chega = Math.max(0, D / vel - 1.4);
+    for (let b = 0; b < 3; b++) {
+      const q = chega + b * 0.62;
+      setTimeout(() => this.noMundo(Math.abs(D - vel * q), 0.8, () => {
+        this.nota('sawtooth', 405, 0, 0.45, 0.05, 0.015, 1500);
+        this.nota('sawtooth', 507, 0, 0.45, 0.045, 0.015, 1500);
+        this.nota('square', 405, 0, 0.45, 0.02, 0.015, 900);
       }), q * 1000);
     }
-    // alarme de carro disparado (não é sirene de polícia): trechos de ~1 s que se revezam, como alarme de verdade:
-    // bipe agudo pulsando rápido (bi-bi-bi), trinado tremendo entre dois tons e "uip-uip" de subidas curtas
-    const al = ac.createOscillator(); al.type = 'square';
-    const alf = ac.createBiquadFilter(); alf.type = 'bandpass'; alf.frequency.value = 2200; alf.Q.value = 0.7;
-    const pulso = ac.createGain(); pulso.gain.setValueAtTime(0, t0);   // liga/desliga dos bipes
-    const alg = ac.createGain(); alg.gain.setValueAtTime(0.0001, t0);  // volume pela distância
-    al.connect(alf); alf.connect(pulso); pulso.connect(alg); alg.connect(this.mundo);
-    const TRECHO = 1.1;
-    for (let q = 0, k = 0; q < T; q += TRECHO, k++) {
-      const tipo = k % 3, fim = Math.min(T, q + TRECHO);
-      if (tipo === 0) {            // bi-bi-bi-bi: 2.400 Hz, 70 ms ligado / 50 ms desligado
-        al.frequency.setValueAtTime(2400, t0 + q);
-        for (let u = q; u < fim; u += 0.12) { pulso.gain.setValueAtTime(1, t0 + u); pulso.gain.setValueAtTime(0, t0 + u + 0.07); }
-      } else if (tipo === 1) {     // trinado: treme entre 1.900 e 2.700 Hz bem rápido
-        pulso.gain.setValueAtTime(1, t0 + q);
-        for (let u = q; u < fim; u += 0.08) { al.frequency.setValueAtTime(1900, t0 + u); al.frequency.setValueAtTime(2700, t0 + u + 0.04); }
-      } else {                     // uip-uip: subidas curtas de 1.100 a 2.600 Hz
-        for (let u = q; u < fim; u += 0.22) {
-          pulso.gain.setValueAtTime(1, t0 + u); al.frequency.setValueAtTime(1100, t0 + u);
-          al.frequency.linearRampToValueAtTime(2600, t0 + u + 0.17); pulso.gain.setValueAtTime(0, t0 + u + 0.18);
-        }
-      }
-    }
-    for (let k = 0; k <= N; k++) { const t = k / N * T, a = acustica(Math.abs(D - vel * t)); alg.gain.linearRampToValueAtTime(Math.max(0.0001, 0.03 * a.vol * a.vol), t0 + t); }
-    alg.gain.linearRampToValueAtTime(0.0001, t0 + T + 0.2);
-    al.start(t0); al.stop(t0 + T + 0.3);
-    setTimeout(() => { alg.disconnect(); pulso.disconnect(); alf.disconnect(); }, (T + 1) * 1000);
     setTimeout(() => this.noMundo(1.5, 1.2, () => {   // os zumbis fazendo festa quando passam
       this.voz(120, 210, 0.45, 0.1, [[480, 4, 1.3], [900, 5, 0.45]], 0, 0.3);
       this.voz(105, 180, 0.5, 0.09, [[440, 4, 1.3], [850, 5, 0.45]], 0.18, 0.3);

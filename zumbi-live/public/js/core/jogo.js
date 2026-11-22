@@ -15,7 +15,7 @@ import { RECOMPENSA, DROPS, XP_POR_PILHA_SORTE, defesaRuna, CONVERSIVEL, PARAQUE
 import {
   atributosDaClasse, danoDoHeroi, intervaloTiro, intervaloCorpo, alcanceArma, velocidadeHeroi,
   danoNoHeroi, valorCura, statsZumbi, danoDoZumbi, danoNoZumbi, chanceDoStatus, danoExplosao, danoAliado, ALIADOS,
-  TORCIDA, aplicarTorcida, aplicarPericias, PERICIAS
+  TORCIDA, aplicarTorcida, aplicarPericias, PERICIAS, TOQUE
 } from './dano.js';
 import { STATUS, Estados, sincronizarAtributos } from './status.js';
 import { AMBIENTE, efeitoDoAmbiente, faixaLivre, machuca, dentro } from './ambiente.js';
@@ -347,6 +347,7 @@ export class Jogo {
     this.atualizarFigurantes(dt);
     this.atualizarAliados(dt);
     this.atualizarZumbis(dt);
+    this.danoPorToque(dt);
     this.atualizarCarros(dt);
     this.atualizarItens(dt);
   }
@@ -1520,6 +1521,36 @@ export class Jogo {
     if (!h.vidaBaixa && h.vida > 0 && h.vida / h.vidaMax < 0.3) { h.vidaBaixa = true; this.emit('vida_baixa'); }
     if (h.vida <= 0 && !supremaSegura(this, h) && !reliquiaSalva(this, h)) this.cair();
     return true;
+  }
+
+  // Dano por toque (dano.js → TOQUE): cada zumbi encostado tira um tanto por segundo, além da mordida
+  danoPorToque(dt) {
+    const h = this.hero;
+    if (this.fase !== 'jogo' || this.caido || h.invT > 0 || h.invQ > 0) return;
+    const baixa = h.vida / h.vidaMax <= TOQUE.vidaBaixa;
+    let dps = 0, quem = null;
+    for (const z of this.zumbis) {
+      if (z.morto || z.dormindo || z.nascendo > 0 || z.dono?.aliado) continue;
+      const T = ZUMBIS[z.tipo], r = T.raio + 0.3 + TOQUE.folga;   // raio do zumbi + do herói
+      if (dist2(z.x, z.y, h.x, h.y) > r * r) continue;
+      dps += (baixa ? TOQUE.porSegundoBaixa : TOQUE.porSegundo) * Math.max(1, (z.dano || T.dano) / T.dano);
+      quem = z;
+    }
+    if (!dps) return;
+    let dano = dps * dt * (1 - h.attr.get('defesa'));
+    if (h.estados.tem('inspirado')) dano *= RECOMPENSA.inspiracao.danoRecebido;
+    h.vida -= dano;
+    h.toqueAcum = (h.toqueAcum || 0) + dano;
+    if ((h.toqueT = (h.toqueT || 0) - dt) <= 0 && h.toqueAcum >= 1) {   // aviso na tela (sangue, piscada) uma vez por segundo
+      h.toqueT = 1; this.emit('dano_heroi', { dano: h.toqueAcum, x: h.x, y: h.y, toque: true }); h.toqueAcum = 0;
+    }
+    if (h.vida / h.vidaMax <= RECOMPENSA.chefe.cansaVida) this.cansarColosso();
+    if (h.vida / h.vidaMax < FOLEGO.limite && h.nivel < FOLEGO.ateNivel && !h.suprema && h.folegoCd <= 0) this.segundoFolego();
+    if (!h.vidaBaixa && h.vida > 0 && h.vida / h.vidaMax < 0.3) { h.vidaBaixa = true; this.emit('vida_baixa'); }
+    if (h.vida <= 0) {
+      this.stats.matador = quem?.dono ? { nick: quem.dono.nick, avatar: quem.dono.avatar || '', causa: 'a horda' } : { nick: null, causa: 'a horda' };
+      if (!supremaSegura(this, h) && !reliquiaSalva(this, h)) this.cair();
+    }
   }
 
   // Segundo fôlego: até o nível 10 (FOLEGO.ateNivel), quando a vida cai abaixo de 20% o herói solta um grito,
