@@ -219,6 +219,20 @@ teste(`mochila guarda no máximo ${MOCHILA_MAX} (o resto cura ou blinda)`, () =>
   assert.ok(j.hero.estados.tem('blindado'));
 });
 
+teste('status que um presente dá ao herói avisa na tela (status_presente) com o nome de quem mandou', () => {
+  const j = jogo();
+  j.drainEvents();
+  presente(j, 'municao', 'Ana', { quarteiroes: 3 });
+  const ev = j.drainEvents().filter(e => e.type === 'status_presente');
+  assert.ok(ev.some(e => e.id === 'acelerado' && e.nick === 'Ana' && e.lado === 'positivo' && e.quarteiroes === 3));
+  // status que não veio de presente (mordida, habilidade...) não avisa
+  j.aplicarStatus(j.hero, 'sangramento');
+  assert.ok(!j.drainEvents().some(e => e.type === 'status_presente'));
+  // curtidas não são doação: o suprimento delas não avisa
+  j.comPresente({ id: '__curtidas', nick: 'Curtidas' }, () => j.aplicarStatus(j.hero, 'furia', { quarteiroes: 1 }));
+  assert.ok(!j.drainEvents().some(e => e.type === 'status_presente'));
+});
+
 teste('munição pra quem luta de perto vira fúria', () => {
   const j = jogo('enfermeira');
   presente(j, 'municao', 'Ana', { segundos: 10 });

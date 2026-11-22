@@ -201,7 +201,7 @@ export class Jogo {
     this.emit('novo_heroi', { n: this.heroiN, classe, nome: C.nome, emoji: C.emoji, exHeroi: !!this.ultimoHeroi, viewer: this.hero.viewer, exNome: this.ultimoHeroi?.viewer?.nick || null });
     // Presentes que ajudam e chegaram enquanto o herói anterior estava morto valem para o novo
     const pend = this.pendentesAjuda.splice(0);
-    for (const p of pend) this.agendar(2 + this.rng.next(), () => EFEITOS[p.regra.efeito].aplicar(this, p.regra, p.qtd, p.quem));
+    for (const p of pend) this.agendar(2 + this.rng.next(), () => this.comPresente(p.quem, () => EFEITOS[p.regra.efeito].aplicar(this, p.regra, p.qtd, p.quem)));
   }
 
   morrer() {
@@ -1495,8 +1495,23 @@ export class Jogo {
     if (heroi) {
       sincronizarAtributos(alvo.estados, alvo.attr);
       if (novo) this.emit('status', { id, lado: S.lado, x: alvo.x, y: alvo.y });
+      // veio de um presente da live: mostra na tela o que o herói ganhou (ou sofreu) por uns segundos
+      const quem = opts.presente || this.presenteAtual;
+      if (quem) {
+        const e = alvo.estados.lista.get(id);
+        this.emit('status_presente', { id, nome: S.nome, emoji: S.emoji, lado: S.lado, nick: quem.nick || null,
+          quarteiroes: Number.isFinite(e?.q) ? e.q : null, segundos: Number.isFinite(e?.t) && e?.q == null ? Math.ceil(e.t) : null, pilhas: e?.pilhas || 1 });
+      }
     }
     return novo;
+  }
+
+  // Roda fn com "quem" como o dono do presente: os status que caírem no herói durante fn avisam na tela
+  // (status_presente). Curtidas não contam (não são doação).
+  comPresente(quem, fn) {
+    const antes = this.presenteAtual;
+    this.presenteAtual = quem && quem.id !== '__curtidas' ? quem : null;
+    try { return fn(); } finally { this.presenteAtual = antes; }
   }
 
   armaPadrao() { const h = this.hero, C = CLASSES[h.classe]; if (h.armaFixa) return h.armaFixa; return C.arma === 'escopeta' ? 'pistola' : (C.arma || null); }
@@ -2127,7 +2142,7 @@ export class Jogo {
         const d = Math.sqrt(d2), v = Math.min(d, (2 + Math.max(0, 2.2 - d) * 3) * dt);
         it.x += (h.x - it.x) / d * v; it.y += (h.y - it.y) / d * v;
       }
-      if (d2 < 0.7 * 0.7) { this.pegar(it); it.pego = true; }
+      if (d2 < 0.7 * 0.7) { this.comPresente(it.quem, () => this.pegar(it)); it.pego = true; }
     }
     this.itens = this.itens.filter(it => !it.pego && it.vida > 0);
   }
@@ -2398,7 +2413,7 @@ export class Jogo {
         continue;
       }
       const antes = h.estados.tem('agarrado') ? h.agarradosQuem || [] : [];
-      this.aplicarStatus(h, 'agarrado', { quarteiroes: P.quarteiroes, pilhas: 1, fonte: p.quem });
+      this.aplicarStatus(h, 'agarrado', { quarteiroes: P.quarteiroes, pilhas: 1, fonte: p.quem, presente: p.quem?.nick ? p.quem : null });
       h.agarradosQuem = [...antes, p.quem].slice(-P.maxPilhas);
       this.emit('agarrou', { nick: p.quem?.nick || null, pilhas: h.estados.pilhas('agarrado'), x: h.x, y: h.y });
     }
@@ -2783,7 +2798,7 @@ export class Jogo {
     for (let i = 1; i < this.fila.length; i++) if (this.fila[i].coins > this.fila[k].coins * 4 && this.fila[i].coins >= 500) k = i;
     const p = this.fila.splice(k, 1)[0];
     this.filaCd = 0.6;
-    EFEITOS[p.regra.efeito].aplicar(this, p.regra, p.qtd, p.quem);
+    this.comPresente(p.quem, () => EFEITOS[p.regra.efeito].aplicar(this, p.regra, p.qtd, p.quem));
   }
 
   /* =================== Público =================== */
@@ -2870,12 +2885,12 @@ export class Jogo {
     // no portal, presente mexe no poder do herói (ajuda sobe, atrapalha desce); a rua está pausada
     if (this.portal) { this.presenteNoPortal(lado, coins * qtd, quem); return; }
     // recompensas de presente (recompensas.js): drop de paraquedas (1 moeda) e doação (inspiração + colosso)
-    if (coins > 0 && quem.id !== '__curtidas' && this.fase === 'jogo') this.recompensaDePresente(coins, qtd, quem, lado);
+    if (coins > 0 && quem.id !== '__curtidas' && this.fase === 'jogo') this.comPresente(quem, () => this.recompensaDePresente(coins, qtd, quem, lado));
     if (lado === 'ajuda') {
       if (this.fase === 'jogo') {
         // caído: qualquer presente de ajuda (ou seguir) levanta; compartilhar e curtidas não (são de graça e sem limite)
         if (this.caido && (coins > 0 || giftName === 'seguiu')) this.levantar(quem);
-        ef.aplicar(this, regra, qtd, quem);
+        this.comPresente(quem, () => ef.aplicar(this, regra, qtd, quem));
       } else if (this.pendentesAjuda.length < 10) this.pendentesAjuda.push({ regra, qtd, quem });
     } else {
       // caído: presente de atrapalhar é o golpe final (ainda dá 2,5 s pra alguém salvar)

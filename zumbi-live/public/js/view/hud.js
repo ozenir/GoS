@@ -18,6 +18,8 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 // Narração no meio da tela ("AMEAÇA 2", "LIMPE A ÁREA", "NÍVEL 5"...): desligada pra não poluir o jogo.
 // O que a live faz aparece só nos avisos discretos de baixo (nome + o que fez). true liga de novo.
 export const AVISOS_NO_MEIO = false;
+// Por quantos segundos o status que um presente deu ao herói fica na tela (embaixo do painel de cima)
+export const STATUS_PRESENTE_SEG = 4;
 const urlOk = u => /^https:\/\//.test(String(u || ''));
 const AVATAR_VAZIO = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#2a2238"/><circle cx="5" cy="4" r="2" fill="#6a5a88"/><rect x="2" y="7" width="6" height="3" rx="1.5" fill="#6a5a88"/></svg>');
 
@@ -88,12 +90,37 @@ export class Hud {
     const presente = urlOk(e.image) ? `<img class="gimg" src="${esc(e.image)}" alt="" referrerpolicy="no-referrer">` : esc(e.emoji);
     const vezes = `<span class="vezes">${e.qtd > 1 ? ` x${e.qtd}` : ''}</span>`;
     const espera = e.espera ? ` <small>(em ${e.espera}s)</small>` : '';
-    // duas linhas: o nome de quem mandou em cima; embaixo, alinhado à esquerda, o presente e o que ele fez
+    // duas linhas: o nome de quem mandou em cima; embaixo, alinhado à direita, o presente e o que ele fez (a foto na ponta direita)
     t.innerHTML = `<img class="tava" src="${img}" alt="" referrerpolicy="no-referrer"><span class="tt"><b>${esc(e.nick)}</b><span class="tf">${presente}${vezes} <em>${esc(e.texto)}</em>${espera}</span></span>`;
     box.prepend(t);
     while (box.children.length > 3) box.lastChild.remove();
     const timer = setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 460); }, 3800);
     this.ultimoToast = { chave, el: t, qtd: e.qtd || 1, t: performance.now(), timer };
+  }
+
+  // Status que um presente deu ao herói (buff ou debuff): aparece embaixo do painel de cima por STATUS_PRESENTE_SEG
+  // e some. O mesmo status de novo enquanto ainda está na tela só atualiza o aviso (combo não empilha avisos).
+  statusPresente(e) {
+    const box = $('h-sp');
+    this.spAvisos = this.spAvisos || new Map();
+    const dur = e.quarteiroes ? `${e.quarteiroes} ${e.quarteiroes === 1 ? 'quarteirão' : 'quarteirões'}` : e.segundos ? `${e.segundos}s` : '';
+    const sub = [e.pilhas > 1 ? `x${e.pilhas}` : '', dur, e.nick ? `de ${e.nick}` : ''].filter(Boolean).join(' · ');
+    const html = `<i>${esc(e.emoji)}</i><span><b>${esc(e.nome.toUpperCase())}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span>`;
+    let a = this.spAvisos.get(e.id);
+    if (a && a.el.isConnected && !a.el.classList.contains('out')) {
+      a.el.innerHTML = html;
+      a.el.style.animation = 'none'; void a.el.offsetWidth; a.el.style.animation = '';
+      clearTimeout(a.timer);
+    } else {
+      const el = document.createElement('div');
+      el.className = 'sp ' + (e.lado === 'negativo' ? 'negativo' : 'positivo');
+      el.innerHTML = html;
+      box.prepend(el);
+      while (box.children.length > 3) box.lastChild.remove();
+      a = { el };
+      this.spAvisos.set(e.id, a);
+    }
+    a.timer = setTimeout(() => { a.el.classList.add('out'); setTimeout(() => { a.el.remove(); if (this.spAvisos.get(e.id) === a) this.spAvisos.delete(e.id); }, 460); }, STATUS_PRESENTE_SEG * 1000);
   }
 
   // Slots do herói: habilidades ← [fusão] (NÚCLEO) [fusão] → passivas
@@ -147,6 +174,7 @@ export class Hud {
   evento(e, g) {
     switch (e.type) {
       case 'presente': this.toast(e); break;
+      case 'status_presente': this.statusPresente(e); break;
       case 'chefe':
         if (e.arena) break;   // na arena o aviso é o da arena
         if (e.tipo === 'rei') this.banner('👑 REI ZUMBI!', `despertado por ${e.nome}`, 'perigo', 3.2);

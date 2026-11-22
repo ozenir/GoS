@@ -227,11 +227,21 @@ body.foco .app{padding-block:8px}
 .caido.final b{color:#e0a0ff}
 
 /* --- MEIO: avisos curtos logo abaixo do topo --- */
-/* gráfico de atributos (comente G): no terço da direita, alinhado com a margem do painel de cima, sem fundo nem
-   moldura (só a sigla e os blocos); blocos em paralelogramo de cantos arredondados */
-.acima-leg{position:relative;display:flex;align-items:flex-end;min-width:0}
-/* gráfico, tabela e o botão ficam PARADOS no canto direito, logo acima do letreiro: as notificações passam por baixo sem empurrar */
-.acima-leg>.g-pill,.acima-leg>.grafico,.acima-leg>.tabela{position:absolute;right:0;bottom:0}
+/* logo abaixo do painel de cima: status dado por presente à esquerda; "Digite G · T", gráfico (G) e tabela (T)
+   no canto direito, alinhados com a margem do painel. Gráfico sem fundo nem moldura (só a sigla e os blocos) */
+.sob-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:2cqw;min-width:0}
+.canto-dir{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end}
+.acima-leg{position:relative;display:flex;justify-content:flex-end;align-items:flex-end;min-width:0}
+/* status que o herói ganhou (ou sofreu) por causa de um presente: aparece por 4 s e some */
+.sp-lista{display:flex;flex-direction:column;align-items:flex-start;gap:1cqw;min-width:0;max-width:54cqw}
+.sp{--lado:var(--ajuda);display:flex;align-items:center;gap:1.4cqw;padding:.7cqw 2.6cqw .7cqw 1cqw;border-radius:3.6cqw;max-width:100%;box-sizing:border-box;background:rgba(16,13,24,.88);border:.45cqw solid var(--lado);box-shadow:0 0 2.4cqw color-mix(in srgb,var(--lado) 45%,transparent);animation:spIn .4s cubic-bezier(.2,1.6,.4,1)}
+.sp.negativo{--lado:var(--atrapalha)}
+.sp>i{font-style:normal;font-size:5cqw;line-height:1;flex:none}
+.sp>span{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.sp b{font-size:3.2cqw;font-weight:700;color:var(--lado);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp small{font-size:2.3cqw;font-weight:600;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp.out{animation:out .45s ease-in forwards}
+@keyframes spIn{from{transform:translateX(-6cqw) scale(.85);opacity:0}to{transform:none;opacity:1}}
 .g-pill{z-index:15;flex:none;font:600 2.3cqw var(--font-display);padding:.6cqw 1.6cqw;background:rgba(16,13,24,.55);border:.35cqw solid rgba(255,255,255,.22);border-radius:.6cqw;color:#fff;box-shadow:0 0 0 .3cqw rgba(10,8,16,.5)}
 /* tabela do T (fusões): mesmo lugar e estilo do gráfico, sem moldura; resultado "?" até a live descobrir */
 .tabela{position:relative;z-index:15;flex:none;width:42cqw;display:flex;flex-direction:column;gap:1cqw;animation:gIn .3s steps(4);text-shadow:0 .3cqw 0 rgba(0,0,0,.75),0 0 1.6cqw rgba(0,0,0,.6)}
@@ -269,12 +279,13 @@ body.foco .app{padding-block:8px}
 @keyframes pulsa{to{transform:translateX(-50%) scale(1.06)}}
 
 /* --- BAIXO --- */
-.toasts{display:flex;flex-direction:column-reverse;align-items:flex-start;gap:.9cqw;max-width:80cqw}
-.toast{display:flex;align-items:center;gap:1.2cqw;padding:.6cqw 2.4cqw .6cqw .6cqw;border-radius:3.6cqw;font-size:2.6cqw;font-weight:500;white-space:nowrap;max-width:80cqw;overflow:hidden;background:rgba(16,13,24,.86);border:.4cqw solid var(--lado,var(--card-line));animation:popUp .4s cubic-bezier(.2,1.6,.4,1)}
+.toasts{display:flex;flex-direction:column-reverse;align-items:flex-end;gap:.9cqw;max-width:80cqw}
+/* alinhada à direita: a foto na ponta direita, o nome à esquerda dela e, embaixo, o que o presente fez */
+.toast{display:flex;flex-direction:row-reverse;align-items:center;gap:1.2cqw;padding:.6cqw .6cqw .6cqw 2.4cqw;border-radius:3.6cqw;font-size:2.6cqw;font-weight:500;white-space:nowrap;max-width:80cqw;overflow:hidden;background:rgba(16,13,24,.86);border:.4cqw solid var(--lado,var(--card-line));animation:popUp .4s cubic-bezier(.2,1.6,.4,1)}
 .toast.ajuda{--lado:var(--ajuda)}
 .toast.atrapalha{--lado:var(--atrapalha)}
 .toast .tava{width:6cqw;height:6cqw;border-radius:50%;object-fit:cover;flex:none;background:#2a2238;border:.35cqw solid var(--lado,#fff)}
-.toast .tt{display:flex;flex-direction:column;align-items:flex-start;gap:.15cqw;min-width:0;overflow:hidden;line-height:1.15}
+.toast .tt{display:flex;flex-direction:column;align-items:flex-end;text-align:right;gap:.15cqw;min-width:0;overflow:hidden;line-height:1.15}
 .toast .tt>b{font-size:2.8cqw;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .toast .tf{max-width:100%;overflow:hidden;text-overflow:ellipsis;font-size:2.5cqw}
 .toast b{font-weight:700}
@@ -369,7 +380,7 @@ body.foco .app{padding-block:8px}
 @keyframes histIn{from{transform:translateY(4cqw) rotate(-2deg);opacity:0}to{transform:none;opacity:1}}
 .snd-hint{position:absolute;left:50%;top:92cqw;transform:translateX(-50%);font:600 3cqw var(--font-display);background:#2a2238;color:#fff;padding:1cqw 3cqw;border-radius:99px;white-space:nowrap}
 .sem-rede{position:absolute;right:3cqw;bottom:46cqw;font:600 2.6cqw var(--font-display);background:rgba(184,40,30,.9);color:#fff;padding:.8cqw 2.4cqw;border-radius:99px}
-@media (prefers-reduced-motion: reduce){.toast,.toast.out,.over-card,.intro,.intro.out,.banner .bt,.cta,.caido,.caido .cd,.escolha,.hb.novo,.av em.up{animation:none}}
+@media (prefers-reduced-motion: reduce){.sp,.sp.out,.toast,.toast.out,.over-card,.intro,.intro.out,.banner .bt,.cta,.caido,.caido .cd,.escolha,.hb.novo,.av em.up{animation:none}}
 </style>
 </head>
 <body>
@@ -406,6 +417,8 @@ body.foco .app{padding-block:8px}
             <div class="v-res" id="v-res" hidden></div>
           </div>
           <div class="caido" id="h-caido" hidden><b id="c-tit">💀 HERÓI CAÍDO!</b><span class="cd" id="c-cd">8</span><span class="ct" id="c-txt"></span><small id="c-sub"></small></div>
+          <!-- logo abaixo do painel de cima: à esquerda, o status que um presente deu (4 s); à direita, "Digite G · T" (ou o gráfico/tabela aberto) -->
+          <div class="sob-topo"><div class="sp-lista" id="h-sp"></div><div class="canto-dir"><div class="g-pill" id="g-pill">📊 Digite G · 🧬 T</div><div class="grafico" id="g-painel" hidden></div><div class="tabela" id="t-painel" hidden></div></div></div>
         </div>
 
 
@@ -413,8 +426,8 @@ body.foco .app{padding-block:8px}
         <div class="banner" id="h-banner" hidden><div class="bt" id="b-t"></div><div class="bs" id="b-s"></div></div>
 
         <div class="bottom" id="h-bottom">
-          <!-- linha logo acima do letreiro: notificações à esquerda, "Digite G" (ou o gráfico aberto) à direita -->
-          <div class="acima-leg"><div class="toasts" id="h-toasts"></div><div class="g-pill" id="g-pill">📊 Digite G · 🧬 T</div><div class="grafico" id="g-painel" hidden></div><div class="tabela" id="t-painel" hidden></div></div>
+          <!-- linha logo acima do letreiro: notificações de presente, alinhadas à direita (foto na ponta direita) -->
+          <div class="acima-leg"><div class="toasts" id="h-toasts"></div></div>
           <!-- letreiro dos presentes: entre as notificações (em cima) e a escolha de habilidade (embaixo) -->
           <div class="legenda letreiro" id="h-leg-linha"><div class="trilho"><div class="grupo" id="h-legenda"></div><div class="grupo eco" aria-hidden="true"></div></div></div>
           <div class="escolha card" id="h-escolha" hidden>
