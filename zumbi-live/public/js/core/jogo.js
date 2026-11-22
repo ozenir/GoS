@@ -342,6 +342,7 @@ export class Jogo {
     this.heliT = Math.max(0, this.heliT - dt);
     this.diretor(dt);
     this.processarFila(dt);
+    this.zumbisDeQuemEntrou(dt);
     this.atualizarHeroi(dt);
     if (this.fase === 'jogo' && !this.caido) { this.atualizarEscolha(dt); atualizarHabilidades(this, dt); atualizarReliquia(this, dt); this.checarPortal(); }
     this.atualizarFigurantes(dt);
@@ -469,6 +470,9 @@ export class Jogo {
     if (resta < madrugada) { const k = 1 - resta / madrugada; return { noite: 1 - k * k * (3 - 2 * k), fase: 'madrugada', k }; }
     return { noite: 1, fase: 'noite', k: 1 };
   }
+
+  // zumbis de quem entra na live: um a cada `intervalo` s, até `fila` esperando
+  static ENTRADA = { intervalo: 2, fila: 20 };
 
   // tarde e madrugada: quantos segundos cada uma leva (escurecendo / clareando)
   static CICLO = { tarde: 8, madrugada: 8 };
@@ -1741,7 +1745,8 @@ export class Jogo {
     const T = ZUMBIS[tipo];
     const z = {
       // fúria sem ajuda da live: zumbis batem mais forte e (com FURIA_VIDA) também aguentam mais
-      id: proxId++, tipo, x, y, ...this.statsComFuria(T, opts.vidaMult || 1, !!opts.fa),
+      // opts.simples: zumbi comum sem bônus nenhum (só a escala da ameaça, sem fúria nem cabo de guerra)
+      id: proxId++, tipo, x, y, ...(opts.simples ? statsZumbi(T, this.ameaca(), 1, 1) : this.statsComFuria(T, opts.vidaMult || 1, !!opts.fa)),
       atkCd: 0.5 + this.rng.next(), velMult: 0.85 + this.rng.next() * 0.3, nascendo: opts.nascendo ?? 0.7,
       dono: quem || null, nome: opts.nome || null, kx: 0, ky: 0, fx: 0, fy: 1, animT: this.rng.next() * 10,
       flash: 0, estados: new Estados(), pavio: -1, dormindo: !!opts.dormindo, roupa: this.rng.int(0, 5), extra: opts.extra || null
@@ -2793,7 +2798,7 @@ export class Jogo {
         }
         break;
       }
-      case 'entrou': this.lembrarNome(m.id, m.nick); break;
+      case 'entrou': this.lembrarNome(m.id, m.nick); this.entrouNaLive(m.id, m.nick); break;
       case 'curtidas': {
         this.likes += Number(m.qtd) || 0;
         const por = this.cfg.likesPor;
@@ -2873,6 +2878,29 @@ export class Jogo {
     for (const [id, t] of this.torcida) if (t < limite) this.torcida.delete(id);
     const n = aplicarTorcida(this.hero, this.torcida.size, { ...TORCIDA, maxPessoas: this.cfg.torcidaMax });
     if (n !== this.torcidaN) { const subiu = n > this.torcidaN; this.torcidaN = n; this.emit('torcida', { pessoas: n, subiu }); }
+  }
+
+  // Quem entra na live vira um zumbi com o nome dela (uma vez por pessoa na live). Pra live cheia não virar
+  // enxurrada: um a cada ENTRADA.intervalo s, no máximo ENTRADA.fila esperando (o resto fica só com o nome guardado
+  // pros zumbis comuns) e só na rua (loja, arena, portal e herói caído esperam).
+  entrouNaLive(id, nick) {
+    this.entraram = this.entraram || new Set();
+    this.filaEntradas = this.filaEntradas || [];
+    if (!id || this.entraram.has(id)) return;
+    this.entraram.add(id);
+    if (this.filaEntradas.length < Jogo.ENTRADA.fila) this.filaEntradas.push(nomeSeguro(nick, 12));
+  }
+
+  zumbisDeQuemEntrou(dt) {
+    if (!this.filaEntradas?.length || this.fase !== 'jogo' || this.room || this.arena || this.caido) return;
+    if ((this.entradaT = (this.entradaT || 0) - dt) > 0) return;
+    const p = this.pontoNaRua(this.hero, 8, 12, 0);
+    if (!p) { this.entradaT = 0.5; return; }
+    this.entradaT = Jogo.ENTRADA.intervalo;
+    const nome = this.filaEntradas.shift();
+    const z = this.criarZumbi('comum', p.x, p.y, null, { nome, nascendo: 0.8, simples: true });   // comum, sem bônus
+    z.entrou = true;   // nome em branco (render.js)
+    this.emit('zumbi_entrou', { nome, x: z.x, y: z.y });
   }
 
   lembrarNome(id, nick) {

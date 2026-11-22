@@ -111,6 +111,7 @@ function chatTeste(texto, quem) {
 function eventoTeste(evento, quem = 'você (teste)') {
   if (conectado()) { ws.send(JSON.stringify({ type: 'teste_evento', evento, nome: quem })); return; }
   if (evento === 'curtidas') jogo.handle({ type: 'curtidas', qtd: 100 });
+  else if (evento === 'entrou') jogo.handle({ type: 'entrou', id: 'local_' + quem, nick: quem });
   else if (evento === 'seguiu') jogo.handle({ type: 'seguiu', id: 'local_' + quem + Math.random(), nick: quem, regra: regraSeguir });
   else if (evento === 'compartilhou') jogo.handle({ type: 'compartilhou', id: 'local_' + quem, nick: quem, regra: regraCompartilhar });
 }
@@ -129,7 +130,7 @@ function montarBotoes() {
 montarBotoes();
 $('b-portal').addEventListener('click', () => jogo.abrirPortal(true));   // portal dos 500 na hora (teste)
 document.querySelectorAll('[data-voto]').forEach(b => b.addEventListener('click', () => chatTeste(b.dataset.voto, 'você ' + Math.floor(Math.random() * 1000))));
-document.querySelectorAll('[data-evento]').forEach(b => b.addEventListener('click', () => eventoTeste(b.dataset.evento)));
+document.querySelectorAll('[data-evento]').forEach(b => b.addEventListener('click', () => eventoTeste(b.dataset.evento, b.dataset.evento === 'entrou' ? pick(NOMES) + Math.floor(Math.random() * 100) : undefined)));
 $('b-matar').addEventListener('click', () => { if (jogo.fase === 'jogo') jogo.ferirHeroi(9999, { nick: 'você (teste)' }, 'o botão de teste'); });
 window.addEventListener('keydown', e => {
   if (e.target.closest('input')) return;
@@ -157,7 +158,8 @@ simEl.checked = !isLocal && !live;
         let s = Math.random() * pesos.reduce((a, b) => a + b, 0), i = 0;
         for (; i < lista.length - 1; i++) { s -= pesos[i]; if (s <= 0) break; }
         if ((lista[i][1].moedas || 0) < 1000 || Math.random() < 0.3) presenteTeste(lista[i][0], pick(NOMES));
-      } else if (r < 0.93) eventoTeste('curtidas');
+      } else if (r < 0.9) eventoTeste('curtidas');
+      else if (r < 0.93) eventoTeste('entrou', pick(NOMES) + Math.floor(Math.random() * 1000));   // gente entrando na live
       else eventoTeste(Math.random() < 0.5 ? 'seguiu' : 'compartilhou', pick(NOMES));
     }
     simLoop();
