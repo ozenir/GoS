@@ -116,7 +116,19 @@ body.foco .app{padding-block:8px}
 .mini i{display:block;height:100%;width:0;background:var(--ouro);transition:width .3s}
 .mini.lk i{background:#ff5a8a}
 
-.status{display:flex;gap:1cqw;flex-wrap:nowrap;overflow:hidden;min-height:4.6cqw;-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent);mask-image:linear-gradient(90deg,#000 90%,transparent)}
+.status{display:flex;gap:1cqw;flex-wrap:nowrap;overflow:hidden;min-height:4.6cqw}
+/* letreiro: se a linha não cabe, escorrega da direita pra esquerda (view/letreiro.js) */
+.letreiro{overflow:hidden}
+.letreiro .trilho{display:flex;flex:1;min-width:0;align-items:center}
+.letreiro .grupo{display:flex;flex:1;min-width:0;align-items:center;gap:1cqw}
+.stats.letreiro .grupo{justify-content:space-between}
+.letreiro .grupo>*,.letreiro .mini{flex:none}   /* nada encolhe: se não cabe, rola */
+.letreiro .eco{display:none}
+.letreiro.rola .trilho{flex:none;will-change:transform}
+.letreiro.rola .grupo{flex:none;padding-right:var(--folga,4cqw)}
+.letreiro.rola .eco{display:flex}
+.stats.letreiro.rola .grupo{justify-content:flex-start;gap:3cqw}
+.status.letreiro.rola{-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
 .chip{flex:none;display:inline-flex;align-items:center;gap:.8cqw;padding:.6cqw 1.8cqw;border-radius:99px;background:var(--card);border:.3cqw solid var(--card-line);font-size:2.7cqw;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
 .chip.ok{border-color:rgba(57,196,122,.6)}
 .chip.mal{border-color:rgba(255,90,79,.6)}
@@ -309,15 +321,15 @@ body.foco .app{padding-block:8px}
               <div class="slots" id="h-slots"></div>
             </div>
           </div>
-          <div class="stats">
+          <div class="stats letreiro" id="h-stats"><div class="trilho"><div class="grupo">
             <span title="Quarteirões percorridos">📍 <b id="h-q">0</b></span>
             <span title="Recorde de quarteirões">🏆 <b id="h-rec">0</b></span>
             <span title="Zumbis derrotados">🧟 <b id="h-abates">0</b></span>
             <span title="Nível de ameaça: zumbis mais fortes e hordas maiores">☠️ <b id="h-ameaca">1</b> <i class="mini"><i id="h-amx"></i></i></span>
             <span title="Tempo vivo">⏱ <b id="h-tempo">0:00</b></span>
             <span title="Curtidas até o próximo suprimento">❤️ <i class="mini lk"><i id="h-likes"></i></i></span>
-          </div>
-          <div class="status" id="h-status"></div>
+          </div><div class="grupo eco" aria-hidden="true"></div></div></div>
+          <div class="status letreiro" id="h-linha-status"><div class="trilho"><div class="grupo" id="h-status"></div><div class="grupo eco" aria-hidden="true"></div></div></div>
           <div class="voto card" id="h-voto" hidden>
             <div class="v-top"><div id="v-titulo">🗳️ PRÓXIMO CRUZAMENTO</div><span id="v-sub">comente o número</span></div>
             <div class="v-tempo" id="v-tempo"><i id="v-barra"></i></div>

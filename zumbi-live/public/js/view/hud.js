@@ -6,6 +6,7 @@ import { BAIRROS } from '../core/city.js';
 import { EFEITOS, ladoDo } from '../core/efeitos.js';
 import { progressoAmeaca } from '../core/ameaca.js';
 import { slotsDoHeroi, NUCLEO } from '../core/habilidades.js';
+import { Letreiro } from './letreiro.js';
 import { graficoDoHeroi, GRAFICO_SEGUNDOS, BLOCOS } from '../core/grafico.js';
 
 const $ = id => document.getElementById(id);
@@ -23,6 +24,8 @@ export class Hud {
     this.introT = 0;
     this.resultadoAte = 0;
     this.toastsVivos = [];
+    // linhas que viram letreiro quando não cabem
+    this.letreiros = ['h-stats', 'h-linha-status'].map(id => $(id)).filter(Boolean).map(el => new Letreiro(el));
   }
 
   set(id, valor) {
@@ -286,6 +289,7 @@ export class Hud {
   update(g, dt) {
     const h = g.hero;
     this.atualizarGrafico(g);
+    for (const l of this.letreiros) l.update(dt);
     // vida
     const pct = clamp(h.vida / h.vidaMax, 0, 1);
     $('h-vfill').style.width = (pct * 100).toFixed(1) + '%';
