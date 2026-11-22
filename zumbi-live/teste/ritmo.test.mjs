@@ -91,12 +91,48 @@ teste('limpar a área: zumbi preso que nunca chega some depois de um tempo sem a
   const no = j.city.nodePos(j.rota.alvo.i, j.rota.alvo.j);
   j.hero.x = no.x; j.hero.y = no.y; j.hero.arma = null;
   j.decisao = { id: 'frente', dir: j.rota.dir };
-  const z = j.criarZumbi('comum', no.x + 12, no.y, null, { nascendo: 0 });
+  const longe = AMEACA.cacarLonge + 0.5;   // longe demais pra ir caçar, mas ainda dentro da área
+  const z = j.criarZumbi('comum', no.x + longe, no.y, null, { nascendo: 0 });
   z.vel = 0;
   const q0 = j.stats.quarteiroes;
-  passar(j, AMEACA.limpandoSemAbate * 2 + 4, () => { j.hero.vida = j.hero.vidaMax; z.x = no.x + 12; z.y = no.y; });
+  passar(j, AMEACA.limpandoSemAbate * 2 + 4, () => { j.hero.vida = j.hero.vidaMax; z.x = no.x + longe; z.y = no.y; });
   assert.ok(z.morto && z.sumiu, 'sumiu');
   assert.ok(j.stats.quarteiroes > q0, 'atravessou');
+});
+
+teste(`limpar a área: faltando ${AMEACA.cacarPoucos} ou menos, o herói vai atrás dos últimos zumbis (bem mais longe)`, () => {
+  const j = jogo(12);
+  j.cotaRua = 0; j.zumbis = [];
+  const no = j.city.nodePos(j.rota.alvo.i, j.rota.alvo.j);
+  j.hero.x = no.x; j.hero.y = no.y;
+  j.decisao = { id: 'frente', dir: j.rota.dir };
+  // um zumbi parado a 12 casas, na rua da frente (antes, ele só ia até 9 e ficava esperando)
+  const [dx, dy] = [no.x - j.city.nodePos(j.rota.i, j.rota.j).x, no.y - j.city.nodePos(j.rota.i, j.rota.j).y];
+  const dl = Math.hypot(dx, dy) || 1;
+  const z = j.criarZumbi('comum', no.x - dx / dl * 12, no.y - dy / dl * 12, null, { nascendo: 0 });
+  z.vel = 0; z.atkCd = 99;
+  let cacou = false;
+  passar(j, 4, () => { j.hero.vida = j.hero.vidaMax; if (j.poucosPraLimpar() && Math.hypot(j.hero.x - no.x, j.hero.y - no.y) > 3) cacou = true; });
+  assert.ok(cacou, 'saiu do cruzamento atrás do zumbi');
+  passar(j, AMEACA.limpandoSemAbate - 1, () => { j.hero.vida = j.hero.vidaMax; });
+  assert.ok(z.morto && !z.sumiu, 'matou (não precisou sumir)');
+});
+
+teste('o herói só passa pro próximo quarteirão depois que o chat escolhe todas as habilidades da fila', () => {
+  const j = jogo(12);
+  j.cotaRua = 0; j.zumbis = [];
+  const no = j.city.nodePos(j.rota.alvo.i, j.rota.alvo.j);
+  j.hero.x = no.x; j.hero.y = no.y;
+  j.decisao = { id: 'frente', dir: j.rota.dir };
+  j.niveisPendentes = 2; j.filaNiveis = [2, 3];   // subiu 2 níveis no quarteirão
+  const q0 = j.stats.quarteiroes;
+  let avisou = false;
+  passar(j, 3, ev => { for (const e of ev) if (e.type === 'esperando_escolha') avisou = true; j.hero.vida = j.hero.vidaMax; });
+  assert.equal(j.stats.quarteiroes, q0, 'espera no cruzamento');
+  assert.ok(avisou && j.esperandoEscolha);
+  passar(j, 60, () => { j.hero.vida = j.hero.vidaMax; j.zumbis = []; });
+  assert.ok(!j.escolhasPendentes(), 'o chat (ou a IA) escolheu tudo');
+  assert.ok(j.stats.quarteiroes > q0, 'aí atravessou');
 });
 
 teste('segundo fôlego: antes do nível 10, com a vida quase no fim, empurra a horda e salva o herói (com recarga)', () => {

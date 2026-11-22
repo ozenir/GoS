@@ -39,6 +39,9 @@ export const AMEACA = {
   // Zumbi preso longe que não chega no herói: depois de tantos segundos sem abate, os que estão longe somem.
   // E, por segurança, depois de limpandoMax segundos esperando, o herói atravessa de qualquer jeito.
   limpandoSemAbate: 10, limpandoLonge: 7, limpandoMax: 90,
+  // Faltando poucos (cacarPoucos ou menos), o herói vai atrás deles pra acabar logo: até cacarLonge casas do
+  // cruzamento (com mais zumbis, só até 9: os outros vêm até ele)
+  cacarPoucos: 8, cacarLonge: 17,
 
   // Começo puxado: antes do nível 10 o herói ainda não tem as habilidades no máximo, mas elas crescem muito
   // rápido (cada nível de habilidade triplica). Pra ele sofrer de verdade até o 10 (vida baixa, sem morrer),

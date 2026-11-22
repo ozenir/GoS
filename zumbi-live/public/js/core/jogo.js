@@ -194,6 +194,7 @@ export class Jogo {
     this.hordaT = this.A.hordaCadaSegundos;
     this.cotaRua = null;            // zumbis da rua que ainda nascem neste quarteirão (null = calcula na hora)
     this.limpando = null;           // esperando no cruzamento a área ficar limpa
+    this.esperandoEscolha = false;  // área limpa, mas esperando o chat escolher as habilidades da fila
     this.colossoPendente = null;    // doação: o colosso que vem no próximo quarteirão (recompensas.js)
     this.cabo = this.cabo || caboDeGuerra(null);   // cabo de guerra: top ajudante x top atrapalhante (cabo.js)
     this.fusoesDaLive = this.fusoesDaLive || new Set();   // supremas já feitas nesta live (tabela do T, fusoes.js)
@@ -994,21 +995,23 @@ export class Jogo {
     return n;
   }
 
-  // Limpando a área: vai atrás do zumbi mais perto do cruzamento (sem se afastar muito dele) pra acabar logo.
+  // Limpando a área: vai atrás do zumbi mais perto (sem se afastar muito do cruzamento) pra acabar logo.
   // Quem atira chega só até uns 70% do alcance da arma; quem luta de perto vai até o zumbi.
+  // Faltando poucos (AMEACA.cacarPoucos), vai bem mais longe (cacarLonge) e quem atira caça até os explosivos.
+  poucosPraLimpar() { return !!this.limpando && this.limpando.restam <= this.A.cacarPoucos; }
   cacarZumbi(no) {
-    const h = this.hero, R = this.A.areaRaio;
+    const h = this.hero, R = this.A.areaRaio, poucos = this.poucosPraLimpar();
     let melhor = null, md = Infinity;
     for (const z of this.zumbis) {
-      if (z.morto || z.dormindo || z.nascendo > 0 || z.tipo === 'explosivo') continue;
+      if (z.morto || z.dormindo || z.nascendo > 0 || (z.tipo === 'explosivo' && !(poucos && h.arma))) continue;
       const d = dist2(z.x, z.y, h.x, h.y);
       if (d < md && d < R * R) { md = d; melhor = z; }
     }
     if (!melhor) return null;
     const perto = h.arma ? ARMAS[h.arma].alcance * 0.7 : 1;
     if (Math.sqrt(md) < perto) return { x: h.x, y: h.y, esperando: true };
-    // não se afasta mais que 9 casas do cruzamento: os outros vêm até ele
-    if (dist(melhor.x, melhor.y, no.x, no.y) > 9) return null;
+    // não se afasta mais que 9 casas do cruzamento (faltando poucos, cacarLonge): os outros vêm até ele
+    if (dist(melhor.x, melhor.y, no.x, no.y) > (poucos ? this.A.cacarLonge : 9)) return null;
     return { x: melhor.x, y: melhor.y, cacando: true };
   }
 
@@ -1085,10 +1088,18 @@ export class Jogo {
     const alvo = this.city.nodePos(r.alvo.i, r.alvo.j);
     const [dx, dy] = DIRS[r.dir];
     const falta = (alvo.x - h.x) * dx + (alvo.y - h.y) * dy;
+    // limpando a área: vai atrás dos zumbis que faltam pra qualquer lado (inclusive pra trás, pela rua de onde
+    // veio); sem nenhum pra caçar, volta pro cruzamento
+    // (os relógios da limpeza continuam correndo: zumbi preso some e, no máximo em limpandoMax, ele segue)
+    if (this.limpando && this.decisao && !(falta < 0.5 && dist(h.x, h.y, alvo.x, alvo.y) < 1.4) && !this.areaLimpa(dt)) { const caca = this.cacarZumbi(alvo); if (caca) return caca; }
     if (falta < 0.5) {
       if (dist(h.x, h.y, alvo.x, alvo.y) < 1.4) {
-        // só atravessa com a área limpa: todos os zumbis em volta mortos
-        if (this.decisao && this.areaLimpa(dt)) { this.aplicarDecisao(); return this.objetivoRota(0); }
+        // só atravessa com a área limpa (todos os zumbis em volta mortos) e com todas as habilidades da fila
+        // escolhidas pelo chat (subiu de nível no quarteirão: as escolhas acabam antes de seguir)
+        if (this.decisao && this.areaLimpa(dt)) {
+          if (!this.escolhasPendentes()) { this.esperandoEscolha = false; this.aplicarDecisao(); return this.objetivoRota(0); }
+          if (!this.esperandoEscolha) { this.esperandoEscolha = true; this.emit('esperando_escolha', { faltam: this.niveisPendentes + (this.escolha ? 1 : 0) }); }
+        }
         if (this.limpando) { const caca = this.cacarZumbi(alvo); if (caca) return caca; }
         return { x: alvo.x, y: alvo.y, esperando: true };
       }
@@ -1304,7 +1315,8 @@ export class Jogo {
     const cx = clamp(h.x, Math.min(a.x, b.x), Math.max(a.x, b.x)), cy = clamp(h.y, Math.min(a.y, b.y), Math.max(a.y, b.y));
     const d = Math.hypot(h.x - cx, h.y - cy);
     // limpando a área: pode caçar zumbi pelas ruas do cruzamento, mas sem se afastar mais de 10 casas dele
-    if (d < 2.8 || (this.limpando && dist(h.x, h.y, b.x, b.y) < 10)) { h.foraT = 0; return false; }
+    // (faltando poucos zumbis, até AMEACA.cacarLonge)
+    if (d < 2.8 || (this.limpando && dist(h.x, h.y, b.x, b.y) < (this.poucosPraLimpar() ? this.A.cacarLonge + 1 : 10))) { h.foraT = 0; return false; }
     h.foraT = (h.foraT || 0) + dt;
     if (h.foraT > 1.5 && !h.avisouFora) { h.avisouFora = true; this.emit('voltando_rota'); }
     if (h.foraT <= 1.5) h.avisouFora = false;
@@ -1316,7 +1328,7 @@ export class Jogo {
   vigiarProgresso(dt) {
     const h = this.hero;
     h.focoRota = Math.max(0, (h.focoRota || 0) - dt);
-    if (this.room || this.arena || this.limpando) { h.semProgresso = 0; h.semCruzar = 0; return; }
+    if (this.room || this.arena || this.limpando || this.esperandoEscolha) { h.semProgresso = 0; h.semCruzar = 0; return; }
     const r = this.rota, no = this.city.nodePos(r.alvo.i, r.alvo.j);
     const d = dist(h.x, h.y, no.x, no.y);
     const chave = r.alvo.i + ',' + r.alvo.j;
@@ -1751,6 +1763,9 @@ export class Jogo {
     }
     if (h.nivel >= NIVEL_MAXIMO) h.xp = 0;   // nível máximo: a experiência para
   }
+
+  // Ainda tem habilidade pra o chat escolher? (aberta, na fila ou a do nível deus)
+  escolhasPendentes() { return !!this.escolha || this.niveisPendentes > 0 || deusPendente(this.hero); }
 
   // Nível que conta pra ameaça: só os níveis que o chat já escolheu (os que ainda esperam na fila de escolhas
   // não deixaram o herói mais forte, então não deixam os zumbis mais fortes)
