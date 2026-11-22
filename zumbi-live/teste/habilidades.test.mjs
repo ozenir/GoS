@@ -163,7 +163,7 @@ teste('escolha da IA sempre é uma das cartas', () => {
 /* ---------------- Anti-explosão e os inchados instáveis do nível 20 ---------------- */
 // estouro de um explosivo bem do lado do herói; devolve quanto de vida ele perdeu
 const estourarDoLado = (j, nivel) => {
-  j.hero.nivel = nivel; j.hero.invT = 0; j.hero.colete = 0;
+  j.hero.nivel = nivel; j.hero.invT = 0; j.hero.colete = 0; j.hero.explosaoT = null;   // cada estouro do teste é separado (fora da janela de 2 s)
   j.hero.attr.addMod({ id: 'sem-esquiva', attr: 'esquiva', mult: 0 });
   j.hero.vida = j.hero.vidaMax = 1e6;
   const z = zumbi(j, 0.5, 0, 'explosivo');

@@ -2021,7 +2021,10 @@ export class Jogo {
     if (raio >= 1.5 && this.zonas.length < 12) { const m = raio * 0.55; this.zonas.push({ tipo: 'fogo', x0: x - m, y0: y - m, x1: x + m, y1: y + m, t: 4, semente: this.rng.int(1, 1e6) }); }
     const h = this.hero;
     const dh = dist(x, y, h.x, h.y);
-    if (danoHeroi > 0 && dh < raio) {
+    // várias explosões juntas (cadeia de inchados, horda de explosivos): só a primeira de cada EXPLOSAO.janela s
+    // machuca o herói; as outras no intervalo só empurram os zumbis
+    if (danoHeroi > 0 && dh < raio && !(this.t - (h.explosaoT ?? -1e9) < EXPLOSAO.janela)) {
+      h.explosaoT = this.t;
       const entrou = this.ferirHeroi(danoExplosao(danoHeroi, dh, raio), quem, causa, 'explosao');
       // o estouro do inchado instável derruba o herói (atordoa), a não ser que ele aguente explosão (Anti-explosão)
       if (entrou && cadeia && h.attr.get('resExplosao') < EXPLOSAO.resSemAtordoar) this.aplicarStatus(h, 'atordoado', { duracao: EXPLOSAO.atordoa });

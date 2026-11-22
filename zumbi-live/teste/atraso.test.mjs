@@ -233,6 +233,24 @@ teste('status que um presente dá ao herói avisa na tela (status_presente) com 
   assert.ok(!j.drainEvents().some(e => e.type === 'status_presente'));
 });
 
+teste('várias explosões em até 2 s: só a primeira machuca o herói', () => {
+  const j = jogo();
+  const h = j.hero;
+  let golpes = 0;
+  const ferir = j.ferirHeroi.bind(j);
+  j.ferirHeroi = (...a) => { if (a[3] === 'explosao') golpes++; return ferir(...a); };
+  j.explodir(h.x, h.y, 2, 18, 80, null, 'explosão');
+  passar(j, 0.5);
+  j.explodir(h.x, h.y, 2, 18, 80, null, 'explosão');
+  passar(j, 1);
+  j.explodir(h.x, h.y, 2, 18, 80, null, 'explosão', true);
+  assert.equal(golpes, 1, 'só a primeira da janela');
+  assert.ok(!h.estados.tem('atordoado'), 'a da cadeia dentro da janela também não atordoa');
+  passar(j, 0.6);   // passou dos 2 s: a próxima machuca de novo
+  j.explodir(h.x, h.y, 2, 18, 80, null, 'explosão');
+  assert.equal(golpes, 2);
+});
+
 teste('munição pra quem luta de perto vira fúria', () => {
   const j = jogo('enfermeira');
   presente(j, 'municao', 'Ana', { segundos: 10 });
