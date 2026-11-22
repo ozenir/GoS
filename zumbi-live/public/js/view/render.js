@@ -526,6 +526,10 @@ export class Render {
     if (g.fase === 'jogo' || this.t % 1 < 0.5) lista.push({ key: heroiKey, tipo: 'heroi' });
     lista.sort((a, b) => a.key - b.key);
     this.nomes = [];
+    // de noite: janelas acesas numa camada própria, na mesma ordem dos prédios (o prédio da frente apaga as janelas
+    // do de trás); depois ela brilha por cima do escuro (luz)
+    const noite = g.noiteT > 0 && !g.room;
+    if (noite) { if (!this.em) [this.emc, this.em] = novoCanvas(W, H); this.em.globalCompositeOperation = 'source-over'; this.em.clearRect(0, 0, W, H); }
     for (const o of lista) {
       if (o.tipo === 'predio') {
         const s = S.spritePredio(o.b, o.u1 - o.u0, o.v1 - o.v0, o.porta, this.r);
@@ -536,6 +540,12 @@ export class Render {
         if (tampa) ctx.globalAlpha = 0.35;
         ctx.drawImage(s.c, x0, y0);
         ctx.globalAlpha = 1;
+        if (noite) {
+          const e = this.em;
+          e.globalCompositeOperation = 'destination-out'; e.drawImage(s.c, x0, y0);   // tapa as janelas de trás
+          e.globalCompositeOperation = 'source-over';
+          if (s.luzes && !o.b.fogo) { e.globalAlpha = tampa ? 0.35 : 1; e.drawImage(s.luzes, x0, y0); e.globalAlpha = 1; }
+        }
         if (o.b.fogo) this.fogoPredio(o.b, x0, y0, s.c.width);
         if (s.placa && o.b.shop) this.nomes.push({ placa: true, x: x0 + s.placa[0], y: y0 + s.placa[1] - 16, shop: o.b.shop, tampa });
       } else if (o.tipo === 'fonte') {
@@ -1093,11 +1103,19 @@ export class Render {
     }
   }
 
+  // alguns postes estão com defeito e piscam (sempre os mesmos)
+  posteLigado(p) {
+    const h = ((p.x * 73856093) ^ (p.y * 19349663)) >>> 0;
+    if (h % 9) return true;
+    const f = Math.sin(this.t * 13 + h) + Math.sin(this.t * 5.3 + h * 0.7);
+    return f > -0.6;
+  }
+
   luz(g) {
     const ctx = this.ctx, ex = this.ex;
     const noite = g.noiteT > 0 ? clamp(Math.min(g.noiteT, 3) / 3, 0, 1) : 0;
     const base = g.room ? 0.2 : 0.12;
-    const a = base + noite * 0.62;
+    const a = base + noite * 0.74;   // noite: bem mais escuro (a visão fica reduzida)
     ex.globalCompositeOperation = 'source-over';
     ex.clearRect(0, 0, W, H);
     ex.fillStyle = `rgba(6,6,22,${a})`;
@@ -1109,13 +1127,25 @@ export class Render {
       ex.fillStyle = gr; ex.fillRect(x - r, y - r, r * 2, r * 2);
     };
     const [hx, hy] = this.tela(g.hero.x, g.hero.y, 10);
-    buraco(hx, hy, noite ? 78 : 120, 0.95);
+    buraco(hx, hy, noite ? 60 : 120, 0.95);
     for (const r of this.raios) { const [sx, sy] = this.tela(r.x, r.y, 8); buraco(sx, sy, r.r * (1 - r.age / r.life * 0.5), 0.9); }
     for (const p of this.parts) if (p.fogo && Math.random() < 0.3) { const [sx, sy] = this.tela(p.x, p.y, p.z * 12); buraco(sx, sy, 16, 0.5); }
+    const postes = [];
     if (noite > 0 && !g.room) {
       const L = this.limites();
       for (const o of g.city.objectsIn(L.x0, L.y0, L.x1, L.y1)) {
-        if (o.kind === 'prop' && o.p.tipo === 'poste' && o.p.aceso) { const [sx, sy] = this.tela(o.p.x + 0.5, o.p.y + 0.5); buraco(sx, sy - 6, 44, 0.75); }
+        if (o.kind === 'prop' && o.p.tipo === 'poste' && o.p.aceso && this.posteLigado(o.p)) {
+          // poste: luz em CONE, da lâmpada (no alto, na ponta do braço) até uma poça oval no chão
+          const [sx, sy] = this.tela(o.p.x + 0.5, o.p.y + 0.5), lx = sx + 3.5, ly = sy - 31;
+          postes.push([lx, ly, sy]);
+          ex.save(); ex.translate(lx, sy); ex.scale(1, 0.5);
+          const gr = ex.createRadialGradient(0, 0, 0, 0, 0, 30);
+          gr.addColorStop(0, 'rgba(0,0,0,0.95)'); gr.addColorStop(0.7, 'rgba(0,0,0,0.6)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+          ex.fillStyle = gr; ex.fillRect(-30, -30, 60, 60); ex.restore();
+          const cone = ex.createLinearGradient(0, ly, 0, sy);
+          cone.addColorStop(0, 'rgba(0,0,0,0.55)'); cone.addColorStop(1, 'rgba(0,0,0,0.3)');
+          ex.fillStyle = cone; ex.beginPath(); ex.moveTo(lx - 1.5, ly); ex.lineTo(lx + 1.5, ly); ex.lineTo(lx + 24, sy); ex.lineTo(lx - 24, sy); ex.closePath(); ex.fill();
+        }
         if (o.kind === 'prop' && o.p.alarme && Math.floor(this.t * 4) % 2) { const [sx, sy] = this.tela(o.p.x + 1, o.p.y + 0.5); buraco(sx, sy, 50, 0.8); }
       }
       for (const it of g.itens) if (it.kind.startsWith('bau')) { const [sx, sy] = this.tela(it.x, it.y); buraco(sx, sy, 26, 0.7); }
@@ -1123,6 +1153,27 @@ export class Render {
     }
     ex.globalCompositeOperation = 'source-over';
     ctx.drawImage(this.escuro, 0, 0);
+    if (noite > 0 && !g.room) {
+      // janelas acesas e vitrines brilhando no escuro
+      if (this.emc) {
+        const [px, py] = this.tela(g.hero.x, g.hero.y);
+        this.em.clearRect(px - 9, py - 27, 18, 29);   // o herói na frente de uma janela não fica coberto pela luz
+        ctx.globalAlpha = noite; ctx.drawImage(this.emc, 0, 0); ctx.globalAlpha = 1;
+      }
+      // o cone dos postes ganha cor (luz amarelada de poste) e a lâmpada brilha
+      ctx.globalCompositeOperation = 'lighter';
+      for (const [lx, ly, gy] of postes) {
+        const cone = ctx.createLinearGradient(0, ly, 0, gy);
+        cone.addColorStop(0, `rgba(255,214,140,${0.22 * noite})`); cone.addColorStop(1, `rgba(255,190,100,${0.07 * noite})`);
+        ctx.fillStyle = cone; ctx.beginPath(); ctx.moveTo(lx - 1.5, ly); ctx.lineTo(lx + 1.5, ly); ctx.lineTo(lx + 24, gy); ctx.lineTo(lx - 24, gy); ctx.closePath(); ctx.fill();
+        ctx.save(); ctx.translate(lx, gy); ctx.scale(1, 0.5);
+        const poca = ctx.createRadialGradient(0, 0, 0, 0, 0, 28);
+        poca.addColorStop(0, `rgba(255,200,120,${0.16 * noite})`); poca.addColorStop(1, 'rgba(255,200,120,0)');
+        ctx.fillStyle = poca; ctx.fillRect(-28, -28, 56, 56); ctx.restore();
+        ctx.fillStyle = `rgba(255,240,190,${0.9 * noite})`; ctx.fillRect(Math.round(lx) - 1, Math.round(ly), 3, 1);
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
     // vinheta vermelha de vida baixa
     const pct = g.hero.vida / g.hero.vidaMax;
     if (g.fase === 'jogo' && (pct < 0.3 || g.caido)) {

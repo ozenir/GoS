@@ -523,11 +523,19 @@ export function spritePredio(b, du, dv, porta, rot) {
     fillPoly(x, [P(u0 + 0.8, v0 + 0.8, alt), P(u0 + 0.8, v0, alt), P(u0 + 0.8, v0, alt + 9), P(u0 + 0.8, v0 + 0.8, alt + 9)], '#6a3a2a');
   }
   // janelas
-  const janela = (face, a, z, cor) => {
+  // luzes: só as janelas acesas de noite (camada que brilha por cima do escuro: render.js → luz)
+  const [lc, lx] = canvas(W, H);
+  let temLuz = false;
+  const janela = (face, a, z, cor, ctx = x) => {
     for (let i = 0; i < 4; i++) {
       const p = face === 'v' ? P(a + i / 12, dv, z) : P(du, a - i / 12 + 0.33, z);
-      x.fillStyle = cor; x.fillRect(Math.round(p[0]) + (face === 'v' ? 0 : 0), Math.round(p[1]) - 6, 1, 6);
+      ctx.fillStyle = cor; ctx.fillRect(Math.round(p[0]) + (face === 'v' ? 0 : 0), Math.round(p[1]) - 6, 1, 6);
     }
+  };
+  const acesa = (face, a, z, cor) => {
+    temLuz = true;
+    lx.globalAlpha = 0.28; janela(face, a - 1 / 12, z + 1, cor, lx); janela(face, a + 1 / 12, z + 1, cor, lx);   // brilho em volta
+    lx.globalAlpha = 1; janela(face, a, z, cor, lx);
   };
   const andarTerreo = 16;
   for (const face of ['v', 'u']) {
@@ -537,6 +545,9 @@ export function spritePredio(b, du, dv, porta, rot) {
         const r = hash2(Math.floor(a * 10) + z * 3, b.bi * 31 + b.bj * 17 + b.sx * 5 + b.sy + (face === 'u' ? 999 : 0), 91);
         const cor = b.ruina && r < 0.4 ? '#141414' : r < 0.12 ? '#e8c86a' : r < 0.2 ? '#3a4a5a' : pal.janela;
         janela(face, a, z, cor);
+        // de noite, umas 3 em cada 10 janelas ficam acesas (as amarelas de dia, sempre); prédio em ruína fica apagado
+        const r2 = hash2(Math.floor(a * 10) + z * 7, b.bi * 13 + b.bj * 29 + b.sx * 3 + b.sy + (face === 'u' ? 555 : 0), 93);
+        if (!b.ruina && (r < 0.12 || r2 < 0.24)) acesa(face, a, z, r2 < 0.05 ? '#bfe0ff' : '#ffd98a');   // umas com luz de TV (azulada)
       }
     }
   }
@@ -544,7 +555,7 @@ export function spritePredio(b, du, dv, porta, rot) {
   for (const face of ['v', 'u']) {
     const comp = face === 'v' ? du : dv;
     if (shop) {
-      for (let a = 0.5; a < comp - 0.5; a += 0.5) janela(face, a, 4, a % 1 ? '#bfe0e8' : '#8fb8c8');
+      for (let a = 0.5; a < comp - 0.5; a += 0.5) { janela(face, a, 4, a % 1 ? '#bfe0e8' : '#8fb8c8'); if (!b.ruina) acesa(face, a, 4, '#e8f8ff'); }   // vitrine acesa de noite
       // toldo listrado
       for (let a = 0; a < comp; a += 0.5) {
         const p0 = face === 'v' ? P(a, dv, 15) : P(du, a, 15), p1 = face === 'v' ? P(a + 0.5, dv, 15) : P(du, a + 0.5, 15);
@@ -574,7 +585,7 @@ export function spritePredio(b, du, dv, porta, rot) {
   // arestas
   line(x, ...P(0, dv, 0), ...P(0, dv, alt), tom(esq, 0.12));
   line(x, ...P(du, dv, 0), ...P(du, dv, alt), tom(esq, 0.2));
-  const s = { c, ox: T[0], oy: T[1], placa: shop ? P(du * 0.5, dv * 0.5, alt) : null };
+  const s = { c, ox: T[0], oy: T[1], placa: shop ? P(du * 0.5, dv * 0.5, alt) : null, luzes: temLuz ? lc : null };
   cache.set(k, s);
   return s;
 }
