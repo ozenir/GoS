@@ -25,6 +25,7 @@ import {
 } from './ameaca.js';
 import { CHANCES_PADRAO, PERIGOS, AMEACA_POR_PERIGO, ATRASO_PERIGO, sortearCaminho } from './caminhos.js';
 import { preverDestino } from './previsao.js';
+import { pedeTabela } from './fusoes.js';
 import { caboDeGuerra, multSpawnCabo, multForcaCabo, sorteCabo, CABO } from './cabo.js';
 import { PORTAL, RELIQUIAS, sortearRodadas, forcaGuardiao, escolhaPortalIA, revelar, aplicarEfeito, poderComPresente, darReliquia, atualizarReliquia, reliquiaSalva } from './portal.js';
 
@@ -181,6 +182,7 @@ export class Jogo {
     this.limpando = null;           // esperando no cruzamento a área ficar limpa
     this.colossoPendente = null;    // doação: o colosso que vem no próximo quarteirão (recompensas.js)
     this.cabo = this.cabo || caboDeGuerra(null);   // cabo de guerra: top ajudante x top atrapalhante (cabo.js)
+    this.fusoesDaLive = this.fusoesDaLive || new Set();   // fusões já feitas nesta live (tabela do T, fusoes.js)
     this.carros = [];               // conversíveis dos zumbis passando (presente de atrapalhar de 1 moeda)
     this.paraquedistas = [];        // zumbis descendo de paraquedas em cima do herói (idem)
     this.tomates = [];              // tomates (e pedras) voando do zumbi do tomate (e da pedra) até o herói
@@ -2725,6 +2727,8 @@ export class Jogo {
         }
         // "G" (ou "gráfico", "status"...): abre o gráfico de atributos do herói (core/grafico.js)
         if (pedeGrafico(m.texto)) this.emit('grafico', { nick: nomeSeguro(m.nick) });
+        // "T" (ou "tabela", "fusões"...): abre a tabela de fusões (core/fusoes.js)
+        if (pedeTabela(m.texto)) this.emit('tabela', { nick: nomeSeguro(m.nick) });
         const letra = lerEscolha(m.texto);
         if (letra && this.escolha?.voto.aberta && this.fase === 'jogo' && !this.portal) {   // no portal, não tem roleta
           if (this.escolha.voto.votar(m.id, letra)) this.emit('voto', { nick: nomeSeguro(m.nick), op: letra, habilidade: true });

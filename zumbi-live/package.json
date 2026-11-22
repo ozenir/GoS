@@ -1,6 +1,6 @@
 {
   "name": "heroi-contra-hordas",
-  "version": "1.24.0",
+  "version": "1.25.0",
   "private": true,
   "description": "Jogo de zumbis para live do TikTok: o chat escolhe o caminho e os presentes ajudam ou atrapalham o herói.",
   "type": "module",

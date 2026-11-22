@@ -331,6 +331,10 @@ export const ARMAS_NOVAS = {
 // No nível 10 o jogo vira: daí em diante as hordas gigantes (a cada 5 quarteirões) crescem bem.
 // Nesse nível, em vez das cartas normais, o chat escolhe 1 destas 3. O herói só tem uma suprema.
 export const NIVEL_SUPREMA = 10;
+// Avião do Ataque aéreo: passa em linha reta por cima dos alvos (meio = metade do caminho, em casas) em voo segundos;
+// cada bomba demora queda segundos pra cair (a sombra do avião e as bombas aparecem na tela: view/render.js)
+export const AVIAO = { meio: 16, voo: 1.8, queda: 0.55 };
+
 export const SUPREMAS = {
   bombardeio: {
     nome: 'Ataque aéreo', divino: 'Ataque aéreo divino', emoji: '✈️', cd: 11, bombas: 6, dano: 75, raio: 1.9,
@@ -354,7 +358,19 @@ export const SUPREMAS = {
         ja.push([melhor.x, melhor.y]);
       }
       g.emit('aviso', { texto: `✈️ ${nomeSuprema(h).toUpperCase()}!`, tipo: 'bom' });
-      ja.forEach(([x, y], k) => g.agendar(0.35 + k * 0.12, () => explosaoAmiga(g, x, y, raio, dano, 'explosao', 5)));
+      // o avião passa por cima dos alvos (reta pelo meio deles) e solta as bombas na ordem em que sobrevoa;
+      // cada bomba cai em AVIAO.queda segundos e explode quando bate no chão
+      const A = AVIAO, mx = ja.reduce((a, p) => a + p[0], 0) / ja.length, my = ja.reduce((a, p) => a + p[1], 0) / ja.length;
+      let dx = ja.length > 1 ? ja[ja.length - 1][0] - ja[0][0] : 1, dy = ja.length > 1 ? ja[ja.length - 1][1] - ja[0][1] : 0.4;
+      const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
+      const proj = p => (p[0] - mx) * dx + (p[1] - my) * dy;
+      const x0 = mx - dx * A.meio, y0 = my - dy * A.meio, vel = A.meio * 2 / A.voo;
+      const bombas = ja.map(p => ({ x: p[0], y: p[1], t: Math.max(0.05, (proj(p) + A.meio) / vel) })).sort((a, b) => a.t - b.t);
+      g.emit('aviao', { x0, y0, x1: mx + dx * A.meio, y1: my + dy * A.meio, voo: A.voo, queda: A.queda, bombas });
+      for (const b of bombas) {
+        g.agendar(b.t, () => g.emit('bomba_caindo', { x: b.x, y: b.y, queda: A.queda }));
+        g.agendar(b.t + A.queda, () => explosaoAmiga(g, b.x, b.y, raio, dano, 'explosao', 5));
+      }
       return true;
     }
   },
@@ -526,6 +542,8 @@ export function aplicarCarta(g, carta) {
     h.habT = h.habT || {};
     h.habT[C.ativa] = 0.3;   // já dispara logo
     h.fusoes = [...(h.fusoes || []), carta.id];   // vai pro slot pequeno do lado do núcleo (2 fusões = 1/3 do núcleo)
+    // tabela do T (fusoes.js): a fusão fica descoberta pra live toda
+    if (g.fusoesDaLive && !g.fusoesDaLive.has(carta.id)) { g.fusoesDaLive.add(carta.id); g.emit('fusao_descoberta', { id: carta.id }); }
     g.emit('aviso', { texto: `🧬 FUSÃO! ${ATIVAS[C.ativa].emoji} + ${PASSIVAS[C.passiva].emoji} = ${C.emoji} ${C.nome.toUpperCase()}`, tipo: 'bom' });
     atualizarNucleo(g);
   } else if (carta.tipo === 'suprema') {

@@ -170,12 +170,13 @@ export class Som {
     // muitas juntas (cadeia de inchados, bomba de fragmentação): cada uma um pouco mais baixa
     const agora = performance.now();
     this.expRecentes = (this.expRecentes || []).filter(t => agora - t < 700); this.expRecentes.push(agora);
-    const k = 1 / Math.sqrt(this.expRecentes.length), tam = Math.min(1.5, Math.max(0.6, raio / 1.8));
+    // uma oitava acima (todas as frequências ×2) e 10% mais alta (volumes ×1,1)
+    const k = 1.1 / Math.sqrt(this.expRecentes.length), tam = Math.min(1.5, Math.max(0.6, raio / 1.8)), O = 2;
     this.noMundo(d, 3.5, () => {
-      this.osc('sine', 58 + 14 / tam, 22, 0.9 * tam, 0.55 * k);
-      this.noise(2.1 * tam, 0.55 * k, 'lowpass', 240, 0, 0.8, 35, 0.025);
-      this.noise(0.16, 0.16 * k, 'lowpass', 1000, 0, 0.6, 200, 0.004);
-      this.noise(1.5 * tam, 0.16 * k, 'lowpass', 140, 0.3 + Math.random() * 0.12, 0.7, 35, 0.06);
+      this.osc('sine', (58 + 14 / tam) * O, 22 * O, 0.9 * tam, 0.55 * k);
+      this.noise(2.1 * tam, 0.55 * k, 'lowpass', 240 * O, 0, 0.8, 35 * O, 0.025);
+      this.noise(0.16, 0.16 * k, 'lowpass', 1000 * O, 0, 0.6, 200 * O, 0.004);
+      this.noise(1.5 * tam, 0.16 * k, 'lowpass', 140 * O, 0.3 + Math.random() * 0.12, 0.7, 35 * O, 0.06);
     });
   }
   latido(d = 1) { if (this.pode('latido', 0.5)) this.noMundo(d, 0.4, () => { this.osc('square', 600, 300, 0.07, 0.1); this.osc('square', 650, 320, 0.07, 0.1, 0.12); }); }
@@ -225,9 +226,23 @@ export class Som {
     g.gain.linearRampToValueAtTime(0.0001, t0 + T + 0.2);
     o.start(t0); am.start(t0); o.stop(t0 + T + 0.3); am.stop(t0 + T + 0.3);
     setTimeout(() => { g.disconnect(); lp.disconnect(); ronco.disconnect(); }, (T + 1) * 1000);
-    this.noMundo(D, 1, () => {   // buzina de longe: fom-fom
-      for (const q of [0, 0.26]) { this.nota('square', 233, q, 0.2, 0.05, 0.01, 900); this.nota('square', 294, q, 0.2, 0.04, 0.01, 900); }
-    });
+    // buzina: fom-fom... fooom, várias vezes enquanto vem (na distância de cada momento)
+    for (const [q, longa] of [[0, false], [0.26, false], [0.9, true], [T * 0.42, false], [T * 0.42 + 0.24, false], [T * 0.55, true]]) {
+      setTimeout(() => this.noMundo(Math.abs(D - vel * q), 1, () => {
+        const dur = longa ? 0.55 : 0.18;
+        this.nota('square', 233, 0, dur, 0.055, 0.01, 900); this.nota('square', 294, 0, dur, 0.045, 0.01, 900);
+      }), q * 1000);
+    }
+    // alarme do carro disparado: sirene que sobe e desce sem parar, passando junto com o carro
+    const al = ac.createOscillator(); al.type = 'square';
+    const alf = ac.createBiquadFilter(); alf.type = 'bandpass'; alf.frequency.value = 1500; alf.Q.value = 0.9;
+    const alg = ac.createGain(); alg.gain.setValueAtTime(0.0001, t0);
+    al.connect(alf); alf.connect(alg); alg.connect(this.mundo);
+    for (let q = 0; q < T; q += 0.5) { al.frequency.setValueAtTime(880, t0 + q); al.frequency.linearRampToValueAtTime(1320, t0 + q + 0.25); al.frequency.linearRampToValueAtTime(880, t0 + q + 0.5); }
+    for (let k = 0; k <= N; k++) { const t = k / N * T, a = acustica(Math.abs(D - vel * t)); alg.gain.linearRampToValueAtTime(Math.max(0.0001, 0.035 * a.vol * a.vol), t0 + t); }
+    alg.gain.linearRampToValueAtTime(0.0001, t0 + T + 0.2);
+    al.start(t0); al.stop(t0 + T + 0.3);
+    setTimeout(() => { alg.disconnect(); alf.disconnect(); }, (T + 1) * 1000);
     setTimeout(() => this.noMundo(1.5, 1.2, () => {   // os zumbis fazendo festa quando passam
       this.voz(120, 210, 0.45, 0.1, [[480, 4, 1.3], [900, 5, 0.45]], 0, 0.3);
       this.voz(105, 180, 0.5, 0.09, [[440, 4, 1.3], [850, 5, 0.45]], 0.18, 0.3);
@@ -462,6 +477,29 @@ export class Som {
       this.noise(0.35, 0.08, 'bandpass', bom ? 1800 : 500, 0, 1.4, bom ? 3200 : 200, 0.02);
     });
   }
+  // avião do Ataque aéreo: ronco grave do motor passando (sobe e desce, com Doppler) e o vento
+  aviao(dur = 1.8) {
+    if (!this.running) return;
+    const ac = this.ac, t0 = ac.currentTime, T = dur + 1.2;
+    const o = ac.createOscillator(); o.type = 'sawtooth';
+    const o2 = ac.createOscillator(); o2.type = 'sawtooth'; o2.detune.value = 9;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 1.1;
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0);
+    o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(this.mundo);
+    for (let k = 0; k <= 24; k++) {
+      const t = k / 24 * T, x = (t / T - 0.5) * 2, perto = 1 - Math.min(1, Math.abs(x));
+      const f = 78 * (1 + 0.06 * (x < 0 ? 1 : -1) * Math.min(1, Math.abs(x) * 3));   // Doppler: mais agudo chegando
+      o.frequency.linearRampToValueAtTime(f, t0 + t); o2.frequency.linearRampToValueAtTime(f * 1.5, t0 + t);
+      lp.frequency.linearRampToValueAtTime(250 + 650 * perto, t0 + t);
+      g.gain.linearRampToValueAtTime(Math.max(0.0001, 0.17 * perto * perto + 0.01), t0 + t);
+    }
+    g.gain.linearRampToValueAtTime(0.0001, t0 + T + 0.2);
+    o.start(t0); o2.start(t0); o.stop(t0 + T + 0.3); o2.stop(t0 + T + 0.3);
+    setTimeout(() => { g.disconnect(); lp.disconnect(); }, (T + 1) * 1000);
+    this.noMundo(0, T, () => this.noise(T, 0.07, 'bandpass', 500, 0, 0.8, 1400, T * 0.45));   // vento da passagem
+  }
+  // bomba caindo: assobio descendo (a explosão vem do evento da explosão)
+  bombaCaindo(queda = 0.5) { if (this.pode('assobio', 0.05)) this.noMundo(1.5, queda + 0.2, () => this.osc('sine', 1500, 420, queda, 0.05)); }
   pedrada() {
     this.noMundo(0, 1.4, () => {
       this.noise(0.03, 0.32, 'highpass', 2600, 0, 0.9);                                // o estalo do vidro

@@ -133,7 +133,7 @@ document.querySelectorAll('[data-evento]').forEach(b => b.addEventListener('clic
 $('b-matar').addEventListener('click', () => { if (jogo.fase === 'jogo') jogo.ferirHeroi(9999, { nick: 'você (teste)' }, 'o botão de teste'); });
 window.addEventListener('keydown', e => {
   if (e.target.closest('input')) return;
-  if (['1', '2', '3', '4', '5', 'a', 'b', 'c', 'g'].includes(e.key.toLowerCase())) chatTeste(e.key.toLowerCase(), 'você ' + Math.floor(Math.random() * 1000));   // g = gráfico de atributos
+  if (['1', '2', '3', '4', '5', 'a', 'b', 'c', 'g', 't'].includes(e.key.toLowerCase())) chatTeste(e.key.toLowerCase(), 'você ' + Math.floor(Math.random() * 1000));   // g = gráfico de atributos
   if (e.key.toLowerCase() === 'p') jogo.abrirPortal(true);   // p = abre o portal dos 500 na hora (teste)
 });
 
@@ -235,6 +235,8 @@ function tocar(e, g) {
     case 'portal_reliquia': som.runa(); break;
     case 'portal_saindo': som.portalAbriu(true); break;
     case 'eclipse': som.onda(); break;
+    case 'aviao': som.aviao(e.voo); break;
+    case 'bomba_caindo': som.bombaCaindo(e.queda); break;
     case 'fenix': som.levantou(); break;
     case 'agarrou': case 'paraquedista_quicou': som.agarrou(); break;
     case 'soltou_perna': som.soltouPerna(); break;

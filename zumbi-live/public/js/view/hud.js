@@ -10,6 +10,7 @@ import { Letreiro } from './letreiro.js';
 import { RESULTADO_SEG } from '../core/jogo.js';
 import { CABO } from '../core/cabo.js';
 import { RELIQUIAS } from '../core/portal.js';
+import { tabelaFusoes, TABELA_SEGUNDOS } from '../core/fusoes.js';
 import { graficoDoHeroi, GRAFICO_SEGUNDOS, BLOCOS } from '../core/grafico.js';
 
 const $ = id => document.getElementById(id);
@@ -161,7 +162,9 @@ export class Hud {
       // recompensas de presente (recompensas.js)
       case 'drop': this.banner(`🪂 ${e.emoji} ${e.nome.toUpperCase()}${e.pilhas > 1 ? ' x' + e.pilhas : ''}!`, `${e.texto} · 5 quarteirões${e.quem ? ' · presente de ' + e.quem : ''}`, 'bom', 2.2); break;
       case 'inspiracao': this.banner('✨ INSPIRADO!', `${e.nick ? e.nick + ' doou · ' : ''}${e.segundos} s tomando só 20% do dano e machucando quem chega perto`, 'bom', 2.6); break;
-      case 'grafico': this.graficoAte = performance.now() + GRAFICO_SEGUNDOS * 1000; this.cache.gk = null; break;
+      case 'grafico': this.graficoAte = performance.now() + GRAFICO_SEGUNDOS * 1000; this.tabelaAte = 0; this.cache.gk = null; break;
+      case 'tabela': this.tabelaAte = performance.now() + TABELA_SEGUNDOS * 1000; this.graficoAte = 0; this.cache.tk = null; break;   // o último pedido (G ou T) fica na tela
+      case 'fusao_descoberta': this.cache.tk = null; break;
       case 'tomateiro': this.banner('🍅 ZUMBI DO TOMATE!', 'joga tomate de longe e suja a tela', 'perigo', 2); break;
       case 'paraquedista': this.banner(`🪂🧟 ZUMBI PARAQUEDISTA${e.nick ? ' DE ' + e.nick.toUpperCase() : ''}!`, 'vai cair bem em cima do herói', 'perigo', 2); break;
       case 'agarrou': this.banner('🧟 AGARROU A PERNA!', `lento até o próximo cruzamento${e.pilhas > 1 ? ` · ${e.pilhas} zumbis pendurados` : ''}${e.nick ? ' · presente de ' + e.nick : ''}`, 'perigo', 2.2); break;
@@ -275,8 +278,10 @@ export class Hud {
   atualizarGrafico(g) {
     const painel = $('g-painel'), pill = $('g-pill');
     const aberto = g.fase === 'jogo' && performance.now() < (this.graficoAte || 0);
+    const tabela = g.fase === 'jogo' && performance.now() < (this.tabelaAte || 0);
     if (painel.hidden === aberto) painel.hidden = !aberto;
-    if (pill.hidden !== aberto) pill.hidden = aberto;
+    if (pill.hidden !== (aberto || tabela)) pill.hidden = aberto || tabela;
+    this.atualizarTabela(g, tabela);
     if (!aberto) return;
     // só a sigla e os 5 blocos de cada atributo (sem moldura)
     const linhas = graficoDoHeroi(g.hero);
@@ -285,6 +290,23 @@ export class Hud {
       this.cache.gk = chave;
       painel.innerHTML = linhas.map(l => `<div class="g-l" style="--c:${l.cor}" title="${esc(l.nome)}: ${esc(l.texto)} de ${esc(l.fmt(l.max))}"><b>${l.sigla}</b><span class="g-b">${Array.from({ length: BLOCOS }, (_, k) => `<i${k < l.blocos ? ' class="on"' : ''}></i>`).join('')}</span></div>`).join('');
     }
+  }
+
+  // Tabela de fusões (core/fusoes.js): aberta por TABELA_SEGUNDOS depois que alguém comenta "T".
+  // Receita sempre; o resultado (fusão + poder) só se já foi feita nesta live, senão "?"
+  atualizarTabela(g, aberto) {
+    const painel = $('t-painel');
+    if (painel.hidden === aberto) painel.hidden = !aberto;
+    if (!aberto) return;
+    const linhas = tabelaFusoes(g.fusoesDaLive);
+    const chave = linhas.map(l => (l.fusao ? 1 : 0)).join('');
+    if (this.cache.tk === chave) return;
+    this.cache.tk = chave;
+    painel.innerHTML = '<div class="t-h">FUSÕES <small>habilidade + passiva</small></div>' + linhas.map(l =>
+      `<div class="t-l${l.fusao ? ' on' : ''}" title="${esc(l.ativa.nome)} + ${esc(l.passiva.nome)}${l.fusao ? ' = ' + esc(l.fusao.nome) : ''}">` +
+      `<span class="t-in">${l.ativa.emoji}<i>+</i>${l.passiva.emoji}</span><i class="t-eq">=</i>` +
+      (l.fusao ? `<span class="t-out">${l.fusao.emoji}</span><b>${l.fusao.poder}</b><small>${esc(l.fusao.nome.toUpperCase())}</small>` : '<span class="t-out t-x">?</span><b class="t-x">?</b>') +
+      '</div>').join('');
   }
 
   update(g, dt) {

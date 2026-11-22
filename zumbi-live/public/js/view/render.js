@@ -26,6 +26,7 @@ export class Render {
     this.parts = []; this.decals = []; this.tracers = []; this.explosoes = []; this.textos = []; this.raios = [];
     this.arremessos = []; this.choques = []; this.ondas = [];   // efeitos das habilidades
     this.bracos = [];   // braço esticado do zumbi de braço longo
+    this.avioes = []; this.bombasCaindo = [];   // Ataque aéreo: sombra do avião e bombas caindo
     [this.escuro, this.ex] = novoCanvas(W, H);
     this.brancos = new WeakMap();
     this.vistos = new Set();
@@ -136,6 +137,8 @@ export class Render {
       case 'furia_divina': this.piscar('#fff3a0', 0.55); this.tremer(6); this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.7, cor: '#fff3a0' }); this.raios.push({ x: e.x, y: e.y, age: 0, life: 0.6, r: 120 }); for (let i = 0; i < 20; i++) { const a = Math.random() * 6.28, s = 2 + Math.random() * 4; this.particula({ x: e.x, y: e.y, z: 0.5, vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: 3, life: 0.8, cor: i % 2 ? '#ffd23f' : '#fff3a0', tam: 2 }); } break;
       case 'deus': case 'nucleo': this.piscar('#ffd23f', e.tercos ? 0.25 : 0.4); break;
       case 'pedrada': this.tremer(5); this.piscar('#ffffff', 0.25); for (let i = 0; i < 6; i++) this.particula({ x: e.x + (Math.random() - 0.5) * 0.4, y: e.y + (Math.random() - 0.5) * 0.4, z: 0.8, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, vz: 2, life: 0.4, cor: Math.random() < 0.5 ? '#6a6a74' : '#a8a8b2', tam: 1 }); break;
+      case 'aviao': this.avioes.push({ ...e, age: 0 }); break;
+      case 'bomba_caindo': this.bombasCaindo.push({ ...e, age: 0 }); break;
       case 'eclipse': this.choques.push({ pts: [[e.x, e.y], [e.x2, e.y2]], age: 0, life: 0.35, cor: '#b06bff' }); for (let i = 0; i < 16; i++) { const k = Math.random(); this.particula({ x: e.x + (e.x2 - e.x) * k, y: e.y + (e.y2 - e.y) * k, z: 0.6, vz: 1, g: -0.5, life: 0.6, cor: Math.random() < 0.5 ? '#b06bff' : '#2a0f45', tam: 2 }); } this.tremer(3); break;
       case 'fenix': this.piscar('#ff8a2a', 0.45); this.tremer(5); for (let i = 0; i < 24; i++) { const a = Math.random() * 6.28, s = 2 + Math.random() * 3; this.particula({ x: e.x, y: e.y, z: 0.4, vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: 2.5, life: 0.7, cor: ['#ffd23f', '#ff8a2a', '#ff4a2a'][i % 3], tam: 2, fogo: true }); } break;
       case 'inspiracao_pulso': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.35, cor: '#ffd23f' }); break;
@@ -227,6 +230,7 @@ export class Render {
     this.fantasmaHeroi(g);
     this.desenharParticulas();
     this.desenharHabilidades(g);
+    this.desenharAvioes();
     this.desenharTracers();
     this.luz(g);
     this.desenharHeli(g, dt);
@@ -938,8 +942,39 @@ export class Render {
     this.ondas = this.ondas.filter(a => a.age < a.life);
     for (const r of this.raios) r.age += dt;
     this.raios = this.raios.filter(r => r.age < r.life);
+    for (const a of this.avioes) a.age += dt;
+    this.avioes = this.avioes.filter(a => a.age < a.voo * 1.6);
+    for (const b of this.bombasCaindo) b.age += dt;
+    this.bombasCaindo = this.bombasCaindo.filter(b => b.age < b.queda);
     for (const t of this.textos) t.age += dt;
     this.textos = this.textos.filter(t => t.age < t.life);
+  }
+
+  // Ataque aéreo: a sombra do avião passa pelo chão (o avião vai lá no alto, fora da câmera) e as bombas caem
+  // do céu, cada uma com a sombra crescendo no chão até bater e explodir
+  desenharAvioes() {
+    const ctx = this.ctx;
+    for (const a of this.avioes) {
+      const k = (a.age / a.voo) * 1.25 - 0.12;   // começa um pouco antes e termina um pouco depois da linha das bombas
+      const x = a.x0 + (a.x1 - a.x0) * k, y = a.y0 + (a.y1 - a.y0) * k;
+      const [sx, sy] = this.tela(x, y), [ex, ey] = this.tela(a.x1, a.y1), [bx, by] = this.tela(a.x0, a.y0);
+      const ang = Math.atan2(ey - by, ex - bx);
+      ctx.save(); ctx.translate(sx, sy); ctx.rotate(ang);
+      ctx.globalAlpha = 0.38; ctx.fillStyle = '#05040a';
+      ctx.beginPath(); ctx.ellipse(0, 0, 19, 3.2, 0, 0, Math.PI * 2); ctx.fill();                    // fuselagem
+      ctx.beginPath(); ctx.moveTo(4, 0); ctx.lineTo(-3, -22); ctx.lineTo(-9, -22); ctx.lineTo(-5, 0); ctx.lineTo(-9, 22); ctx.lineTo(-3, 22); ctx.closePath(); ctx.fill();   // asas
+      ctx.beginPath(); ctx.moveTo(-14, 0); ctx.lineTo(-19, -8); ctx.lineTo(-22, -8); ctx.lineTo(-20, 0); ctx.lineTo(-22, 8); ctx.lineTo(-19, 8); ctx.closePath(); ctx.fill();   // cauda
+      ctx.restore(); ctx.globalAlpha = 1;
+    }
+    for (const b of this.bombasCaindo) {
+      const k = b.age / b.queda, alt = (1 - k * k) * 90;   // cai acelerando
+      const [gx, gy] = this.tela(b.x, b.y);
+      ctx.globalAlpha = 0.25 + 0.4 * k; disc(ctx, gx, gy, 1 + k * 4, '#05040a', 0.5); ctx.globalAlpha = 1;   // sombra crescendo
+      const y = gy - alt;
+      ctx.fillStyle = '#2a2a30'; ctx.fillRect(gx - 1, y - 3, 3, 6);                  // bomba
+      ctx.fillStyle = '#5a5a64'; ctx.fillRect(gx - 1, y - 3, 1, 4);
+      ctx.fillStyle = '#c83a2a'; ctx.fillRect(gx - 2, y - 5, 5, 1); ctx.fillRect(gx, y - 6, 1, 2);   // aletas
+    }
   }
 
   desenharParticulas() {
