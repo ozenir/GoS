@@ -25,7 +25,8 @@ import { multRunaDano } from './recompensas.js';
 export const MAX_ATIVAS = 3;     // quantas habilidades ativas o herói pode ter ao mesmo tempo
 
 // Zumbis que dá pra acertar (vivos e já de pé)
-const alvos = g => g.zumbis.filter(z => !z.morto && !(z.nascendo > 0));
+// (zumbi do fã com escudo fica de fora: ainda não pode morrer)
+const alvos = g => g.zumbis.filter(z => !z.morto && !(z.nascendo > 0) && !(z.fa?.escudo > 0));
 
 // Dano de habilidade: escala com o atributo "dano" do herói; afinidade e resistência do zumbi contam
 const ferir = (g, z, base, tipo) => g.ferirZumbi(z, danoNoZumbi(z, base * g.hero.attr.get('dano'), tipo), null, false);

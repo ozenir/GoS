@@ -268,6 +268,8 @@ Todo presente continua fazendo o que faz (tabela abaixo). Além disso:
   - **🚗 Conversível dos zumbis**: um conversível vermelho cheio de zumbi em pé no banco, de braços pra cima, corta a rua do herói (de frente ou por trás), buzinando. **Quem estiver na frente perde metade da vida ATUAL**: o herói, os zumbis e até chefe (até o colosso!). Todo mundo é jogado pro lado e fica tonto um instante. Metade da vida atual nunca mata. O herói às vezes percebe e pula pro lado, às vezes não. No fim aparece o placar ("🚗 atropelou 9 zumbis e o herói!"). O motor tem Doppler: mais agudo chegando, mais grave indo embora.
   - **🪂🧟 Zumbi paraquedista**: um zumbi desce de paraquedas seguindo o herói e **cai em cima dele, agarrado na perna**: o herói fica **lento só no quarteirão em que foi agarrado**, com o zumbi pendurado. Mais de um pendurado (até 3) deixa ainda mais lento. Assim que ele atravessa o próximo cruzamento (a direção que o chat escolheu), o zumbi solta e vira um zumbi normal no chão (tem que matar pra limpar a área). Se o herói estiver invencível, o zumbi quica e cai do lado.
 
+- **🎵 Zumbis do fã (TikTok):** os 3 zumbis que o TikTok manda levam **o nome e a foto do perfil** de quem mandou numa bolinha em cima da cabeça (sem foto, a inicial), brilham em ciano e rosa e são **mais fortes** (2x a vida, 1,3x o dano) e **mais rápidos** (1,6x). **Cada um consegue acertar o herói pelo menos uma vez**: até o primeiro golpe que entra (ou que bate no colete) ele tem um escudo 🛡️ e não morre, e o herói nem perde tempo atirando nele. Depois do golpe, vira um zumbi forte normal. Pra nunca travar, o escudo some sozinho em 25 s. São sempre 3 por TikTok (não crescem com a ameaça) e eles não levam o reforço do começo do jogo.
+
 - **✨ Doação (presente de 2 moedas ou mais):**
   - **Inspiração**: por 10 segundos o herói brilha dourado, **toma só 20% do dano** e solta pulsos de luz que machucam todos os zumbis em volta.
   - Ganha um **drop** também.
@@ -284,7 +286,7 @@ Tudo que **ajuda** acontece na hora (e se adapta à situação, veja "O atraso d
 |---|---|---|---|
 | 🌹 Rosa | 1 | ajuda | cura +14% na hora |
 | 🍦 Sorvete | 1 | atrapalha | cacos de vidro na rua: herói fica lento |
-| 🎵 TikTok | 1 | atrapalha | 3 zumbis com o nome de quem mandou |
+| 🎵 TikTok | 1 | atrapalha | 3 **zumbis do fã**: nome e foto de quem mandou em cima da cabeça, brilho ciano e rosa, mais fortes e rápidos, e cada um acerta o herói pelo menos uma vez (veja abaixo) |
 | 🫰 Coração com dedos | 5 | ajuda | munição + **tiro rápido nos próximos 3 quarteirões** (combo soma +1 por presente, até 8). Quem luta de perto ganha fúria |
 | 🧴 Perfume | 20 | atrapalha | horda de 8 zumbis |
 | 🍩 Rosquinha | 30 | ajuda | kit médico (+35%): cura na hora ou vai pra mochila |
@@ -388,7 +390,7 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 | Só chat (6 pessoas comentando e votando, curtidas) | **8 min 23 s** | 17 | quase ninguém cai; a vida chega a ~40-60% entre o 5 e o 9. A maioria cai entre o nível 15 e o 24 |
 | Chat + presentes misturados (8 por minuto) | **~28 min** (a maioria cai no **golpe final** de quem atrapalha; o mais longo 35 min). Uns 70 colossos em 6 heróis, quase todos vencidos, luta de ~45 s | 40+ | ninguém cai |
 | Chat + só presentes que ajudam (4 por minuto) | ~30 min (o mais longo 35 min) | 40+ | ninguém cai |
-| Chat + só presentes que atrapalham (4 por minuto) | 6 min 44 s (a maioria cai no golpe final). Aqui o colosso aperta: 3 de cada 4 cansaram, luta de ~1 min | 20 | ninguém cai |
+| Chat + só presentes que atrapalham (4 por minuto) | 4 min 37 s (os zumbis do fã e o conversível apertam de verdade). O colosso também aperta: 3 de cada 4 cansaram | 13 | uns 4 de cada 10 caem antes do 10 |
 
 Os primeiros níveis vêm rápido (a primeira escolha de habilidade sai no primeiro minuto) e depois cada nível pede mais. O nível 10 chega por volta dos 3 minutos em lives com chat; o 20 (lobos e braços longos), em lives que ajudam; o 30 (praia), em lives muito engajadas. Cada quarteirão leva perto de 1 minuto (limpar a área inclusive), então a horda gigante vem a cada 4 ou 5 minutos.
 
@@ -419,7 +421,7 @@ Cada assunto tem o seu arquivo em `public/js/core/`:
 | `habilidades.js` | **as habilidades do roguelike**: ativas, passivas, armas novas, treino, como as 3 cartas são sorteadas e o que a IA escolhe. Habilidade nova = acrescentar em `ATIVAS` ou `PASSIVAS` (instruções no começo do arquivo) |
 | `jogo.js` | o resto: herói, zumbis, arena, herói caído, mochila e presentes inteligentes |
 
-**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/som.test.mjs` (acústica), `node teste/recompensas.test.mjs` (drops, inspiração, colosso, runas, conversível e zumbi paraquedista), `node teste/catalogo.test.mjs` (a prévia sem o programa usa os mesmos números do config.json), `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade, força por nível, combos, suprema, vida por nível, Anti-explosão e inchados instáveis), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (começo puxado, cota da quadra, limpar a área, horda a cada 5 quarteirões, segundo fôlego, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
+**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/som.test.mjs` (acústica), `node teste/recompensas.test.mjs` (drops, inspiração, colosso, runas, conversível, zumbi paraquedista e zumbis do fã), `node teste/catalogo.test.mjs` (a prévia sem o programa usa os mesmos números do config.json), `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (cartas, escolha do chat, cada habilidade, força por nível, combos, suprema, vida por nível, Anti-explosão e inchados instáveis), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (começo puxado, cota da quadra, limpar a área, horda a cada 5 quarteirões, segundo fôlego, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
 
 **Para testar o equilíbrio sem live:** `node teste/simular.mjs` roda dezenas de partidas em segundos em 5 cenários (sem interação, só chat, presentes misturados, só presentes que ajudam, só presentes que atrapalham) e mostra quanto cada herói durou. Para testar números sem mexer no `config.json`: `AJUSTES='{"horda_base":8}' node teste/simular.mjs 20 nada`. Também dá pra mexer em `ameaca.js` e na força dos zumbis só na simulação: `AMEACA='{"medioForca":1.5}' ESCALA='{"vida":0.3}' node teste/simular.mjs 20 chat`, e `SEED=1` roda outra sequência de partidas. O simulador mostra em que faixa de nível os heróis caem, a vida mínima em cada faixa, quando chegam no nível 10 e quanto tempo levam pra limpar a área.
 
@@ -443,7 +445,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.13.1)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.14.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.

@@ -10,7 +10,7 @@ import { ZUMBIS, CLASSES, ARMAS, CORPO, xpParaNivel, multVidaNivel } from './dad
 import { EFEITOS, ladoDo } from './efeitos.js';
 import { Votacao, lerVoto, lerEscolha, OPCOES } from './votacao.js';
 import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasSupremas, supremaSegura, NIVEL_SUPREMA, ATIVAS } from './habilidades.js';
-import { RECOMPENSA, DROPS, XP_POR_PILHA_SORTE, defesaRuna, CONVERSIVEL, PARAQUEDISTA } from './recompensas.js';
+import { RECOMPENSA, DROPS, XP_POR_PILHA_SORTE, defesaRuna, CONVERSIVEL, PARAQUEDISTA, ZUMBI_FA } from './recompensas.js';
 import {
   atributosDaClasse, danoDoHeroi, intervaloTiro, intervaloCorpo, alcanceArma, velocidadeHeroi,
   danoNoHeroi, valorCura, statsZumbi, danoDoZumbi, danoNoZumbi, chanceDoStatus, danoExplosao, danoAliado, ALIADOS,
@@ -1392,6 +1392,7 @@ export class Jogo {
     const cand = [];
     for (const z of this.zumbis) {
       if (z.morto || z.nascendo > 0 || (perto && z.tipo === 'explosivo' && h.vida / h.vidaMax < 0.5)) continue;
+      if (z.fa?.escudo > 0) continue;   // zumbi do fã com escudo: não adianta mirar nele
       const d = dist(h.x, h.y, z.x, z.y);
       if (d > alcance + ZUMBIS[z.tipo].raio) continue;
       let s = d;
@@ -1584,10 +1585,11 @@ export class Jogo {
   }
 
   /* =================== Zumbis =================== */
-  statsComFuria(T, vidaMult) {
+  // semInicio: sem o reforço do começo (zumbi do fã já vem forte por conta própria)
+  statsComFuria(T, vidaMult, semInicio = false) {
     const f = furiaDaHorda((this.t - Math.max(this.stats.inicio, this.ultimaAjudaT ?? 0)) / 60, this.A);
     // começo puxado (antes do nível 10): zumbis mais fortes
-    const ini = forcaInicio(this.esperandoSuprema() ? NIVEL_SUPREMA - 1 : this.hero.nivel, this.A);
+    const ini = semInicio ? 1 : forcaInicio(this.esperandoSuprema() ? NIVEL_SUPREMA - 1 : this.hero.nivel, this.A);
     const s = statsZumbi(T, this.ameaca(), vidaMult * (1 + (f - 1) * this.A.furiaVida) * ini, f * ini);
     s.vel *= 1 + Math.min(this.A.furiaVelMax, (f - 1) * this.A.furiaVel);
     return s;
@@ -1597,11 +1599,17 @@ export class Jogo {
     const T = ZUMBIS[tipo];
     const z = {
       // fúria sem ajuda da live: zumbis batem mais forte e (com FURIA_VIDA) também aguentam mais
-      id: proxId++, tipo, x, y, ...this.statsComFuria(T, opts.vidaMult || 1),
+      id: proxId++, tipo, x, y, ...this.statsComFuria(T, opts.vidaMult || 1, !!opts.fa),
       atkCd: 0.5 + this.rng.next(), velMult: 0.85 + this.rng.next() * 0.3, nascendo: opts.nascendo ?? 0.7,
       dono: quem || null, nome: opts.nome || null, kx: 0, ky: 0, fx: 0, fy: 1, animT: this.rng.next() * 10,
       flash: 0, estados: new Estados(), pavio: -1, dormindo: !!opts.dormindo, roupa: this.rng.int(0, 5), extra: opts.extra || null
     };
+    if (opts.fa) {
+      // zumbi do fã (presente TikTok): mais forte e rápido, com a foto de quem mandou e escudo até acertar o herói
+      const F = ZUMBI_FA;
+      z.vida = z.vidaMax = z.vidaMax * F.vida; z.vel *= F.vel; z.dano *= F.dano;
+      z.fa = { escudo: F.escudoMax, avatar: quem?.avatar || '' };
+    }
     if (tipo === 'explosivo') {
       // do nível 20 em diante, inchado instável: o estouro cresce com a ameaça como o dano dos outros zumbis
       const E = EXPLOSAO, instavel = this.hero.nivel >= E.desdeNivel;
@@ -1631,6 +1639,7 @@ export class Jogo {
       const T = ZUMBIS[z.tipo];
       z.flash = Math.max(0, z.flash - dt);
       if (z.nascendo > 0) { z.nascendo -= dt; continue; }
+      if (z.fa?.escudo > 0) z.fa.escudo = Math.max(0, z.fa.escudo - dt);   // escudo do zumbi do fã some sozinho com o tempo
       // colosso da doação: cansa quando o herói chega em 30% de vida (ou a luta demora demais)
       if (z.doacao && vivo) {
         const D = z.doacao, C = RECOMPENSA.chefe;
@@ -1763,7 +1772,10 @@ export class Jogo {
           // cansado, bate bem mais fraco
           const C = RECOMPENSA.chefe;
           const golpe = z.doacao ? h.vidaMax * C.golpe * (z.doacao.cansado ? C.cansadoDano : 1) : danoDoZumbi(z);
+          const coleteAntes = h.colete;
           const entrou = this.ferirHeroi(golpe, z.dono, z.doacao ? 'o colosso' : z.dono ? `${T.nome.toLowerCase()} de ${z.dono.nick}` : 'a horda', z.doacao ? 'esmagar' : A.tipo);
+          // zumbi do fã: acertou (ou bateu no colete) → perde o escudo
+          if (z.fa?.escudo > 0 && (entrou || h.colete < coleteAntes)) { z.fa.escudo = 0; this.emit('fa_acertou', { x: z.x, y: z.y, nome: z.nome }); }
           if (entrou) for (const s of A.status || []) if (this.rng.next() < s.chance) this.aplicarStatus(h, s.id, { duracao: s.duracao, fonte: z.dono });
         }
         this.emit('mordida', { x: z.x, y: z.y, chefe: !!T.chefe });
@@ -1777,6 +1789,7 @@ export class Jogo {
   // dano já calculado (dano.js). critico e efetividade ('super' | 'fraco') só servem pra mostrar na tela.
   ferirZumbi(z, dano, quem, silencioso = false, critico = false, efetividade = null) {
     if (z.morto) return;
+    if (z.fa?.escudo > 0) { if (!silencioso) { z.flash = 0.1; this.emit('acerto', { x: z.x, y: z.y, tipo: z.tipo, critico: false, efetividade: 'escudo' }); } return; }   // zumbi do fã: ainda não acertou o herói
     if (z.doacao?.cansado) dano *= RECOMPENSA.chefe.cansadoDanoRecebido;   // colosso cansado: frágil
     z.vida -= dano;
     z.dormindo = false;
@@ -2253,7 +2266,7 @@ export class Jogo {
     const h = this.hero;
     // Hordas mandadas pelo público crescem com a ameaça (o explosivo é sempre 1 por presente)
     // (o multiplicador do começo vale entre 60% e 100%: presente nunca manda mais que o normal)
-    if (quem && tipo !== 'explosivo' && !opts.semEscala) qtd = Math.max(1, Math.round(qtd * multPresente(this.nivelAmeaca, this.A) * clamp(this.multInicio(), 0.6, 1)));
+    if (quem && tipo !== 'explosivo' && !opts.semEscala && !opts.fa) qtd = Math.max(1, Math.round(qtd * multPresente(this.nivelAmeaca, this.A) * clamp(this.multInicio(), 0.6, 1)));
     const nome = opts.nomeados && quem ? nomeSeguro(quem.nick, 12) : null;
     const lugares = [];
     if (this.room) {
@@ -2277,7 +2290,7 @@ export class Jogo {
     lugares.forEach((p, k) => {
       const novos = this.hero.nivel >= NIVEL_INIMIGOS_NOVOS;
       const t = tipo === 'horda' ? (novos && this.rng.chance(EXPLOSAO.naHorda) ? 'explosivo' : novos && this.rng.chance(0.25) ? (this.rng.chance(0.55) ? 'lobo' : 'esticado') : this.rng.chance(0.2) ? 'corredor' : this.rng.chance(0.2) ? 'gordo' : 'comum') : tipo;
-      this.criarZumbi(t, p.x, p.y, quem, { nome, nascendo: 0.5 + k * 0.08 });
+      this.criarZumbi(t, p.x, p.y, quem, { nome, nascendo: 0.5 + k * 0.08, fa: opts.fa });
     });
   }
 

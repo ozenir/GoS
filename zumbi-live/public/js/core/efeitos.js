@@ -82,7 +82,8 @@ export const EFEITOS = {
     lado: 'atrapalha',
     texto: r => `${n(r.qtd, 3)} zumbis com seu nome`,
     aviso: (r, q) => `mandou ${Math.min(18, n(r.qtd, 3) * q)} zumbis`,
-    aplicar: (g, r, q, quem) => g.soltarZumbis('comum', Math.min(18, n(r.qtd, 3) * q), quem, { nomeados: true, combo: q })
+    // zumbis do fã (recompensas.js → ZUMBI_FA): nome e foto de quem mandou, mais fortes, e cada um acerta o herói ao menos uma vez
+    aplicar: (g, r, q, quem) => g.soltarZumbis('comum', Math.min(18, n(r.qtd, 3) * q), quem, { nomeados: true, combo: q, fa: true })
   },
   vidro: {
     lado: 'atrapalha',

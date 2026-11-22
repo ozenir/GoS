@@ -86,6 +86,7 @@ export class Render {
         // textos de super efetivo / resistiu / crítico (com limite pra não poluir a tela)
         if (e.efetividade === 'super' && this.t - (this.ultSuper || -9) > 0.7) { this.ultSuper = this.t; this.texto(e.x, e.y, 'SUPER EFETIVO!', '#ffb02a', 0.95); }
         else if (e.efetividade === 'fraco' && this.t - (this.ultFraco || -9) > 1.2) { this.ultFraco = this.t; this.texto(e.x, e.y, 'resistiu', '#a0a8b8', 0.8); }
+        else if (e.efetividade === 'escudo' && this.t - (this.ultEscudo || -9) > 1.2) { this.ultEscudo = this.t; this.texto(e.x, e.y, '🛡️ escudo', '#25f4ee', 0.8); }
         else if (e.critico && this.t - (this.ultCrit || -9) > 0.5) { this.ultCrit = this.t; this.texto(e.x, e.y, 'CRÍTICO', '#ffe27a', 0.85); }
         break;
       }
@@ -124,6 +125,7 @@ export class Render {
       case 'arremesso': this.arremessos.push({ ...e, age: 0, life: e.t }); break;
       case 'raio': this.choques.push({ pts: e.pts, age: 0, life: 0.22 }); for (const p of e.pts.slice(1)) this.raios.push({ x: p[0], y: p[1], age: 0, life: 0.15, r: 22 }); break;
       case 'onda': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.45 }); this.tremer(3); break;
+      case 'fa_acertou': this.texto(e.x, e.y, 'acertou! 🛡️💔', '#fe2c55', 0.9); break;
       case 'agarrou': this.tremer(4); for (let i = 0; i < 8; i++) this.particula({ x: e.x + (Math.random() - 0.5) * 0.6, y: e.y + (Math.random() - 0.5) * 0.6, z: 0.1, vz: 1.5, life: 0.5, cor: '#8a8070', tam: 2 }); break;
       case 'atropelou': this.tremer(e.heroi ? 6 : 2); for (let i = 0; i < (e.heroi ? 10 : 5); i++) this.particula({ x: e.x + (Math.random() - 0.5) * 0.5, y: e.y + (Math.random() - 0.5) * 0.5, z: 0.4, vz: 2 + Math.random() * 2, life: 0.5, cor: e.heroi ? '#ffd23f' : '#8a1e1e', tam: 2 }); if (e.heroi) this.piscar('#ff2a2a', 0.2); break;
       case 'inspiracao_pulso': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.35, cor: '#ffd23f' }); break;
@@ -595,7 +597,14 @@ export class Render {
       this.vistos.add(z.id); if (this.vistos.size > 2000) this.vistos.clear();
       for (let i = 0; i < 6 * esc; i++) this.particula({ x: z.x + (Math.random() - 0.5) * 0.6 * esc, y: z.y + (Math.random() - 0.5) * 0.6 * esc, z: 0.1, vz: 1 + Math.random() * 2, life: 0.5, cor: i % 2 ? '#5a4a3a' : '#3a3028', tam: 2 });
     }
+    // zumbi do fã (presente TikTok): brilho ciano e rosa nos pés, faíscas e, com escudo, uma bolha em volta
+    if (z.fa && nasc >= 1) {
+      const [gx, gy] = this.tela(z.x, z.y), k = Math.sin(this.t * 6 + z.id) * 0.5 + 0.5;
+      this.ctx.globalAlpha = 0.35 + 0.25 * k; disc(this.ctx, gx, gy, 9 + k * 2, k > 0.5 ? '#25f4ee' : '#fe2c55', 0.5); this.ctx.globalAlpha = 1;
+      if (Math.random() < 0.25) this.particula({ x: z.x + (Math.random() - 0.5) * 0.5, y: z.y + (Math.random() - 0.5) * 0.5, z: 0.5, vz: 1.5, g: -0.4, life: 0.6, cor: Math.random() < 0.5 ? '#25f4ee' : '#fe2c55', tam: 1 });
+    }
     const [sx, sy] = this.pessoa(spr, z.x, z.y, esc, 1, Math.max(0.05, nasc));
+    if (z.fa?.escudo > 0 && nasc >= 1) { this.ctx.globalAlpha = 0.18 + 0.08 * Math.sin(this.t * 8); disc(this.ctx, sx, sy - 10, 13, '#bff8ff', 0.9); this.ctx.globalAlpha = 1; }
     if (z.flash > 0.04) { this.ctx.globalAlpha = 0.6; this.ctx.drawImage(this.branco(spr), sx - S.PE_X * esc, sy - S.PE_Y * esc, S.SPR_W * esc, S.SPR_H * esc); this.ctx.globalAlpha = 1; }
     if (z.tipo === 'explosivo') {
       const rapido = z.pavio >= 0;
@@ -614,7 +623,9 @@ export class Render {
       for (const s of z.estados.lista.values()) { ic += STATUS[s.id].emoji; if (ic.length > 6) break; }
       this.nomes.push({ x: sx, y: sy - S.PE_Y * esc - (z.nome ? (T.chefe ? 16 : 9) : (T.chefe ? 8 : 1)), txt: ic, cor: '#fff', tam: 4.5 });
     }
-    if (z.nome && nasc >= 1) this.nomes.push({ x: sx, y: sy - S.PE_Y * esc - (T.chefe ? 8 : 2), txt: z.nome, chefe: T.chefe, cor: z.tipo === 'exheroi' ? '#9fd0ff' : T.chefe ? '#ff6a4a' : '#ffd8a8' });
+    if (z.nome && nasc >= 1) this.nomes.push({ x: sx, y: sy - S.PE_Y * esc - (T.chefe ? 8 : 2), txt: z.nome, chefe: T.chefe, cor: z.fa ? '#25f4ee' : z.tipo === 'exheroi' ? '#9fd0ff' : T.chefe ? '#ff6a4a' : '#ffd8a8' });
+    // foto de quem mandou, em cima da cabeça (sem foto: a inicial do nome)
+    if (z.fa && nasc >= 1) this.nomes.push({ foto: z.fa.avatar, inicial: (z.nome || '?')[0].toUpperCase(), escudo: z.fa.escudo > 0, x: sx, y: sy - S.PE_Y * esc - 22 });
   }
 
   // Chamas no ponto (x, y) do mundo, a z pixels de altura: retângulos piscando e fumaça subindo
@@ -1044,6 +1055,36 @@ export class Render {
     ctx.fillStyle = 'rgba(30,30,30,0.7)'; ctx.fillRect(x - 26 + p * 4, y - 8, 52 - p * 8, 2);
   }
 
+  // Foto do espectador (zumbi do fã) numa bolinha com borda piscando em ciano e rosa
+  fotoNaCabeca(n, k) {
+    const tx = this.tx, r = 7.5 * k, x = n.x * k, y = n.y * k;
+    this.fotos = this.fotos || new Map();
+    let img = null;
+    if (/^https:\/\//.test(n.foto || '')) {
+      img = this.fotos.get(n.foto);
+      if (!img) {
+        img = new Image(); img.referrerPolicy = 'no-referrer'; img.ok = false;
+        img.onload = () => { img.ok = true; }; img.onerror = () => { img.erro = true; };
+        img.src = n.foto; this.fotos.set(n.foto, img);
+        if (this.fotos.size > 60) this.fotos.delete(this.fotos.keys().next().value);
+      }
+    }
+    tx.save();
+    tx.beginPath(); tx.arc(x, y, r, 0, Math.PI * 2); tx.closePath();
+    tx.fillStyle = '#1a1420'; tx.fill();
+    if (img?.ok) { tx.clip(); tx.drawImage(img, x - r, y - r, r * 2, r * 2); }
+    else {
+      tx.fillStyle = '#fe2c55'; tx.fill();
+      tx.fillStyle = '#ffffff'; tx.font = `700 ${Math.round(9 * k)}px "Fredoka", system-ui, sans-serif`; tx.textBaseline = 'middle';
+      tx.fillText(n.inicial, x, y + 0.5 * k);
+    }
+    tx.restore();
+    tx.beginPath(); tx.arc(x, y, r, 0, Math.PI * 2);
+    tx.lineWidth = 1.6 * k; tx.strokeStyle = Math.floor(this.t * 4) % 2 ? '#25f4ee' : '#fe2c55'; tx.stroke();
+    if (n.escudo) { tx.font = `700 ${Math.round(6 * k)}px system-ui, sans-serif`; tx.textBaseline = 'middle'; tx.fillText('🛡️', x + r, y - r * 0.6); }
+    tx.textBaseline = 'bottom';
+  }
+
   // Textos nítidos (nomes, placas, números) num canvas de alta resolução por cima do jogo
   desenharTextos(g) {
     const tc = this.tc, tx = this.tx;
@@ -1056,6 +1097,7 @@ export class Render {
       tx.fillStyle = cor; tx.fillText(txt, x * k, y * k);
     };
     for (const n of this.nomes || []) {
+      if (n.inicial) { this.fotoNaCabeca(n, k); continue; }
       if (n.placa) {
         const s = n.shop;
         tx.globalAlpha = n.tampa ? 0.4 : 1;

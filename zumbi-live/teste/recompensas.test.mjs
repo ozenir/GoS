@@ -2,7 +2,7 @@
 // Rodar:  node teste/recompensas.test.mjs
 import assert from 'node:assert/strict';
 import { Jogo } from '../public/js/core/jogo.js';
-import { RECOMPENSA, DROPS, CONVERSIVEL, PARAQUEDISTA } from '../public/js/core/recompensas.js';
+import { RECOMPENSA, DROPS, CONVERSIVEL, PARAQUEDISTA, ZUMBI_FA } from '../public/js/core/recompensas.js';
 import { STATUS } from '../public/js/core/status.js';
 import { aplicarCarta, atualizarHabilidades } from '../public/js/core/habilidades.js';
 
@@ -230,6 +230,51 @@ teste('zumbi paraquedista: herói invencível, ele quica e cai do lado', () => {
   j.paraquedista(null); passar(j, PARAQUEDISTA.altura / PARAQUEDISTA.queda + 0.5);
   assert.ok(!h.estados.tem('agarrado'));
   assert.ok(j.zumbis.some(z => !z.morto && z.tipo === 'comum'));
+});
+
+/* ---------------- zumbis do fã (presente TikTok) ---------------- */
+teste('TikTok: 3 zumbis com nome e foto de quem mandou, mais fortes e mais rápidos', () => {
+  const j = jogo();
+  j.hero.nivel = 12; j.hero.suprema = 'imortal';   // sem o reforço do começo, pra comparar com o zumbi comum
+  j.handle({ type: 'presente', id: 'f', nick: 'gabi.oliveira', avatar: 'https://exemplo.com/foto.jpg', giftName: 'TikTok', count: 1, coins: 1, regra: { efeito: 'zumbis', qtd: 3 } });
+  passar(j, 0.5);
+  const fas = j.zumbis.filter(z => z.fa);
+  assert.equal(fas.length, 3);
+  const normal = j.criarZumbi('comum', j.hero.x + 9, j.hero.y);
+  for (const z of fas) {
+    assert.ok(z.nome.startsWith('gabi.olivei'), z.nome);   // nome cortado em 12 letras na tela
+    assert.equal(z.fa.avatar, 'https://exemplo.com/foto.jpg');
+    assert.ok(Math.abs(z.vidaMax / normal.vidaMax - ZUMBI_FA.vida) < 1e-9 && z.dano > normal.dano && z.vel > normal.vel * 1.5);
+  }
+});
+
+teste('zumbi do fã: não morre antes de acertar o herói; acertou, perde o escudo e morre normal', () => {
+  const j = jogo(), h = j.hero;
+  h.invT = 0; h.attr.addMod({ id: 'sem-esquiva', attr: 'esquiva', mult: 0 });
+  const z = j.criarZumbi('comum', h.x + 0.5, h.y, { id: 'f', nick: 'fa' }, { nascendo: 0, fa: true });
+  j.ferirZumbi(z, 1e6, null);
+  assert.ok(!z.morto && z.fa.escudo > 0, 'escudo segurou');
+  z.atkCd = 0;
+  const v = h.vida;
+  for (let i = 0; i < 30 && z.fa.escudo > 0; i++) j.atualizarZumbis(DT);
+  assert.ok(h.vida < v, 'acertou o herói');
+  assert.equal(z.fa.escudo, 0);
+  j.ferirZumbi(z, 1e6, null);
+  assert.ok(z.morto, 'agora morre');
+});
+
+teste('zumbi do fã: bater no colete também conta; e o escudo some sozinho com o tempo', () => {
+  const j = jogo(), h = j.hero;
+  h.invT = 0; h.colete = 2; h.attr.addMod({ id: 'sem-esquiva', attr: 'esquiva', mult: 0 });
+  const z = j.criarZumbi('comum', h.x + 0.5, h.y, null, { nascendo: 0, fa: true });
+  z.atkCd = 0;
+  for (let i = 0; i < 30 && z.fa.escudo > 0; i++) j.atualizarZumbis(DT);
+  assert.equal(z.fa.escudo, 0, 'colete conta como acerto');
+  const k = jogo();
+  const w = k.criarZumbi('comum', k.hero.x + 15, k.hero.y, null, { nascendo: 0, fa: true });
+  w.fa.escudo = 0.5;
+  for (let i = 0; i < 30; i++) k.atualizarZumbis(DT);
+  assert.equal(w.fa.escudo, 0, 'sumiu com o tempo');
 });
 
 console.log(`\n${ok} testes passaram.`);

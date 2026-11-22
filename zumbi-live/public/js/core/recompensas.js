@@ -93,3 +93,13 @@ export const CONVERSIVEL = {
 //  e vira um zumbi normal no chão (tem que matar pra limpar a área). Herói invencível: ele quica e cai do lado.
 // ============================================================================
 export const PARAQUEDISTA = { chance: 0.5, altura: 8, queda: 2.4, quarteiroes: 1, maxPilhas: 3 };   // quarteiroes 1 = até o próximo cruzamento
+
+// ============================================================================
+//  🎵 ZUMBIS DO FÃ — os zumbis do presente TikTok (efeito "zumbis", 3 por presente).
+//  Levam o NOME e a FOTO de quem mandou em cima da cabeça, brilham em ciano e rosa e são mais fortes e
+//  rápidos (vida, vel e dano multiplicam). Cada um tem que conseguir acertar o herói pelo menos uma vez:
+//  até o primeiro golpe que entra (ou que bate no colete) ele tem um ESCUDO e não morre. Depois vira um zumbi
+//  forte normal. Pra nunca travar (herói invencível, por exemplo), o escudo some sozinho em escudoMax segundos.
+// ============================================================================
+// São sempre 3 por TikTok (não crescem com a ameaça como as outras hordas de presente): TikTok x2 = 6.
+export const ZUMBI_FA = { vida: 2, vel: 1.6, dano: 1.3, escudoMax: 25 };
