@@ -87,8 +87,9 @@ export const CONVERSIVEL = {
 // ============================================================================
 //  🪂🧟 ZUMBI PARAQUEDISTA — a outra opção do presente de ATRAPALHAR de 1 moeda (sorteio com o conversível:
 //  chance = chance de vir o paraquedista em vez do carro). Um zumbi desce de paraquedas seguindo o herói e
-//  cai em cima dele: AGARRA A PERNA (status "agarrado") e o herói fica lento por `quarteiroes` quarteirões.
+//  cai em cima dele: AGARRA A PERNA (status "agarrado") e o herói fica lento SÓ NO QUARTEIRÃO EM QUE FOI
+//  AGARRADO: no primeiro cruzamento que ele atravessar (a direção que o chat escolheu), o zumbi solta.
 //  Mais de um agarrado soma (até maxPilhas), cada um deixa mais lento. Quando passa o tempo, o zumbi solta
 //  e vira um zumbi normal no chão (tem que matar pra limpar a área). Herói invencível: ele quica e cai do lado.
 // ============================================================================
-export const PARAQUEDISTA = { chance: 0.5, altura: 8, queda: 2.4, quarteiroes: 3, maxPilhas: 3 };
+export const PARAQUEDISTA = { chance: 0.5, altura: 8, queda: 2.4, quarteiroes: 1, maxPilhas: 3 };   // quarteiroes 1 = até o próximo cruzamento

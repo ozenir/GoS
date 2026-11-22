@@ -205,7 +205,7 @@ teste('conversível: quando o herói percebe, pula pro lado e escapa', () => {
   assert.ok(escapou >= 4, `escapou ${escapou} de 6`);
 });
 
-teste('zumbi paraquedista: cai em cima, agarra a perna (lento por 3 quarteirões), depois solta e vira zumbi', () => {
+teste('zumbi paraquedista: cai em cima, agarra a perna (lento até o próximo cruzamento), depois solta e vira zumbi', () => {
   const j = jogo(), h = j.hero;
   const vel0 = h.estados.lentidao();
   j.paraquedista(null);
@@ -217,8 +217,9 @@ teste('zumbi paraquedista: cai em cima, agarra a perna (lento por 3 quarteirões
   assert.equal(h.estados.pilhas('agarrado'), 2);
   assert.ok(h.estados.lentidao() < 0.6 * vel0, 'dois pendurados: mais lento');
   j.zumbis = [];
-  j.andouQuarteirao(PARAQUEDISTA.quarteiroes);
-  assert.ok(!h.estados.tem('agarrado'), 'soltou');
+  assert.equal(PARAQUEDISTA.quarteiroes, 1);
+  j.andouQuarteirao(1);   // atravessou o primeiro cruzamento
+  assert.ok(!h.estados.tem('agarrado'), 'soltou no primeiro cruzamento');
   assert.equal(j.zumbis.filter(z => !z.morto).length, 2, 'viraram zumbis no chão');
   assert.ok(eventos(j).some(e => e.type === 'soltou_perna'));
 });
