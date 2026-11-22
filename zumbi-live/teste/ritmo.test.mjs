@@ -25,7 +25,7 @@ teste('começo puxado: até o nível 10 vêm mais zumbis e mais fortes; do 10 em
   assert.ok(forcaInicio(5) > forcaInicio(4), 'do 5 ao 9 é o mais difícil');
   for (const n of [10, 30]) { assert.equal(multInicio(n), 1); assert.equal(forcaInicio(n), 1); }
   const j = jogo(7), forte = j.criarZumbi('comum', j.hero.x + 5, j.hero.y).vida;
-  j.hero.nivel = 10; j.hero.suprema = 'imortal';
+  j.hero.nivel = 10;
   assert.ok(j.criarZumbi('comum', j.hero.x + 5, j.hero.y).vida < forte);
 });
 
@@ -52,7 +52,6 @@ teste('cota da quadra: acabou, não nasce mais zumbi da rua até o próximo quar
 
 teste('sem horda por tempo: em 2 minutos parado sem andar, nenhuma horda chega sozinha', () => {
   const j = jogo(15);
-  j.hero.suprema = 'imortal';
   let hordas = 0;
   passar(j, 120, ev => { for (const e of ev) if (e.type === 'horda' || e.type === 'horda_quadra') hordas++; j.hero.vida = j.hero.vidaMax; });
   assert.equal(hordas, 0);
@@ -60,7 +59,6 @@ teste('sem horda por tempo: em 2 minutos parado sem andar, nenhuma horda chega s
 
 teste(`horda gigante a cada ${AMEACA.hordaCadaQuarteiroes} quarteirões`, () => {
   const j = jogo(12);
-  j.hero.suprema = 'imortal';
   const vistas = [];
   for (let q = 1; q <= 15; q++) {
     j.andouQuarteirao(1);
@@ -220,7 +218,7 @@ teste('braço longo acerta de longe, com uns 30% de chance', () => {
 
 teste('fúria da horda só conta o tempo SEM presente de ajuda (não é tempo limite)', () => {
   const j = jogo(12);
-  j.hero.suprema = 'imortal';   // (do nível 10 em diante, sem o começo puxado)
+  j.hero.nivel = 10;   // (do nível 10 em diante, sem o começo puxado)
   j.stats.inicio = j.t - 15 * 60;            // 15 minutos de run
   const normal = statsZumbi(ZUMBIS.comum, j.ameaca()).dano;
   j.ultimaAjudaT = j.t;                       // acabou de ganhar ajuda da live

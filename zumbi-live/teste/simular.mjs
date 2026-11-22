@@ -58,6 +58,8 @@ function rodar(id, seed) {
   let minV = {}; const minVs = [], morreuNivel = {}, tempo10 = [];
   let heroiAtual = jogo.hero, chegou10 = false, nasceu = jogo.t;
   const limpas = [], lutas = [];
+  // quando sai cada suprema e o nível deus (tempo vivo e nível do herói)
+  const marcos = { s1: [], s3: [], s6: [], deus: [] };
   let inicioLuta = null;
   const t0 = Date.now();
   while (res.length < N) {
@@ -69,7 +71,7 @@ function rodar(id, seed) {
     // herói vivo há muito tempo: mostra o estado (pra achar travas)
     if (jogo.t - nasceu > 40 * 60 && passos % (30 * 60) === 0) {
       const h = jogo.hero;
-      console.log(`  [vivo há ${fmtTempo(jogo.t - nasceu)}] q ${jogo.stats.quarteiroes} nível ${h.nivel} ameaça ${jogo.nivelAmeaca} vida ${Math.round(h.vida)}/${Math.round(h.vidaMax)} zumbis ${jogo.zumbis.filter(z => !z.morto).length} sala ${!!jogo.room} arena ${!!jogo.arena} limpando ${JSON.stringify(jogo.limpando)} decisão ${jogo.decisao?.id || '-'} caído ${!!jogo.caido} suprema ${h.suprema} pos ${h.x.toFixed(1)},${h.y.toFixed(1)}`);
+      console.log(`  [vivo há ${fmtTempo(jogo.t - nasceu)}] q ${jogo.stats.quarteiroes} nível ${h.nivel} ameaça ${jogo.nivelAmeaca} vida ${Math.round(h.vida)}/${Math.round(h.vidaMax)} zumbis ${jogo.zumbis.filter(z => !z.morto).length} sala ${!!jogo.room} arena ${!!jogo.arena} limpando ${JSON.stringify(jogo.limpando)} decisão ${jogo.decisao?.id || '-'} caído ${!!jogo.caido} supremas ${(h.supremas || []).join(',')} deus ${h.deus} pos ${h.x.toFixed(1)},${h.y.toFixed(1)}`);
     }
     if (jogo.fase === 'jogo') {
       const h = jogo.hero, f = faixa(h.nivel), v = jogo.caido ? 0 : h.vida / h.vidaMax;
@@ -83,6 +85,8 @@ function rodar(id, seed) {
     for (const e of jogo.drainEvents()) {
       contagem[e.type] = (contagem[e.type] || 0) + 1;
       if (e.type === 'area_limpa') limpas.push(e.segundos);
+      if (e.type === 'suprema' && [1, 3, 6].includes(e.total)) marcos['s' + e.total].push({ t: jogo.t - jogo.stats.inicio, n: jogo.hero.nivel });
+      if (e.type === 'deus') marcos.deus.push({ t: jogo.t - jogo.stats.inicio, n: jogo.hero.nivel });
       if (e.type === 'colosso') inicioLuta = jogo.t;
       if (e.type === 'colosso_vencido' && inicioLuta != null) { lutas.push(jogo.t - inicioLuta); inicioLuta = null; }
       if (e.type === 'heroi_morreu') { res.push(e.relatorio); const f = faixa(e.relatorio.nivel); morreuNivel[f] = (morreuNivel[f] || 0) + 1; }
@@ -103,6 +107,8 @@ function rodar(id, seed) {
   console.log('  vida mínima (mediana dos que passaram pela faixa):', faixas.map(f => { const v = minVs.map(m => m[f]).filter(x => x != null).sort((a, b) => a - b); return v.length ? `${f}: ${Math.round(v[Math.floor(v.length / 2)] * 100)}%` : null; }).filter(Boolean).join(' · '));
   const t10 = tempo10.slice().sort((a, b) => a - b);
   if (t10.length) console.log(`  chegaram no nível 10: ${t10.length}/${res.length} · tempo mediano ${fmtTempo(t10[Math.floor(t10.length / 2)])}`);
+  const marco = (k, nome) => { const l = marcos[k].slice().sort((a, b) => a.t - b.t); return l.length ? `${nome}: ${l.length}/${res.length} · ${fmtTempo(l[l.length >> 1].t)} (nível ${l.slice().sort((a, b) => a.n - b.n)[l.length >> 1].n})` : `${nome}: 0/${res.length}`; };
+  console.log('  supremas (mediana):', [marco('s1', '1ª'), marco('s3', '3ª'), marco('s6', '6ª'), marco('deus', 'deus')].join(' · '));
   if (limpas.length) { const l = limpas.slice().sort((a, b) => a - b); console.log(`  limpar a área no cruzamento: ${l.length} vezes, mediana ${l[l.length >> 1]} s, 90% até ${l[Math.floor(l.length * 0.9)]} s · hordas gigantes ${contagem.horda_quadra || 0}`); }
   if (contagem.colosso) console.log(`  presentes: ${contagem.drop || 0} drops pegos, ${contagem.inspiracao || 0} inspirações · colossos: ${contagem.colosso} apareceram, ${contagem.colosso_cansou || 0} cansaram, ${contagem.colosso_vencido || 0} vencidos${lutas.length ? `, luta mediana ${fmtTempo(lutas.sort((a, b) => a - b)[lutas.length >> 1])}` : ''}`);
   const porClasse = {};

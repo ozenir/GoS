@@ -8,16 +8,17 @@
 //  O MÁXIMO de cada atributo é calculado pra cada personagem, somando tudo que o jogo oferece:
 //    - a base da classe (vida, velocidade, defesa, esquiva...) e as perícias no nível de referência
 //      (NIVEL_REFERENCIA, com o treino no máximo)
-//    - as passivas no nível 5 (Força, Couro grosso, Reflexos...)
+//    - as passivas que o personagem pode pegar, no nível máximo (Força, Couro grosso, Reflexos, as únicas dele...)
 //    - os drops de paraquedas com 5 pilhas
 //    - os bônus de status que valem juntos (fúria, foco, blindado, tiro rápido, instinto)
-//    - a torcida cheia, a adrenalina (vida baixa), a melhor habilidade suprema e uma runa de resistência
+//    - a torcida cheia, a adrenalina (vida baixa), as supremas dele (todas: cabem 6), o melhor poder nível deus
+//      dele e uma runa de resistência
 //  e respeitando os limites do jogo (dano.js → ATRIBUTOS: velocidade até 2,2x, defesa até 60%...).
 //  É um "herói perfeito" daquele personagem; ninguém chega lá numa partida normal.
 // ============================================================================
 import { ATRIBUTOS, TORCIDA, PERICIA_ATRIBUTOS, PERICIA_PADRAO, multPericia } from './dano.js';
 import { CLASSES, ARMAS, CORPO, multVidaNivel } from './dados.js';
-import { PASSIVAS, SUPREMAS, TREINO_MAX } from './habilidades.js';
+import { PASSIVAS, SUPREMAS, DEUSES, TREINO_MAX, daClasse } from './habilidades.js';
 import { STATUS } from './status.js';
 import { RECOMPENSA } from './recompensas.js';
 
@@ -45,11 +46,11 @@ export const blocos = (valor, max) => (max > 0 ? Math.max(0, Math.min(BLOCOS, Ma
 const categoriaDe = (arma, corpo) => (arma && ARMAS[arma] ? ARMAS[arma].categoria : CORPO[corpo]?.categoria || 'impacto');
 
 // Todas as fontes de bônus que existem no jogo pra um atributo, no máximo: [{ mult } | { soma }]
-function fontes(attr, C) {
+function fontes(attr, C, classe) {
   const l = [];
-  for (const P of Object.values(PASSIVAS)) { const m = P.mod(P.max); if (m.attr === attr) l.push(m); }
+  for (const P of Object.values(PASSIVAS)) if (daClasse(P, classe)) for (const m of P.mods(P.max)) if (m.attr === attr) l.push(m);
   for (const S of Object.values(STATUS)) {
-    if (S.lado !== 'positivo' || !S.mods || S.so === 'zumbi') continue;
+    if (S.lado !== 'positivo' || !S.mods || S.so === 'zumbi' || (S.classe && S.classe !== classe)) continue;
     const k = S.porPilha ? S.maxPilhas : 1;
     for (const m of S.mods) if (m.attr === attr) l.push(m.mult != null ? { mult: 1 + (m.mult - 1) * k } : { soma: m.soma * k });
     if (attr === 'regen' && S.porSegundo?.cura && S.id !== 'regenerando') l.push({ soma: S.porSegundo.cura * (S.maxPilhas || 1) });   // drop Fôlego, instinto
@@ -58,10 +59,11 @@ function fontes(attr, C) {
   if (attr === 'dano') l.push({ mult: 1 + TORCIDA.danoPorPessoa * TORCIDA.maxPessoas }, { mult: 1.25 });   // torcida cheia, adrenalina
   if (attr === 'regen') l.push({ soma: TORCIDA.regenPorPessoa * TORCIDA.maxPessoas });
   if (attr === 'defesa') l.push({ soma: RECOMPENSA.runa.defesa * 5 });   // uma runa de resistência numa habilidade nível 5
-  // a melhor suprema pra esse atributo (o herói só tem uma)
-  let sup = null;
-  for (const S of Object.values(SUPREMAS)) for (const m of (S.mods ? S.mods() : [])) if (m.attr === attr && (!sup || (m.soma ?? m.mult) > (sup.soma ?? sup.mult))) sup = m;
-  if (sup) l.push(sup);
+  // as supremas do personagem (cabem 6; conta todas as que dão esse atributo) e o melhor poder nível deus
+  for (const S of Object.values(SUPREMAS)) if (daClasse(S, classe)) for (const m of S.mods || []) if (m.attr === attr) l.push(m);
+  let deus = null;
+  for (const D of Object.values(DEUSES)) if (daClasse(D, classe)) for (const m of D.mods || []) if (m.attr === attr && (!deus || (m.soma ?? m.mult) > (deus.soma ?? deus.mult))) deus = m;
+  if (deus) l.push(deus);
   // perícias no nível de referência (agilidade dá esquiva e velocidade)
   for (const [cat, lista] of Object.entries(PERICIA_ATRIBUTOS)) {
     const p = periciaReferencia(C, cat);
@@ -86,7 +88,7 @@ export function maximo(classe, id) {
   const A = ATRIBUTOS[attr];
   let base = attr === 'vidaMax' ? C.vida : attr === 'velocidade' ? (C.vel || 1) : (C.attr?.[attr] ?? A.base);
   let soma = 0, mult = 1;
-  for (const f of fontes(attr, C)) { if (f.soma != null) soma += f.soma; if (f.mult != null) mult *= f.mult; }
+  for (const f of fontes(attr, C, classe)) { if (f.soma != null) soma += f.soma; if (f.mult != null) mult *= f.mult; }
   if (attr === 'vidaMax') mult *= multVidaNivel(NIVEL_REFERENCIA);
   let v = (base + soma) * mult;
   if (A.max != null) v = Math.min(A.max, v);

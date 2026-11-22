@@ -245,7 +245,19 @@ function tocar(e, g) {
     case 'colosso_cansou': som.cansou(longe(e, g)); break;
     case 'colosso_vencido': som.recorde(); break;
     case 'runa': som.runa(); break;
-    case 'nucleo': som.nucleo(e.tercos); break;
+    case 'suprema': som.nucleo(Math.min(3, Math.ceil(e.total / 2))); break;
+    // habilidades novas (hab-ativas.js, hab-supremas.js)
+    case 'gelo': som.onda(); break;
+    case 'ima': som.zap(); break;
+    case 'algemas': som.bloqueio(); break;
+    case 'grito': som.onda(); break;
+    case 'sirene': som.alarme(1.5); break;
+    case 'escudo': som.colete(); break;
+    case 'escudo_bloqueou': som.bloqueio(); break;
+    case 'seringa': som.cura(); break;
+    case 'rajada': som.tiro(e.grande ? 'metralhadora' : 'escopeta'); break;
+    case 'tempo_parado': som.furiaDivina(); break;
+    case 'justica': som.tiro('escopeta'); break;
     case 'deus': som.deus(); break;
     case 'nivel_maximo': som.recorde(); break;
     case 'furia_divina': som.furiaDivina(); break;

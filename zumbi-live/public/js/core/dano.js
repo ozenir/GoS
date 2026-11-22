@@ -32,6 +32,12 @@ export const ATRIBUTOS = {
   esquiva:    { base: 0,    min: 0, max: 0.45, nome: 'esquiva' },        // chance de desviar de um ataque
   curaPorAcerto: { base: 0, min: 0,    nome: 'cura por acerto' },      // vida que volta a cada golpe corpo a corpo que acerta
   chanceStatus:  { base: 0, min: 0, max: 1, nome: 'chance de efeito' }, // soma na chance de causar sangramento, atordoar...
+  // Das habilidades (habilidades.js): área das explosões/ondas, recarga (multiplica o tempo entre usos: 0,7 = 30%
+  // mais rápido), experiência ganha e alcance pra puxar os itens do chão
+  area:       { base: 1, min: 0.5, max: 2.2, nome: 'área das habilidades' },
+  recarga:    { base: 1, min: 0.4, max: 1.5, nome: 'recarga das habilidades' },
+  xpGanho:    { base: 1, min: 0.5, nome: 'experiência ganha' },
+  ima:        { base: 1, min: 1, max: 4, nome: 'alcance pra pegar itens' },
   // Resistência do herói por tipo de dano (fração ignorada)
   resMordida:   { base: 0, min: -0.5, max: 0.8, nome: 'resistência a mordida' },
   resImpacto:   { base: 0, min: -0.5, max: 0.8, nome: 'resistência a impacto' },

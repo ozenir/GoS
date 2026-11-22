@@ -9,7 +9,7 @@ import { FlowField } from './flow.js';
 import { ZUMBIS, CLASSES, ARMAS, CORPO, xpParaNivel, multVidaNivel, NIVEL_MAXIMO } from './dados.js';
 import { EFEITOS, ladoDo } from './efeitos.js';
 import { Votacao, lerVoto, lerEscolha, OPCOES } from './votacao.js';
-import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasSupremas, supremaSegura, NIVEL_SUPREMA, ATIVAS, atualizarNucleo } from './habilidades.js';
+import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasDeus, deusPendente, supremaSegura, aoMatarZumbi, ATIVAS } from './habilidades.js';
 import { pedeGrafico } from './grafico.js';
 import { RECOMPENSA, DROPS, XP_POR_PILHA_SORTE, defesaRuna, CONVERSIVEL, PARAQUEDISTA, ZUMBI_FA, FORTES, chaveForte } from './recompensas.js';
 import {
@@ -65,6 +65,15 @@ const CHAVES_AMEACA = {
 const CHAVES_CAMINHO = { caminho_perigoso_porcento: 'perigoso', caminho_livre_porcento: 'livre', caminho_historia_porcento: 'historia' };
 
 let proxId = 1;
+
+// Escolha de habilidade com níveis acumulados na fila (2 ou mais): votação mais curta (escolhaDur × mult, no mínimo
+// `minimo` segundos; o atraso da live continua valendo) e menos espera entre uma escolha e a próxima
+export const ESCOLHA_RAPIDA = { mult: 0.6, minimo: 7, espera: 1.5 };
+
+// Controle no zumbi: atordoado, congelado e com medo não se renovam em cima um do outro; depois que passa,
+// o zumbi fica CONTROLE_IMUNE segundos imune (a janela pra ele atacar)
+export const CONTROLE = new Set(['atordoado', 'congelado', 'medo']);
+export const CONTROLE_IMUNE = 1.2;
 
 // Quantas curas/kits cabem na mochila do herói (guardados quando chegam com a vida alta)
 export const MOCHILA_MAX = 5;
@@ -137,7 +146,7 @@ export class Jogo {
       nivel: 1, xp: 0, fx: DIRS[dir][0], fy: DIRS[dir][1], andando: false, mira: null, animT: 0,
       parado: 0, ultimaPos: { x: start.x, y: start.y }, vidaBaixa: false,
       mochila: [],     // curas e kits que chegaram com a vida alta: ele usa sozinho quando precisar
-      habs: {}, passivas: {}, treino: 0, habT: {}   // habilidades escolhidas pelo chat (habilidades.js)
+      habs: {}, passivas: {}, supremas: [], deus: null, treino: 0, habT: {}, supT: {}, escudo: 0   // habilidades escolhidas pelo chat (habilidades.js)
     };
     this.praia = null;            // praia em andamento (praia.js)
     this.figurantes = [];         // pessoas fugindo ou sendo devoradas (só cenário, ninguém interage)
@@ -187,7 +196,8 @@ export class Jogo {
     this.limpando = null;           // esperando no cruzamento a área ficar limpa
     this.colossoPendente = null;    // doação: o colosso que vem no próximo quarteirão (recompensas.js)
     this.cabo = this.cabo || caboDeGuerra(null);   // cabo de guerra: top ajudante x top atrapalhante (cabo.js)
-    this.fusoesDaLive = this.fusoesDaLive || new Set();   // fusões já feitas nesta live (tabela do T, fusoes.js)
+    this.fusoesDaLive = this.fusoesDaLive || new Set();   // supremas já feitas nesta live (tabela do T, fusoes.js)
+    this.objHab = [];               // minas, torretas, bumerangues... das habilidades (hab-base.js)
     this.carros = [];               // conversíveis dos zumbis passando (presente de atrapalhar de 1 moeda)
     this.paraquedistas = [];        // zumbis descendo de paraquedas em cima do herói (idem)
     this.tomates = [];              // tomates (e pedras) voando do zumbi do tomate (e da pedra) até o herói
@@ -382,7 +392,7 @@ export class Jogo {
     // Desgaste da cidade: começa depois de 1 minuto e chega no máximo com 10 minutos de run.
     // Ruas e prédios que aparecem depois disso vêm com buracos, carros batidos e em chamas, prédios pegando fogo.
     this.city.desgaste = clamp((minutos - 1) / 9, 0, 1);
-    const n = nivelAmeaca(minutos, this.stats.quarteiroes, this.hero.nivel, this.A, this.ameacaBonus);
+    const n = nivelAmeaca(minutos, this.stats.quarteiroes, this.nivelForca(), this.A, this.ameacaBonus);
     if (!this.room) {
       const b = this.city.bairroNaPosicao(this.hero.x, this.hero.y);
       if (b !== this.bairroAtual) {
@@ -424,7 +434,7 @@ export class Jogo {
       this.trecho.livre = false;
     }
     // Horda que chega sozinha de tempos em tempos (cresce com a ameaça)
-    if (this.protecao <= 0 && this.A.hordaCadaSegundos > 0 && h.nivel >= this.A.hordaDesdeNivel && !this.esperandoSuprema()) {
+    if (this.protecao <= 0 && this.A.hordaCadaSegundos > 0 && h.nivel >= this.A.hordaDesdeNivel) {
       this.hordaT -= dt;
       if (this.hordaT <= 0) {
         this.hordaT = this.A.hordaCadaSegundos;
@@ -1542,6 +1552,12 @@ export class Jogo {
     if (!heroi && id === 'atordoado' && ZUMBIS[alvo.tipo].chefe) opts = { ...opts, duracao: (opts.duracao ?? S.duracao) * 0.4 }; // chefes se recuperam rápido
     if (heroi && id === 'infectado' && this.rng.next() < alvo.attr.get('resInfeccao')) return false;
     if (heroi && S.multNoHeroi) opts = { ...opts, mult: (opts.mult ?? 1) * S.multNoHeroi };
+    // Controle no zumbi (atordoar, congelar, medo): depois que passa, ele fica CONTROLE_IMUNE s sem poder ser
+    // controlado de novo. Senão as supremas de controle juntas prendem a horda pra sempre e o herói vira imortal.
+    if (!heroi && CONTROLE.has(id)) {
+      if ((alvo.ctrlAte ?? -1) > this.t) return false;
+      alvo.ctrlAte = this.t + (opts.duracao ?? S.duracao) + CONTROLE_IMUNE;
+    }
     const novo = alvo.estados.aplicar(id, opts);
     if (heroi) {
       sincronizarAtributos(alvo.estados, alvo.attr);
@@ -1619,6 +1635,21 @@ export class Jogo {
     const r = danoNoHeroi(h, dano, tipo, this.rng);
     if (r.bloqueado === 'invencivel') return false;
     if (r.bloqueado === 'esquiva') { this.emit('esquiva', { x: h.x, y: h.y }); return false; }
+    // Escudo de energia (habilidades): cada carga segura um golpe inteiro; quando a última quebra, empurra a horda
+    if (h.escudo > 0 && !silencioso && tipo !== 'esmagar') {
+      h.escudo--;
+      this.emit('escudo_bloqueou', { x: h.x, y: h.y, resta: h.escudo });
+      if (h.escudo === 0 && h.escudoEstouro > 0) {
+        this.emit('onda', { x: h.x, y: h.y, raio: 2.2, cor: '#7ad8ff' });
+        for (const z of this.zumbis) {
+          if (z.morto || dist2(z.x, z.y, h.x, h.y) > 2.2 * 2.2) continue;
+          this.ferirZumbi(z, h.escudoEstouro * h.attr.get('dano'), null, false);
+          const d = Math.hypot(z.x - h.x, z.y - h.y) || 0.01;
+          if (!z.morto && !ZUMBIS[z.tipo].chefe) { z.kx += (z.x - h.x) / d * 7; z.ky += (z.y - h.y) / d * 7; }
+        }
+      }
+      return false;
+    }
     if (r.bloqueado === 'colete') { h.colete--; this.emit('colete', { x: h.x, y: h.y, resta: h.colete }); return false; }
     dano = r.dano;
     if (h.estados.tem('inspirado')) dano *= RECOMPENSA.inspiracao.danoRecebido;   // doação: toma só 20% do dano
@@ -1626,7 +1657,7 @@ export class Jogo {
     // o golpe que levou o herói a 30% cansa o colosso na hora (antes da mochila ou de outra cura chegar)
     if (h.vida / h.vidaMax <= RECOMPENSA.chefe.cansaVida) this.cansarColosso();
     // segundo fôlego (antes do nível 10): com a vida quase no fim, o herói empurra todo mundo e respira
-    if (h.vida / h.vidaMax < FOLEGO.limite && h.nivel < FOLEGO.ateNivel && !h.suprema && h.folegoCd <= 0) this.segundoFolego();
+    if (h.vida / h.vidaMax < FOLEGO.limite && h.nivel < FOLEGO.ateNivel && !h.supremas?.length && h.folegoCd <= 0) this.segundoFolego();
     if (!silencioso) this.emit('dano_heroi', { dano, x: h.x, y: h.y });
     this.stats.matador = quem ? { nick: quem.nick, avatar: quem.avatar || '', causa } : { nick: null, causa };
     if (!h.vidaBaixa && h.vida > 0 && h.vida / h.vidaMax < 0.3) { h.vidaBaixa = true; this.emit('vida_baixa'); }
@@ -1665,7 +1696,7 @@ export class Jogo {
       h.toqueT = 1; this.emit('dano_heroi', { dano: h.toqueAcum, x: h.x, y: h.y, toque: true }); h.toqueAcum = 0;
     }
     if (h.vida / h.vidaMax <= RECOMPENSA.chefe.cansaVida) this.cansarColosso();
-    if (h.vida / h.vidaMax < FOLEGO.limite && h.nivel < FOLEGO.ateNivel && !h.suprema && h.folegoCd <= 0) this.segundoFolego();
+    if (h.vida / h.vidaMax < FOLEGO.limite && h.nivel < FOLEGO.ateNivel && !h.supremas?.length && h.folegoCd <= 0) this.segundoFolego();
     if (!h.vidaBaixa && h.vida > 0 && h.vida / h.vidaMax < 0.3) { h.vidaBaixa = true; this.emit('vida_baixa'); }
     if (h.vida <= 0) {
       this.stats.matador = quem?.dono ? { nick: quem.dono.nick, avatar: quem.dono.avatar || '', causa: 'a horda' } : { nick: null, causa: 'a horda' };
@@ -1694,7 +1725,7 @@ export class Jogo {
 
   ganharXp(x) {
     const h = this.hero;
-    h.xp += x * (1 + XP_POR_PILHA_SORTE * h.estados.pilhas('d_sorte'));   // drop Sortudo: mais experiência
+    h.xp += x * (1 + XP_POR_PILHA_SORTE * h.estados.pilhas('d_sorte')) * h.attr.get('xpGanho');   // drop Sortudo e passivas (Estudioso, Gorjeta): mais experiência
     while (h.xp >= xpParaNivel(h.nivel) && h.nivel < NIVEL_MAXIMO) {
       h.xp -= xpParaNivel(h.nivel);
       h.nivel++;
@@ -1712,7 +1743,7 @@ export class Jogo {
       this.sincronizarVida();
       this.emit('nivel', { nivel: h.nivel, pericias: subiu });
       if (h.nivel === NIVEL_INIMIGOS_NOVOS) this.emit('novos_inimigos', {});
-      if (h.nivel === NIVEL_MAXIMO) { h.xp = 0; this.emit('nivel_maximo', { nivel: h.nivel }); atualizarNucleo(this); }   // núcleo cheio → nível deus
+      if (h.nivel === NIVEL_MAXIMO) { h.xp = 0; this.emit('nivel_maximo', { nivel: h.nivel }); }
       // cada nível vira uma escolha de habilidade do chat (A, B ou C)
       this.niveisPendentes++;
       this.filaNiveis.push(h.nivel);
@@ -1721,10 +1752,13 @@ export class Jogo {
     if (h.nivel >= NIVEL_MAXIMO) h.xp = 0;   // nível máximo: a experiência para
   }
 
+  // Nível que conta pra ameaça: só os níveis que o chat já escolheu (os que ainda esperam na fila de escolhas
+  // não deixaram o herói mais forte, então não deixam os zumbis mais fortes)
+  nivelForca() { return Math.max(1, this.hero.nivel - this.niveisPendentes); }
+
   // Começo puxado: quantos zumbis normais a mais aparecem no nível atual do herói (ameaca.js → multInicio)
   // (enquanto o chat escolhe a habilidade suprema do nível 10, ainda vale o do nível 9)
-  multInicio() { return multInicio(this.esperandoSuprema() ? NIVEL_SUPREMA - 1 : this.hero.nivel, this.A); }
-  esperandoSuprema() { const h = this.hero; return h.nivel >= NIVEL_SUPREMA && !h.suprema; }
+  multInicio() { return multInicio(this.hero.nivel, this.A); }
   // Tamanho de horda dos caminhos perigosos, já com o multiplicador do começo
   hordaDaRua(n) { return Math.max(3, Math.round(tamanhoHorda(n, this.A) * this.multInicio())); }
 
@@ -1733,8 +1767,6 @@ export class Jogo {
   hordaDaQuadra() {
     if (this.fase !== 'jogo') return;
     if (this.room || this.arena || this.caido || this.rota.beco) { this.agendar(3, () => this.hordaDaQuadra()); return; }   // espera voltar pra rua
-    // a do nível 10 espera o chat escolher a habilidade suprema
-    if (this.escolha?.suprema || (this.esperandoSuprema() && this.filaNiveis.includes(NIVEL_SUPREMA))) { this.agendar(2, () => this.hordaDaQuadra()); return; }
     const qtd = tamanhoHordaQuadra(this.nivelAmeaca, 1, this.A);
     const ondas = Math.max(1, Math.ceil(qtd / this.A.hordaQuadraOndaCada)), por = Math.ceil(qtd / ondas);
     for (let k = 0; k < ondas; k++) this.agendar(1.5 + k * 8, () => {
@@ -1784,25 +1816,25 @@ export class Jogo {
   /* =================== Escolha de habilidade (roguelike) =================== */
   // A cada nível o chat escolhe 1 de 3 cartas (habilidades.js). Mesma janela de votos atrasados da votação.
   // Se subir vários níveis de uma vez, as escolhas vêm uma depois da outra.
+  // Com 6 supremas no núcleo, a próxima escolha é a do NÍVEL DEUS (3 poderes; passa na frente da fila e não
+  // gasta um nível)
   abrirEscolha() {
     const h = this.hero;
-    this.niveisPendentes--;
-    // nível 10: escolha especial entre as 3 habilidades supremas. Ela passa na frente das escolhas
-    // de níveis anteriores que ainda estão na fila (senão chegaria tarde, com a horda já em cima).
-    let k = this.filaNiveis.indexOf(NIVEL_SUPREMA);
-    const suprema = k >= 0 && !h.suprema;
-    if (!suprema) k = 0;
-    const nivel = this.filaNiveis.splice(k, 1)[0] ?? h.nivel;
-    const cartas = suprema ? cartasSupremas() : sortearCartas(h, this.rng);
+    const deus = deusPendente(h);
+    if (!deus) this.niveisPendentes--;
+    const nivel = deus ? h.nivel : this.filaNiveis.shift() ?? h.nivel;
+    const cartas = deus ? cartasDeus(h, this.rng) : sortearCartas(h, this.rng);
     if (!cartas.length) return;
-    const voto = new Votacao(cartas.map(c => ({ id: c.letra.toLowerCase(), n: c.letra })), this.cfg.escolhaDur, this.cfg.atraso);
-    this.escolha = { voto, cartas, nivel, suprema };
-    this.emit('escolha_abriu', { nivel, cartas, suprema });
+    // com níveis acumulados na fila, a votação fica mais curta (o chat escolhe mais rápido e o herói não fica pra trás)
+    const dur = this.niveisPendentes >= 2 ? Math.max(ESCOLHA_RAPIDA.minimo, this.cfg.escolhaDur * ESCOLHA_RAPIDA.mult) : this.cfg.escolhaDur;
+    const voto = new Votacao(cartas.map(c => ({ id: c.letra.toLowerCase(), n: c.letra })), dur, this.cfg.atraso);
+    this.escolha = { voto, cartas, nivel, deus };
+    this.emit('escolha_abriu', { nivel, cartas, deus });
   }
 
   atualizarEscolha(dt) {
     if (!this.escolha) {
-      if (this.niveisPendentes > 0 && (this.escolhaEspera -= dt) <= 0) this.abrirEscolha();
+      if ((this.niveisPendentes > 0 || deusPendente(this.hero)) && (this.escolhaEspera -= dt) <= 0) this.abrirEscolha();
       return;
     }
     const e = this.escolha;
@@ -1817,7 +1849,7 @@ export class Jogo {
     this.escolhaRes = { carta, votos: res.votos, total: e.voto.total, auto: res.auto, empate: !!res.empate, quem, ate: this.t + 3.5, voto: e.voto };
     this.emit('habilidade', { carta, votos: res.votos, auto: res.auto, quem, x: h.x, y: h.y });
     this.escolha = null;
-    this.escolhaEspera = 3.5;
+    this.escolhaEspera = this.niveisPendentes >= 2 ? ESCOLHA_RAPIDA.espera : 3.5;
   }
 
   /* =================== Zumbis =================== */
@@ -1825,7 +1857,7 @@ export class Jogo {
   statsComFuria(T, vidaMult, semInicio = false) {
     const f = furiaDaHorda((this.t - Math.max(this.stats.inicio, this.ultimaAjudaT ?? 0)) / 60, this.A);
     // começo puxado (antes do nível 10): zumbis mais fortes
-    const ini = semInicio ? 1 : forcaInicio(this.esperandoSuprema() ? NIVEL_SUPREMA - 1 : this.hero.nivel, this.A);
+    const ini = semInicio ? 1 : forcaInicio(this.hero.nivel, this.A);
     const cabo = multForcaCabo(this.cabo);   // atrapalhante na frente no cabo de guerra: zumbis um pouco mais fortes
     const s = statsZumbi(T, this.ameaca(), vidaMult * (1 + (f - 1) * this.A.furiaVida) * ini * cabo, f * ini * cabo);
     s.vel *= 1 + Math.min(this.A.furiaVelMax, (f - 1) * this.A.furiaVel);
@@ -2004,7 +2036,10 @@ export class Jogo {
         else if (d <= Tm.max) quieto = true;
         if (z.tomateCd <= 0 && d <= Tm.max + 1.5 && !this.caido) { z.tomateCd = Tm.recarga; this.lancarTomate(z); }
       }
-      const avanco = perto || quieto ? 0 : vel * dt;
+      // com medo (Grito de guerra e cia., habilidades.js): foge do herói e não ataca
+      const medo = vivo && z.estados.tem('medo');
+      if (medo) { mx = -mx; my = -my; quieto = false; z.atkCd = Math.max(z.atkCd, 0.3); }
+      const avanco = (perto && !medo) || quieto ? 0 : vel * dt;
       this.mover(z, mx * avanco + sx * 0.5 * dt * 4, my * avanco + sy * 0.5 * dt * 4, Math.min(0.3, T.raio * 0.7));
       if (avanco > 0) z.animT += avanco;
       z.fx = mx; z.fy = my;
@@ -2049,6 +2084,7 @@ export class Jogo {
     z.morto = true;
     const T = ZUMBIS[z.tipo];
     this.stats.abates++;
+    aoMatarZumbi(this, z);   // supremas que reagem a zumbi morrendo (Transfusão)
     if (this.fase === 'jogo') this.ganharXp(T.xp * (1 + (this.nivelAmeaca - 1) * 0.1));   // zumbi mais forte dá mais XP
     this.emit('morte_zumbi', { x: z.x, y: z.y, tipo: z.tipo, chefe: !!T.chefe, nome: z.nome, dono: z.dono?.nick || null, roupa: z.roupa });
     // ajudante na frente no cabo de guerra: sorte, às vezes o cadáver tem um suprimento
@@ -2205,7 +2241,7 @@ export class Jogo {
       if (this.fase !== 'jogo' || this.caido) continue;
       const d2 = dist2(h.x, h.y, it.x, it.y);
       // ímã: item perto vem sozinho até o herói (não fica preso atrás de zumbi ou carro)
-      const ima = it.ima || 2.2;
+      const ima = (it.ima || 2.2) * h.attr.get('ima');   // passivas (Gorjeta) puxam de mais longe
       if (d2 < ima * ima && d2 > 0.01) {
         const d = Math.sqrt(d2), v = Math.min(d, (2 + Math.max(0, 2.2 - d) * 3) * dt);
         it.x += (h.x - it.x) / d * v; it.y += (h.y - it.y) / d * v;

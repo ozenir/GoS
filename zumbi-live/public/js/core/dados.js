@@ -118,14 +118,19 @@ for (const c of Object.values(CORPO)) c.corpo = true;
 
 // O que o herói ganha ao subir de nível é escolhido pelo chat: ver habilidades.js
 
-// XP para passar do nível n para o n+1: cada nível pede mais que o anterior
-// (nível 1→2: 8 · 5→6: 31 · 10→11: 80 · 20→21: 245 · 30→31: 500). Zumbi dá mais XP quanto maior a ameaça.
 // Vida máxima por nível do herói: +10% da vida do personagem a cada nível até o 20 (nível 10 = +90%,
 // nível 20 = +190%) e +3% por nível depois. Subir de nível não cura (a vida atual fica como estava).
 export const VIDA_POR_NIVEL = 0.1, VIDA_POR_NIVEL_DEPOIS_DO_20 = 0.03;
 export const multVidaNivel = n => 1 + VIDA_POR_NIVEL * Math.min(n - 1, 19) + VIDA_POR_NIVEL_DEPOIS_DO_20 * Math.max(0, n - 20);
 
-export const xpParaNivel = n => Math.round(5 + n * 3 + n * n * 0.45);
+// XP para passar do nível n para o n+1. Cada nível vira uma carta (habilidades.js); uma suprema pede 8 cartas certas
+// (habilidade até o 5 + a passiva par até o 3) no meio das outras, e o chat leva uns 15 a 20 s pra escolher cada
+// uma. Por isso a experiência vem mais fácil que antes, mas no ritmo que o chat consegue escolher (níveis demais
+// só iam esperar na fila).
+//   nível 1→2: 6 · 5→6: 22 · 10→11: 57 · 20→21: 176 · 40→41: 612 · 60→61: 1312 · 90→91: 2857
+// No total: nível 10 ≈ 220 XP · 20 ≈ 1.300 · 40 ≈ 8.500 · 60 ≈ 27.000 · 90 ≈ 87.000 (antes: 300 · 1.800 · 11.800 · 37.000 · 120.000).
+// Zumbi dá mais XP quanto maior a ameaça; as passivas Estudioso e Gorjeta e o drop Sortudo dão mais.
+export const xpParaNivel = n => Math.round(4 + n * 2 + n * n * 0.33);
 
-// Nível máximo do herói. Lá a experiência para; a habilidade nível deus (habilidades.js → DEUS) só abre aqui.
-export const NIVEL_MAXIMO = 100;
+// Nível máximo do herói. Lá a experiência para. (O nível deus não depende dele: vem com 6 supremas.)
+export const NIVEL_MAXIMO = 120;

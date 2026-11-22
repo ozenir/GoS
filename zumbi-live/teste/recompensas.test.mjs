@@ -235,7 +235,7 @@ teste('zumbi paraquedista: herói invencível, ele quica e cai do lado', () => {
 /* ---------------- zumbis do fã (presente TikTok) ---------------- */
 teste('TikTok: 3 zumbis com nome e foto de quem mandou, mais fortes e mais rápidos', () => {
   const j = jogo();
-  j.hero.nivel = 12; j.hero.suprema = 'imortal';   // sem o reforço do começo, pra comparar com o zumbi comum
+  j.hero.nivel = 12;   // sem o reforço do começo, pra comparar com o zumbi comum
   j.handle({ type: 'presente', id: 'f', nick: 'gabi.oliveira', avatar: 'https://exemplo.com/foto.jpg', giftName: 'TikTok', count: 1, coins: 1, regra: { efeito: 'zumbis', qtd: 3 } });
   passar(j, 0.5);
   const fas = j.zumbis.filter(z => z.fa);

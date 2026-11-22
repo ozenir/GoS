@@ -5,7 +5,7 @@ import { STATUS } from '../core/status.js';
 import { BAIRROS } from '../core/city.js';
 import { EFEITOS, ladoDo } from '../core/efeitos.js';
 import { progressoAmeaca } from '../core/ameaca.js';
-import { slotsDoHeroi, NUCLEO } from '../core/habilidades.js';
+import { slotsDoHeroi } from '../core/habilidades.js';
 import { Letreiro } from './letreiro.js';
 import { RESULTADO_SEG } from '../core/jogo.js';
 import { CABO } from '../core/cabo.js';
@@ -123,7 +123,7 @@ export class Hud {
     a.timer = setTimeout(() => { a.el.classList.add('out'); setTimeout(() => { a.el.remove(); if (this.spAvisos.get(e.id) === a) this.spAvisos.delete(e.id); }, 460); }, STATUS_PRESENTE_SEG * 1000);
   }
 
-  // Slots do herói: habilidades ← [fusão] (NÚCLEO) [fusão] → passivas
+  // Slots do herói: habilidades (5, pra esquerda) ← NÚCLEO (as 6 supremas em volta) → passivas (5, pra direita)
   atualizarSlots(h) {
     const S = slotsDoHeroi(h), N = S.nucleo;
     const k = JSON.stringify(S);
@@ -131,32 +131,26 @@ export class Hud {
     const antes = new Set((this.cache.slotsIds || []));
     const ids = [];
     const slot = (x, cls) => {
-      const id = cls + x.emoji + x.nivel; ids.push(id);
-      return `<span class="sl ${cls}${antes.has(id) || !this.cache.slots ? '' : ' novo'}" title="${esc(x.nome)}">${esc(x.emoji)}<i>${x.nivel}</i>${x.runa ? '<u>🔮</u>' : ''}</span>`;
+      const id = cls + x.id + x.nivel; ids.push(id);
+      return `<span class="sl ${cls}${x.unica ? ' unica' : ''}${x.max ? ' max' : ''}${antes.has(id) || !this.cache.slots ? '' : ' novo'}" title="${esc(x.nome)}${x.unica ? ' (única)' : ''}">${esc(x.emoji)}<i>${x.nivel}</i>${x.runa ? '<u>🔮</u>' : ''}</span>`;
     };
-    // 5 slots de cada lado: usados, presos pela fusão solta (até ela entrar no núcleo) e vazios
-    const fileira = (lista, max, cls) => {
-      const presos = Math.min(S.presas, Math.max(0, max - lista.length));
-      return lista.slice(0, max).map(x => slot(x, cls)).join('') +
-        '<span class="sl presa" title="Vaga presa pela fusão até ela entrar no núcleo"></span>'.repeat(presos) +
-        '<span class="sl vazio"></span>'.repeat(Math.max(0, max - lista.length - presos));
-    };
-    const mini = i => {
-      const x = S.mini[i];
-      if (!x) return '<span class="sm" title="Fusão: habilidade nível 3 + a passiva certa"></span>';
-      const id = 'm' + x.emoji; ids.push(id);
-      return `<span class="sm on${antes.has(id) || !this.cache.slots ? '' : ' novo'}" title="${esc(x.nome)} (fusão)">${esc(x.emoji)}</span>`;
-    };
-    // anel do núcleo: 3 terços com uma folguinha entre eles; cheios em dourado
-    const parte = 360 / N.total, folga = 6, cor = i => (N.deus ? '#fff3a0' : i < N.tercos ? '#ffd23f' : 'rgba(255,255,255,.12)');
+    const fileira = (lista, max, cls) => lista.slice(0, max).map(x => slot(x, cls)).join('') + '<span class="sl vazio"></span>'.repeat(Math.max(0, max - lista.length));
+    // anel do núcleo: 6 pedaços com uma folguinha entre eles; cheios em dourado (deus: tudo claro)
+    const parte = 360 / N.total, folga = 5, cor = i => (N.deus ? '#fff3a0' : i < N.feitas ? '#ffd23f' : 'rgba(255,255,255,.12)');
     const anel = Array.from({ length: N.total }, (_, i) => `${cor(i)} ${i * parte + folga / 2}deg ${(i + 1) * parte - folga / 2}deg, transparent ${(i + 1) * parte - folga / 2}deg ${(i + 1) * parte + folga / 2}deg`).join(',');
-    const selo = N.deus ? '<em>DEUS</em>' : N.bloqueado ? `<em class="lock">🔒${NIVEL_MAXIMO}</em>` : N.tercos ? `<em>${N.centro ? '+' + N.grau : N.tercos + '/' + N.total}</em>` : '';
-    const titulo = (N.centro ? N.centro.nome + ' · ' : '') + (N.deus ? 'nível deus' : `núcleo ${N.tercos}/${N.total}: a cada ${NUCLEO.porTerco} fusões, 1 terço se une à suprema e eleva ela. Cheio + nível ${NIVEL_MAXIMO} = nível deus`);
-    const subiu = (this.cache.nucT ?? N.tercos) !== N.tercos || (this.cache.nucD === false && N.deus);
-    this.cache.nucT = N.tercos; this.cache.nucD = N.deus;
+    // as supremas ficam em volta, cada uma no seu pedaço do anel
+    const orbs = Array.from({ length: N.total }, (_, i) => {
+      const x = S.supremas[i];
+      if (x) { const id = 'S' + x.id; ids.push(id); }
+      return `<span class="orb${x ? ' on' : ''}${x?.unica ? ' unica' : ''}${x && !antes.has('S' + x.id) && this.cache.slots ? ' novo' : ''}" style="--a:${i * parte + parte / 2 - 90}deg" title="${x ? esc(x.nome) : 'vaga de suprema'}">${x ? esc(x.emoji) : ''}</span>`;
+    }).join('');
+    const meio = N.deus ? esc(N.deus.emoji) : `${N.feitas}<small>/${N.total}</small>`;
+    const titulo = N.deus ? `nível deus: ${N.deus.nome}` : `núcleo: ${N.feitas} de ${N.total} supremas (habilidade nível 5 + a passiva par no nível 3). Com ${N.total}, o chat escolhe o poder nível deus`;
+    const subiu = (this.cache.nucF ?? N.feitas) !== N.feitas || (this.cache.nucD === false && !!N.deus);
+    this.cache.nucF = N.feitas; this.cache.nucD = !!N.deus;
     $('h-slots').innerHTML =
       `<div class="lado hab">${fileira(S.ativas, S.maxAtivas, 'hab')}</div>` +
-      `<div class="nucleo">${mini(0)}<span class="nuc${N.deus ? ' deus' : ''}${subiu ? ' up' : ''}" title="${esc(titulo)}"><span class="anel" style="background:conic-gradient(${anel});-webkit-mask:radial-gradient(circle,transparent 61%,#000 62%);mask:radial-gradient(circle,transparent 61%,#000 62%)"></span><span class="meio">${N.centro ? esc(N.centro.emoji) : ''}</span>${selo}</span>${mini(1)}</div>` +
+      `<div class="nucleo"><span class="nuc${N.deus ? ' deus' : ''}${N.prontas && !N.deus ? ' pronta' : ''}${subiu ? ' up' : ''}" title="${esc(titulo)}"><span class="anel" style="background:conic-gradient(${anel});-webkit-mask:radial-gradient(circle,transparent 58%,#000 59%);mask:radial-gradient(circle,transparent 58%,#000 59%)"></span><span class="meio">${meio}</span>${orbs}${N.deus ? '<em>DEUS</em>' : ''}</span></div>` +
       `<div class="lado pas">${fileira(S.passivas, S.maxPassivas, 'pas')}</div>`;
     this.cache.slots = k; this.cache.slotsIds = ids;
   }
@@ -185,7 +179,7 @@ export class Hud {
       case 'bau': if (e.raridade === 'lendario') this.banner(`✨ ${ARMAS[e.arma]?.nome.toUpperCase() || 'ARMA LENDÁRIA'}!`, e.quem ? `baú lendário de ${e.quem}` : 'baú lendário', 'ouro', 2.8); break;
       case 'nivel': this.banner(`⭐ NÍVEL ${e.nivel}`, (e.pericias || []).join(' · '), 'ouro', 1.6); break;
       case 'passiva': this.banner(e.texto, '', 'bom', 1.8); break;
-      case 'nucleo': this.banner(`💠 NÚCLEO ${e.tercos}/${e.total}!`, (e.suprema ? `${e.suprema.emoji} ${e.suprema.nome}: a suprema subiu de grau` : 'a suprema do nível 10 já vai nascer elevada') + (e.bloqueado ? ` · nível deus no ${NIVEL_MAXIMO}` : ''), 'ouro', 3.2); break;
+      case 'suprema': this.banner(`🧬 SUPREMA ${e.total}/${e.max}!`, `${e.emoji} ${e.nome}` + (e.total >= e.max ? ' · núcleo cheio: o chat escolhe o poder NÍVEL DEUS' : ''), 'ouro', 3.2); break;
       case 'deus': this.banner('👑 NÍVEL DEUS!', `${e.emoji} ${e.nome}`, 'ouro', 4); break;
       case 'nivel_maximo': this.banner(`🏆 NÍVEL ${e.nivel}! NÍVEL MÁXIMO`, '', 'ouro', 3); break;
       // recompensas de presente (recompensas.js)
@@ -321,21 +315,24 @@ export class Hud {
     }
   }
 
-  // Tabela de fusões (core/fusoes.js): aberta por TABELA_SEGUNDOS depois que alguém comenta "T".
-  // Receita sempre; o resultado (fusão + poder) só se já foi feita nesta live, senão "?"
+  // Tabela de supremas (core/fusoes.js): aberta por TABELA_SEGUNDOS depois que alguém comenta "T".
+  // Receita sempre; o resultado só se a suprema já foi feita nesta live, senão "?"
   atualizarTabela(g, aberto) {
     const painel = $('t-painel');
     if (painel.hidden === aberto) painel.hidden = !aberto;
     if (!aberto) return;
-    const linhas = tabelaFusoes(g.fusoesDaLive);
-    const chave = linhas.map(l => (l.fusao ? 1 : 0)).join('');
+    const h = g.hero;
+    const linhas = tabelaFusoes(g.fusoesDaLive, h.classe, h.supremas || []);
+    const chave = h.classe + linhas.map(l => (l.fusao ? 1 : 0) + (l.feita ? 2 : 0)).join('');
     if (this.cache.tk === chave) return;
     this.cache.tk = chave;
-    painel.innerHTML = '<div class="t-h">FUSÕES <small>habilidade + passiva</small></div>' + linhas.map(l =>
-      `<div class="t-l${l.fusao ? ' on' : ''}" title="${esc(l.ativa.nome)} + ${esc(l.passiva.nome)}${l.fusao ? ' = ' + esc(l.fusao.nome) : ''}">` +
+    // 2 colunas: habilidade (nível 5) + passiva (nível 3) = suprema. Dourado: o herói já fez; roxo: a live já
+    // descobriu; ◆: única do personagem
+    painel.innerHTML = `<div class="t-h">SUPREMAS <small>habilidade 5 + passiva 3</small></div><div class="t-grade">` + linhas.map(l =>
+      `<div class="t-l${l.fusao ? ' on' : ''}${l.feita ? ' feita' : ''}${l.unica ? ' unica' : ''}" title="${esc(l.ativa.nome)} + ${esc(l.passiva.nome)}${l.fusao ? ' = ' + esc(l.fusao.nome) + ' (poder ' + l.fusao.poder + ')' : ''}">` +
       `<span class="t-in">${l.ativa.emoji}<i>+</i>${l.passiva.emoji}</span><i class="t-eq">=</i>` +
-      (l.fusao ? `<span class="t-out">${l.fusao.emoji}</span><b>${l.fusao.poder}</b><small>${esc(l.fusao.nome.toUpperCase())}</small>` : '<span class="t-out t-x">?</span><b class="t-x">?</b>') +
-      '</div>').join('');
+      (l.fusao ? `<span class="t-out">${l.fusao.emoji}</span>` : '<span class="t-out t-x">?</span>') +
+      '</div>').join('') + '</div>';
   }
 
   update(g, dt) {
@@ -390,7 +387,7 @@ export class Hud {
     this.set('h-rec', String(Math.max(g.recorde, g.stats.quarteiroes)));
     this.set('h-abates', String(g.stats.abates));
     this.set('h-ameaca', String(g.nivelAmeaca));
-    if (g.fase === 'jogo') $('h-amx').style.width = (progressoAmeaca((g.t - g.stats.inicio) / 60, g.stats.quarteiroes, h.nivel, g.A, g.ameacaBonus) * 100).toFixed(0) + '%';
+    if (g.fase === 'jogo') $('h-amx').style.width = (progressoAmeaca((g.t - g.stats.inicio) / 60, g.stats.quarteiroes, g.nivelForca(), g.A, g.ameacaBonus) * 100).toFixed(0) + '%';
     this.set('h-tempo', fmtTempo((g.fase === 'jogo' ? g.t : g.t - g.faseT) - g.stats.inicio));
     $('h-likes').style.width = (g.cfg.likesPor > 0 ? clamp(g.likes / g.cfg.likesPor, 0, 1) * 100 : 0).toFixed(0) + '%';
 
@@ -463,8 +460,15 @@ export class Hud {
     const key = cartas.map(c => c.tipo + c.id + c.nivel).join(',') + (e ? 'a' : 'f');
     if (this.cache.ekey !== key) {
       this.cache.ekey = key;
-      const tag = c => c.cat === 'combo' ? `COMBO ${c.de}` : c.cat === 'suprema' ? 'SUPREMA' : c.cat === 'nova' ? (c.tipo === 'arma' ? 'ARMA NOVA' : 'NOVA') : c.cat === 'passiva' ? 'PASSIVA' : (c.tipo === 'treino' ? 'APRIMORAR' : `NÍVEL ${c.nivel}`);
-      $('e-ops').innerHTML = cartas.map(c => `<div class="ec${c.cat === 'combo' ? ' combo' : ''}" data-l="${c.letra}"><i class="fill"></i><span class="le">${c.letra}</span><span class="ic">${esc(c.emoji)}</span><span class="tag ${c.cat}">${tag(c)}</span><b>${esc(c.nome)}</b><p>${esc(c.desc)}</p><span class="cnt">0 votos</span></div>`).join('');
+      // selo da carta: SUPREMA (com a receita), NÍVEL DEUS, NOVA/ÚNICA, PASSIVA, NÍVEL n...
+      const tag = c => c.cat === 'suprema' ? `SUPREMA ${c.de}` : c.cat === 'deus' ? (c.unica ? 'DEUS ÚNICO' : 'NÍVEL DEUS')
+        : c.cat === 'nova' ? (c.tipo === 'arma' ? 'ARMA NOVA' : c.unica ? 'NOVA · ÚNICA' : 'NOVA') : c.cat === 'passiva' ? (c.unica ? 'PASSIVA · ÚNICA' : 'PASSIVA')
+        : c.tipo === 'treino' ? 'APRIMORAR' : c.tipo === 'extra' ? 'EXTRA' : `NÍVEL ${c.nivel}`;
+      const cls = c => c.cat === 'deus' ? 'deus' : c.cat === 'suprema' ? 'suprema' : c.unica ? 'unica' : c.cat;
+      const papel = { ofensiva: 'ATAQUE', defensiva: 'DEFESA', controle: 'CONTROLE' };
+      // habilidade e passiva mostram com quem combinam pra virar suprema (o resultado a live descobre)
+      const par = c => (c.tipo === 'ativa' || c.tipo === 'passiva') && c.par ? `<small class="pr">🧬 + ${esc(c.par.split(' ')[0])}${c.sinergia ? ` · ${esc(c.par.split(' ')[0])} +${c.sinergia}%` : ''}</small>` : '';
+      $('e-ops').innerHTML = cartas.map(c => `<div class="ec${c.cat === 'suprema' ? ' combo' : ''}${c.cat === 'deus' ? ' deus' : ''}" data-l="${c.letra}"><i class="fill"></i><span class="le">${c.letra}</span>${c.papel ? `<span class="pp ${c.papel}">${papel[c.papel]}</span>` : ''}<span class="ic">${esc(c.emoji)}</span><span class="tag ${cls(c)}">${tag(c)}</span><b>${esc(c.nome)}</b><p>${esc(c.desc)}</p>${par(c)}<span class="cnt">0 votos</span></div>`).join('');
     }
     const vt = e ? e.voto : res.voto;
     if (vt) {
@@ -485,7 +489,7 @@ export class Hud {
       $('e-barra').style.width = (clamp(resta / v.duracao, 0, 1) * 100).toFixed(1) + '%';
       $('e-tempo').classList.toggle('urg', resta < 3.5);
       if (v.contandoAtrasados) { this.set('e-titulo', '⏳ CONTANDO VOTOS DA LIVE...'); this.set('e-sub', 'ainda dá tempo: A, B ou C'); }
-      else { this.set('e-titulo', e.suprema ? `🔥 NÍVEL ${e.nivel} · HABILIDADE SUPREMA!` : `⭐ NÍVEL ${e.nivel} · ESCOLHAM!`); this.set('e-sub', `digite A, B ou C · ${Math.ceil(resta)}s`); }
+      else { this.set('e-titulo', e.deus ? '👑 NÍVEL DEUS · ESCOLHAM O PODER!' : e.cartas.some(c => c.tipo === 'suprema') ? `🧬 NÍVEL ${e.nivel} · TEM SUPREMA!` : `⭐ NÍVEL ${e.nivel} · ESCOLHAM!`); this.set('e-sub', `digite A, B ou C · ${Math.ceil(resta)}s`); }
     } else {
       for (const el of document.querySelectorAll('.ec')) {
         const venceu = el.dataset.l === res.carta.letra;

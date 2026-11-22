@@ -29,6 +29,9 @@ export const STATUS = {
   cansado:     { nome: 'Cansado', emoji: '😵', lado: 'negativo', duracao: 9999, maxPilhas: 1, lentidao: 0.35, so: 'zumbi' },   // colosso da doação quando o herói chega em 30% (recompensas.js)
   quebrado:    { nome: 'Armadura quebrada', emoji: '💔', lado: 'negativo', duracao: 5, maxPilhas: 1, resistencia: -0.2, so: 'zumbi' },
   agarrado:    { nome: 'Zumbi na perna', emoji: '🧟', lado: 'negativo', duracao: 30, maxPilhas: 3, lentidao: 0.6, lentidaoPorPilha: true, so: 'heroi' },   // zumbi paraquedista (recompensas.js): cada um pendurado deixa mais lento
+  // controle das habilidades (habilidades.js): congelado não anda nem ataca; com medo, foge do herói e não ataca
+  congelado:   { nome: 'Congelado', emoji: '🧊', lado: 'negativo', duracao: 1.5, maxPilhas: 1, parado: true, danoRecebido: 1.15, so: 'zumbi' },
+  medo:        { nome: 'Com medo', emoji: '😱', lado: 'negativo', duracao: 2.5, maxPilhas: 1, so: 'zumbi' },
   infectado:   { nome: 'Infectado', emoji: '🦠', lado: 'negativo', duracao: 8, maxPilhas: 3, porSegundo: { dano: 1 }, tipoDano: 'infeccao', mods: [{ attr: 'cura', mult: 0.6 }], so: 'heroi' },
 
   /* ------------- positivos ------------- */
@@ -38,6 +41,9 @@ export const STATUS = {
   instinto:    { nome: 'Instinto de sobrevivência', emoji: '🧡', lado: 'positivo', duracao: 6, maxPilhas: 1, porSegundo: { cura: 2.5 }, mods: [{ attr: 'defesa', soma: 0.25 }], so: 'heroi' },
   foco:        { nome: 'Foco', emoji: '👁️', lado: 'positivo', duracao: 6, maxPilhas: 1, mods: [{ attr: 'critChance', soma: 0.15 }], so: 'heroi' },
   blindado:    { nome: 'Blindado', emoji: '🛡️', lado: 'positivo', duracao: 4, maxPilhas: 1, mods: [{ attr: 'defesa', soma: 0.4 }], so: 'heroi' },
+  // habilidades (habilidades.js)
+  turbo:       { nome: 'Turbo', emoji: '🏍️', lado: 'positivo', duracao: 3, maxPilhas: 1, classe: 'entregador', mods: [{ attr: 'velocidade', mult: 1.45 }, { attr: 'esquiva', soma: 0.2 }], so: 'heroi' },
+  adrenalina:  { nome: 'Adrenalina', emoji: '💉', lado: 'positivo', duracao: 4, maxPilhas: 1, classe: 'enfermeira', mods: [{ attr: 'cadencia', mult: 1.5 }, { attr: 'velocidade', mult: 1.15 }], so: 'heroi' },
   // Inspiração (doação, recompensas.js): toma 20% do dano e solta pulsos de luz em volta (jogo.js)
   inspirado:   { nome: 'Inspirado', emoji: '✨', lado: 'positivo', duracao: 10, maxPilhas: 1, so: 'heroi' },
 
