@@ -229,8 +229,10 @@ body.foco .app{padding-block:8px}
 /* --- MEIO: avisos curtos logo abaixo do topo --- */
 /* gráfico de atributos (comente G): no terço da direita, alinhado com a margem do painel de cima, sem fundo nem
    moldura (só a sigla e os blocos); blocos em paralelogramo de cantos arredondados */
-.acima-leg{display:flex;align-items:flex-end;justify-content:space-between;gap:1.6cqw;min-width:0}
-.g-pill{flex:none;font:600 2.3cqw var(--font-display);padding:.6cqw 1.6cqw;background:rgba(16,13,24,.55);border:.35cqw solid rgba(255,255,255,.22);border-radius:.6cqw;color:#fff;box-shadow:0 0 0 .3cqw rgba(10,8,16,.5)}
+.acima-leg{position:relative;display:flex;align-items:flex-end;min-width:0}
+/* gráfico, tabela e o botão ficam PARADOS no canto direito, logo acima do letreiro: as notificações passam por baixo sem empurrar */
+.acima-leg>.g-pill,.acima-leg>.grafico,.acima-leg>.tabela{position:absolute;right:0;bottom:0}
+.g-pill{z-index:15;flex:none;font:600 2.3cqw var(--font-display);padding:.6cqw 1.6cqw;background:rgba(16,13,24,.55);border:.35cqw solid rgba(255,255,255,.22);border-radius:.6cqw;color:#fff;box-shadow:0 0 0 .3cqw rgba(10,8,16,.5)}
 /* tabela do T (fusões): mesmo lugar e estilo do gráfico, sem moldura; resultado "?" até a live descobrir */
 .tabela{position:relative;z-index:15;flex:none;width:42cqw;display:flex;flex-direction:column;gap:1cqw;animation:gIn .3s steps(4);text-shadow:0 .3cqw 0 rgba(0,0,0,.75),0 0 1.6cqw rgba(0,0,0,.6)}
 .t-h{font-size:2.3cqw;font-weight:700;letter-spacing:.14em;line-height:1;padding-left:.55cqw}
