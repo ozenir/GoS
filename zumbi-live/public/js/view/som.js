@@ -131,7 +131,8 @@ export class Som {
       this.noise(0.09, 0.22, 'lowpass', 1300, 0, 0.6, 160); this.osc('sine', 95, 32, 0.07, 0.2);
     });
   }
-  tiroAliado(d = 3) { if (this.pode('tiroA', 0.08)) this.noMundo(d, 0.3, () => { this.noise(0.07, 0.16, 'lowpass', 1300, 0, 0.6, 180); this.osc('sine', 100, 35, 0.06, 0.12); }); }
+  // tiro do ajudante (sobrevivente): o MESMO som da pistola do herói, só com a distância (acústica da rua)
+  tiroAliado(d = 3) { if (this.pode('tiroA', 0.05)) this.noMundo(d, 0.4, () => { this.noise(0.09, 0.22, 'lowpass', 1300, 0, 0.6, 160); this.osc('sine', 95, 32, 0.07, 0.2); }); }
   chama() { if (this.pode('chama', 0.09)) this.noMundo(0, 0.3, () => this.noise(0.14, 0.18, 'lowpass', 900, 0, 0.5, 400)); }
   acerto(d = 2) { if (this.pode('acerto', 0.04)) this.noMundo(d, 0.2, () => this.noise(0.06, 0.18, 'lowpass', 500)); }
   golpe(taco) { this.noMundo(0.5, 0.3, () => { this.noise(0.1, taco ? 0.4 : 0.25, 'lowpass', taco ? 700 : 400); this.osc('sine', 160, 60, 0.1, 0.25); }); }
