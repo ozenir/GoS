@@ -53,7 +53,8 @@ teste(`a próxima votação só abre ${RESULTADO_SEG} s depois do anúncio do re
   const j = new Jogo({ seed: 8, classe: 'bombeira' });
   j.hero.invT = 1e9;
   const ev = []; const e0 = j.emit.bind(j); j.emit = (t, d) => { ev.push({ t, em: j.t }); return e0(t, d); };
-  for (let i = 0; i < 400 / DT; i++) j.update(DT);
+  // (sobrevivência: as votações são mais espaçadas — destino no mapa, encontros e o Barganha — então roda 12 min)
+  for (let i = 0; i < 720 / DT; i++) j.update(DT);
   let conferidos = 0, dec = null;
   for (const e of ev) {
     if (e.t === 'decisao') dec = e.em;

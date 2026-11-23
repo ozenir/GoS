@@ -315,7 +315,7 @@ function tocarEvento(e, g) {
     case 'tropecou': som.tropecou(classe); break;
     case 'vitima_salva': case 'encontro_salvo': som.alivio(longe(e, g)); som.livre(); break;
     case 'voltou_zumbi': som.notou(longe(e, g)); som.perigo(); break;
-    case 'votacao_abriu': if (e.mapa) som.mapa(); else if (e.encontro) som.encontro(); break;
+    case 'votacao_abriu': if (e.mapa) som.mapa(); else if (e.encontro) som.encontro(); else if (e.mascate) som.escolha(); break;
     // a cidade viva (cenario.js): veículo de emergência passando com a sirene e gente gritando da janela
     case 'viatura_passando': {
       const am = [];
@@ -328,6 +328,11 @@ function tocarEvento(e, g) {
       break;
     }
     case 'janela': som.janela(longe(e, g), e.texto, e.socorro); break;
+    // o Barganha e a grana (mascate.js); quem foi salvo e virou zumbi ou não resistiu (encontros.js)
+    case 'mascate': som.mascate(e.fase, longe(e, g)); if (e.fase === 'chegou') som.encontro(); break;
+    case 'grana': if (e.valor > 0) som.grana(); break;
+    case 'aliado_virou': som.notou(longe(e, g)); som.perigo(); break;
+    case 'aliado_morreu': som.morteHeroi(); break;
     case 'entrou_predio': case 'saiu_predio': som.porta(); break;
   }
 }
@@ -385,6 +390,7 @@ function loop(agora) {
       const f = o.kind === 'prop' && o.p.fogo ? [o.p.x + 0.5, o.p.y + 0.5] : o.kind === 'building' && o.b.fogo ? [Math.max(o.b.x0, Math.min(h.x, o.b.x1)), Math.max(o.b.y0, Math.min(h.y, o.b.y1))] : null;
       if (f) fogoD = Math.min(fogoD, Math.hypot(f[0] - h.x, f[1] - h.y));
     }
+    if (jogo.mascate) fogoD = Math.min(fogoD, Math.hypot(jogo.mascate.barril.x - h.x, jogo.mascate.barril.y - h.y));   // o barril do Barganha
   }
   som.crepitar(dt, fogoD);
   // alarmes de carro tocando: acompanham a distância do herói até o carro

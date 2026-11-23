@@ -159,7 +159,8 @@ teste('ajudar: o herói vai até a pessoa, enfrenta os zumbis e ela agradece (vi
     decidirEncontro(j, 'esquerda', { votos: 0, auto: true });
     for (let i = 0; i < 60 / DT && j.encontro; i++) j.update(DT);
     const s = ev.find(x => x.t === 'encontro_salvo');
-    if (s) { salvos++; assert.ok(ENCONTROS.recompensas.some(([r]) => r === s.recompensa)); }
+    // vai junto (mordido: encontros.js → infeccao) e às vezes ainda dá um item
+    if (s) { salvos++; assert.ok(s.recompensa === 'aliado' || ENCONTROS.recompensas.some(([r]) => r === s.recompensa)); assert.ok(j.aliados.some(a => a.encontro?.nome === s.nome), 'foi junto'); }
   }
   assert.ok(salvos >= 3, `salvou ${salvos}`);
 });

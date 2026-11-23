@@ -446,7 +446,7 @@ export class Render {
   setasVotacao(g) {
     if (g.room || g.fase !== 'jogo') return;
     const v = g.voto;
-    if (!v || v.encontro) return;   // encontro (ajudar ou seguir): sem setas no chão
+    if (!v || v.encontro || v.mascate) return;   // encontro (ajudar ou seguir) e o Barganha: sem setas no chão
     if (v.mapa) { this.setasMapa(g, v); return; }
     const ctx = this.ctx;
     const n = g.city.nodePos(g.rota.alvo.i, g.rota.alvo.j);
@@ -586,6 +586,10 @@ export class Render {
       lista.push({ key: (u0 + u1 + v0 + v1) / 2, tipo: 'viatura', c, u0, v0, eixo: u1 - u0 > v1 - v0 ? 'u' : 'v' });
     }
     if (!g.room) for (const f of g.figurantes || []) { const [u, v] = this.view(f.x, f.y); lista.push({ key: u + v, tipo: 'figurante', f }); }
+    if (g.mascate && !g.room) {
+      const m = g.mascate, [u, v] = this.view(m.x, m.y), [bu, bv] = this.view(m.barril.x, m.barril.y);
+      lista.push({ key: u + v, tipo: 'mascate', m }); lista.push({ key: bu + bv, tipo: 'barril_fogo', m });
+    }
     if (g.fase === 'jogo' || this.t % 1 < 0.5) lista.push({ key: heroiKey, tipo: 'heroi' });
     lista.sort((a, b) => a.key - b.key);
     this.nomes = [];
@@ -596,8 +600,12 @@ export class Render {
     // que os postes abrem no escuro (emM). Um prédio desenhado depois (na frente) apaga o que ficou atrás dele.
     if (noite) {
       if (!this.em) { [this.emc, this.em] = novoCanvas(W, H); [this.emLc, this.emL] = novoCanvas(W, H); [this.emMc, this.emM] = novoCanvas(W, H); }
-      for (const e of [this.em, this.emL, this.emM]) { e.globalCompositeOperation = 'source-over'; e.clearRect(0, 0, W, H); }
+      // e mais duas pra lanterna: o buraco que ela abre no escuro (emF) e a cor fria da luz (emFC). Entram na hora do
+      // herói; o prédio opaco desenhado depois dele (na frente) tapa a luz; o transparente deixa a luz passar
+      if (!this.emF) { [this.emFc, this.emF] = novoCanvas(W, H); [this.emFCc, this.emFC] = novoCanvas(W, H); }
+      for (const e of [this.em, this.emL, this.emM, this.emF, this.emFC]) { e.globalCompositeOperation = 'source-over'; e.clearRect(0, 0, W, H); }
     }
+    this.lanternaFeita = false;
     for (const o of lista) {
       if (o.tipo === 'predio') {
         const s = S.spritePredio(o.b, o.u1 - o.u0, o.v1 - o.v0, o.porta, this.r);
@@ -612,14 +620,16 @@ export class Render {
           // prédio de verdade tapa a luz dos postes e as janelas de trás; prédio TRANSPARENTE (na frente do herói)
           // não tapa a luz dos postes (ela fica por cima dele) e só apaga um pouco as janelas de trás
           if (!tampa) for (const c of [this.emL, this.emM]) { c.globalCompositeOperation = 'destination-out'; c.drawImage(s.c, x0, y0); c.globalCompositeOperation = 'source-over'; }
+          // a luz da lanterna não passa por cima de um prédio opaco que está na frente; o transparente deixa passar
+          if (this.lanternaFeita && !tampa) for (const c of [this.emF, this.emFC]) { c.globalCompositeOperation = 'destination-out'; c.drawImage(s.c, x0, y0); c.globalCompositeOperation = 'source-over'; }
           const e = this.em;
           e.globalCompositeOperation = 'destination-out'; e.globalAlpha = tampa ? 0.65 : 1; e.drawImage(s.c, x0, y0); e.globalAlpha = 1;
           e.globalCompositeOperation = 'source-over';
           if (s.luzes && !o.b.fogo) { e.globalAlpha = tampa ? 0.35 : 1; e.drawImage(s.luzes, x0, y0); e.globalAlpha = 1; }
         }
         if (o.b.fogo) this.fogoPredio(o.b, x0, y0, s.c.width);
-        for (const j of g.janelas || []) if (j.b.id === o.b.id) this.pessoaNaJanela(j, x0, y0, o.u1 - o.u0, o.v1 - o.v0, o.b.altura, noite);
-        if (s.placa && o.b.shop) this.nomes.push({ placa: true, x: x0 + s.placa[0], y: y0 + s.placa[1] - 16, shop: o.b.shop, tampa });
+        for (const j of g.janelas || []) if (j.b.id === o.b.id) this.pessoaNaJanela(j, x0 + s.ox, y0 + s.oy, o.u1 - o.u0, o.v1 - o.v0, o.b.altura, noite);
+        // (a placa da loja é desenhada dentro do sprite do prédio: sprites.js → placaPixel)
       } else if (o.tipo === 'fonte') {
         const s = S.spriteFonte();
         const [sx, sy] = this.topoVista(o.u0, o.v0);
@@ -646,6 +656,12 @@ export class Render {
       else if (o.tipo === 'zumbi') this.desenharZumbi(o.z, g);
       else if (o.tipo === 'aliado') this.desenharAliado(o.a);
       else if (o.tipo === 'conversivel') this.desenharConversivel(o);
+      else if (o.tipo === 'mascate') this.desenharMascate(o.m, g);
+      else if (o.tipo === 'barril_fogo') {
+        const sb = S.spriteProp('barril'), [bx, by] = this.tela(o.m.barril.x, o.m.barril.y);
+        ctx.drawImage(sb.c, bx - sb.ox, by - sb.oy);
+        this.chamas(o.m.barril.x, o.m.barril.y, 14, 3);
+      }
       else if (o.tipo === 'viatura') {
         const c = o.c, sv = S.spriteViatura(c.tipo, o.eixo), [sx, sy] = this.topoVista(o.u0, o.v0);
         ctx.drawImage(sv.c, sx - sv.ox, sy - sv.oy);
@@ -656,7 +672,10 @@ export class Render {
       else if (o.tipo === 'paraquedista') this.desenharParaquedista(o.p);
       else if (o.tipo === 'tomate') (o.t.tipo === 'pedra' ? this.desenharPedra(o.t) : this.desenharTomate(o.t));
       else if (o.tipo === 'figurante') this.desenharFigurante(o.f, g);
-      else if (o.tipo === 'heroi') this.desenharHeroi(g);
+      else if (o.tipo === 'heroi') {
+        this.desenharHeroi(g);
+        if (noite && g.fase === 'jogo' && !g.caido && CORPO[g.hero.corpo]?.luz) { this.coneLanterna(this.emF, g, 1); this.coneLanterna(this.emFC, g, 0.16, true); this.lanternaFeita = true; }
+      }
     }
   }
 
@@ -785,13 +804,35 @@ export class Render {
     if (z.fa && nasc >= 1) this.nomes.push({ foto: z.fa.avatar, inicial: (z.nome || '?')[0].toUpperCase(), escudo: z.fa.escudo > 0, x: sx, y: sy - S.PE_Y * esc - 22 });
   }
 
+  // O Barganha (mascate.js): encapuzado, olhos amarelos brilhando na sombra do capuz, lenço vermelho no rosto,
+  // bugigangas penduradas no casaco; o nome em cima e a fala dele. Indo embora, some aos poucos.
+  desenharMascate(m, g) {
+    const ctx = this.ctx, h = g.hero, set = S.spriteMascate();
+    const fx = h.x - m.x, fy = h.y - m.y, d = Math.hypot(fx, fy) || 1;
+    const a = m.fase === 'indo' ? Math.max(0, 1 - m.t / 5) : 1;
+    if (a <= 0) return;
+    const [sx, sy] = this.pessoa(this.quadro(set, fx / d, fy / d, 0, false), m.x, m.y, 1, a);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = '#b83a2a'; ctx.fillRect(sx - 2, sy - 16, 5, 2);                                     // lenço
+    const pisca = Math.floor(this.t * 1.3) % 7 === 0;
+    if (!pisca) { ctx.fillStyle = '#ffe14a'; ctx.fillRect(sx - 2, sy - 19, 1, 1); ctx.fillRect(sx + 1, sy - 19, 1, 1); }   // olhos
+    const balanca = Math.round(Math.sin(this.t * 2) * 0.6);
+    ctx.fillStyle = '#c8b070'; ctx.fillRect(sx - 4, sy - 11 + balanca, 1, 2);                          // bugigangas
+    ctx.fillStyle = '#9aa0a8'; ctx.fillRect(sx + 4, sy - 12 - balanca, 1, 3);
+    ctx.fillStyle = '#d33b2c'; ctx.fillRect(sx + 3, sy - 9, 2, 2);
+    ctx.globalAlpha = 1;
+    this.nomes.push({ x: sx, y: sy - 30, txt: '🧥 O Barganha', cor: '#ffe14a', tam: 5.5 });
+    if (m.falaT < 4.5) this.nomes.push({ x: sx, y: sy - 37, txt: '💬 ' + m.fala, cor: '#ffffff', tam: 5 });
+  }
+
   // Alguém na janela de um prédio (cenario.js): a janela aberta (acesa de noite), a pessoa debruçada acenando e,
-  // nos primeiros segundos, o que ela grita. x0, y0 = onde o sprite do prédio foi desenhado; du, dv = tamanho na vista
-  pessoaNaJanela(j, x0, y0, du, dv, alt, noite) {
+  // nos primeiros segundos, o que ela grita. ox, oy = onde fica o pé do canto de trás do prédio (P(0, 0, 0) do
+  // sprite) na tela; du, dv = tamanho na vista
+  pessoaNaJanela(j, ox, oy, du, dv, alt, noite) {
     const ctx = this.ctx, C = S.CASA, z = j.b.casa ? 7 : alt * j.alt;
     // (casa: a janela fica na parede dela, recuada no lote; prédio: na fachada)
     const [u, v] = j.b.casa ? (j.lado ? [C.u1, C.v0 + (C.v1 - C.v0) * j.a] : [C.u0 + (C.u1 - C.u0) * j.a, C.v1]) : j.lado ? [du, dv * j.a] : [du * j.a, dv];
-    const px = Math.round(x0 + dv * 12 + 2 + (u - v) * 12 + (j.lado ? -3 : 3)), py = Math.round(y0 + alt + 4 + (u + v) * 6 - z);
+    const px = Math.round(ox + (u - v) * 12 + (j.lado ? -3 : 3)), py = Math.round(oy + (u + v) * 6 - z);
     const ap = Math.min(1, j.t / 0.4, (j.dur - j.t) / 0.5);   // aparece e some
     if (ap <= 0) return;
     ctx.globalAlpha = ap;
@@ -850,10 +891,11 @@ export class Render {
       const [sx, sy] = this.tela(f.x, f.y);
       ctx.globalAlpha = 0.75; disc(ctx, sx + 1, sy, 9, '#5a0a0a', 0.45); ctx.globalAlpha = 1;
       ctx.drawImage(S.sombra(14), sx - 8, sy - 3);
-      const mexe = !f.salva && Math.floor(this.t * 5) % 3 === 0 ? 1 : 0;
+      const mexe = !f.salva && !f.morto && Math.floor(this.t * 5) % 3 === 0 ? 1 : 0;
       ctx.drawImage(S.deitado(set.frente[0]), sx - 14, sy - 10 - mexe);
       if (!f.salva && Math.floor(this.t * 3) % 2) { ctx.fillStyle = S.CIVIL_PELE[(f.roupa * 5) % 6]; ctx.fillRect(sx + 6, sy - 12 - mexe, 1, 3); }   // a mão pedindo ajuda
       const desde = f.t - (f.gritoDesde ?? -9);
+      if (f.morto) { if (f.t < 4) this.nomes.push({ x: sx, y: sy - 16, txt: '🕯️ ' + f.nome, cor: '#c8c0d8' }); return; }   // quem foi salvo e não resistiu
       if (f.salva ? desde < 3.5 : desde < 1.8) this.nomes.push({ x: sx, y: sy - 22, txt: (f.salva ? '🙏 ' : '🆘 ') + (f.nome ? f.nome + ': ' : '') + f.grito, cor: f.salva ? '#fff3c8' : '#ff6a5a' });
       else if (f.nome && !f.salva) this.nomes.push({ x: sx, y: sy - 18, txt: f.nome, cor: '#ffd8a8' });
       if (!f.salva && Math.random() < 0.05) this.sangue(f.x, f.y, 1);
@@ -1451,7 +1493,8 @@ export class Render {
     buraco(hx, hy, 120 - 60 * noite, 0.95);   // a visão vai fechando junto com o escuro
     // lanterna (policial): um cone de luz pra onde ele olha, abrindo o escuro na frente
     const lanterna = noite > 0.05 && g.fase === 'jogo' && !g.caido && CORPO[g.hero.corpo]?.luz;
-    if (lanterna) this.coneLanterna(ex, g, 1);
+    if (lanterna && this.lanternaFeita) ex.drawImage(this.emFc, 0, 0);   // já na ordem das camadas (objetos)
+    else if (lanterna && g.room) this.coneLanterna(ex, g, 1);             // dentro de um prédio não tem prédio na frente
     // explosões e raios abrem luz no escuro; de noite a explosão ilumina bem mais longe
     for (const r of this.raios) { const [sx, sy] = this.tela(r.x, r.y, 8); buraco(sx, sy, r.r * (1 - r.age / r.life * 0.5) * (noite > 0 ? 1.7 : 1), 0.95); }
     for (const p of this.parts) if (p.fogo && Math.random() < 0.3) { const [sx, sy] = this.tela(p.x, p.y, p.z * 12); buraco(sx, sy, 16, 0.5); }
@@ -1465,6 +1508,7 @@ export class Render {
         if (o.kind === 'prop' && o.p.fogo && o.p.tipo === 'lixeira') { const [sx, sy] = this.tela(o.p.x + 0.5, o.p.y + 0.5, 8); buraco(sx, sy, 34, 0.75); }
       }
       for (const it of g.itens) if (it.kind.startsWith('bau')) { const [sx, sy] = this.tela(it.x, it.y); buraco(sx, sy, 26, 0.7); }
+      if (g.mascate) { const [sx, sy] = this.tela(g.mascate.barril.x, g.mascate.barril.y, 12); buraco(sx, sy, 52, 0.85); }   // o barril do Barganha
       for (const z of g.zonasAgora || []) if (AMBIENTE[z.tipo]?.luz && ligadoZona(z, g.t)) { const [sx, sy] = this.tela((z.x0 + z.x1) / 2, (z.y0 + z.y1) / 2); buraco(sx, sy, z.tipo === 'fogo' ? 46 : 30, 0.7); }
     }
     ex.globalCompositeOperation = 'source-over';
@@ -1503,7 +1547,8 @@ export class Render {
     }
     this.luzesCor = [];
     // a luz branca e fria da lanterna por cima do escuro (bem de leve)
-    if (lanterna) { ctx.globalCompositeOperation = 'lighter'; this.coneLanterna(ctx, g, 0.16 * noite, true); ctx.globalCompositeOperation = 'source-over'; }
+    if (lanterna && this.lanternaFeita) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = noite; ctx.drawImage(this.emFCc, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+    else if (lanterna && g.room) { ctx.globalCompositeOperation = 'lighter'; this.coneLanterna(ctx, g, 0.16 * noite, true); ctx.globalCompositeOperation = 'source-over'; }
     // vinheta vermelha de vida baixa
     const pct = g.hero.vida / g.hero.vidaMax;
     if (g.fase === 'jogo' && (pct < 0.3 || g.caido)) {

@@ -2,8 +2,10 @@
 //  ENCONTROS — pessoas pedindo ajuda no caminho da viagem (mapa.js).
 //
 //  No meio da viagem, às vezes alguém está encurralado por zumbis numa rua do lado. O chat vota:
-//    1 🤝 AJUDAR  o herói desvia, enfrenta os zumbis e salva a pessoa. Ela agradece com uma ajuda de verdade:
-//                 vira um sobrevivente que acompanha o herói por uns quarteirões, ou dá um item que tinha.
+//    1 🤝 AJUDAR  o herói desvia, enfrenta os zumbis e salva a pessoa. Ela vai junto (atira nos zumbis) e às vezes
+//                 dá um item que tinha. Mas ela foi MORDIDA: depois do 1º quarteirão tem 40% de chance de virar
+//                 zumbi e atacar o herói; depois do 2º, 60%; se não virou, morre no 3º quarteirão ou quando a
+//                 viagem chega no lugar (INFECCAO).
 //    2 🚶 SEGUIR  a viagem continua. A pessoa fica pra trás... e uns quarteirões depois aparece de novo,
 //                 como zumbi, com o nome dela.
 //  Ninguém votou: a IA ajuda quando o herói está com a vida boa.
@@ -21,11 +23,15 @@ export const ENCONTROS = {
   viraZumbi: 2,           // ignorada, ela volta como zumbi tantos quarteirões depois
   desisteEm: 60,          // ajudando há tanto tempo sem conseguir: desiste
   xp: 6,                  // experiência por salvar (× ameaça)
-  aliadoQuarteiroes: 4,   // quanto tempo quem foi salvo acompanha o herói (como sobrevivente ajudante)
+  // quem é salvo foi mordido: chance de virar zumbi depois do 1º e do 2º quarteirão; morre no quarteirão `morreNo`
+  // ou quando a viagem chega no lugar
+  // mordido: atira bem mais devagar (está fraco, com febre) e pode virar zumbi
+  infeccao: { chances: [0.4, 0.6], morreNo: 3, vidaZumbi: 1.8, lentidao: 2.6 },
+  itemJunto: 0.5,         // chance de ainda dar um item que tinha
   nomes: ['Dona Cida', 'Seu Jorge', 'Marina', 'Tião', 'Rafaela', 'Seu Bené', 'Júlia', 'Carlos', 'Dona Lurdes', 'Neide', 'Roberto', 'Paula'],
   situacoes: ['encurralada', 'caída no chão', 'presa no beco', 'cercada'],
   // o que quem foi salvo dá: [tipo, peso]
-  recompensas: [['aliado', 4], ['kit', 2], ['municao', 1.5], ['energetico', 1], ['remedio', 1]]
+  recompensas: [['kit', 2], ['municao', 1.5], ['energetico', 1], ['remedio', 1], ['grana', 2]]
 };
 
 // Tenta criar um encontro na rua do lado do cruzamento da frente (r.alvo). null se não deu.
@@ -117,18 +123,47 @@ function salvar(g, e) {
   const E = ENCONTROS, p = e.pessoa;
   e.fase = 'fim';
   p.salva = true; p.gritoDesde = p.t; p.vida = p.t + 6;
-  const tipo = g.rng.weighted(E.recompensas);
   g.ganharXp(E.xp * g.nivelAmeaca);
-  if (tipo === 'aliado') {
-    p.grito = 'Obrigado! Vou com você.'; p.vida = p.t + 1.5;
-    g.addAliado('sobrevivente', E.aliadoQuarteiroes, { nick: e.nome, aliado: true });
-  } else {
-    p.grito = 'Obrigado! Fica com isso.';
-    g.agendar(0.8, () => { if (g.fase === 'jogo' && !g.room) g.soltarItemEm(tipo, tipo === 'kit' ? { valor: 30 } : {}, null, p.x + 0.3, p.y); });
-  }
-  g.emit('encontro_salvo', { nome: e.nome, x: p.x, y: p.y, recompensa: tipo });
-  g.emit('aviso', { texto: `🤝 ${e.nome} está a salvo!${tipo === 'aliado' ? ' E vai junto' : ''}`, tipo: 'bom' });
+  // vai junto com o herói (mordido: o relógio da infecção começa)
+  p.grito = 'Obrigado! Vou com você.'; p.vida = p.t + 1.5;
+  g.addAliado('sobrevivente', 99, { nick: e.nome, aliado: true, id: 'encontro:' + e.nome + ':' + Math.round(g.t) });
+  const a = g.aliados[g.aliados.length - 1];
+  if (a) a.encontro = { nome: e.nome, quarteiroes: 0, roupa: p.roupa };
+  // e às vezes dá um item que tinha
+  const tipo = g.rng.chance(E.itemJunto) ? g.rng.weighted(E.recompensas) : null;
+  if (tipo) g.agendar(0.8, () => { if (g.fase === 'jogo' && !g.room) g.soltarItemEm(tipo, tipo === 'kit' ? { valor: 30 } : tipo === 'grana' ? { valor: g.rng.int(8, 16) } : {}, null, p.x + 0.3, p.y); });
+  g.emit('encontro_salvo', { nome: e.nome, x: p.x, y: p.y, recompensa: tipo || 'aliado' });
+  g.emit('aviso', { texto: `🤝 ${e.nome} está a salvo e vai junto... mas foi mordido.`, tipo: 'bom' });
   g.encontro = null;
+}
+
+// Quarteirão novo: quem foi salvo (e mordido) pode virar zumbi; no último, não resiste
+export function quarteiraoDosSalvos(g) {
+  const I = ENCONTROS.infeccao;
+  for (const a of [...(g.aliados || [])]) {
+    if (!a.encontro) continue;
+    const n = ++a.encontro.quarteiroes;
+    if (n <= I.chances.length && g.rng.chance(I.chances[n - 1])) virarZumbi(g, a);
+    else if (n >= I.morreNo) morrerSalvo(g, a);
+  }
+}
+// A viagem chegou no lugar: quem ainda está junto (mordido) não resiste
+export function salvosChegaram(g) { for (const a of [...(g.aliados || [])]) if (a.encontro) morrerSalvo(g, a); }
+
+export function virarZumbi(g, a) {
+  g.aliados = g.aliados.filter(x => x !== a);
+  const z = g.criarZumbi('comum', a.x, a.y, null, { nome: a.encontro.nome, vidaMult: ENCONTROS.infeccao.vidaZumbi, nascendo: 0.5 });
+  z.ex = true; z.roupa = a.encontro.roupa ?? 0; z.atkCd = 0.8;
+  const h = g.hero, d = Math.hypot(h.x - z.x, h.y - z.y) || 1; z.fx = (h.x - z.x) / d; z.fy = (h.y - z.y) / d;
+  g.emit('aliado_virou', { nome: a.encontro.nome, x: a.x, y: a.y });
+  g.emit('aviso', { texto: `🧟 ${a.encontro.nome} virou zumbi e está atacando!`, tipo: 'perigo' });
+  return z;
+}
+export function morrerSalvo(g, a) {
+  g.aliados = g.aliados.filter(x => x !== a);
+  if (!g.room) g.figurantes.push({ tipo: 'vitima', x: a.x, y: a.y, t: 0, vida: 25, roupa: a.encontro.roupa ?? 0, salva: true, morto: true, nome: a.encontro.nome, grito: '', gritoDesde: -99 });
+  g.emit('aliado_morreu', { nome: a.encontro.nome, x: a.x, y: a.y });
+  g.emit('aviso', { texto: `💀 ${a.encontro.nome} não resistiu à mordida...`, tipo: 'perigo' });
 }
 
 // Quarteirão novo: quem ficou pra trás pode voltar como zumbi (com o nome)

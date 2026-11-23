@@ -95,6 +95,13 @@ function setDePessoa(o) {
 }
 
 const cache = new Map();
+// O Barganha (mascate.js): capuz e casaco compridos verde-oliva, rosto na sombra, mochila enorme (os olhos que
+// brilham, o lenço e as bugigangas penduradas são desenhados por cima, no render)
+export function spriteMascate() {
+  if (!cache.has('mascate')) cache.set('mascate', setDePessoa({ camisa: '#3e4a2c', calca: '#2a2420', bota: '#17120e', chapeu: { tipo: 'touca', cor: '#2e3820' }, capa: '#2e3820', mochila: '#6a4a2a', cabelo: '#16140f', pele: '#3a302a' }));
+  return cache.get('mascate');
+}
+
 export function spriteHeroi(roupa, zumbi = false) {
   const k = 'h' + roupa + zumbi;
   if (!cache.has(k)) {
@@ -333,6 +340,10 @@ export function spriteItem(kind) {
     // caixinha de remédio: branca com faixa azul e cruz
     caixaIso(x, 10, 17, 6, 5, 5, '#f4f6fa', '#d8dde6', '#bcc4d0');
     r(5, 11, 4, 2, '#3a7bd8'); r(12, 11, 4, 2, '#3a7bd8'); r(9, 7, 3, 1, '#3a7bd8'); r(10, 6, 1, 3, '#3a7bd8');
+  } else if (kind === 'grana') {
+    // um bolinho de notas com elástico (e uma moeda)
+    r(4, 9, 11, 5, '#3f8a4a'); r(5, 8, 11, 5, '#5aa864'); r(6, 9, 9, 3, '#7cc886'); r(9, 8, 2, 5, '#d8c060');
+    r(13, 13, 3, 3, '#f2c94c'); r(14, 14, 1, 1, '#b8861e');
   } else if (kind === 'arma') {
     r(3, 9, 13, 3, '#3a3a40'); r(12, 12, 3, 4, '#5a3a22'); r(15, 9, 2, 2, '#3a3a40'); r(4, 10, 8, 1, '#6a6a70');
   }
@@ -539,6 +550,65 @@ export function spriteProp(tipo) {
   return s;
 }
 
+/* ===================== Letreiros (fonte de pixel) ===================== */
+// Fonte 3x5 pras placas das lojas: desenhadas DENTRO do sprite do prédio, então obedecem a perspectiva (inclinadas
+// na direção da face) e a ordem das camadas (prédio da frente tapa; prédio transparente deixa a placa transparente).
+const FONTE = {
+  A: ['010', '101', '111', '101', '101'], B: ['110', '101', '110', '101', '110'], C: ['011', '100', '100', '100', '011'],
+  D: ['110', '101', '101', '101', '110'], E: ['111', '100', '110', '100', '111'], F: ['111', '100', '110', '100', '100'],
+  G: ['011', '100', '101', '101', '011'], H: ['101', '101', '111', '101', '101'], I: ['111', '010', '010', '010', '111'],
+  J: ['001', '001', '001', '101', '010'], K: ['101', '101', '110', '101', '101'], L: ['100', '100', '100', '100', '111'],
+  M: ['101', '111', '111', '101', '101'], N: ['110', '101', '101', '101', '101'], O: ['010', '101', '101', '101', '010'],
+  P: ['110', '101', '110', '100', '100'], Q: ['010', '101', '101', '110', '011'], R: ['110', '101', '110', '101', '101'],
+  S: ['011', '100', '010', '001', '110'], T: ['111', '010', '010', '010', '010'], U: ['101', '101', '101', '101', '111'],
+  V: ['101', '101', '101', '101', '010'], W: ['101', '101', '111', '111', '101'], X: ['101', '101', '010', '101', '101'],
+  Y: ['101', '101', '010', '010', '010'], Z: ['111', '001', '010', '100', '111'], ' ': ['000', '000', '000', '000', '000']
+};
+// ícone 5x5 de cada loja (no lugar do emoji)
+const ICONES = {
+  farmacia: { cor: '#2fbf6a', px: ['00100', '00100', '11111', '00100', '00100'] },
+  hospital: { cor: '#e53935', px: ['00100', '00100', '11111', '00100', '00100'] },
+  mercado: { cor: '#f2a541', px: ['10000', '11111', '01110', '01110', '01010'] },
+  delegacia: { cor: '#f2c94c', px: ['00100', '11111', '01110', '01010', '10001'] },
+  posto: { cor: '#e85d4a', px: ['11100', '10110', '11101', '11101', '11100'] },
+  fabrica: { cor: '#c8ccd4', px: ['10000', '11010', '11111', '11111', '11111'] },
+  casa: { cor: '#c98a5e', px: ['00100', '01110', '11111', '01010', '01110'] }
+};
+const largTexto = txt => txt.length * 4 - 1;
+// escreve txt com a fonte 3x5 a partir de (x, y), inclinado: cada coluna desce `inclina` px por px andado (0,5 =
+// face da esquerda, -0,5 = face da direita, como a perspectiva isométrica)
+function escreverPixel(ctx, txt, x, y, cor, inclina = 0) {
+  ctx.fillStyle = cor;
+  let cx = 0;
+  for (const ch of txt) {
+    const base = ch.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const gl = FONTE[base] || FONTE[' '];
+    const ponto = (c, r) => ctx.fillRect(x + cx + c, y + r + Math.floor((cx + c) * inclina), 1, 1);
+    gl.forEach((linha, r) => { for (let c = 0; c < 3; c++) if (linha[c] === '1') ponto(c, r); });
+    if (/[ÁÉÍÓÚ]/.test(ch)) ponto(2, -1); else if (/[ÃÕ]/.test(ch)) { ponto(0, -1); ponto(2, -2); } else if (/[ÂÊÔ]/.test(ch)) { ponto(0, -1); ponto(2, -1); ponto(1, -2); } else if (ch === 'Ç') ponto(1, 5);
+    cx += 4;
+  }
+}
+// placa inteira (fundo na cor da loja, brilho em cima, ícone e o nome), inclinada; devolve a largura em px
+function placaPixel(ctx, shop, x, y, inclina, comBorda = true) {
+  const nome = shop.nome.toUpperCase(), ic = ICONES[shop.tipo], w = largTexto(nome) + (ic ? 8 : 0) + 6, hh = 9;
+  for (let i = 0; i < w; i++) {
+    const yy = y + Math.floor(i * inclina);
+    ctx.fillStyle = shop.placa; ctx.fillRect(x + i, yy, 1, hh);
+    ctx.fillStyle = tom(shop.placa, 0.25); ctx.fillRect(x + i, yy, 1, 1);
+    if (comBorda) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(x + i, yy + hh, 1, 1); }
+  }
+  let tx = x + 3;
+  if (ic) {
+    ic.px.forEach((linha, r) => { for (let c = 0; c < 5; c++) if (linha[c] === '1') { ctx.fillStyle = ic.cor; ctx.fillRect(tx + c, y + 2 + r + Math.floor((tx - x + c) * inclina), 1, 1); } });
+    tx += 8;
+  }
+  // o texto, com a inclinação contada desde o começo da placa
+  const dy = Math.floor((tx - x) * inclina);
+  escreverPixel(ctx, nome, tx, y + 2 + dy - Math.floor(0 * inclina), '#ffffff', inclina);
+  return w;
+}
+
 /* ===================== Casas (bairro residencial) ===================== */
 // O lote inteiro (7x7): quintal de grama com cerca branca de madeira, caminho de pedra até a porta, a casa no meio
 // (parede em cor pastel, telhado de telha com duas águas, porta e janelas que acendem de noite), às vezes uma
@@ -641,9 +711,12 @@ export function spritePredio(b, du, dv, porta, rot) {
   if (cache.has(k)) return cache.get(k);
   if (cache.size > 900) cache.clear();
   const alt = b.altura;
-  const W = (du + dv) * 12 + 4, H = (du + dv) * 6 + alt + 8;
+  // loja: metade tem o letreiro no telhado (sobre dois postes), metade a placa na fachada da porta
+  const letreiroAlto = b.shop && hash2(b.bi * 5 + b.sx, b.bj * 5 + b.sy, 611) < 0.5;
+  const topo = letreiroAlto ? 24 : 0;
+  const W = (du + dv) * 12 + 4, H = (du + dv) * 6 + alt + 8 + topo;
   const [c, x] = canvas(W, H);
-  const T = [dv * 12 + 2, alt + 4];
+  const T = [dv * 12 + 2, alt + 4 + topo];
   const P = (u, v, z) => [T[0] + (u - v) * 12, T[1] + (u + v) * 6 - z];
   const lista = PALETAS_BAIRRO[b.bairro] || PALETAS;
   const pal = lista[b.paleta % lista.length];
@@ -728,15 +801,28 @@ export function spritePredio(b, du, dv, porta, rot) {
     x.fillStyle = 'rgba(10,10,10,0.5)';
     for (let i = 0; i < 18; i++) { const p = P(hash2(i, 3, b.bi) * du, dv, hash2(i, 4, b.bj) * alt); x.fillRect(Math.round(p[0]), Math.round(p[1]), 2, 1); }
   }
-  // placa no telhado
+  // placa: no telhado (letreiro sobre dois postes, paralelo à face da esquerda) ou na fachada, em cima da porta,
+  // inclinada na direção da face. Acende de noite (camada de luzes).
   if (shop) {
-    const p0 = P(du * 0.25, dv * 0.5, alt), p1 = P(du * 0.75, dv * 0.5, alt);
-    x.fillStyle = '#2a2a2a'; x.fillRect(Math.round(p0[0]) + 4, Math.round(p0[1]) - 16, 2, 16); x.fillRect(Math.round(p1[0]) - 6, Math.round(p1[1]) - 16, 2, 16);
+    const nome = shop.nome.toUpperCase(), w = largTexto(nome) + 14;
+    if (letreiroAlto) {
+      const meio = P(du * 0.5, dv * 0.5, alt), x0 = Math.round(meio[0] - w / 2), y0 = Math.round(meio[1] - 20 - w / 4);
+      x.fillStyle = '#2a2a2a';
+      for (const k of [0.2, 0.8]) { const px = Math.round(x0 + w * k), py = y0 + Math.floor(w * k * 0.5) + 9; x.fillRect(px, py, 2, Math.round(meio[1]) - py + Math.round(Math.abs(k - 0.5) * 6)); }
+      placaPixel(x, shop, x0, y0, 0.5);
+      lx.globalAlpha = 0.85; placaPixel(lx, shop, x0, y0, 0.5, false); lx.globalAlpha = 1; temLuz = true;
+    } else {
+      const face = porta?.face || 'v', comp = face === 'v' ? du : dv;
+      const z = Math.min(alt - 3, 26), meioA = porta ? porta.a : comp / 2;
+      if (face === 'v') { const p0 = P(Math.max(0.1, meioA - w / 24), dv, z); placaPixel(x, shop, Math.round(p0[0]), Math.round(p0[1]), 0.5); lx.globalAlpha = 0.85; placaPixel(lx, shop, Math.round(p0[0]), Math.round(p0[1]), 0.5, false); }
+      else { const p0 = P(du, Math.min(dv - 0.1, meioA + w / 24), z); placaPixel(x, shop, Math.round(p0[0]), Math.round(p0[1]), -0.5); lx.globalAlpha = 0.85; placaPixel(lx, shop, Math.round(p0[0]), Math.round(p0[1]), -0.5, false); }
+      lx.globalAlpha = 1; temLuz = true;
+    }
   }
   // arestas
   line(x, ...P(0, dv, 0), ...P(0, dv, alt), tom(esq, 0.12));
   line(x, ...P(du, dv, 0), ...P(du, dv, alt), tom(esq, 0.2));
-  const s = { c, ox: T[0], oy: T[1], placa: shop ? P(du * 0.5, dv * 0.5, alt) : null, luzes: temLuz ? lc : null };
+  const s = { c, ox: T[0], oy: T[1], placa: null, luzes: temLuz ? lc : null };
   cache.set(k, s);
   return s;
 }

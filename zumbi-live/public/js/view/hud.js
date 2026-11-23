@@ -421,6 +421,7 @@ export class Hud {
     // treino e runa são do ataque principal: aparecem do lado da arma
     if (h.treino) armaTxt += ` 🎓${h.treino}`;
     if (h.runas?.principal?.dano || h.runas?.principal?.resistencia) armaTxt += ' 🔮';
+    if (g.S?.mascate) armaTxt += ` · 💰 R$ ${h.grana ?? 0}`;   // a grana pro Barganha (mascate.js)
     this.set('h-arma', armaTxt);
     const armaEl = $('h-arma'), lend = !!a?.lendaria;
     if (armaEl.dataset.l !== String(lend)) { armaEl.classList.toggle('lend', lend); armaEl.dataset.l = String(lend); }
@@ -452,6 +453,8 @@ export class Hud {
     if (g.poucosPraLimpar?.()) st.push(`<span class="chip">🎯 caçando os últimos ${g.limpando.restam}</span>`);
     // viagem pelo mapa: pra onde está indo e quanto falta; salvando alguém no caminho
     if (g.encontro?.fase === 'ajudando' && g.fase === 'jogo') st.push(`<span class="chip ok">🤝 salvando ${esc(g.encontro.nome)}</span>`);
+    if (g.mascate && g.mascate.fase !== 'indo' && g.fase === 'jogo') st.push(`<span class="chip ok">🧥 O Barganha · 💰 R$ ${h.grana ?? 0}</span>`);
+    for (const a of g.aliados || []) if (a.encontro) st.push(`<span class="chip mal" title="Foi mordido: pode virar zumbi">🩸 ${esc(a.encontro.nome)} · mordido</span>`);
     if ((g.viagem || g.destino) && !g.room && g.fase === 'jogo') {
       const L = g.viagem?.lugar, falta = g.viagem ? g.viagem.dirs.length + 1 : 0;
       st.push(g.destino || !L ? `<span class="chip ok">🧭 chegando${L ? ` · ${esc(L.emoji)} ${esc(L.nome)}` : ''}</span>` : `<span class="chip">🧭 ${esc(L.emoji)} ${esc(L.nome)} · ${falta} quarteirã${falta === 1 ? 'o' : 'os'}</span>`);
@@ -620,9 +623,11 @@ export class Hud {
       this.cache.vkey = key;
       const icone = o => o.lugar ? esc(o.lugar.emoji) : o.id === 'entrar' ? (o.praca ? '⚔️' : esc(o.shop?.emoji || '🚪')) : o.seta;
       // a direção que leva a um lugar mostra o lugar (🛒 mercado, 🏥 hospital, 🚓 delegacia...)
-      const nome = o => o.lugar ? `${esc(o.lugar.nome.toLowerCase())} <small>${o.lugar.dist}q</small>` : o.id === 'entrar' ? (o.praca ? 'arena' : 'entrar') : o.destino ? `${esc(o.destino.emoji)} ${esc(o.destino.nome.toLowerCase())}` : o.nome.toLowerCase();
+      // (Barganha: o preço de cada coisa; riscado = não tem grana pra isso)
+      const nome = o => o.oferta ? `${esc(o.oferta.nome.toLowerCase())}${o.oferta.preco ? ` <small class="${o.oferta.preco > (g.hero.grana ?? 0) ? 'caro' : ''}">R$${o.oferta.preco}</small>` : o.oferta.ganho ? ` <small>+R$${o.oferta.ganho}</small>` : ''}` : o.lugar ? `${esc(o.lugar.nome.toLowerCase())} <small>${o.lugar.dist}q</small>` : o.id === 'entrar' ? (o.praca ? 'arena' : 'entrar') : o.destino ? `${esc(o.destino.emoji)} ${esc(o.destino.nome.toLowerCase())}` : o.nome.toLowerCase();
       const titulo = v.contandoAtrasados ? '⏳ contando os votos da live <small>· ainda dá tempo</small>'
         : v.encontro ? `🆘 ${esc(v.encontro.nome)} pede ajuda! <small>· ${esc(v.encontro.situacao)}, ${v.encontro.zumbis} zumbis</small>`
+        : v.mascate ? `🧥 O Barganha: "${esc(v.mascate.fala)}" <small>· 💰 R$ ${v.mascate.grana}</small>`
         : v.mapa ? '🗺️ Pra onde vamos? <small>· vote no lugar</small>'
         : v.portal ? (v.premio ? '🏆 Escolha a relíquia com' : '🌀 Escolha o portal com')
         : v.praia ? '🏖️ Saia da praia com' : v.loja ? `🗳️ Escolha a direção com <small>· ${esc(v.loja.emoji)} ${esc(v.loja.nome)} aqui!</small>` : '🗳️ Escolha a direção com';

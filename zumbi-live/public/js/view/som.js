@@ -400,6 +400,23 @@ export class Som {
       for (let i = 0; i < n; i++) { const dur = i === n - 1 ? 0.32 : rnd(0.09, 0.14), sobe = i === n - 1 && texto.includes('?'); this.voz(f * rnd(0.95, 1.08), f * (sobe ? 1.25 : 0.9), dur, 0.11, [[rnd(500, 850), 5, 1.4], [rnd(1000, 1500), 6, 0.5], [2700, 8, 0.12]], q, 0.08, 0.02); q += dur + 0.03; }
     }, { eco: 0.55 });
   }
+  // O Barganha (mascate.js): voz grave e rouca, devagar, e a risadinha "hehehe"; na compra, a caixa registradora
+  mascate(fase, d = 2) {
+    const risada = q => { for (let i = 0; i < 4; i++) { this.voz(112 - i * 4, 96, 0.09, 0.09, [[520, 4, 1.4], [980, 5, 0.4]], q + i * 0.14, 0.6); this.noise(0.08, 0.025, 'bandpass', 1400, q + i * 0.14, 1.4, 900, 0.01); } };
+    const falar = (n, q = 0) => { for (let i = 0; i < n; i++) this.voz(rnd(88, 105), rnd(78, 92), rnd(0.12, 0.2), 0.11, [[rnd(450, 700), 4, 1.4], [rnd(900, 1300), 5, 0.45]], q + i * 0.2, 0.45); };
+    this.noMundo(d, 3, () => {
+      if (fase === 'chegou') { falar(5); risada(1.15); }
+      else if (fase === 'comprar' || fase === 'trocar') { risada(0); this.caixa(0.5); }
+      else if (fase === 'vender') { falar(3); this.caixa(0.4); }
+      else if (fase === 'tchau') { falar(4); risada(0.9); }
+      else falar(3);
+    }, { eco: 0.3 });
+  }
+  // caixa registradora: a gaveta abrindo e o "plim-plim"
+  caixa(q = 0) { this.noise(0.12, 0.08, 'bandpass', 1800, q, 2, 900, 0.005); this.metalico([2093, 3136], 0.5, 0.05, q + 0.08); this.metalico([2637, 3951], 0.6, 0.045, q + 0.2); }
+  // pegou grana: moedinhas
+  grana() { if (this.pode('grana', 0.12)) this.naTela(() => { this.nota('triangle', 1568, 0, 0.18, 0.05, 0.003, 3000); this.nota('triangle', 2093, 0.06, 0.25, 0.05, 0.003, 3000); }); }
+
   // fogo por perto (lixeira, carro ou prédio pegando fogo): o crepitar, mais forte quanto mais perto (d em casas)
   crepitar(dt, d) {
     if (!this.running || !(d < 9)) return;
