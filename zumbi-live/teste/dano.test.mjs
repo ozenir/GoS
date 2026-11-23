@@ -157,12 +157,12 @@ teste('cura respeita vida máxima e bônus de cura', () => {
 console.log('Zumbis, explosões, aliados');
 teste('ameaça 1 = números da tabela', () => {
   const s = statsZumbi(ZUMBIS.comum, 1);
-  assert.equal(s.vida, 30); assert.equal(s.dano, 6); assert.equal(s.vel, ZUMBIS.comum.vel); assert.equal(s.resistencia, 0);
+  assert.equal(s.vida, 30); assert.equal(s.dano, ZUMBIS.comum.dano); assert.equal(s.vel, ZUMBIS.comum.vel); assert.equal(s.resistencia, 0);
 });
 teste('ameaça maior = zumbi mais forte', () => {
   const s = statsZumbi(ZUMBIS.comum, 3);
   perto(s.vida, 30 * (1 + 2 * ESCALA_AMEACA.vida));
-  perto(s.dano, 6 * (1 + 2 * ESCALA_AMEACA.dano));
+  perto(s.dano, ZUMBIS.comum.dano * (1 + 2 * ESCALA_AMEACA.dano));
   assert.ok(s.resistencia <= ESCALA_AMEACA.resistenciaMax);
 });
 teste('multiplicador extra de vida (para chefes especiais)', () => {

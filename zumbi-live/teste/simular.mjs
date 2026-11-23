@@ -6,7 +6,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Jogo } from '../public/js/core/jogo.js';
-import { ESCALA_AMEACA } from '../public/js/core/dano.js';
+import { ESCALA_AMEACA, MORDIDA, TOQUE } from '../public/js/core/dano.js';
+import { ZUMBIS } from '../public/js/core/dados.js';
 import { AMEACA } from '../public/js/core/ameaca.js';
 import { makeRng, fmtTempo } from '../public/js/core/util.js';
 
@@ -17,6 +18,10 @@ if (process.env.AJUSTES) Object.assign(config.jogo, JSON.parse(process.env.AJUST
 // ESCALA='{"vida":0.3}' muda dano.js → ESCALA_AMEACA; AMEACA='{"cotaBase":20}' muda ameaca.js → AMEACA (só nesta simulação)
 if (process.env.ESCALA) Object.assign(ESCALA_AMEACA, JSON.parse(process.env.ESCALA));
 if (process.env.AMEACA) Object.assign(AMEACA, JSON.parse(process.env.AMEACA));
+// MORDIDA='{"folga":0.3}' / TOQUE='{"porSegundo":3}' (dano.js); DANO_ZUMBI='{"comum":6}' muda o dano base de cada zumbi
+if (process.env.MORDIDA) Object.assign(MORDIDA, JSON.parse(process.env.MORDIDA));
+if (process.env.TOQUE) Object.assign(TOQUE, JSON.parse(process.env.TOQUE));
+if (process.env.DANO_ZUMBI) for (const [k, v] of Object.entries(JSON.parse(process.env.DANO_ZUMBI))) ZUMBIS[k].dano = v;
 const presentes = Object.entries(config.presentes.por_nome);
 
 const N = Number(process.argv[2]) || 20;

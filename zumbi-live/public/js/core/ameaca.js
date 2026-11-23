@@ -140,7 +140,8 @@ export const PEDREIRO = { desdeNivel: 6, chance: 0.28 };
 // O estouro do inchado também atordoa o herói (atordoa s), a não ser que a resistência a explosão dele seja de pelo
 // menos resSemAtordoar (Anti-explosão nível 2, ou o mecânico e a bombeira, que já nascem resistentes).
 export const EXPLOSAO = {
-  base: 18, raio: 1.9, danoZumbi: 80, desdeNivel: NIVEL_INIMIGOS_NOVOS,
+  base: 9, raio: 1.9,   // dano do estouro no herói (era 18: cortado pela metade)
+  danoZumbi: 80, desdeNivel: NIVEL_INIMIGOS_NOVOS,
   multNovo: 2.2, raioNovo: 2.4, naHorda: 0.3, pesoRua: 6, cadeia: 0.18, atordoa: 1, resSemAtordoar: 0.24,
   janela: 2,      // várias explosões em até 2 s: só a primeira machuca (e atordoa) o herói
   arremesso: 12   // e ela joga o herói longe (~3 casas), pra fora do alcance das próximas

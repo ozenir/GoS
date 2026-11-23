@@ -15,7 +15,7 @@ import { RECOMPENSA, DROPS, XP_POR_PILHA_SORTE, defesaRuna, CONVERSIVEL, PARAQUE
 import {
   atributosDaClasse, danoDoHeroi, intervaloTiro, intervaloCorpo, alcanceArma, velocidadeHeroi,
   danoNoHeroi, valorCura, statsZumbi, danoDoZumbi, danoNoZumbi, chanceDoStatus, danoExplosao, danoAliado, ALIADOS,
-  TORCIDA, aplicarTorcida, aplicarPericias, PERICIAS, TOQUE
+  TORCIDA, aplicarTorcida, aplicarPericias, PERICIAS, TOQUE, MORDIDA
 } from './dano.js';
 import { STATUS, Estados, sincronizarAtributos } from './status.js';
 import { AMBIENTE, efeitoDoAmbiente, faixaLivre, machuca, dentro } from './ambiente.js';
@@ -2067,6 +2067,10 @@ export class Jogo {
       const chamado = this.limpando && d > 6 ? 1.7 : 1;
       const vel = z.vel * z.velMult * z.estados.lentidao() * lentidaoChao * (noite ? 1.12 : 1) * (vivo ? 1 : 0.25) * chamado;
       const perto = d < T.alcance + 0.12;
+      // morde quem está encostado na tela (dano.js → MORDIDA), mesmo que o empurrão do herói não deixe colar
+      const morde = d < T.alcance + MORDIDA.folga;
+      if (morde && !z.encostou && vivo) { z.encostou = true; z.atkCd = Math.min(z.atkCd, MORDIDA.chegada); }
+      else if (!morde && d > T.alcance + MORDIDA.folga + 1.5) z.encostou = false;
       // zumbi do tomate e da pedra: fica de longe (recua se o herói chega perto, para quando está na distância boa) e joga
       let quieto = false;
       const Tm = T.tomate || T.pedra || T.arremesso;   // (arremesso: zumbis da tela que jogam de longe, tela.js)
@@ -2090,7 +2094,7 @@ export class Jogo {
       z.fx = mx; z.fy = my;
       // ataque
       z.atkCd -= dt;
-      if (perto && z.atkCd <= 0 && vivo) {
+      if (morde && z.atkCd <= 0 && vivo) {
         z.atkCd = T.cd;
         if (alvoAliado) { /* aliados não morrem: só seguram o zumbi */ }
         else {

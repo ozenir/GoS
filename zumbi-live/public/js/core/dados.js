@@ -7,9 +7,9 @@ import { ZUMBIS_TELA, tipoTela } from './tela.js';
 // ataque: tipo de dano do golpe do zumbi (dano.js → TIPOS_DANO) e efeitos que ele pode causar no herói (status.js)
 // Fraquezas e resistências de cada zumbi a cada tipo de dano: dano.js → AFINIDADES
 export const ZUMBIS = {
-  comum:     { nome: 'Zumbi',        vida: 30,   vel: 0.56, dano: 6,  cd: 1.0, raio: 0.32, xp: 1,  alcance: 0.62, ataque: { tipo: 'mordida', status: [{ id: 'infectado', chance: 0.06 }] } },
-  gordo:     { nome: 'Zumbi gordo',  vida: 55,   vel: 0.44, dano: 8,  cd: 1.2, raio: 0.4,  xp: 2,  alcance: 0.66, ataque: { tipo: 'mordida', status: [{ id: 'infectado', chance: 0.1 }] } },
-  corredor:  { nome: 'Corredor',     vida: 20,   vel: 1.4,  dano: 4,  cd: 0.7, raio: 0.28, xp: 1,  alcance: 0.6,  ataque: { tipo: 'mordida', status: [{ id: 'sangramento', chance: 0.15 }] } },
+  comum:     { nome: 'Zumbi',        vida: 30,   vel: 0.56, dano: 7,  cd: 1.0, raio: 0.32, xp: 1,  alcance: 0.62, ataque: { tipo: 'mordida', status: [{ id: 'infectado', chance: 0.06 }] } },
+  gordo:     { nome: 'Zumbi gordo',  vida: 55,   vel: 0.44, dano: 9,  cd: 1.2, raio: 0.4,  xp: 2,  alcance: 0.66, ataque: { tipo: 'mordida', status: [{ id: 'infectado', chance: 0.1 }] } },
+  corredor:  { nome: 'Corredor',     vida: 20,   vel: 1.4,  dano: 5,  cd: 0.7, raio: 0.28, xp: 1,  alcance: 0.6,  ataque: { tipo: 'mordida', status: [{ id: 'sangramento', chance: 0.15 }] } },
   explosivo: { nome: 'Explosivo',    vida: 40,   vel: 0.54, dano: 0,  cd: 1.0, raio: 0.42, xp: 3,  alcance: 0.9,  ataque: { tipo: 'explosao' } },
   chefao:    { nome: 'Chefão',       vida: 480,  vel: 0.55, dano: 11, cd: 1.3, raio: 0.6,  xp: 25, alcance: 1.05, chefe: true, ataque: { tipo: 'impacto', status: [{ id: 'atordoado', chance: 0.2, duracao: 0.6 }] } },
   rei:       { nome: 'Rei Zumbi',    vida: 1400, vel: 0.48, dano: 16, cd: 1.5, raio: 0.85, xp: 60, alcance: 1.35, chefe: true, ataque: { tipo: 'impacto', status: [{ id: 'atordoado', chance: 0.2, duracao: 0.7 }, { id: 'lento', chance: 0.3 }] } },

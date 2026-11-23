@@ -2,7 +2,7 @@
 // Rodar:  node teste/toque.test.mjs
 import assert from 'node:assert/strict';
 import { Jogo } from '../public/js/core/jogo.js';
-import { TOQUE } from '../public/js/core/dano.js';
+import { TOQUE, MORDIDA } from '../public/js/core/dano.js';
 import { ZUMBIS } from '../public/js/core/dados.js';
 
 let ok = 0;
@@ -46,6 +46,16 @@ teste('cresce com a ameaça: zumbi mais forte tira mais por toque', () => {
   fraco.dano = ZUMBIS.comum.dano * 3; h.vida = h.vidaMax; v0 = h.vida;
   for (let i = 0; i < 1 / DT; i++) j.danoPorToque(DT); const d3 = v0 - h.vida;
   assert.ok(Math.abs(d3 / d1 - 3) < 0.01, `${d1.toFixed(2)} → ${d3.toFixed(2)}`);
+});
+
+teste('mordida: pega quem está encostado na tela (além do colado) e a primeira sai logo ao chegar', () => {
+  const j = jogo(), h = j.hero, ev = [];
+  const e0 = j.emit.bind(j); j.emit = (t, d) => { ev.push(t); return e0(t, d); };
+  const T = ZUMBIS.comum, z = j.criarZumbi('comum', h.x + T.alcance + MORDIDA.folga - 0.03, h.y, null, { nascendo: 0 });
+  z.vel = 0; z.atkCd = 5;   // parado logo fora do alcance antigo (alcance + 0,12)
+  const p = { x: h.x, y: h.y };
+  for (let i = 0; i < (MORDIDA.chegada + 0.1) / DT; i++) { h.corpoCd = 9; h.tiroCd = 9; h.invT = 0; j.update(DT); h.x = p.x; h.y = p.y; }
+  assert.ok(ev.includes('mordida'), 'mordeu em até ' + MORDIDA.chegada + ' s');
 });
 
 console.log(`\n${ok} testes passaram.`);

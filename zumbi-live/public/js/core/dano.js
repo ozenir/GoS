@@ -243,6 +243,12 @@ export function danoNoHeroi(h, bruto, tipo = 'mordida', rng = null) {
 // não golpe). Invencível não toma; inspirado toma só uma parte.
 export const TOQUE = { porSegundo: 2, porSegundoBaixa: 0.5, vidaBaixa: 0.3, folga: 0.12 };
 
+// Mordida: o zumbi morde quem está encostado na tela (sprites se tocando, ~1 casa), não só colado.
+// Antes ele mordia só a 0,74 casa, e o empurrão automático do herói (que pega a ~1,07) jogava ele
+// pra trás antes: chegava perto e quase nunca mordia. folga: quanto além do alcance do zumbi a
+// mordida pega; chegada: a primeira mordida sai em no máximo isso depois de encostar.
+export const MORDIDA = { folga: 0.2, chegada: 0.35 };
+
 // Quanto uma cura (em % da vida máxima) devolve de vida
 export const valorCura = (h, pct) => h.attr.get('vidaMax') * pct / 100 * h.attr.get('cura');
 
@@ -289,11 +295,11 @@ export const ESCALA_AMEACA = {
   resistencia: 0.025,   // +2,5% de resistência (dano ignorado) por nível...
   resistenciaMax: 0.4,  // ...até no máximo 40%
   // Acelera no fim: da ameaça aceleraDesde em diante, vida e dano ainda multiplicam por (1 + isto) a cada nível
-  // (+9% de vida e +6% de dano por nível, acumulando). Nada até a 18, pouco na 25 (vida ×1,8), muito na 40
+  // (+9% de vida e +7% de dano por nível, acumulando). Nada até a 18, pouco na 25 (vida ×1,8), muito na 40
   // (vida ×6,6). As habilidades e combos crescem multiplicando; sem isso, um herói forte ficaria imortal.
   aceleraDesde: 18,
   vidaExp: 0.09,
-  danoExp: 0.06
+  danoExp: 0.07   // era 0.06: subiu quando o estouro do inchado caiu pela metade (ele era o que pesava no fim de jogo)
 };
 // danoMult: multiplicador extra de dano (ameaca.js → furiaDaHorda)
 export function statsZumbi(T, ameaca, vidaMult = 1, danoMult = 1) {
