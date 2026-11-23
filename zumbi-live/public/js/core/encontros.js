@@ -75,6 +75,7 @@ export function decidirEncontro(g, id, res) {
   const previsao = ajudar
     ? { risco: 'perigoso', rotulo: 'PERIGOSO', emoji: '🟠', itens: [`🤝 vai salvar ${e.nome}`, `🧟 ${e.zumbis.length} zumbis em volta`, '🎁 quem é salvo agradece'] }
     : { risco: 'tranquilo', rotulo: 'SEGUE A VIAGEM', emoji: '🚶', itens: [`😔 ${e.nome} fica pra trás`, '🧟 pode voltar... diferente'] };
+  g.decididoEm = g.t;   // (a próxima votação espera o resultado sair da tela)
   g.emit('decisao', { id, n: ajudar ? 1 : 2, nome: ajudar ? 'AJUDAR' : 'SEGUIR', seta: ajudar ? '🤝' : '🚶', votos: res.votos, total: g.voto?.total ?? 0, auto: res.auto, empate: !!res.empate, quem: [], previsao, encontro: true });
   if (!ajudar) {
     e.pessoa.vida = e.pessoa.t + 9;   // ainda grita um pouco, depois fica só o corpo

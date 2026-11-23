@@ -37,6 +37,7 @@ import { SOBREVIVENCIA, rampa, montarCena, cenaAtiva, atualizarCena, zumbiDevora
 import { LOJAS } from './room.js';
 import { lugaresDaViagem, rotaAte, ruaLivre, pontosDaRota } from './mapa.js';
 import { ENCONTROS, criarEncontro, decidirEncontro, escolhaEncontroIA, atualizarEncontro, voltaramComoZumbi } from './encontros.js';
+import { atualizarCenario } from './cenario.js';
 
 export const PADRAO = {
   votoDur: 10, relNum: 10, relDest: 12, protecao: 15, likesPor: 300, maxZ: 90,
@@ -201,6 +202,7 @@ export class Jogo {
     this.viagem = null;           // viagem pelo mapa (mapa.js): { lugar, dirs } — a rota até o lugar escolhido
     this.visitados = [];          // cruzamentos ("i,j") dos últimos lugares visitados: o mapa não oferece de novo
     this.encontro = null;         // alguém pedindo ajuda no caminho (encontros.js)
+    this.viaturas = []; this.janelas = []; this.viaturaT = null; this.janelaT = null;   // cenário vivo (cenario.js)
     this.perdidos = [];           // quem ficou pra trás: volta como zumbi uns quarteirões depois
     this.arena = null;
     this.ultimaLoja = -9;
@@ -405,6 +407,7 @@ export class Jogo {
     this.diretor(dt);
     atualizarCena(this, dt);
     atualizarEncontro(this, dt);
+    atualizarCenario(this, dt);   // veículos de emergência passando e gente nas janelas (cenario.js)
     this.dueloAtivo = calcularDuelo(this);
     this.processarFila(dt);
     this.zumbisDeQuemEntrou(dt);
@@ -675,6 +678,7 @@ export class Jogo {
     this.votoAbreT = 0.8;
     this.spawnT = 2;
     this.flowT = 0;
+    this.pararNoCruzamento();
     this.emit('saiu_predio', { tipo: shop.tipo });
     this.checarRecorde();
   }
@@ -794,6 +798,7 @@ export class Jogo {
     this.itens = this.itens.filter(it => !it.achado && it.kind !== 'bau_medio' && it.kind !== 'kit');
     this.decisao = null; this.voto = null; this.votoAbreT = 0.8; this.trecho = null; this.spawnT = 2; this.flowT = 0;
     this.andouQuarteirao(2);
+    this.pararNoCruzamento();
     this.emit('saiu_predio', { tipo: 'praia' });
     this.checarRecorde();
   }
@@ -875,7 +880,8 @@ export class Jogo {
     // no meio da viagem, às vezes alguém pede ajuda numa rua do lado (encontros.js)
     V.passos = (V.passos || 0) + 1;
     if (V.passos >= 1 && !this.encontro && this.stats.quarteiroes >= ENCONTROS.desdeQuarteirao && this.rng.chance(ENCONTROS.chance)) {
-      this.agendar(3 + this.rng.next() * 3, () => {
+      const espera = Math.max(3 + this.rng.next() * 3, (this.decididoEm ?? -1e9) + RESULTADO_SEG - this.t);   // depois do resultado sair da tela
+      this.agendar(espera, () => {
         if (this.fase === 'jogo' && this.viagem && !this.encontro && !this.voto && !this.room && !this.arena && !this.caido) criarEncontro(this);
       });
     }
@@ -1064,8 +1070,18 @@ export class Jogo {
     h.x = p.x; h.y = p.y; h.fx = DIRS[r.dir][0]; h.fy = DIRS[r.dir][1];
     this.andouQuarteirao(2);
     this.decisao = null; this.voto = null; this.votoAbreT = 0.8; this.trecho = null;
+    this.pararNoCruzamento();
     this.emit('saiu_predio', { tipo: 'praca' });
     this.checarRecorde();
+  }
+
+  // Viagem pelo mapa: saindo de um prédio, da arena ou da praia, o herói fica PARADO no cruzamento onde saiu
+  // (o alvo da rota é o próprio cruzamento) e a votação de destino abre ali mesmo
+  pararNoCruzamento() {
+    if (!this.S.mapa) return;
+    const r = this.rota;
+    r.alvo = { i: r.i, j: r.j };
+    r.i -= DIRS[r.dir][0]; r.j -= DIRS[r.dir][1];
   }
 
   // Direção pra seguir a partir de um cruzamento sem passar por rua bloqueada nem sem saída:
@@ -1234,10 +1250,15 @@ export class Jogo {
         if (shop) { this.indoPorta = shop; this.emit('destino', { tipo: shop.tipo, nome: shop.nome, emoji: shop.emoji }); return { x: shop.door.x, y: shop.door.y, porta: true }; }
       }
     }
+    // (viagem pelo mapa: a votação de destino só abre com o herói no cruzamento; ele PARA ali enquanto o chat
+    // escolhe, consultando o mapa, e o mapa não esconde a ação)
+    const noAlvo = this.city.nodePos(r.alvo.i, r.alvo.j);
     if (!this.voto && !this.decisao && !this.destino) {
       this.votoAbreT -= dt;
-      if (this.votoAbreT <= 0) this.abrirVotacao();
+      const resultadoSaiu = this.t - (this.decididoEm ?? -1e9) >= RESULTADO_SEG;
+      if (this.votoAbreT <= 0 && (!this.S.mapa || r.beco || (dist(h.x, h.y, noAlvo.x, noAlvo.y) < 1.2 && resultadoSaiu))) this.abrirVotacao();
     }
+    h.noMapa = !!(this.voto?.mapa && this.voto.aberta);
     if (this.voto && this.voto.aberta) {
       this.voto.update(dt);
       if (this.voto.t <= 0) this.fecharVotacao();
@@ -1273,7 +1294,7 @@ export class Jogo {
     // Ritmo: enquanto a votação não fecha, anda só o suficiente pra chegar no cruzamento junto com o fim
     // dela (a votação dura mais por causa do atraso da live). Assim ele não fica parado esperando.
     let ritmo = 1;
-    if (!this.decisao) {
+    if (!this.decisao && !this.S.mapa) {
       const resta = this.voto ? (this.voto.aberta ? this.voto.t : 0) : Math.max(0, this.votoAbreT) + this.cfg.votoDur + this.cfg.atraso;
       if (resta > 0.3) ritmo = clamp((falta - 0.5) / (resta * this.cfg.velHeroi), 0.45, 1);
     }
@@ -3154,19 +3175,19 @@ export class Jogo {
   alarme(seg, quem) {
     this.alarmeT = Math.max(this.alarmeT, seg);
     this.alarmeQuem = quem;
-    this.emit('alarme', {});
-    if (this.room) { this.salaT = Math.max(this.salaT, this.cfg.predioT - 20); return; }
+    if (this.room) { this.emit('alarme', { sala: true }); this.salaT = Math.max(this.salaT, this.cfg.predioT - 20); return; }
     // carro novo na rua à frente, piscando
     const p = this.pontoAFrente(5);
     const [dx, dy] = DIRS[this.rota.dir];
     const lado = this.rng.chance(0.5) ? 1 : -1;
     const cx = Math.floor(p.x + (dx ? 0 : lado * 1)), cy = Math.floor(p.y + (dy ? 0 : lado * 1));
     const tiles = dx ? [{ x: cx, y: cy }, { x: cx + 1, y: cy }] : [{ x: cx, y: cy }, { x: cx, y: cy + 1 }];
-    if (!tiles.every(t => this.city.tileWalk(t.x, t.y))) { this.alarmeCarro = { x: p.x, y: p.y }; return; }
+    if (!tiles.every(t => this.city.tileWalk(t.x, t.y))) { this.alarmeCarro = { x: p.x, y: p.y }; this.emit('alarme', { x: p.x, y: p.y }); return; }
     if (this.alarmeCarro?.tiles) this.city.removeDyn(this.alarmeCarro);
     const carro = { tipo: 'carro', x: cx, y: cy, w: dx ? 2 : 1, h: dx ? 1 : 2, cor: this.rng.int(0, 5), alarme: true };
     this.city.addDyn(carro, tiles);
     this.alarmeCarro = carro;
+    this.emit('alarme', { x: cx + carro.w / 2, y: cy + carro.h / 2 });   // o som fica no carro (som.js → atualizarAlarmes)
   }
 
   trem(qtd, quem) {

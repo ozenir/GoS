@@ -66,6 +66,27 @@ export const DESGASTE = {
   prediosFogo: 0.25      // prédio pegando fogo (só visual)
 };
 
+// CAOS (0 a 1): quanto mais longe do começo (e quanto mais tempo de run), mais a cidade desmorona. Números =
+// chance quando o caos está no máximo. caos = base + quarteirões de distância do começo × porQuarteirao + desgaste × porDesgaste
+export const CAOS = {
+  base: 0.08, porQuarteirao: 0.09, porDesgaste: 0.35,
+  bloqueioPolicia: 0.1,  // rua interditada pela polícia (cavaletes e uma viatura atravessada)
+  emergencia: 0.45,      // viatura, ambulância ou caminhão de bombeiro parado na rua, com as luzes piscando
+  lixeiraFogo: 0.55,     // lixeira pegando fogo
+  prediosFogo: 0.3       // fogo nas janelas dos prédios
+};
+export const VEICULOS_EMERGENCIA = ['policia', 'ambulancia', 'bombeiros'];
+// Parte dos lotes do bairro residencial que é casa (o resto: prédios de apartamento)
+export const CASAS_NO_RESIDENCIAL = 0.72;
+
+// Nomes das ruas (o mapa e o painel mostram): cada rua horizontal (linha j) e vertical (coluna i) tem um nome.
+// Uma a cada 4 é avenida (mais larga no mapa).
+const NOMES_RUA = ['das Flores', 'dos Ipês', 'Sete de Setembro', 'Quinze de Novembro', 'das Acácias', 'Tiradentes', 'São João',
+  'do Comércio', 'das Palmeiras', 'Barão do Rio Branco', 'Santos Dumont', 'Marechal Deodoro', 'dos Andradas', 'Dom Pedro II',
+  'da Liberdade', 'das Laranjeiras', 'Bela Vista', 'dos Pinheiros', 'Castro Alves', 'Cecília Meireles', 'dos Girassóis', 'do Farol'];
+const NOMES_AV = ['Brasil', 'Paulista', 'Getúlio Vargas', 'Atlântica', 'Independência', 'Rio Branco', 'Amazonas', 'dos Bandeirantes', 'Beira-Mar', 'Porto Sereno'];
+export const ehAvenida = k => mod(k, 4) === 0;
+
 const escolher = (lista, r) => {
   let tot = 0; for (const [, w] of lista) tot += w;
   let acc = r * tot;
@@ -95,6 +116,17 @@ export class City {
 
   // Nó (cruzamento) i,j fica no meio das duas ruas
   nodePos(i, j) { return { x: i * P + MID, y: j * P + MID }; }
+
+  // Nome da rua: axis 'h' = rua horizontal da linha k (j), 'v' = vertical da coluna k (i)
+  nomeRua(axis, k) {
+    const av = ehAvenida(k + (axis === 'h' ? 2 : 0)), lista = av ? NOMES_AV : NOMES_RUA;
+    return (av ? 'Av. ' : 'R. ') + lista[Math.floor(hash2(k, axis === 'h' ? 11 : 23, this.seed + 505) * lista.length)];
+  }
+  avenida(axis, k) { return ehAvenida(k + (axis === 'h' ? 2 : 0)); }
+  // o caos em volta do cruzamento/quarteirão (i, j)
+  caos(i, j) { return Math.min(1, CAOS.base + Math.hypot(i, j) * CAOS.porQuarteirao + (this.desgaste || 0) * CAOS.porDesgaste); }
+  // Nome da rua do trecho que sai do cruzamento i,j na direção d
+  ruaDoTrecho(i, j, d) { return d === 1 || d === 3 ? this.nomeRua('h', j) : this.nomeRua('v', i); }
 
   /* ---------- Bairros e quarteirões ---------- */
   bairro(bi, bj) {
@@ -210,17 +242,19 @@ export class City {
     const shop = this.shopAt(node.i, node.j);
     const isShop = shop && shop.bi === bi && shop.bj === bj && shop.sx === sx && shop.sy === sy;
     const bairro = this.bairro(bi, bj);
-    const altura = isShop ? (bairro === 'residencial' ? 22 : 30)
+    // bairro residencial: a maioria dos lotes é casa (quintal, cerca, telhado); o resto, prédio de apartamento
+    const casa = !isShop && bairro === 'residencial' && hash3(bi * 2 + sx, bj * 2 + sy, 6, this.seed) < CASAS_NO_RESIDENCIAL;
+    const altura = casa ? 26 : isShop ? (bairro === 'residencial' ? 22 : 30)
       : bairro === 'residencial' ? 16 + Math.floor(h * 3) * 6
       : bairro === 'industrial' ? 24 + Math.floor(h * 3) * 8
       : 30 + Math.floor(h * 5) * 12;
     return {
-      id: `${bi},${bj},${sx},${sy}`, bi, bj, sx, sy, x0, y0, x1: x0 + BSIZE, y1: y0 + BSIZE, bairro, altura,
+      id: `${bi},${bj},${sx},${sy}`, bi, bj, sx, sy, x0, y0, x1: x0 + BSIZE, y1: y0 + BSIZE, bairro, altura, casa,
       paleta: Math.floor(hash3(bi * 2 + sx, bj * 2 + sy, 2, this.seed) * 6),
       janelas: Math.floor(hash3(bi * 2 + sx, bj * 2 + sy, 3, this.seed) * 3),
-      ruina: hash3(bi * 2 + sx, bj * 2 + sy, 4, this.seed) < 0.18,
+      ruina: !casa && hash3(bi * 2 + sx, bj * 2 + sy, 4, this.seed) < 0.18,
       // desgaste da run: com o tempo, alguns prédios começam a pegar fogo (só visual)
-      fogo: !isShop && hash3(bi * 2 + sx, bj * 2 + sy, 5, this.seed) < (this.desgaste || 0) * DESGASTE.prediosFogo,
+      fogo: !isShop && hash3(bi * 2 + sx, bj * 2 + sy, 5, this.seed) < Math.max((this.desgaste || 0) * DESGASTE.prediosFogo, (this.caos(bi, bj) - 0.25) * CAOS.prediosFogo),
       shop: isShop ? shop : null
     };
   }
@@ -323,6 +357,8 @@ export class City {
     if (!pertoDoInicio && rb < CHANCE_BLOQUEIO) bloqueio = { along: 10 };
     else if (!pertoDoInicio && rb < CHANCE_BLOQUEIO + CHANCE_SEM_SAIDA) semSaida = { along: 13 };
     else if (!pertoDoInicio && hash3(i, j, sd + 100, this.seed) < dg * DESGASTE.bloqueioCarros) bloqueio = { along: 10, carros: true };
+    const caos = this.caos(i, j);
+    if (!bloqueio && !semSaida && !pertoDoInicio && hash3(i, j, sd + 130, this.seed) < (caos - 0.2) * CAOS.bloqueioPolicia) bloqueio = { along: 10, policia: true };
     const barreira = bloqueio || semSaida;
     if (bloqueio?.carros) {
       // engavetamento: dois carros atravessados e uma barricada fecham a rua
@@ -339,6 +375,12 @@ export class City {
         solid.add(p.x + ',' + p.y);
         props.push({ tipo: across === 2 ? 'barricada_placa' : 'barricada', x: p.x, y: p.y, eixo: axis });
       }
+      // interdição da polícia: uma viatura atravessada atrás dos cavaletes, com as luzes ligadas
+      if (barreira.policia) {
+        const p = at(barreira.along + 2, 1), p2 = at(barreira.along + 2, 2);
+        props.push({ tipo: 'carro', emergencia: 'policia', luzes: true, x: Math.min(p.x, p2.x), y: Math.min(p.y, p2.y), w: ax ? 1 : 2, h: ax ? 2 : 1, cor: 0 });
+        solid.add(p.x + ',' + p.y); solid.add(p2.x + ',' + p2.y);
+      }
     }
     // Carros abandonados nas faixas do lado (a faixa do meio fica sempre livre)
     const nCarros = Math.floor(hash3(i, j, sd + 1, this.seed) * (bairro === 'residencial' ? 4 : 3));
@@ -350,8 +392,10 @@ export class City {
       const lado = hash3(i, j, sd + 7 + n, this.seed) < 0.5 ? 1 : 3;
       const p = at(along, lado);
       const p2 = at(along + 1, lado);
-      const fogo = hash3(i, j, sd + 20 + n, this.seed) < dg * DESGASTE.carroFogo;
-      props.push({ tipo: 'carro', x: p.x, y: p.y, w: ax ? 2 : 1, h: ax ? 1 : 2, cor: Math.floor(hash3(i, j, sd + 12 + n, this.seed) * 6), virado: hash3(i, j, sd + 17 + n, this.seed) < 0.2, fogo });
+      // com o caos, alguns são viaturas, ambulâncias e caminhões de bombeiro parados (luzes piscando)
+      const emergencia = !pertoDoInicio && n === 0 && hash3(i, j, sd + 131, this.seed) < caos * CAOS.emergencia ? VEICULOS_EMERGENCIA[Math.floor(hash3(i, j, sd + 132, this.seed) * 3)] : null;
+      const fogo = !emergencia && hash3(i, j, sd + 20 + n, this.seed) < dg * DESGASTE.carroFogo;
+      props.push({ tipo: 'carro', emergencia, luzes: !!emergencia && hash3(i, j, sd + 133, this.seed) < 0.85, x: p.x, y: p.y, w: ax ? 2 : 1, h: ax ? 1 : 2, cor: Math.floor(hash3(i, j, sd + 12 + n, this.seed) * 6), virado: !emergencia && hash3(i, j, sd + 17 + n, this.seed) < 0.2, fogo });
       solid.add(p.x + ',' + p.y); solid.add(p2.x + ',' + p2.y);
       if (fogo) {
         // carro em chamas: fogo no chão em volta (machuca quem passa raspando)
@@ -373,6 +417,18 @@ export class City {
       const p = at(along, lado);
       const r = hash3(i, j, sd + 49 + n, this.seed);
       props.push({ tipo: bairro === 'industrial' && r < 0.4 ? 'conteiner' : r < 0.25 ? 'barril' : r < 0.7 ? 'lixo' : 'caixas', x: p.x, y: p.y });
+    }
+    // Rua de bairro residencial: árvores na calçada
+    if (bairro === 'residencial') for (const [along, lado] of [[3, 4], [10, 0], [17, 4]]) {
+      if (hash3(i, j, sd + 150 + along, this.seed) < 0.3 || (barreira && Math.abs(along - barreira.along) < 2)) continue;
+      const p = at(along, lado);
+      props.push({ tipo: 'arvore', x: p.x, y: p.y, v: along % 3 }); solid.add(p.x + ',' + p.y);
+    }
+    // Lixeiras nas calçadas; com o caos, pegando fogo
+    if (hash3(i, j, sd + 140, this.seed) < 0.75) {
+      const along = 3 + Math.floor(hash3(i, j, sd + 141, this.seed) * 15), lado = hash3(i, j, sd + 142, this.seed) < 0.5 ? 0 : 4;
+      const p = at(along, lado);
+      props.push({ tipo: 'lixeira', x: p.x, y: p.y, fogo: !pertoDoInicio && hash3(i, j, sd + 143, this.seed) < (caos - 0.15) * CAOS.lixeiraFogo });
     }
     const nMancha = Math.floor(hash3(i, j, sd + 60, this.seed) * 3);
     for (let n = 0; n < nMancha; n++) {

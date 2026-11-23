@@ -32,10 +32,11 @@ export const SOBREVIVENCIA = {
   calmaVel: 0.6, calmaRaio: 7,
   duelo: {
     max: 2, raio: 6,       // até `max` zumbis acordados a menos de `raio` casas (e nenhum chefe): duelo
-    guarda: 1.75,          // distância que o herói de perto espera depois de bater
+    guarda: 1.6,           // distância que o herói de perto espera depois de bater (dentro do alcance do bote)
     distancia: 3.4,        // distância que quem atira tenta manter
     bote: 0.5,             // segundos que o zumbi se prepara antes de avançar (dá pra ver)
-    investida: 0.75,       // quanto ele avança no bote (casas)
+    investida: 1,          // quanto ele avança no bote (casas): da guarda, chega no herói se ele não desviar
+    alcanceBote: 1,        // o zumbi arma o bote a até (alcance dele + 0,12 + isto) do herói
     reacao: 0.55,          // chance do herói ler o bote e desviar (+reacaoPorAgilidade por ponto de agilidade acima de 2)
     reacaoPorAgilidade: 0.08,
     recuo: 0.85            // velocidade recuando (fração)
@@ -199,7 +200,7 @@ export function boteDoZumbi(g, z, T, d, dt, morder) {
     }
     return true;
   }
-  if (z.atkCd <= 0 && d < T.alcance + 0.12 + D.investida && !g.caido) {
+  if (z.atkCd <= 0 && d < T.alcance + 0.12 + D.alcanceBote && !g.caido) {
     const agil = Math.max(0, (h.pericias?.agilidade ?? 2) - 2);
     z.bote = { t: D.bote * (0.85 + g.rng.next() * 0.3), lido: g.rng.next() < D.reacao + agil * D.reacaoPorAgilidade };
     g.emit('bote_preparo', { x: z.x, y: z.y });

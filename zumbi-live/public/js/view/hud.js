@@ -446,6 +446,7 @@ export class Hud {
     const st = [];
     if (g.arena && g.fase === 'jogo') { const ch = g.arena.chefe; st.push(`<span class="chip mal">⚔️ arena · chefe ${ch.morto ? 'derrotado' : Math.ceil(Math.max(0, ch.vida) / ch.vidaMax * 100) + '%'} · ${Math.max(0, Math.ceil(100 - g.arena.t))}s</span>`); }
     if (!g.room && g.bairroAtual) { const B = BAIRROS[g.bairroAtual]; st.push(`<span class="chip">${B.emoji} ${esc(B.nome)}</span>`); }
+    if (!g.room && g.fase === 'jogo' && g.city.ruaDoTrecho) st.push(`<span class="chip" title="A rua onde o herói está">🪧 ${esc(g.city.ruaDoTrecho(g.rota.i, g.rota.j, g.rota.dir))}</span>`);
     if (g.protecao > 0 && g.fase === 'jogo') st.push(`<span class="chip ok">🛡️ proteção ${Math.ceil(g.protecao)}s</span>`);
     if (g.fila.length && g.protecao > 0) st.push(`<span class="chip mal">😈 ${g.fila.length} na fila</span>`);
     if (g.poucosPraLimpar?.()) st.push(`<span class="chip">🎯 caçando os últimos ${g.limpando.restam}</span>`);

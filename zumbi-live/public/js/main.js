@@ -230,8 +230,8 @@ function tocarEvento(e, g) {
     case 'praia_vencida': som.recorde(); break;
     case 'virou': som.virou(); break;
     case 'chefe': som.chefe(e.tipo === 'rei' || e.tipo === 'colosso'); break;
-    case 'alarme': som.alarme(e.sala ? 4 : 6, !!e.sala); break;
-    case 'alarme_carro': som.alarmeCarro(e.seg, longe(e, g)); break;
+    case 'alarme': som.alarme(e.sala ? 4 : 6, !!e.sala, Number.isFinite(e.x) ? { x: e.x, y: e.y } : null); break;
+    case 'alarme_carro': som.alarmeCarro(e.seg, longe(e, g), { x: e.x, y: e.y }); break;
     case 'latido': som.latido(longe(e, g)); break;
     case 'vidro_pisou': som.crocante(); break;
     case 'helicoptero': som.helicoptero(); break;
@@ -316,12 +316,24 @@ function tocarEvento(e, g) {
     case 'vitima_salva': case 'encontro_salvo': som.alivio(longe(e, g)); som.livre(); break;
     case 'voltou_zumbi': som.notou(longe(e, g)); som.perigo(); break;
     case 'votacao_abriu': if (e.mapa) som.mapa(); else if (e.encontro) som.encontro(); break;
+    // a cidade viva (cenario.js): veículo de emergência passando com a sirene e gente gritando da janela
+    case 'viatura_passando': {
+      const am = [];
+      for (let t = 0; t <= e.dur + 0.001; t += 0.1) {
+        const x = e.x0 + e.dx * e.vel * t, y = e.y0 + e.dy * e.vel * t, d = Math.hypot(x - g.hero.x, y - g.hero.y);
+        const x2 = x + e.dx * e.vel * 0.1, y2 = y + e.dy * e.vel * 0.1, d2 = Math.hypot(x2 - g.hero.x, y2 - g.hero.y);
+        am.push({ t, d, pan: ladoNaTela(x, y), vr: (d - d2) / 0.1 * 2.5 });   // (casas/s → m/s)
+      }
+      som.sirenePassando(e.tipo, am, e.dur);
+      break;
+    }
+    case 'janela': som.janela(longe(e, g), e.texto, e.socorro); break;
     case 'entrou_predio': case 'saiu_predio': som.porta(); break;
   }
 }
 
 /* ---------- laço ---------- */
-let ultimo = performance.now(), acc = 0, coracaoT = 0, ultimoSeg = -1;
+let ultimo = performance.now(), acc = 0, coracaoT = 0, ultimoSeg = -1, fogoBusca = 0, fogoD = Infinity;
 const PASSO = 1 / 60;
 function loop(agora) {
   const dt = Math.min(0.1, (agora - ultimo) / 1000); ultimo = agora;
@@ -366,6 +378,17 @@ function loop(agora) {
     andando: h.andando && jogo.fase === 'jogo', anda: h.animT || 0, vida: jogo.fase === 'jogo' ? pct : 1, cauteloso: !!h.cauteloso,
     chao: h.noVidro ? 'vidro' : jogo.room ? (jogo.room.praia ? 'grama' : sala === 'azulejo' ? 'azulejo' : sala === 'concreto' ? 'concreto' : 'piso') : jogo.bairroAtual === 'parque' ? 'grama' : 'asfalto'   // areia da praia soa como grama
   });
+  // fogo por perto (lixeira, carro ou prédio pegando fogo): o crepitar (procura de meio em meio segundo)
+  if ((fogoBusca -= dt) <= 0) {
+    fogoBusca = 0.5; fogoD = Infinity;
+    if (!jogo.room && jogo.fase === 'jogo') for (const o of jogo.city.objectsIn(h.x - 9, h.y - 9, h.x + 9, h.y + 9)) {
+      const f = o.kind === 'prop' && o.p.fogo ? [o.p.x + 0.5, o.p.y + 0.5] : o.kind === 'building' && o.b.fogo ? [Math.max(o.b.x0, Math.min(h.x, o.b.x1)), Math.max(o.b.y0, Math.min(h.y, o.b.y1))] : null;
+      if (f) fogoD = Math.min(fogoD, Math.hypot(f[0] - h.x, f[1] - h.y));
+    }
+  }
+  som.crepitar(dt, fogoD);
+  // alarmes de carro tocando: acompanham a distância do herói até o carro
+  som.atualizarAlarmes(p => [Math.hypot(p.x - h.x, p.y - h.y), ladoNaTela(p.x, p.y)]);
   som.cenario(dt, { periodo: jogo.periodo || 'manha', dentro: !!jogo.room, praia: !!jogo.room?.praia, parque: jogo.bairroAtual === 'parque', perigo: clamp(perto / 12, 0, 1) });
   som.musica(jogo.fase === 'jogo' ? clamp(perto / 18 + (1 - pct) * 0.4 + (jogo.ehNoite() ? 0.25 : 0) + chefe * 0.4, 0, 1) : 0, dt, jogo.fase === 'jogo' && pct < 0.5 ? clamp((0.5 - pct) / 0.5, 0.05, 1) : 0);
   if (jogo.fase === 'jogo' && pct < 0.3) { coracaoT -= dt; if (coracaoT <= 0) { coracaoT = pct < 0.15 ? 0.55 : 0.85; som.coracao(); } }

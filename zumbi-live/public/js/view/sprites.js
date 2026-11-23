@@ -345,7 +345,10 @@ export function spriteItem(kind) {
 const CORES_CARRO = ['#8a3b3b', '#3b5a8a', '#c9c0b0', '#3b6e4f', '#8a7a3b', '#4b4b55'];
 
 // Carro: comp = tamanho em casas ao longo de u (2) ou v (2). eixo 'u' ou 'v' na vista.
-export function spriteCarro(cor, eixo, virado) {
+// emergencia: 'policia' (branca com faixa azul e giroflex), 'ambulancia' (van branca com faixa e cruz vermelhas)
+// ou 'bombeiros' (caminhão vermelho com faixa branca e escada). As luzes que piscam são desenhadas no render.
+export function spriteCarro(cor, eixo, virado, emergencia = null) {
+  if (emergencia) return spriteViatura(emergencia, eixo);
   const k = 'car' + cor + eixo + virado;
   if (cache.has(k)) return cache.get(k);
   const du = eixo === 'u' ? 2 : 1, dv = eixo === 'u' ? 1 : 2;
@@ -373,6 +376,61 @@ export function spriteCarro(cor, eixo, virado) {
   cache.set(k, s);
   return s;
 }
+
+export function spriteViatura(tipo, eixo) {
+  const k = 'vtr' + tipo + eixo;
+  if (cache.has(k)) return cache.get(k);
+  const du = eixo === 'u' ? 2 : 1, dv = eixo === 'u' ? 1 : 2;
+  const W = (du + dv) * 12 + 2, Hh = (du + dv) * 6 + 26;
+  const [c, x] = canvas(W, Hh);
+  const T = [dv * 12 + 1, 24];
+  const P = (u, v, z) => [T[0] + (u - v) * 12, T[1] + (u + v) * 6 - z];
+  const box = (u0, v0, u1, v1, z0, z1, top, l, r) => {
+    fillPoly(x, [P(u0, v1, z0), P(u1, v1, z0), P(u1, v1, z1), P(u0, v1, z1)], l);
+    fillPoly(x, [P(u1, v1, z0), P(u1, v0, z0), P(u1, v0, z1), P(u1, v1, z1)], r);
+    fillPoly(x, [P(u0, v0, z1), P(u1, v0, z1), P(u1, v1, z1), P(u0, v1, z1)], top);
+  };
+  // faixa pintada na lateral (as duas faces que aparecem)
+  const faixa = (u0, v0, u1, v1, z0, z1, cor) => {
+    fillPoly(x, [P(u0, v1, z0), P(u1, v1, z0), P(u1, v1, z1), P(u0, v1, z1)], cor);
+    fillPoly(x, [P(u1, v1, z0), P(u1, v0, z0), P(u1, v0, z1), P(u1, v1, z1)], tom(cor, -0.2));
+  };
+  const m = 0.1, U = du - m, V = dv - m;
+  if (tipo === 'policia') {
+    box(m, m, U, V, 1, 8, '#f2f4f8', '#e2e5ec', '#b8bcc6');
+    faixa(m, m, U, V, 3, 5, '#2a5bd7');
+    const iu = eixo === 'u' ? 0.5 : 0.2, iv = eixo === 'u' ? 0.2 : 0.5;
+    box(m + iu, m + iv, U - (eixo === 'u' ? 0.35 : 0.2), V - (eixo === 'u' ? 0.2 : 0.35), 8, 13, '#e8eaef', '#2a3440', '#1e2630');
+    const cu = du / 2, cv = dv / 2;
+    box(cu - 0.25, cv - 0.15, cu + 0.25, cv + 0.15, 13, 15, '#3a3c44', '#2a2c32', '#22242a');   // giroflex
+  } else if (tipo === 'ambulancia') {
+    box(m, m, U, V, 1, 14, '#f6f6f6', '#e6e6e6', '#c2c2c6');
+    faixa(m, m, U, V, 5, 7, '#d32f2f');
+    // cruz na lateral
+    const cz = 10, a = eixo === 'u' ? [du * 0.6, V] : [U, dv * 0.6];
+    const pc = P(a[0], a[1], cz); x.fillStyle = '#d32f2f'; x.fillRect(Math.round(pc[0]) - 1, Math.round(pc[1]) - 3, 2, 6); x.fillRect(Math.round(pc[0]) - 3, Math.round(pc[1]) - 1, 6, 2);
+    const cu = eixo === 'u' ? 0.4 : du / 2, cv = eixo === 'u' ? dv / 2 : 0.4;
+    box(cu - 0.2, cv - 0.15, cu + 0.2, cv + 0.15, 14, 16, '#3a3c44', '#2a2c32', '#22242a');
+  } else {
+    box(m, m, U, V, 1, 12, '#c62828', '#b02020', '#8a1818');
+    faixa(m, m, U, V, 4, 5, '#f0f0f0');
+    // escada em cima
+    const a0 = eixo === 'u' ? [0.4, dv / 2] : [du / 2, 0.4], a1 = eixo === 'u' ? [du - 0.3, dv / 2] : [du / 2, dv - 0.3];
+    const p0 = P(a0[0], a0[1], 13), p1 = P(a1[0], a1[1], 13);
+    line(x, p0[0], p0[1], p1[0], p1[1], '#c8ccd4', 2);
+    const cu = eixo === 'u' ? 0.35 : du / 2, cv = eixo === 'u' ? dv / 2 : 0.35;
+    box(cu - 0.2, cv - 0.15, cu + 0.2, cv + 0.15, 12, 14, '#3a3c44', '#2a2c32', '#22242a');
+  }
+  x.fillStyle = '#151515';
+  const rodas = eixo === 'u' ? [[0.45, dv - m], [du - 0.45, dv - m]] : [[du - m, 0.45], [du - m, dv - 0.45]];
+  for (const [u, v] of rodas) { const p = P(u, v, 1); x.fillRect(Math.round(p[0]) - 2, Math.round(p[1]) - 2, 4, 3); }
+  contorno(c);
+  const s = { c, ox: T[0], oy: T[1] };
+  cache.set(k, s);
+  return s;
+}
+// Cores das luzes de cada veículo de emergência (piscam alternando)
+export const LUZES_EMERGENCIA = { policia: ['#ff2a2a', '#2a6aff'], ambulancia: ['#ff2a2a', '#ffffff'], bombeiros: ['#ff2a2a', '#ffb02a'] };
 
 // Conversível dos zumbis: carro vermelho sem capota (os zumbis em pé são desenhados por cima, no render)
 export function spriteConversivel(eixo) {
@@ -465,6 +523,11 @@ export function spriteProp(tipo) {
     x.fillStyle = '#e8e0d0'; x.fillRect(4, 16, 1, 20); x.fillRect(15, 16, 1, 20); x.fillRect(4, 26, 12, 1);
     caixaIso(x, 10, 18, 7, 5, 7, '#d84a3a', '#b83a2a', '#9a2e22');
     x.fillStyle = '#f0f0f0'; x.fillRect(6, 3, 8, 2); x.fillStyle = '#d84a3a'; x.fillRect(9, 3, 2, 2);
+  } else if (tipo === 'lixeira') {
+    // lixeira de rua (contêiner pequeno verde com tampa)
+    [c, x] = canvas(14, 16); ox = 7; oy = 13;
+    caixaIso(x, 7, 15, 5, 4, 8, '#3f7a45', '#2f6035', '#244a29');
+    x.fillStyle = '#1e3a22'; x.fillRect(3, 5, 8, 1); x.fillStyle = '#5a9a60'; x.fillRect(4, 3, 6, 1);
   } else if (tipo === 'conteiner') {
     [c, x] = canvas(20, 24); ox = 10; oy = 21;
     caixaIso(x, 10, 22, 9, 8, 12, '#3a7a8a', '#2e6270', '#224a56');
@@ -472,6 +535,76 @@ export function spriteProp(tipo) {
   }
   contorno(c);
   const s = { c, ox, oy };
+  cache.set(k, s);
+  return s;
+}
+
+/* ===================== Casas (bairro residencial) ===================== */
+// O lote inteiro (7x7): quintal de grama com cerca branca de madeira, caminho de pedra até a porta, a casa no meio
+// (parede em cor pastel, telhado de telha com duas águas, porta e janelas que acendem de noite), às vezes uma
+// chaminé e uma árvore no quintal. As medidas da casa ficam em CASA (a gente na janela usa: render.js).
+export const CASA = { u0: 1.4, u1: 5.6, v0: 1.3, v1: 5.3, parede: 12, cumeeira: 9 };
+const PAREDES_CASA = ['#ecdcbc', '#c8e0ea', '#f2cdb4', '#d6e8c2', '#ecccdc', '#d8d6e4', '#f4e4a8'];
+const TELHAS = ['#b8442e', '#9a3a2a', '#7a5a4a', '#5a6a7a', '#a8562e'];
+export function spriteCasa(b, du, dv, rot) {
+  const k = 'casa' + b.id + '|' + rot;
+  if (cache.has(k)) return cache.get(k);
+  if (cache.size > 900) cache.clear();
+  const alt = b.altura;
+  const W = (du + dv) * 12 + 4, H = (du + dv) * 6 + alt + 8;
+  const [c, x] = canvas(W, H), [lc, lx] = canvas(W, H);
+  const T = [dv * 12 + 2, alt + 4];
+  const P = (u, v, z) => [T[0] + (u - v) * 12, T[1] + (u + v) * 6 - z];
+  const h1 = hash2(b.bi * 7 + b.sx, b.bj * 7 + b.sy, 501), h2 = hash2(b.bi * 3 + b.sy, b.bj * 5 + b.sx, 502);
+  const grama = ['#5f8f4c', '#6a9a52', '#58864a'][Math.floor(h2 * 3)];
+  // quintal
+  fillPoly(x, [P(0, 0, 0), P(du, 0, 0), P(du, dv, 0), P(0, dv, 0)], grama);
+  for (let i = 0; i < 26; i++) { const p = P(hash2(i, 1, b.bi * 9 + b.sx) * du, hash2(i, 2, b.bj * 9 + b.sy) * dv, 0); x.fillStyle = tom(grama, i % 2 ? -0.12 : 0.1); x.fillRect(Math.round(p[0]), Math.round(p[1]), 1, 1); }
+  // caminho de pedra até a porta (no meio da face da frente)
+  const C = CASA, um = (C.u0 + C.u1) / 2;
+  for (let v = C.v1; v < dv - 0.1; v += 0.4) { const p = P(um, v, 0); x.fillStyle = (v * 10) % 2 < 1 ? '#c8b898' : '#b0a080'; x.fillRect(Math.round(p[0]) - 3, Math.round(p[1]) - 1, 6, 2); }
+  // cerca dos fundos (atrás da casa)
+  const cerca = (ua, va, ub, vb) => {
+    const n = Math.max(2, Math.round(Math.hypot(ub - ua, vb - va) * 2.5));
+    for (let i = 0; i <= n; i++) { const t = i / n, p = P(ua + (ub - ua) * t, va + (vb - va) * t, 0); x.fillStyle = '#f2efe6'; x.fillRect(Math.round(p[0]), Math.round(p[1]) - 5, 1, 5); }
+    const a = P(ua, va, 4), z = P(ub, vb, 4); line(x, a[0], a[1], z[0], z[1], '#d8d2c4');
+  };
+  cerca(0.1, 0.1, du - 0.1, 0.1); cerca(0.1, 0.1, 0.1, dv - 0.1);
+  // a casa: paredes
+  const parede = PAREDES_CASA[Math.floor(h1 * PAREDES_CASA.length)], telha = TELHAS[Math.floor(h2 * TELHAS.length)];
+  const hb = C.parede, hr = C.parede + C.cumeeira, vm = (C.v0 + C.v1) / 2;
+  fillPoly(x, [P(C.u0, C.v1, 0), P(C.u1, C.v1, 0), P(C.u1, C.v1, hb), P(C.u0, C.v1, hb)], parede);                       // frente
+  fillPoly(x, [P(C.u1, C.v1, 0), P(C.u1, C.v0, 0), P(C.u1, C.v0, hb), P(C.u1, vm, hr), P(C.u1, C.v1, hb)], tom(parede, -0.22));   // lateral com o oitão
+  // telhado: água de trás (aparece um pouco) e água da frente
+  fillPoly(x, [P(C.u0 - 0.25, vm, hr), P(C.u1 + 0.25, vm, hr), P(C.u1 + 0.25, C.v0 - 0.3, hb - 1), P(C.u0 - 0.25, C.v0 - 0.3, hb - 1)], tom(telha, -0.25));
+  fillPoly(x, [P(C.u0 - 0.25, C.v1 + 0.3, hb - 1), P(C.u1 + 0.25, C.v1 + 0.3, hb - 1), P(C.u1 + 0.25, vm, hr), P(C.u0 - 0.25, vm, hr)], telha);
+  for (let u = C.u0; u < C.u1; u += 0.5) { const a = P(u, C.v1 + 0.3, hb - 1), z = P(u, vm, hr); line(x, a[0], a[1], z[0], z[1], tom(telha, -0.12)); }   // fileiras de telha
+  { const a = P(C.u0 - 0.25, vm, hr), z = P(C.u1 + 0.25, vm, hr); line(x, a[0], a[1], z[0], z[1], tom(telha, 0.2)); }   // a cumeeira
+  if (h1 < 0.45) {   // chaminé
+    const cu = C.u0 + 0.8;
+    fillPoly(x, [P(cu, vm + 0.6, hr - 4), P(cu + 0.6, vm + 0.6, hr - 4), P(cu + 0.6, vm + 0.6, hr + 4), P(cu, vm + 0.6, hr + 4)], '#8a4a3a');
+    fillPoly(x, [P(cu + 0.6, vm + 0.6, hr - 4), P(cu + 0.6, vm, hr - 4), P(cu + 0.6, vm, hr + 4), P(cu + 0.6, vm + 0.6, hr + 4)], '#6a3a2a');
+  }
+  // porta e janelas (acendem de noite)
+  let temLuz = false;
+  const janela = (face, a, z, larg, cor, ctx = x) => {
+    for (let i = 0; i < larg; i++) { const p = face === 'v' ? P(a + i / 12, C.v1, z) : P(C.u1, a - i / 12, z); ctx.fillStyle = cor; ctx.fillRect(Math.round(p[0]), Math.round(p[1]) - 5, 1, 5); }
+  };
+  { for (let i = -2; i < 3; i++) { const p = P(um + i / 12, C.v1, 0); x.fillStyle = i === -2 || i === 2 ? '#3a2416' : '#6a3a22'; x.fillRect(Math.round(p[0]), Math.round(p[1]) - 8, 1, 8); } }
+  for (const [face, a] of [['v', C.u0 + 0.5], ['v', C.u1 - 1.1], ['u', C.v1 - 1]]) {
+    janela(face, a, 4, 6, '#3a4a5a');
+    const r = hash2(Math.floor(a * 10), b.bi * 13 + b.bj * 7 + b.sx + b.sy * 3, 503);
+    if (r < 0.55) { temLuz = true; lx.globalAlpha = 0.3; janela(face, a - 1 / 12, 5, 8, '#ffd98a', lx); lx.globalAlpha = 1; janela(face, a, 4, 6, '#ffd98a', lx); }
+  }
+  // cerca da frente (por cima do quintal da frente) e uma árvore no canto
+  cerca(du - 0.1, 0.1, du - 0.1, dv - 0.1); cerca(0.1, dv - 0.1, um - 0.45, dv - 0.1); cerca(um + 0.45, dv - 0.1, du - 0.1, dv - 0.1);
+  if (h2 < 0.7) {
+    const [tu, tv] = h1 < 0.5 ? [0.9, dv - 1] : [du - 1, 0.9], t0 = P(tu, tv, 0), t1 = P(tu, tv, 10);
+    line(x, t0[0], t0[1], t1[0], t1[1], '#5a3a22', 2);
+    disc(x, t1[0], t1[1] - 3, 6, '#3f7a3a', 0.9); disc(x, t1[0] - 2, t1[1] - 5, 4, '#56954a', 0.9);
+  }
+  contorno(c);
+  const s = { c, ox: T[0], oy: T[1], placa: null, luzes: temLuz ? lc : null };
   cache.set(k, s);
   return s;
 }
@@ -503,6 +636,7 @@ const PALETAS = [
 // Prédio visto de cima de lado. du, dv = tamanho na vista (casas). alt = altura em pixels.
 // porta: { face: 'u' | 'v', a: posição ao longo da face (casas) } ou null.
 export function spritePredio(b, du, dv, porta, rot) {
+  if (b.casa) return spriteCasa(b, du, dv, rot);
   const k = 'b' + b.id + '|' + rot + '|' + (porta ? porta.face + porta.a : '') + (b.shop ? b.shop.tipo : '');
   if (cache.has(k)) return cache.get(k);
   if (cache.size > 900) cache.clear();

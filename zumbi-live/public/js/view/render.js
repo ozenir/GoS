@@ -10,6 +10,7 @@ import { ZUMBIS_TELA } from '../core/tela.js';
 import { fillPoly, line, disc, canvas as novoCanvas } from './pixel.js';
 import * as S from './sprites.js';
 import { CenaPortal } from './portal.js';
+import { CORES_OPCAO } from './mapa.js';
 
 export const W = 216, H = 384;
 const AX = 114, AY = 226;           // onde fica o ponto da câmera na tela (um pouco abaixo do centro: o HUD de cima fica livre)
@@ -577,6 +578,13 @@ export class Render {
       const u1 = Math.max(...cs.map(q => q[0])), v1 = Math.max(...cs.map(q => q[1]));
       lista.push({ key: (u0 + u1 + v0 + v1) / 2, tipo: 'conversivel', c, u0, v0, eixo: u1 - u0 > v1 - v0 ? 'u' : 'v' });
     }
+    for (const c of g.room ? [] : g.viaturas || []) {
+      const px = -c.dy * 0.5, py = c.dx * 0.5;
+      const cs = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([a, b]) => this.view(c.x + c.dx * a + px * b, c.y + c.dy * a + py * b));
+      const u0 = Math.min(...cs.map(q => q[0])), v0 = Math.min(...cs.map(q => q[1]));
+      const u1 = Math.max(...cs.map(q => q[0])), v1 = Math.max(...cs.map(q => q[1]));
+      lista.push({ key: (u0 + u1 + v0 + v1) / 2, tipo: 'viatura', c, u0, v0, eixo: u1 - u0 > v1 - v0 ? 'u' : 'v' });
+    }
     if (!g.room) for (const f of g.figurantes || []) { const [u, v] = this.view(f.x, f.y); lista.push({ key: u + v, tipo: 'figurante', f }); }
     if (g.fase === 'jogo' || this.t % 1 < 0.5) lista.push({ key: heroiKey, tipo: 'heroi' });
     lista.sort((a, b) => a.key - b.key);
@@ -610,6 +618,7 @@ export class Render {
           if (s.luzes && !o.b.fogo) { e.globalAlpha = tampa ? 0.35 : 1; e.drawImage(s.luzes, x0, y0); e.globalAlpha = 1; }
         }
         if (o.b.fogo) this.fogoPredio(o.b, x0, y0, s.c.width);
+        for (const j of g.janelas || []) if (j.b.id === o.b.id) this.pessoaNaJanela(j, x0, y0, o.u1 - o.u0, o.v1 - o.v0, o.b.altura, noite);
         if (s.placa && o.b.shop) this.nomes.push({ placa: true, x: x0 + s.placa[0], y: y0 + s.placa[1] - 16, shop: o.b.shop, tampa });
       } else if (o.tipo === 'fonte') {
         const s = S.spriteFonte();
@@ -617,10 +626,11 @@ export class Render {
         ctx.drawImage(s.c, sx - s.ox, sy - s.oy);
       } else if (o.tipo === 'carro' || o.tipo === 'movel') {
         const p = o.p;
-        const s = o.tipo === 'carro' ? S.spriteCarro(p.cor, o.u1 - o.u0 > o.v1 - o.v0 ? 'u' : 'v', p.virado) : S.spriteMovel(p.tipo, Math.round(o.u1 - o.u0), Math.round(o.v1 - o.v0), p.v || 0);
+        const s = o.tipo === 'carro' ? S.spriteCarro(p.cor, o.u1 - o.u0 > o.v1 - o.v0 ? 'u' : 'v', p.virado, p.emergencia) : S.spriteMovel(p.tipo, Math.round(o.u1 - o.u0), Math.round(o.v1 - o.v0), p.v || 0);
         const [sx, sy] = this.topoVista(o.u0, o.v0);
         ctx.drawImage(s.c, sx - s.ox, sy - s.oy);
         if (p.fogo) this.chamas(p.x + (p.w || 1) / 2, p.y + (p.h || 1) / 2, 8, 3);
+        if (p.emergencia && p.luzes) this.giroflex(p.emergencia, p.x + (p.w || 1) / 2, p.y + (p.h || 1) / 2, p.emergencia === 'policia' ? 15 : 16, p.x * 7 + p.y);
         if (p.alarme && Math.floor(this.t * 4) % 2) {
           const [cx, cy] = this.tela(p.x + (p.w || 1) / 2, p.y + (p.h || 1) / 2, 10);
           ctx.fillStyle = '#ffb02a'; ctx.fillRect(cx - 10, cy, 3, 2); ctx.fillRect(cx + 8, cy, 3, 2);
@@ -630,11 +640,19 @@ export class Render {
         if (!s.c) continue;
         const [sx, sy] = this.tela(o.p.x + 0.5, o.p.y + 0.5);
         ctx.drawImage(s.c, sx - s.ox, sy - s.oy);
+        if (o.p.fogo) this.chamas(o.p.x + 0.5, o.p.y + 0.5, 8, 2);   // lixeira pegando fogo
         if (noite && o.p.tipo === 'poste' && o.p.aceso && this.posteLigado(o.p)) this.luzPoste(sx, sy);
       } else if (o.tipo === 'item') this.desenharItem(o.it);
       else if (o.tipo === 'zumbi') this.desenharZumbi(o.z, g);
       else if (o.tipo === 'aliado') this.desenharAliado(o.a);
       else if (o.tipo === 'conversivel') this.desenharConversivel(o);
+      else if (o.tipo === 'viatura') {
+        const c = o.c, sv = S.spriteViatura(c.tipo, o.eixo), [sx, sy] = this.topoVista(o.u0, o.v0);
+        ctx.drawImage(sv.c, sx - sv.ox, sy - sv.oy);
+        this.giroflex(c.tipo, c.x, c.y, c.tipo === 'policia' ? 15 : 16, 0);
+        if (noite) { const [lx, ly] = this.tela(c.x, c.y, 14); (this.luzesCor ||= []).push([lx, ly, c.tipo, 0]); }
+        if (Math.random() < 0.6) this.particula({ x: c.x - c.dx * 1.1 + (Math.random() - 0.5) * 0.6, y: c.y - c.dy * 1.1 + (Math.random() - 0.5) * 0.6, z: 0.1, vz: 0.6, life: 0.5, cor: '#8a8070', tam: 2 });
+      }
       else if (o.tipo === 'paraquedista') this.desenharParaquedista(o.p);
       else if (o.tipo === 'tomate') (o.t.tipo === 'pedra' ? this.desenharPedra(o.t) : this.desenharTomate(o.t));
       else if (o.tipo === 'figurante') this.desenharFigurante(o.f, g);
@@ -765,6 +783,36 @@ export class Render {
     if (z.nome && nasc >= 1) this.nomes.push({ x: sx, y: sy - S.PE_Y * esc - (T.chefe ? 8 : 2), txt: z.nome, chefe: T.chefe, cor: z.dono ? ROXO_ATRAPALHA : z.entrou ? '#ffffff' : z.tipo === 'exheroi' ? '#9fd0ff' : T.chefe ? '#ff6a4a' : '#ffd8a8' });
     // foto de quem mandou, em cima da cabeça (sem foto: a inicial do nome)
     if (z.fa && nasc >= 1) this.nomes.push({ foto: z.fa.avatar, inicial: (z.nome || '?')[0].toUpperCase(), escudo: z.fa.escudo > 0, x: sx, y: sy - S.PE_Y * esc - 22 });
+  }
+
+  // Alguém na janela de um prédio (cenario.js): a janela aberta (acesa de noite), a pessoa debruçada acenando e,
+  // nos primeiros segundos, o que ela grita. x0, y0 = onde o sprite do prédio foi desenhado; du, dv = tamanho na vista
+  pessoaNaJanela(j, x0, y0, du, dv, alt, noite) {
+    const ctx = this.ctx, C = S.CASA, z = j.b.casa ? 7 : alt * j.alt;
+    // (casa: a janela fica na parede dela, recuada no lote; prédio: na fachada)
+    const [u, v] = j.b.casa ? (j.lado ? [C.u1, C.v0 + (C.v1 - C.v0) * j.a] : [C.u0 + (C.u1 - C.u0) * j.a, C.v1]) : j.lado ? [du, dv * j.a] : [du * j.a, dv];
+    const px = Math.round(x0 + dv * 12 + 2 + (u - v) * 12 + (j.lado ? -3 : 3)), py = Math.round(y0 + alt + 4 + (u + v) * 6 - z);
+    const ap = Math.min(1, j.t / 0.4, (j.dur - j.t) / 0.5);   // aparece e some
+    if (ap <= 0) return;
+    ctx.globalAlpha = ap;
+    ctx.fillStyle = noite ? '#ffd88a' : '#1a1c24'; ctx.fillRect(px - 3, py - 6, 7, 8);              // a janela aberta
+    ctx.fillStyle = noite ? '#c89a4a' : '#2a2e3a'; ctx.fillRect(px - 3, py + 2, 7, 1);              // o peitoril
+    const cam = ['#c84a3a', '#3a6ac8', '#e8c040', '#4a9a5a', '#9a4ab8', '#e87a2a'][j.roupa % 6], pele = S.CIVIL_PELE[(j.roupa * 5) % 6];
+    ctx.fillStyle = cam; ctx.fillRect(px - 2, py - 1, 5, 3);                                          // o corpo debruçado
+    ctx.fillStyle = pele; ctx.fillRect(px - 1, py - 4, 3, 3);                                         // a cabeça
+    ctx.fillStyle = '#2a1c14'; ctx.fillRect(px - 1, py - 5, 3, 1);
+    if (j.acena) { const b = Math.floor(this.t * 6) % 2; ctx.fillStyle = pele; ctx.fillRect(px + 3, py - 4 - b * 2, 1, 3); ctx.fillRect(px - 3, py - 3 + b, 1, 2); }
+    ctx.globalAlpha = 1;
+    if (j.t < 3.6) this.nomes.push({ x: px, y: py - 8, txt: '💬 ' + j.texto, cor: '#ffffff', tam: 4.6 });
+  }
+
+  // Giroflex de viatura, ambulância e bombeiros: duas luzes que piscam alternando (e, de noite, iluminam: luz)
+  giroflex(tipo, x, y, z, fase = 0) {
+    const ctx = this.ctx, [cx, cy] = this.tela(x, y, z), [a, b] = S.LUZES_EMERGENCIA[tipo] || S.LUZES_EMERGENCIA.policia;
+    const k = Math.abs(Math.floor(this.t * 7 + fase)) % 2;
+    ctx.fillStyle = k ? a : '#5a2020'; ctx.fillRect(cx - 3, cy - 1, 2, 2);
+    ctx.fillStyle = k ? '#20205a' : b; ctx.fillRect(cx + 1, cy - 1, 2, 2);
+    ctx.globalAlpha = 0.28; disc(ctx, cx + (k ? -2 : 2), cy, 5, k ? a : b, 0.6); ctx.globalAlpha = 1;
   }
 
   // Chamas no ponto (x, y) do mundo, a z pixels de altura: retângulos piscando e fumaça subindo
@@ -906,6 +954,13 @@ export class Render {
       else if (h.corpo === 'beisebol') { line(ctx, hx, hy, hx + cx * 4, hy + cy * 4, '#c8a070', 1); line(ctx, hx + cx * 3, hy + cy * 3, hx + cx * 8, hy + cy * 8, '#d9b384', 2); }
       else if (h.corpo === 'pe_de_cabra') { line(ctx, hx, hy, hx + cx * 7, hy + cy * 7, '#b8302a', 1); ctx.fillStyle = '#b8302a'; ctx.fillRect(Math.round(hx + cx * 7 - cy * 1.5), Math.round(hy + cy * 7 + cx * 1.5), 1, 1); }
       else if (h.corpo === 'lanterna') { line(ctx, hx, hy, hx + cx * 4, hy + cy * 4, '#2a2a30', 2); ctx.fillStyle = '#e8eef8'; ctx.fillRect(Math.round(hx + cx * 4), Math.round(hy + cy * 4), 1, 1); }
+    }
+    // consultando o mapa (votação de destino): o papel aberto nas mãos, balançando de leve
+    if (h.noMapa && !h.mira) {
+      const b = Math.round(Math.sin(this.t * 2) * 0.5);
+      ctx.fillStyle = '#efe6cf'; ctx.fillRect(sx - 4, sy - 13 + b, 8, 5);
+      ctx.fillStyle = '#c9b98f'; ctx.fillRect(sx, sy - 13 + b, 1, 5);
+      ctx.fillStyle = '#3a7bd8'; ctx.fillRect(sx - 3, sy - 11 + b, 2, 1); ctx.fillStyle = '#d33b2c'; ctx.fillRect(sx + 2, sy - 12 + b, 1, 1);
     }
     if (h.colete > 0) { ctx.fillStyle = '#5a9ad8'; for (let i = 0; i < Math.min(h.colete, 6); i++) ctx.fillRect(sx - 6 + i * 2, sy - 29, 1, 2); }
     if (h.estados.tem('lento') && Math.random() < 0.3) this.particula({ x: h.x, y: h.y, z: 0.1, vz: 0.5, life: 0.3, cor: '#d8f4ff', tam: 1 });
@@ -1406,6 +1461,8 @@ export class Render {
       const L = this.limites();
       for (const o of g.city.objectsIn(L.x0, L.y0, L.x1, L.y1)) {
         if (o.kind === 'prop' && o.p.alarme && Math.floor(this.t * 4) % 2) { const [sx, sy] = this.tela(o.p.x + 1, o.p.y + 0.5); buraco(sx, sy, 50, 0.8); }
+        if (o.kind === 'prop' && o.p.emergencia && o.p.luzes) { const [sx, sy] = this.tela(o.p.x + (o.p.w || 1) / 2, o.p.y + (o.p.h || 1) / 2, 14); buraco(sx, sy, 44, 0.7); (this.luzesCor ||= []).push([sx, sy, o.p.emergencia, o.p.x * 7 + o.p.y]); }
+        if (o.kind === 'prop' && o.p.fogo && o.p.tipo === 'lixeira') { const [sx, sy] = this.tela(o.p.x + 0.5, o.p.y + 0.5, 8); buraco(sx, sy, 34, 0.75); }
       }
       for (const it of g.itens) if (it.kind.startsWith('bau')) { const [sx, sy] = this.tela(it.x, it.y); buraco(sx, sy, 26, 0.7); }
       for (const z of g.zonasAgora || []) if (AMBIENTE[z.tipo]?.luz && ligadoZona(z, g.t)) { const [sx, sy] = this.tela((z.x0 + z.x1) / 2, (z.y0 + z.y1) / 2); buraco(sx, sy, z.tipo === 'fogo' ? 46 : 30, 0.7); }
@@ -1433,6 +1490,18 @@ export class Render {
       if (this.emLc) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = noite; ctx.drawImage(this.emLc, 0, 0); ctx.globalAlpha = 1; }
       ctx.globalCompositeOperation = 'source-over';
     }
+    // giroflex de noite: a cor (vermelho e azul, vermelho e branco...) pintando a rua em volta, alternando
+    if (this.luzesCor?.length) {
+      ctx.globalCompositeOperation = 'lighter';
+      for (const [sx, sy, tipo, fase] of this.luzesCor) {
+        const k = Math.abs(Math.floor(this.t * 7 + fase)) % 2, cor = (S.LUZES_EMERGENCIA[tipo] || S.LUZES_EMERGENCIA.policia)[k];
+        const gr = ctx.createRadialGradient(sx, sy, 0, sx, sy, 46);
+        gr.addColorStop(0, cor + '55'); gr.addColorStop(1, cor + '00');
+        ctx.fillStyle = gr; ctx.fillRect(sx - 46, sy - 46, 92, 92);
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    this.luzesCor = [];
     // a luz branca e fria da lanterna por cima do escuro (bem de leve)
     if (lanterna) { ctx.globalCompositeOperation = 'lighter'; this.coneLanterna(ctx, g, 0.16 * noite, true); ctx.globalCompositeOperation = 'source-over'; }
     // vinheta vermelha de vida baixa
@@ -1504,6 +1573,54 @@ export class Render {
   }
 
   // Textos nítidos (nomes, placas, números) num canvas de alta resolução por cima do jogo
+  // Os lugares da viagem (core/mapa.js) no PRÓPRIO jogo: na votação de destino, um pino em cima de cada lugar
+  // (número da votação, emoji e quantos quarteirões) ou, se ele está fora da tela, uma seta na borda apontando
+  // pra ele. Viajando, só o destino (azul, como o GPS). Assim o mapa pode ser pequeno e o jogo continua à vista.
+  marcadoresViagem(g, tx, k) {
+    if (g.room || g.fase !== 'jogo' || g.caido) return;
+    const v = g.voto;
+    let alvos = [];
+    if (v?.mapa && v.aberta) alvos = v.opcoes.map(o => ({ L: o.lugar, n: o.n, cor: CORES_OPCAO[(o.n - 1) % 4], dist: o.lugar.dist }));
+    else if (g.viagem && !g.destino) alvos = [{ L: g.viagem.lugar, n: null, cor: '#1a73e8', dist: g.viagem.dirs.length + 1 }];
+    if (!alvos.length) return;
+    const topo = H * 0.36, base = H * 0.8, esq = 14, dir = W - 14, cx = W / 2, cy = H * 0.58;
+    tx.textAlign = 'center'; tx.textBaseline = 'middle';
+    for (const a of alvos) {
+      const L = a.L;
+      const w = L.praca ? g.city.pracaAt(L.i, L.j)?.entrada : g.city.shopAt(L.i, L.j)?.door;
+      const p = w || g.city.nodePos(L.i, L.j);
+      const [sx, sy] = this.tela(p.x, p.y, 34);
+      const dentro = sx > esq && sx < dir && sy > topo && sy < base;
+      let px = sx, py = sy, ang = null;
+      if (!dentro) {
+        const dx = sx - cx, dy = sy - cy;
+        let t = 1;
+        if (dx) t = Math.min(t, ((dx > 0 ? dir : esq) - cx) / dx);
+        if (dy) t = Math.min(t, ((dy > 0 ? base : topo) - cy) / dy);
+        px = cx + dx * t; py = cy + dy * t; ang = Math.atan2(dy, dx);
+      }
+      const rotulo = `${a.n ? a.n + ' · ' : ''}${L.emoji} ${a.dist}q`;
+      tx.font = `700 ${Math.round(6 * k)}px "Fredoka", system-ui, sans-serif`;
+      const bw = tx.measureText(rotulo).width / k + 8, bh = 10.5;
+      tx.globalAlpha = 0.92;
+      tx.fillStyle = 'rgba(16,13,24,0.8)'; tx.strokeStyle = a.cor; tx.lineWidth = 1.1 * k;
+      tx.beginPath(); tx.roundRect((px - bw / 2) * k, (py - bh / 2) * k, bw * k, bh * k, (bh / 2) * k); tx.fill(); tx.stroke();
+      tx.fillStyle = a.cor;
+      tx.beginPath();
+      if (ang != null) {   // seta na borda, apontando pro lugar
+        const ex = px + Math.cos(ang) * (bw / 2 + 2), ey = py + Math.sin(ang) * (bh / 2 + 2);
+        const ax = Math.cos(ang), ay = Math.sin(ang), qx = -ay, qy = ax;
+        tx.moveTo((ex + ax * 5) * k, (ey + ay * 5) * k); tx.lineTo((ex + qx * 3) * k, (ey + qy * 3) * k); tx.lineTo((ex - qx * 3) * k, (ey - qy * 3) * k);
+      } else {             // pino: a pontinha pra baixo, em cima do lugar
+        tx.moveTo((px - 3) * k, (py + bh / 2) * k); tx.lineTo((px + 3) * k, (py + bh / 2) * k); tx.lineTo(px * k, (py + bh / 2 + 5) * k);
+      }
+      tx.closePath(); tx.fill();
+      tx.fillStyle = '#ffffff'; tx.fillText(rotulo, px * k, (py + 0.3) * k);
+      tx.globalAlpha = 1;
+    }
+    tx.textBaseline = 'bottom';
+  }
+
   desenharTextos(g) {
     const tc = this.tc, tx = this.tx;
     const k = tc.width / W;
@@ -1548,6 +1665,7 @@ export class Render {
       tx.textBaseline = 'middle'; escrever(m.txt, sx, sy - 5, 6.5, m.cor, 'rgba(0,0,0,0)'); tx.textBaseline = 'bottom';
       tx.globalAlpha = 1;
     }
+    this.marcadoresViagem(g, tx, k);
     for (const t of this.textos) {
       const [sx, sy] = this.tela(t.x, t.y, 26 + t.age * 18 + (t.dz || 0));
       tx.globalAlpha = clamp((t.life - t.age) / 0.4, 0, 1);

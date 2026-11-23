@@ -297,15 +297,20 @@ teste('praia: a horda sai do mar, sobrevive 1 minuto, votação de pra onde ir e
   assert.ok([turnLeft(dir0), turnLeft(turnLeft(dir0)), (turnLeft(dir0) + 2) % 4, dir0].includes(j.rota.dir));
 });
 
-teste('cidade sem desgaste: nada de buraco, carro em chamas, engavetamento nem prédio pegando fogo', () => {
+teste('cidade sem desgaste: nada de buraco, carro em chamas nem engavetamento; o fogo de lixeira e prédio vem do caos (longe do começo)', () => {
   const c = new City(77);
   for (let i = 2; i < 12; i++) for (let jj = 2; jj < 12; jj++) for (const ax of ['h', 'v']) {
     const s = c.segment(ax, i, jj);
     assert.ok(!s.zonas.some(z => z.tipo === 'buraco' || z.carro), 'buraco/carro em chamas');
     assert.ok(!s.bloqueio?.carros);
-    assert.ok(!s.props.some(p => p.fogo));
+    assert.ok(!s.props.some(p => p.fogo && p.tipo !== 'lixeira'), 'só lixeira pega fogo sem desgaste');
   }
-  for (let i = 2; i < 12; i++) for (let jj = 2; jj < 12; jj++) { const b = c.building(i, jj, 0, 0); if (b) assert.ok(!b.fogo); }
+  for (let i = 2; i < 12; i++) for (let jj = 2; jj < 12; jj++) { const b = c.building(i, jj, 0, 0); if (b?.fogo) assert.ok(c.caos(i, jj) > 0.25, 'prédio pegando fogo só com caos'); }
+  // perto do começo: nada pegando fogo
+  for (let i = -1; i <= 1; i++) for (let jj = -1; jj <= 1; jj++) {
+    for (const ax of ['h', 'v']) assert.ok(!c.segment(ax, i, jj).props.some(p => p.fogo));
+    for (let sx = 0; sx < 2; sx++) for (let sy = 0; sy < 2; sy++) assert.ok(!c.building(i, jj, sx, sy)?.fogo);
+  }
 });
 
 teste('cidade com desgaste máximo: buracos, carros em chamas, engavetamentos e prédios pegando fogo', () => {

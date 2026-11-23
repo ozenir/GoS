@@ -43,6 +43,9 @@ teste('a votação de destino abre com o mapa; ninguém votou: a IA vai pro que 
     const j = semCena(seed);
     j.votoAbreT = 0;
     j.update(DT);
+    assert.ok(!j.voto, 'longe do cruzamento: a votação espera ele chegar');
+    const no = j.city.nodePos(j.rota.alvo.i, j.rota.alvo.j); j.hero.x = no.x; j.hero.y = no.y;
+    j.update(DT);
     assert.ok(j.voto?.mapa, 'votação do mapa');
     assert.ok(j.voto.opcoes.every(o => o.lugar && o.n >= 1 && o.n <= 4));
     j.hero.vida = j.hero.vidaMax * 0.2;
@@ -52,6 +55,19 @@ teste('a votação de destino abre com o mapa; ninguém votou: a IA vai pro que 
   }
   assert.ok(curaComVidaBaixa / total >= 0.75, `com a vida baixa vai buscar remédio ou comida (${curaComVidaBaixa}/${total})`);
   assert.ok(arena <= 1, 'e quase nunca pra arena');
+});
+
+teste('enquanto o chat escolhe o destino, o herói fica parado no cruzamento (consultando o mapa)', () => {
+  const j = semCena(2), h = j.hero;
+  j.zumbis = []; j.spawnT = 1e9; h.invT = 1e9;
+  for (let i = 0; i < 60 / DT && !j.voto; i++) j.update(DT);
+  assert.ok(j.voto?.mapa);
+  const no = j.city.nodePos(j.rota.alvo.i, j.rota.alvo.j);
+  for (let i = 0; i < 3 / DT; i++) j.update(DT);   // (termina os últimos passos até o cruzamento)
+  const x0 = h.x, y0 = h.y;
+  for (let i = 0; i < 4 / DT && j.voto?.aberta; i++) j.update(DT);
+  assert.ok(Math.hypot(h.x - x0, h.y - y0) < 0.3 && Math.hypot(h.x - no.x, h.y - no.y) < 1, 'parado no cruzamento');
+  assert.ok(h.noMapa, 'com o mapa na mão');
 });
 
 teste('a viagem: o herói segue a rota sozinho e entra no lugar escolhido', () => {

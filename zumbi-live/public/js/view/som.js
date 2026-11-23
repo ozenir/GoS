@@ -291,9 +291,21 @@ export class Som {
   /* ---------- alarme de carro (explosão perto de um carro parado) ---------- */
   // Primeiro os vidros estouram; depois o alarme de verdade, passando pelos padrões de um alarme comum:
   // "uiu-uiu" (sobe e desce), bipes rápidos e o "uô-uô" alternado. Sai de uma cornetinha de carro (filtro estreito).
-  alarmeCarro(seg = 9, d = 6) {
+  // O alarme fica NO CARRO: enquanto toca, o volume, o abafamento, o eco e o lado acompanham o herói a cada quadro
+  // (atualizarAlarmes). Ele se afastando, o alarme vai baixando até sumir.
+  alarmeCarro(seg = 9, d = 6, pos = null) {
     if (!this.running) return;
-    this.noMundo(d, seg + 1.5, () => {
+    const ac = this.ac;
+    const g = ac.createGain(), lp = ac.createBiquadFilter(), eco = ac.createGain();
+    lp.type = 'lowpass'; lp.Q.value = 0.5;
+    g.connect(lp);
+    let saida = lp, p = null;
+    if (ac.createStereoPanner) { p = ac.createStereoPanner(); lp.connect(p); saida = p; }
+    saida.connect(this.mundo); saida.connect(eco); eco.connect(this.ecoIn);
+    const al = { g, lp, p, eco, pos, ate: ac.currentTime + seg + 0.8 };
+    this.posicionar(al, d, this.pan, true);
+    const antes = this.alvo; this.alvo = g;
+    try {
       this.quebrarVidro(0.7);
       let t = 0.35;
       for (const [tipo, dur] of [['uiu', 2.4], ['bip', 1.6], ['uo', 2.2], ['uiu', 2.4], ['bip', 1.6], ['uo', 2.2]]) {
@@ -301,7 +313,24 @@ export class Som {
         this.padraoAlarme(tipo, t, Math.min(dur, seg - t));
         t += dur;
       }
-    }, { eco: 0.45 });
+    } finally { this.alvo = antes; }
+    (this.alarmes ||= []).push(al);
+    setTimeout(() => { g.disconnect(); lp.disconnect(); p?.disconnect(); eco.disconnect(); }, (seg + 1.5) * 1000);
+  }
+  // põe um som contínuo (alarme) a d casas do herói, do lado pan; longe de verdade (25+ casas), some aos poucos
+  posicionar(al, d, pan = 0, ja = false) {
+    const a = acustica(d), t = this.ac.currentTime, some = clamp(1 - (d - 22) / 22, 0, 1), k = ja ? 0.001 : 0.18;
+    al.g.gain.setTargetAtTime(a.vol * some, t, k);
+    al.lp.frequency.setTargetAtTime(a.corte, t, k);
+    al.eco.gain.setTargetAtTime(a.eco * some, t, k);
+    if (al.p) al.p.pan.setTargetAtTime(clamp(pan, -1, 1), t, k);
+  }
+  // a cada quadro: onde = pos => [distância, lado] (main.js)
+  atualizarAlarmes(onde) {
+    if (!this.alarmes?.length || !this.running) return;
+    const t = this.ac.currentTime;
+    this.alarmes = this.alarmes.filter(al => al.ate > t);
+    for (const al of this.alarmes) if (al.pos) { const [d, pan] = onde(al.pos); this.posicionar(al, d, pan); }
   }
   padraoAlarme(tipo, quando, dur) {
     const ac = this.ac, t0 = ac.currentTime + quando;
@@ -324,10 +353,67 @@ export class Som {
     }
     o.start(t0); o.stop(t0 + dur + 0.05);
   }
+  // Veículo de emergência passando (cenario.js): a sirene de cada um (viatura: "uiôôô" sobe e desce; ambulância:
+  // o "iu-iu-iu" rápido; bombeiros: mais grave, com a buzina), com o Doppler (mais aguda chegando, mais grave indo
+  // embora), o volume, o abafamento e o lado acompanhando a posição. amostras = [{ t, d, pan, vr }] (vr: m/s, + chegando)
+  sirenePassando(tipo, amostras, dur) {
+    if (!this.running || !amostras.length) return;
+    const ac = this.ac, t0 = ac.currentTime;
+    const o = ac.createOscillator(); o.type = tipo === 'bombeiros' ? 'sawtooth' : 'square';
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = tipo === 'bombeiros' ? 900 : 1300; bp.Q.value = 0.9;
+    const g = ac.createGain(), lp = ac.createBiquadFilter(), eco = ac.createGain();
+    lp.type = 'lowpass'; lp.Q.value = 0.5;
+    o.connect(bp); bp.connect(g); g.connect(lp);
+    let saida = lp, p = null;
+    if (ac.createStereoPanner) { p = ac.createStereoPanner(); lp.connect(p); saida = p; }
+    saida.connect(this.mundo); saida.connect(eco); eco.connect(this.ecoIn);
+    // a nota da sirene em cada instante (antes do Doppler)
+    const nota = t => tipo === 'policia' ? 700 + 650 * (0.5 - 0.5 * Math.cos(2 * Math.PI * t / 2.2))
+      : tipo === 'ambulancia' ? 760 + 640 * ((t / 0.36) % 1)
+      : 480 + 560 * (0.5 - 0.5 * Math.cos(2 * Math.PI * t / 3));
+    const em = t => { let a = amostras[0]; for (const x of amostras) { if (x.t > t) break; a = x; } return a; };
+    g.gain.setValueAtTime(0.0001, t0); lp.frequency.setValueAtTime(300, t0);
+    for (let t = 0; t <= dur; t += 0.025) {
+      const a = em(t), A = acustica(a.d), some = clamp(1 - (a.d - 24) / 18, 0, 1);
+      o.frequency.linearRampToValueAtTime(nota(t) * VEL_SOM / (VEL_SOM - clamp(a.vr, -120, 120)), t0 + t);
+      g.gain.linearRampToValueAtTime(Math.max(0.0001, 0.09 * A.vol * some), t0 + t);
+      lp.frequency.linearRampToValueAtTime(A.corte, t0 + t);
+      eco.gain.linearRampToValueAtTime(A.eco * some, t0 + t);
+      if (p) p.pan.linearRampToValueAtTime(clamp(a.pan, -1, 1), t0 + t);
+    }
+    g.gain.linearRampToValueAtTime(0.0001, t0 + dur + 0.2);
+    o.start(t0); o.stop(t0 + dur + 0.3);
+    // bombeiros: a buzina grave (dois tons) no meio da passagem
+    if (tipo === 'bombeiros') {
+      const meio = amostras.reduce((m, x) => (x.d < m.d ? x : m), amostras[0]);
+      for (const q of [meio.t - 0.6, meio.t + 0.2]) if (q > 0) setTimeout(() => this.noMundo(meio.d, 1, () => { this.nota('sawtooth', 220, 0, 0.5, 0.06, 0.02, 900); this.nota('sawtooth', 277, 0, 0.5, 0.05, 0.02, 900); }, { pan: meio.pan }), q * 1000);
+    }
+    setTimeout(() => { g.disconnect(); lp.disconnect(); p?.disconnect(); eco.disconnect(); bp.disconnect(); }, (dur + 1) * 1000);
+  }
+  // alguém gritando da janela de um prédio (cenario.js): voz humana lá do alto, com o eco da rua
+  janela(d, texto, socorro = false) {
+    if (socorro) { this.socorro(d, texto.toUpperCase().startsWith('ME') ? 'ME AJUDA!' : 'SOCORRO!', rnd(0.85, 1.2)); return; }
+    if (!this.pode('janela', 1)) return;
+    const f = rnd(170, 330), n = Math.max(2, Math.min(5, Math.round(texto.length / 5)));
+    this.noMundo(d, 2, () => {
+      let q = 0;
+      for (let i = 0; i < n; i++) { const dur = i === n - 1 ? 0.32 : rnd(0.09, 0.14), sobe = i === n - 1 && texto.includes('?'); this.voz(f * rnd(0.95, 1.08), f * (sobe ? 1.25 : 0.9), dur, 0.11, [[rnd(500, 850), 5, 1.4], [rnd(1000, 1500), 6, 0.5], [2700, 8, 0.12]], q, 0.08, 0.02); q += dur + 0.03; }
+    }, { eco: 0.55 });
+  }
+  // fogo por perto (lixeira, carro ou prédio pegando fogo): o crepitar, mais forte quanto mais perto (d em casas)
+  crepitar(dt, d) {
+    if (!this.running || !(d < 9)) return;
+    this.fogoT = (this.fogoT ?? 0) - dt;
+    if (this.fogoT > 0) return;
+    const k = 1 - d / 9;
+    this.fogoT = rnd(0.05, 0.18) / (0.3 + k);
+    this.noMundo(d, 0.3, () => { this.noise(rnd(0.008, 0.02), 0.05 + 0.08 * k, 'bandpass', rnd(1800, 4200), 0, 1.5); if (Math.random() < 0.25) this.noise(0.3, 0.03 * k, 'lowpass', 500, 0, 0.7, 200, 0.05, 'marrom'); }, { eco: 0.2, bus: this.amb });
+  }
+
   // alarme de presente (o carro novo piscando na rua) e o alarme do prédio
-  alarme(seg = 6, sala = false) {
+  alarme(seg = 6, sala = false, pos = null) {
     if (!this.running) return;
-    if (!sala) { this.alarmeCarro(seg, 5); return; }
+    if (!sala) { this.alarmeCarro(seg, 5, pos); return; }
     // alarme do prédio: campainha de incêndio (sino elétrico martelando)
     this.noMundo(3, seg + 1, () => { for (let i = 0; i < seg * 14; i++) this.metalico([2200, 3150, 4400], 0.06, 0.03, i / 14); }, { eco: 0.6 });
   }
