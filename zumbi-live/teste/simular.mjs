@@ -69,9 +69,9 @@ function rodar(id, seed) {
     maxZ = Math.max(maxZ, jogo.zumbis.length);
     if (jogo.hero !== heroiAtual) { minVs.push(minV); minV = {}; heroiAtual = jogo.hero; chegou10 = false; nasceu = jogo.t; }
     // herói vivo há muito tempo: mostra o estado (pra achar travas)
-    if (jogo.t - nasceu > 40 * 60 && passos % (30 * 60) === 0) {
+    if (jogo.t - nasceu > (Number(process.env.VIVO) || 40) * 60 && passos % (30 * 60) === 0) {
       const h = jogo.hero;
-      console.log(`  [vivo há ${fmtTempo(jogo.t - nasceu)}] q ${jogo.stats.quarteiroes} nível ${h.nivel} ameaça ${jogo.nivelAmeaca} vida ${Math.round(h.vida)}/${Math.round(h.vidaMax)} zumbis ${jogo.zumbis.filter(z => !z.morto).length} sala ${!!jogo.room} arena ${!!jogo.arena} limpando ${JSON.stringify(jogo.limpando)} decisão ${jogo.decisao?.id || '-'} caído ${!!jogo.caido} supremas ${(h.supremas || []).join(',')} deus ${h.deus} pos ${h.x.toFixed(1)},${h.y.toFixed(1)}`);
+      console.log(`  [vivo há ${fmtTempo(jogo.t - nasceu)}] q ${jogo.stats.quarteiroes} nível ${h.nivel} ameaça ${jogo.nivelAmeaca} vida ${Math.round(h.vida)}/${Math.round(h.vidaMax)} zumbis ${jogo.zumbis.filter(z => !z.morto).length} sala ${!!jogo.room} arena ${!!jogo.arena} limpando ${JSON.stringify(jogo.limpando)} decisão ${jogo.decisao?.id || '-'} esperaEscolha ${!!jogo.esperandoEscolha} pendentes ${jogo.niveisPendentes} escolha ${!!jogo.escolha} distNo ${Math.hypot(h.x - jogo.city.nodePos(jogo.rota.alvo.i, jogo.rota.alvo.j).x, h.y - jogo.city.nodePos(jogo.rota.alvo.i, jogo.rota.alvo.j).y).toFixed(1)} caído ${!!jogo.caido} supremas ${(h.supremas || []).join(',')} deus ${h.deus} pos ${h.x.toFixed(1)},${h.y.toFixed(1)}`);
     }
     if (jogo.fase === 'jogo') {
       const h = jogo.hero, f = faixa(h.nivel), v = jogo.caido ? 0 : h.vida / h.vidaMax;

@@ -398,7 +398,7 @@ export class Hud {
     if (g.protecao > 0 && g.fase === 'jogo') st.push(`<span class="chip ok">🛡️ proteção ${Math.ceil(g.protecao)}s</span>`);
     if (g.fila.length && g.protecao > 0) st.push(`<span class="chip mal">😈 ${g.fila.length} na fila</span>`);
     // área limpa, mas ainda tem habilidade pra escolher: o herói espera no cruzamento
-    if (g.esperandoEscolha && g.escolhasPendentes()) { const n = g.niveisPendentes + (g.escolha ? 1 : 0); st.push(`<span class="chip">⏳ escolham ${n > 1 ? `as ${n} habilidades` : 'a habilidade'} pra seguir</span>`); }
+    if (g.esperandoEscolha?.faltam > 0) { const n = g.esperandoEscolha.faltam; st.push(`<span class="chip">⏳ escolham ${n > 1 ? `as ${n} habilidades` : 'a habilidade'} pra seguir</span>`); }
     if (g.poucosPraLimpar?.()) st.push(`<span class="chip">🎯 caçando os últimos ${g.limpando.restam}</span>`);
     // período do dia (manhã, tarde, noite, madrugada) e quanto falta pro próximo
     const per = g.periodoDoDia();

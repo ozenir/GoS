@@ -135,6 +135,20 @@ teste('o herói só passa pro próximo quarteirão depois que o chat escolhe tod
   assert.ok(j.stats.quarteiroes > q0, 'aí atravessou');
 });
 
+teste('esperando as escolhas: os níveis que ele ganha enquanto espera ficam pro próximo quarteirão (não trava)', () => {
+  const j = jogo(12);
+  j.cotaRua = 0; j.zumbis = [];
+  const no = j.city.nodePos(j.rota.alvo.i, j.rota.alvo.j);
+  j.hero.x = no.x; j.hero.y = no.y;
+  j.decisao = { id: 'frente', dir: j.rota.dir };
+  j.niveisPendentes = 1; j.filaNiveis = [2];
+  const q0 = j.stats.quarteiroes;
+  // a cada 3 s ele sobe mais um nível (zumbis de presente morrendo, por exemplo): a fila nunca esvazia
+  let t = 0;
+  passar(j, 90, () => { j.hero.vida = j.hero.vidaMax; j.zumbis = []; if ((t += 1 / 30) > 3) { t = 0; j.niveisPendentes++; j.filaNiveis.push(j.hero.nivel); } });
+  assert.ok(j.stats.quarteiroes > q0, 'atravessou depois da escolha que estava pendente');
+});
+
 teste('segundo fôlego: antes do nível 10, com a vida quase no fim, empurra a horda e salva o herói (com recarga)', () => {
   const j = jogo(6);
   j.hero.invT = 0;
