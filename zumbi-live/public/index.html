@@ -172,6 +172,10 @@ body.foco .app{padding-block:8px}
 .modo-res .v-relogio,.modo-cabo .v-relogio{top:2.6cqw;left:10.6cqw;right:10.6cqw;height:2.6cqw}
 .v-relogio>i{display:block;height:100%;width:100%;border-radius:99px;background:var(--ouro);transition:width .2s linear,opacity .3s}
 .v-relogio.urg>i{background:var(--atrapalha)}
+/* o mesmo relógio na escolha de habilidade (A, B, C): bastão dourado que some das pontas pro meio, vermelho no fim */
+.v-tempo{display:flex;justify-content:center;height:1.1cqw;margin:0 3cqw}
+.v-tempo>i{display:block;height:100%;width:100%;border-radius:99px;background:var(--ouro);box-shadow:0 0 1.2cqw rgba(255,210,63,.45);transition:width .2s linear,background .3s}
+.v-tempo.urg>i{background:var(--atrapalha);box-shadow:0 0 1.2cqw rgba(255,90,79,.55)}
 .modo-res .v-relogio>i,.modo-cabo .v-relogio>i{opacity:0}
 .cabo{position:absolute;inset:0;display:flex;border-radius:99px;background:linear-gradient(180deg,#b06ae0,#7a2fb0);box-shadow:0 0 0 .35cqw rgba(10,8,16,.75),0 .5cqw 1.4cqw rgba(0,0,0,.5);opacity:0;transition:opacity .4s}
 .modo-res .cabo,.modo-cabo .cabo{opacity:1}
