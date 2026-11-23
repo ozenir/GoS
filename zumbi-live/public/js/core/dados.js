@@ -1,3 +1,5 @@
+import { ZUMBIS_TELA, tipoTela } from './tela.js';
+
 // Tabelas do jogo: tipos de zumbi, classes de herói, armas e melhorias de nível.
 // Mexa aqui pra mudar números (vida, dano, velocidade...). Velocidade em casas por segundo.
 // (o herói anda 1,1 por padrão: config.json → velocidade_do_heroi)
@@ -34,6 +36,15 @@ export const ZUMBIS = {
                braco: { alcance: 2.8, chance: 0.3, recarga: 2.2 },
                ataque: { tipo: 'impacto', status: [{ id: 'lento', chance: 0.2 }] } }
 };
+// Zumbis da tela (tela.js): cada um vira um tipo "tela_<id>" aqui. Os que jogam de longe ganham o arremesso
+// (como o zumbi do tomate: para a uns metros e joga; sempre acerta e o efeito acontece na tela); os que vêm até a
+// câmera fazem o efeito quando chegam perto do herói (jogo.js → efeitoTela).
+for (const [id, Zt] of Object.entries(ZUMBIS_TELA)) {
+  ZUMBIS[tipoTela(id)] = {
+    nome: Zt.nome, ...Zt.zumbi, tela: id,
+    ...(Zt.jeito === 'longe' ? { arremesso: { min: 4.5, max: 7.5, recarga: Zt.recarga, voo: 0.85 } } : {})
+  };
+}
 
 // Personagens. Todos usam o mesmo corpo, muda roupa, armas e o jeito de lutar.
 //   arma         arma de fogo inicial (ARMAS) ou null = luta só de perto

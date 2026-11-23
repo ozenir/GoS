@@ -30,7 +30,7 @@ const CENARIOS = {
   ajuda: { nome: 'Chat + só presentes que AJUDAM (≈4 por minuto)', chat: 0.5, pessoas: 6, curtidas: 2, presentes: 4, lado: 'ajuda' },
   atrapalha: { nome: 'Chat + só presentes que ATRAPALHAM (≈4 por minuto)', chat: 0.5, pessoas: 6, curtidas: 2, presentes: 4, lado: 'atrapalha' }
 };
-const ATRAPALHA = new Set(['zumbis', 'vidro', 'horda', 'explosivo', 'alarme', 'trem', 'chefao', 'rei']);
+const ATRAPALHA = new Set(['zumbis', 'vidro', 'horda', 'explosivo', 'alarme', 'trem', 'chefao', 'rei', 'tela']);
 
 function publico(jogo, rng, dt, c) {
   if (c.chat && rng.next() < dt * c.chat) jogo.handle({ type: 'chat', id: 'u' + rng.int(1, c.pessoas), nick: 'pessoa' + rng.int(1, c.pessoas), texto: rng.pick(['1', '2', '3', '4', 'kkk', 'vai']) });

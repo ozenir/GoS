@@ -85,7 +85,7 @@ wss.on('connection', c => {
 
 /* ---------- Ranking da live: quem mais ajudou e quem mais atrapalhou ---------- */
 // Efeitos que atrapalham o herói. Todo o resto ajuda.
-const ATRAPALHA = new Set(['zumbis', 'vidro', 'horda', 'explosivo', 'alarme', 'trem', 'chefao', 'rei']);
+const ATRAPALHA = new Set(['zumbis', 'vidro', 'horda', 'explosivo', 'alarme', 'trem', 'chefao', 'rei', 'tela']);
 const ranking = { ajuda: new Map(), atrapalha: new Map() };
 function somar(lado, p, moedas) {
   const m = ranking[lado];

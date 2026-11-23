@@ -7,6 +7,8 @@ import { Render } from './view/render.js';
 import { Hud } from './view/hud.js';
 import { Som } from './view/som.js';
 import { Sujeira } from './view/sujeira.js';
+import { TelaFX } from './view/tela.js';
+import { ZUMBIS_TELA } from './core/tela.js';
 import { PRESENTES_PADRAO, SEGUIR_PADRAO, COMPARTILHAR_PADRAO, JOGO_PADRAO } from './catalogo.js';
 
 const $ = id => document.getElementById(id);
@@ -24,6 +26,9 @@ const render = new Render($('game'), $('texto'));
 const hud = new Hud();
 const som = new Som();
 const sujeira = new Sujeira($('sujeira'));   // tomate no vidro (zumbi do tomate)
+// zumbis da tela (core/tela.js): a arte fica em view/tela.js; a camada de baixo fica por baixo do painel
+const telaFX = new TelaFX({ cima: $('sujeira'), baixo: $('tela-baixo'), jogo: [$('game'), $('texto')], sujeira, render, som: id => som.telaSom(id) });
+window.telaFX = telaFX;
 let catalogo = PRESENTES_PADRAO;
 let regraSeguir = SEGUIR_PADRAO, regraCompartilhar = COMPARTILHAR_PADRAO;
 hud.setLegenda(catalogo, regraSeguir, regraCompartilhar, jogo.cfg.likesPor);
@@ -128,7 +133,21 @@ function montarBotoes() {
   }
 }
 montarBotoes();
-$('b-portal').addEventListener('click', () => jogo.abrirPortal(true));   // portal dos 500 na hora (teste)
+$('b-portal').addEventListener('click', () => jogo.abrirPortal(true));
+// zumbis da tela: um botão pra cada (o zumbi aparece perto e faz o efeito) e o limpador
+{
+  const box = $('t-tela');
+  for (const [id, Zt] of Object.entries(ZUMBIS_TELA)) {
+    const b = document.createElement('button');
+    b.className = 'btn atrapalha'; b.title = `${Zt.nome} (nível ${Zt.nivel}) · ${Zt.frase}`; b.innerHTML = `${Zt.emoji} <small>${Zt.nivel}</small>`;
+    b.addEventListener('click', e => { if (e.shiftKey) jogo.efeitoTela(id, { nick: 'você' }); else jogo.surgirTela(id, { id: 'teste', nick: pick(NOMES) }); });   // shift: só o efeito, na hora
+    box.appendChild(b);
+  }
+  const l = document.createElement('button');
+  l.className = 'btn ajuda'; l.title = 'Limpador de para-brisa: limpa a tela'; l.textContent = '🧽 Limpar';
+  l.addEventListener('click', () => jogo.emit('limpar_tela', { nick: 'você' }));
+  box.appendChild(l);
+}   // portal dos 500 na hora (teste)
 document.querySelectorAll('[data-voto]').forEach(b => b.addEventListener('click', () => chatTeste(b.dataset.voto, 'você ' + Math.floor(Math.random() * 1000))));
 document.querySelectorAll('[data-evento]').forEach(b => b.addEventListener('click', () => eventoTeste(b.dataset.evento, b.dataset.evento === 'entrou' ? pick(NOMES) + Math.floor(Math.random() * 100) : undefined)));
 $('b-matar').addEventListener('click', () => jogo.derrubar({ nick: 'você (teste)' }));   // derruba mesmo (sem esquiva, colete, mochila...)
@@ -225,6 +244,7 @@ function tocar(e, g) {
     case 'paraquedista': som.paraquedista(); break;
     case 'tomate_lancado': som.arremesso(); break;
     case 'tomatada': sujeira.tomatada(); som.tomatada(); break;
+    case 'tela': som.telaSom(e.id); break;
     case 'pedra_lancada': som.arremesso(); break;
     case 'pedrada': sujeira.pedrada(); som.pedrada(); break;
     case 'portal_abriu': som.portalAbriu(); break;
@@ -292,6 +312,9 @@ function loop(agora) {
   if (n === 6) acc = 0;
   for (const e of jogo.drainEvents()) {
     try {
+      if (e.type === 'tela') telaFX.disparar(e);
+      // limpador: só passa (e avisa) se tinha sujeira na tela
+      if (e.type === 'limpar_tela') { if (telaFX.limpar()) { som.limpador(); hud.avisoTela({ limpou: true, nick: e.nick }); } continue; }
       render.evento(e, jogo);
       hud.evento(e, jogo);
       tocar(e, jogo);
@@ -302,6 +325,7 @@ function loop(agora) {
   }
   render.draw(jogo, dt);
   sujeira.desenhar(dt);
+  telaFX.desenhar(dt, jogo);
   hud.update(jogo, dt);
   // som de perigo
   const h = jogo.hero;

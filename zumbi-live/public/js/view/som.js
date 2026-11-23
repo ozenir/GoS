@@ -495,6 +495,40 @@ export class Som {
   }
   // bomba caindo: assobio descendo (a explosão vem do evento da explosão)
   bombaCaindo(queda = 0.5) { if (this.pode('assobio', 0.05)) this.noMundo(1.5, queda + 0.2, () => this.osc('sine', 1500, 420, queda, 0.05)); }
+  // Zumbis da tela (core/tela.js): som exagerado em cada impacto (é o som que vende a piada)
+  telaSom(id) {
+    const splat = (grave = 120, molhado = 700) => { this.nota('sine', grave, 0, 0.12, 0.22, 0.002, 400, 55); this.noise(0.25, 0.24, 'bandpass', molhado, 0, 1.6, 200, 0.004); this.noise(0.1, 0.1, 'bandpass', molhado * 1.6, 0.05, 2.5, 500, 0.004); };
+    this.noMundo(0, 2.5, () => {
+      switch (id) {
+        case 'ovo': splat(160, 900); this.noise(0.03, 0.18, 'highpass', 3000, 0, 1); break;   // a casca estalando
+        case 'pintor': splat(90, 500); for (let i = 0; i < 5; i++) this.noise(0.06, 0.05, 'bandpass', 400, 0.3 + i * 0.2, 3, 250, 0.01); break;
+        case 'chiclete': this.noise(0.15, 0.18, 'bandpass', 900, 0, 2, 300, 0.01); this.osc('sawtooth', 220, 520, 0.5, 0.05, 0.1); this.osc('sine', 300, 90, 0.25, 0.08, 0.6); break;   // cuspe + "bóing"
+        case 'torta': splat(80, 450); this.nota('square', 330, 0.25, 0.12, 0.08); this.nota('square', 247, 0.4, 0.2, 0.08); break;   // splat + "fom fom"
+        case 'lambedor': this.noise(0.7, 0.16, 'bandpass', 600, 0, 4, 1600, 0.08); this.noise(0.3, 0.08, 'bandpass', 2000, 0.6, 5, 900, 0.03); break;   // slurp
+        case 'bate': this.nota('sine', 150, 0, 0.18, 0.3, 0.002, 500, 70); this.noise(0.06, 0.18, 'lowpass', 900, 0, 1); break;   // BONK no vidro
+        case 'encostado': this.nota('sine', 110, 0, 0.2, 0.28, 0.002, 400, 60); this.noise(0.4, 0.06, 'bandpass', 2400, 0.25, 6, 3000, 0.05); break;   // tum + vidro rangendo
+        case 'puxa': this.noise(0.5, 0.14, 'bandpass', 1400, 0, 1.2, 3400, 0.02); this.noise(0.08, 0.1, 'highpass', 4000, 0.45, 1); break;   // página dobrando
+        case 'grafite': this.noise(1.0, 0.13, 'highpass', 5000, 0, 0.8, 4000, 0.04); this.noise(0.05, 0.08, 'bandpass', 1200, 1.05, 3); break;   // chhhh do spray
+        case 'eletricista': this.osc('square', 60, 60, 0.6, 0.06); this.noise(2.6, 0.12, 'bandpass', 3000, 0, 0.5, 2000, 0.02); for (let i = 0; i < 6; i++) this.noise(0.03, 0.2, 'highpass', 4000, Math.random() * 1.5, 1); break;   // zap + chiado
+        case 'fumaca': this.noise(1.6, 0.14, 'lowpass', 900, 0, 0.7, 300, 0.2); this.osc('sine', 90, 70, 0.6, 0.06, 0.1); break;   // fffff + tosse grave
+        case 'apagao': this.osc('sawtooth', 220, 40, 0.8, 0.08); this.nota('sine', 70, 0.75, 0.6, 0.2); break;   // a luz caindo + TUM
+        case 'tonto': for (let i = 0; i < 4; i++) this.osc('sine', 400 + i * 80, 260 + i * 60, 0.4, 0.05, i * 0.35); break;   // uóóóó
+        case 'lama': splat(70, 400); this.noise(0.4, 0.12, 'lowpass', 600, 0, 0.8, 200, 0.01); break;   // splosh
+        case 'gigante': this.osc('sawtooth', 70, 40, 1.4, 0.14); this.noise(1.4, 0.16, 'lowpass', 300, 0, 0.6, 120, 0.15); this.nota('sine', 55, 1.4, 0.6, 0.35); break;   // rugido + PÁ
+        case 'selfie': this.noise(0.02, 0.2, 'highpass', 5000, 0.7, 1); this.noise(0.08, 0.14, 'bandpass', 2400, 0.72, 2, 1200); break;   // clique da foto
+        case 'fa': [523, 659, 784, 1047].forEach((f, i) => this.osc('square', f, f, 0.12, 0.05, i * 0.1)); break;   // tchanã!
+      }
+    });
+  }
+  // o limpador de para-brisa: o motorzinho e a borracha rangendo no vidro
+  limpador() {
+    this.noMundo(0, 1.4, () => {
+      this.osc('sawtooth', 70, 85, 1.1, 0.04);
+      this.osc('square', 1800, 2400, 0.12, 0.03, 0.15); this.osc('square', 2200, 1600, 0.12, 0.03, 0.7);
+      this.noise(1.0, 0.07, 'bandpass', 1500, 0, 2, 900, 0.05);
+    });
+  }
+
   pedrada() {
     this.noMundo(0, 1.4, () => {
       this.noise(0.03, 0.32, 'highpass', 2600, 0, 0.9);                                // o estalo do vidro

@@ -6,6 +6,7 @@ import { ZUMBIS, CLASSES } from '../core/dados.js';
 import { STATUS } from '../core/status.js';
 import { AMBIENTE, ligado as ligadoZona } from '../core/ambiente.js';
 import { posDrone } from '../core/habilidades.js';
+import { ZUMBIS_TELA } from '../core/tela.js';
 import { fillPoly, line, disc, canvas as novoCanvas } from './pixel.js';
 import * as S from './sprites.js';
 import { CenaPortal } from './portal.js';
@@ -687,6 +688,8 @@ export class Render {
       this.ctx.fillStyle = '#d7261c'; this.ctx.fillRect(sx + 3, sy - 13 + b, 3, 3);
       this.ctx.fillStyle = '#3f7f2c'; this.ctx.fillRect(sx + 4, sy - 14 + b, 1, 1);
     }
+    // zumbis da tela (core/tela.js): o item na mão (ovo, balde de tinta, torta, spray, celular, plaquinha...)
+    if (T.tela && nasc >= 1) this.itemTela(ZUMBIS_TELA[T.tela], sx, sy, z);
     if (z.tipo === 'explosivo') {
       const rapido = z.pavio >= 0;
       if (Math.floor(this.t * (rapido ? 12 : 3)) % 2) { this.ctx.fillStyle = '#ff3a2a'; this.ctx.fillRect(sx - 1, sy - 18, 3, 2); }
@@ -915,6 +918,25 @@ export class Render {
     ctx.fillStyle = '#a8a8b2'; ctx.fillRect(sx - 1 + (gira > 1 ? 1 : 0), y - 1 + (gira % 2), 1, 1);
   }
 
+  // item na mão de um zumbi da tela (pixel art pequena, balançando)
+  itemTela(Zt, sx, sy, z) {
+    const ctx = this.ctx, b = Math.round(Math.sin(this.t * 5 + z.id)), x = sx + 3, y = sy - 13 + b;
+    const R = (cor, X, Y, w = 1, h = 1) => { ctx.fillStyle = cor; ctx.fillRect(X, Y, w, h); };
+    switch (Zt.item) {
+      case 'ovo': R('#f4eedc', x, y, 3, 3); R('#ffffff', x, y, 1, 1); R('#c8bc98', x + 2, y + 2); break;
+      case 'balde': R('#8a8a94', x, y, 4, 4); R(z.corBalde || (z.corBalde = ['#e83a5a', '#3a8aff', '#ffd23f', '#3ac47a', '#b06bff'][z.id % 5]), x, y, 4, 1); R('#5a5a64', x + 1, y - 1, 2, 1); break;
+      case 'chiclete': R('#ff7ac0', x, y, 3, 2); R('#ffd0e8', x, y); break;
+      case 'torta': R('#d8a050', x - 1, y + 1, 5, 2); R('#ffffff', x - 1, y - 1, 5, 2); R('#e83a3a', x + 1, y - 2); break;
+      case 'spray': R('#e83a5a', x, y - 1, 2, 4); R('#d8dde6', x, y - 2, 2, 1); if (Math.random() < 0.3) R('#ff9ac0', x + 2, y - 2); break;
+      case 'alicate': R('#e8442a', x, y + 1, 1, 3); R('#e8442a', x + 2, y + 1, 1, 3); R('#9aa0aa', x, y - 1, 3, 2); if (Math.random() < 0.2) R('#9fe8ff', x + 3, y - 2); break;
+      case 'cigarro': R('#f4f4f0', x, y + 1, 3, 1); R('#ff6a2a', x + 3, y + 1); if (Math.random() < 0.15) this.particula({ x: z.x + 0.2, y: z.y, z: 1.3, vz: 0.6, g: -0.4, life: 1, cor: 'rgba(160,160,160,0.6)', tam: 2, fumaca: true }); break;
+      case 'garrafa': R('#3a8a4a', x + 1, y - 2, 1, 2); R('#3a8a4a', x, y, 3, 3); break;
+      case 'lama': R('#6a4a2a', x, y, 3, 3); R('#8a6a3a', x, y); break;
+      case 'celular': R('#1a1a24', x, y - 1, 3, 4); R('#9fe8ff', x + 1, y, 1, 2); break;
+      case 'placa': R('#8a6a3a', x + 1, y - 2, 1, 5); R('#ffffff', x - 2, y - 7, 7, 5); R('#fe2c55', x - 2, y - 7, 7, 1); R('#25f4ee', x - 2, y - 3, 7, 1); break;
+    }
+  }
+
   desenharTomate(t) {
     const ctx = this.ctx;
     const [sx, sy] = this.tela(t.x, t.y);
@@ -922,6 +944,13 @@ export class Render {
     const sh = S.sombra(4);
     ctx.globalAlpha = 0.6; ctx.drawImage(sh, sx - Math.floor(sh.width / 2), sy - 2); ctx.globalAlpha = 1;
     const y = sy - 8 - z, gira = Math.floor(this.t * 12) % 4;
+    // arremesso dos zumbis da tela: ovo, tinta, chiclete, torta ou lama voando
+    if (t.tipo === 'tela') {
+      const cor = { ovo: ['#f4eedc', '#ffffff'], pintor: ['#3a8aff', '#9fd0ff'], chiclete: ['#ff7ac0', '#ffd0e8'], torta: ['#ffffff', '#d8a050'], lama: ['#6a4a2a', '#8a6a3a'] }[t.tela] || ['#cccccc', '#ffffff'];
+      ctx.fillStyle = cor[0]; ctx.fillRect(sx - 2, y - 1, 5, 4); ctx.fillRect(sx - 1, y - 2, 3, 6);
+      ctx.fillStyle = cor[1]; ctx.fillRect(sx - 1 + (gira % 2), y - 1, 1, 1);
+      return;
+    }
     ctx.fillStyle = '#8e1410'; ctx.fillRect(sx - 2, y - 1, 5, 4); ctx.fillRect(sx - 1, y - 2, 3, 6);
     ctx.fillStyle = '#d7261c'; ctx.fillRect(sx - 1, y - 1, 3, 4); ctx.fillRect(sx - 2, y, 5, 2);
     ctx.fillStyle = '#ff7a5c'; ctx.fillRect(sx - 1 + (gira % 2), y - 1, 1, 1);

@@ -1,5 +1,6 @@
 // Sprites em pixel art gerados por código: pessoas, zumbis, cachorro, chão, itens, carros e prédios.
 // Cada personagem tem 4 quadros de caminhada, de frente e de costas; o lado esquerdo é o direito espelhado.
+import { ZUMBIS_TELA, idTela } from '../core/tela.js';
 import { canvas, fillPoly, line, disc, contorno, espelhar, tom } from './pixel.js';
 import { hash2 } from '../core/util.js';
 
@@ -126,6 +127,9 @@ export function spriteZumbi(tipo, roupa) {
   if (tipo === 'rei') o = { ...o, largura: 1, pele: '#7a8aa0', camisa: '#5a2a7a', calca: '#2a1a3a', capa: '#8a1e3a', chapeu: { tipo: 'coroa' } };
   if (tipo === 'pedreiro') o = { ...o, camisa: '#e8742a', calca: '#3a5a8a', cabelo: '#2a2018', chapeu: { tipo: 'capacete', cor: '#f2c230' } };   // peão de obra: colete laranja, jeans, capacete amarelo
   if (tipo === 'tomateiro') o = { ...o, camisa: '#c83a2a', calca: '#3a4a2a', cabelo: '#4a3a20', chapeu: { tipo: 'bone', cor: '#3f7f2c' } };   // feirante: camisa vermelha, boné verde
+  // zumbis da tela (core/tela.js): cada um com a roupa dele (pintor de branco, fã com as cores do TikTok...)
+  const Zt = ZUMBIS_TELA[idTela(tipo)];
+  if (Zt?.roupa) o = { ...o, ...Zt.roupa };
   if (tipo === 'colosso') o = { ...o, largura: 2, pele: '#7a6a5a', camisa: '#2e2a4a', calca: '#1a1826', cabelo: '#2a2018', capa: '#c8a030' };
   if (tipo === 'esticado') o = { ...o, largura: -1, pele: '#9aa07a', camisa: '#3a4656', calca: '#262a32', cabelo: '#3a3a2a' };
   const s = setDePessoa(o);

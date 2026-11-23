@@ -26,6 +26,7 @@ import {
 import { CHANCES_PADRAO, PERIGOS, AMEACA_POR_PERIGO, ATRASO_PERIGO, sortearCaminho } from './caminhos.js';
 import { preverDestino } from './previsao.js';
 import { pedeTabela } from './fusoes.js';
+import { TELA, ZUMBIS_TELA, tipoTela, idTela, niveisPorMoedas, sortearTela, sortearNaRua } from './tela.js';
 import { caboDeGuerra, multSpawnCabo, multForcaCabo, sorteCabo, CABO } from './cabo.js';
 import { PORTAL, RELIQUIAS, sortearRodadas, forcaGuardiao, escolhaPortalIA, revelar, aplicarEfeito, poderComPresente, darReliquia, atualizarReliquia, reliquiaSalva } from './portal.js';
 
@@ -35,7 +36,9 @@ import { Historia, HISTORIA } from './historia.js';
 
 export const PADRAO = {
   votoDur: 10, relNum: 10, relDest: 12, protecao: 15, likesPor: 300, maxZ: 90,
-  velHeroi: 1.1, periodoDia: 150, predioT: 70,   // periodoDia: segundos de cada período (manhã, tarde, noite, madrugada)
+  velHeroi: 1.1, periodoDia: 150, predioT: 70,
+  // zumbis da tela (tela.js): liga/desliga, chance de um presente de atrapalhar mandar um, intervalo e chance na rua
+  telaAtiva: 1, telaChance: TELA.chancePresente, telaRecarga: TELA.recargaPresente, telaRua: TELA.naRua.chance,   // periodoDia: segundos de cada período (manhã, tarde, noite, madrugada)
   torcidaMax: TORCIDA.maxPessoas,
   atraso: 6,        // atraso da live (s): quanto tempo a tela do TikTok chega atrasada pra quem assiste
   escolhaDur: 12,   // tempo da contagem da escolha de habilidade (A, B, C) ao subir de nível
@@ -49,6 +52,7 @@ const CHAVES = {
   protecao_ao_nascer_segundos: 'protecao', curtidas_por_suprimento: 'likesPor', maximo_zumbis: 'maxZ',
   velocidade_do_heroi: 'velHeroi',
   periodo_do_dia_segundos: 'periodoDia', segundos_dentro_do_predio: 'predioT',
+  zumbis_da_tela: 'telaAtiva', tela_chance_por_presente: 'telaChance', tela_recarga_segundos: 'telaRecarga', tela_na_rua_chance: 'telaRua',
   torcida_maximo_pessoas: 'torcidaMax', atraso_da_live_segundos: 'atraso', segundos_caido: 'caidoDur',
   segundos_escolha_habilidade: 'escolhaDur',
   drop_ate_moedas: 'dropAteMoedas', doacao_a_partir_de_moedas: 'doacaoAPartirDe', inspiracao_segundos: 'inspiracaoSeg',
@@ -1819,6 +1823,11 @@ export class Jogo {
     this.cotaRua = null;
     // zumbi do tomate: um por vez, às vezes, num quarteirão novo
     if (h.nivel >= TOMATEIRO.desdeNivel && !this.zumbis.some(z => !z.morto && z.tipo === 'tomateiro') && this.rng.chance(TOMATEIRO.chance)) this.agendar(3, () => this.surgirTomateiro());
+    // zumbi da tela sozinho na rua (tela.js → TELA.naRua; cada um tem o nível do herói em que começa a aparecer)
+    if (this.cfg.telaAtiva && this.zumbis.filter(z => !z.morto && idTela(z.tipo)).length < TELA.naRua.max && this.rng.chance(this.cfg.telaRua)) {
+      const id = sortearNaRua(this.rng, h.nivel);
+      if (id) this.agendar(4, () => this.surgirTela(id, null));
+    }
     // zumbi da pedra: também um por vez, um pouco mais tarde
     if (h.nivel >= PEDREIRO.desdeNivel && !this.zumbis.some(z => !z.morto && z.tipo === 'pedreiro') && this.rng.chance(PEDREIRO.chance)) this.agendar(5, () => this.surgirTomateiro('pedreiro'));
     // doação: o colosso aparece no quarteirão seguinte
@@ -2060,12 +2069,17 @@ export class Jogo {
       const perto = d < T.alcance + 0.12;
       // zumbi do tomate e da pedra: fica de longe (recua se o herói chega perto, para quando está na distância boa) e joga
       let quieto = false;
-      const Tm = T.tomate || T.pedra;
+      const Tm = T.tomate || T.pedra || T.arremesso;   // (arremesso: zumbis da tela que jogam de longe, tela.js)
       if (Tm && vivo && !alvoAliado) {
         z.tomateCd = (z.tomateCd ?? 1.5 + this.rng.next()) - dt;
         if (d < Tm.min) { mx = -mx; my = -my; }
         else if (d <= Tm.max) quieto = true;
         if (z.tomateCd <= 0 && d <= Tm.max + 1.5 && !this.caido) { z.tomateCd = Tm.recarga; this.lancarTomate(z); }
+      }
+      // zumbi da tela que vem até a câmera (tela.js, jeito 'perto'): chegou no herói, faz o efeito na tela
+      if (T.tela && !Tm && vivo && !alvoAliado && !this.caido) {
+        z.telaCd = (z.telaCd ?? 0.3) - dt;
+        if (perto && z.telaCd <= 0) { z.telaCd = ZUMBIS_TELA[T.tela].recarga; this.efeitoTela(T.tela, z.dono, z); }
       }
       // com medo (Grito de guerra e cia., habilidades.js): foge do herói e não ataca
       const medo = vivo && z.estados.tem('medo');
@@ -2675,6 +2689,47 @@ export class Jogo {
     this.emit('portal_presente', { lado, antes, depois: P.poder, nick: quem?.nick || '' });
   }
 
+  /* =================== Zumbis da tela (tela.js; a arte fica em view/tela.js) =================== */
+  // Faz um zumbi da tela aparecer. Vindo de presente, nasce perto (o efeito acontece em poucos segundos);
+  // sozinho na rua, nasce mais longe. A mão gigante não tem zumbi na rua: o efeito vem direto.
+  surgirTela(id, quem) {
+    const Zt = ZUMBIS_TELA[id];
+    if (!Zt || this.fase !== 'jogo' || this.room || this.arena) return false;
+    this.emit('tela_vem', { id, nick: quem?.nick || null });
+    if (Zt.jeito === 'direto') { this.agendar(1.2, () => this.efeitoTela(id, quem)); return true; }
+    const p = quem ? this.pontoNaRua(this.hero, 4.5, 7, 1) || this.pontoNaRua(this.hero, 3, 9, 0) : this.pontoNaRua(this.hero, 8, 11, 1);
+    if (!p) return false;
+    this.criarZumbi(tipoTela(id), p.x, p.y, quem, { nascendo: 0.6 });
+    return true;
+  }
+
+  // Presente de atrapalhar: às vezes também manda um zumbi da tela do nível do valor (barato = ovo, caro = mão gigante)
+  telaDePresente(quem, moedas) {
+    if (!this.cfg.telaAtiva || this.t - (this.telaPresT ?? -1e9) < this.cfg.telaRecarga || !this.rng.chance(this.cfg.telaChance)) return null;
+    const id = sortearTela(this.rng, niveisPorMoedas(moedas));
+    if (id && this.surgirTela(id, quem)) { this.telaPresT = this.t; return id; }
+    return null;
+  }
+
+  // O efeito na tela (o que aparece fica em view/tela.js). Alguns também mexem no jogo: a mão gigante bate no herói.
+  efeitoTela(id, quem, z = null) {
+    const Zt = ZUMBIS_TELA[id], h = this.hero;
+    if (!Zt || this.fase !== 'jogo') return;
+    const e = { id, nick: quem?.nick || null, avatar: quem?.avatar || '', x: z?.x ?? h.x, y: z?.y ?? h.y, semente: this.rng.int(1, 1e6) };
+    // grafite: o nome de quem mandou, ou uma palavra; fã: a plaquinha com o nome de quem mandou
+    if (id === 'grafite') e.palavra = quem?.nick && this.rng.chance(0.6) ? '@' + quem.nick : this.rng.pick(Zt.palavras);
+    if (id === 'fa') e.palavra = quem?.nick ? quem.nick : 'VOCÊ';
+    if (id === 'gigante') {
+      this.agendar(1.4, () => {   // a mão bate e arrasta o herói pro lado
+        if (this.fase !== 'jogo') return;
+        this.ferirHeroi(h.vidaMax * Zt.golpe, quem, 'a mão gigante', 'esmagar');
+        const [dx, dy] = DIRS[this.rota.dir];
+        h.kx = -dy * 8; h.ky = dx * 8;
+      });
+    }
+    this.emit('tela', e);
+  }
+
   /* =================== Zumbi do tomate (dados.js → tomateiro; ameaca.js → TOMATEIRO) =================== */
   // (também o zumbi da pedra: tipo = 'pedreiro')
   surgirTomateiro(tipo = 'tomateiro') {
@@ -2686,7 +2741,12 @@ export class Jogo {
   }
 
   lancarTomate(z) {
-    const T = ZUMBIS[z.tipo], pedra = !!T.pedra, Tm = T.pedra || T.tomate;
+    const T = ZUMBIS[z.tipo], pedra = !!T.pedra, Tm = T.pedra || T.tomate || T.arremesso;
+    if (T.tela) {   // zumbi da tela: joga o que é dele (ovo, tinta, chiclete, torta, lama); acertando, o efeito vai pra tela
+      this.tomates.push({ id: proxId++, tipo: 'tela', tela: T.tela, quem: z.dono, x0: z.x, y0: z.y, x: z.x, y: z.y, alt: 0, t: 0, voo: Tm.voo, dano: z.dano, danoMax: 0.03 });
+      this.emit('tomate_lancado', { x: z.x, y: z.y, tela: T.tela });
+      return;
+    }
     this.tomates.push({ id: proxId++, tipo: pedra ? 'pedra' : 'tomate', x0: z.x, y0: z.y, x: z.x, y: z.y, alt: 0, t: 0, voo: Tm.voo, dano: z.dano, danoMax: Tm.danoMax ?? 0.05 });
     this.emit(pedra ? 'pedra_lancada' : 'tomate_lancado', { x: z.x, y: z.y });
   }
@@ -2704,6 +2764,11 @@ export class Jogo {
       if (k < 1) continue;
       t.fim = true;
       if (this.fase !== 'jogo') continue;
+      if (t.tipo === 'tela') {
+        this.ferirHeroi(Math.min(t.dano, h.vidaMax * t.danoMax), t.quem, 'o ' + ZUMBIS_TELA[t.tela].nome.toLowerCase(), 'impacto');
+        this.efeitoTela(t.tela, t.quem);
+        continue;
+      }
       if (t.tipo === 'pedra') {
         // pedra: machuca um pouco mais (até 7% da vida máxima) e trinca a tela (view/sujeira.js)
         this.ferirHeroi(Math.min(t.dano, h.vidaMax * t.danoMax), null, 'a pedra', 'impacto');
@@ -2934,6 +2999,8 @@ export class Jogo {
     const p = this.fila.splice(k, 1)[0];
     this.filaCd = 0.6;
     this.comPresente(p.quem, () => EFEITOS[p.regra.efeito].aplicar(this, p.regra, p.qtd, p.quem));
+    // presente de atrapalhar também pode mandar um zumbi da tela, do nível do valor do presente (tela.js)
+    if (p.moedas > 0 && p.regra.efeito !== 'tela') this.telaDePresente(p.quem, p.moedas);
   }
 
   /* =================== Público =================== */
@@ -3017,6 +3084,8 @@ export class Jogo {
     // Resposta na hora, em cima do herói, com o nome de quem mandou (mesmo que o efeito vá pra fila)
     if (this.fase === 'jogo') this.emit('presente_heroi', { nick: quem.nick, emoji: emoji || regra.emoji || '🎁', lado, x: this.hero.x, y: this.hero.y });
     if (lado === 'ajuda' && (coins > 0 || giftName === 'seguiu')) this.ultimaAjudaT = this.t;
+    // disputa da tela: quem ajuda passa o limpador de para-brisa (só limpa se tiver sujeira: view/tela.js)
+    if (lado === 'ajuda' && coins > 0 && regra.efeito !== 'limpador') this.emit('limpar_tela', { nick: quem.nick, auto: true });
     // no portal, presente mexe no poder do herói (ajuda sobe, atrapalha desce); a rua está pausada
     if (this.portal) { this.presenteNoPortal(lado, coins * qtd, quem); return; }
     // recompensas de presente (recompensas.js): drop de paraquedas (1 moeda) e doação (inspiração + colosso)
@@ -3034,7 +3103,7 @@ export class Jogo {
         this.caido.t = Math.min(this.caido.t, 2.5);
         this.emit('golpe_final', { nick: quem.nick });
       }
-      if (this.fila.length < 40) this.fila.push({ regra, qtd, quem, coins: coins * qtd });
+      if (this.fila.length < 40) this.fila.push({ regra, qtd, quem, coins: coins * qtd, moedas: coins });
     }
   }
 

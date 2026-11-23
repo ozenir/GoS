@@ -11,6 +11,8 @@
 // (usado sozinho quando a vida cair), munição sem arma de fogo vira fúria, colete cheio vira blindado.
 // Se o herói estiver CAÍDO, qualquer presente de ajuda levanta ele (jogo.js → levantar).
 
+import { ZUMBIS_TELA, niveisPorMoedas, sortearTela } from './tela.js';
+
 const n = (v, padrao) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : padrao);
 // Bônus duram QUARTEIRÕES (não segundos). Config antigo com "segundos" ainda funciona: vira ~1 quarteirão a cada 15 s.
 const nq = (r, padrao) => r.quarteiroes != null ? n(r.quarteiroes, padrao) : r.segundos != null ? Math.max(1, Math.round(n(r.segundos, 15) / 15)) : padrao;
@@ -71,6 +73,13 @@ export const EFEITOS = {
     aviso: () => 'curtidas: suprimento de avião!',
     aplicar: (g, r, q, quem) => g.soltarItem('suprimento', {}, quem, 0)
   },
+  // Limpador de para-brisa: limpa a tela de propósito (todo presente de ajuda já passa o limpador se a tela estiver suja)
+  limpador: {
+    lado: 'ajuda',
+    texto: () => 'limpador de para-brisa (limpa a tela)',
+    aviso: () => 'passou o limpador na tela',
+    aplicar: (g, r, q, quem) => g.emit('limpar_tela', { nick: quem?.nick || null, auto: false })
+  },
   helicoptero: {
     lado: 'ajuda',
     texto: () => 'helicóptero de resgate',
@@ -84,6 +93,13 @@ export const EFEITOS = {
     aviso: (r, q) => `mandou ${Math.min(18, n(r.qtd, 3) * q)} zumbis`,
     // zumbis do fã (recompensas.js → ZUMBI_FA): nome e foto de quem mandou, mais fortes, e cada um acerta o herói ao menos uma vez
     aplicar: (g, r, q, quem) => g.soltarZumbis('comum', Math.min(18, n(r.qtd, 3) * q), quem, { nomeados: true, combo: q, fa: true })
+  },
+  // Zumbi da tela (tela.js): "zumbi": id de um (ovo, pintor, torta, gigante...) ou, sem ele, um do nível do valor
+  tela: {
+    lado: 'atrapalha',
+    texto: r => ZUMBIS_TELA[r.zumbi] ? `${ZUMBIS_TELA[r.zumbi].emoji} ${ZUMBIS_TELA[r.zumbi].nome.toLowerCase()}` : 'um zumbi que suja a tela',
+    aviso: r => ZUMBIS_TELA[r.zumbi] ? `mandou o ${ZUMBIS_TELA[r.zumbi].nome.toLowerCase()}` : 'mandou um zumbi da tela',
+    aplicar: (g, r, q, quem) => g.surgirTela(ZUMBIS_TELA[r.zumbi] ? r.zumbi : sortearTela(g.rng, niveisPorMoedas(r.moedas)), quem)
   },
   vidro: {
     lado: 'atrapalha',

@@ -26,6 +26,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size
 .frame canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 #game{image-rendering:pixelated;image-rendering:crisp-edges}
 #sujeira{image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none;z-index:20}   /* tomate no vidro: por cima de tudo */
+#tela-baixo{image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none}   /* zumbis da tela que mexem na imagem do jogo (fumaça, apagão...): por baixo do painel */
+.frame #game,.frame #texto,.frame #tela-baixo{transform-origin:50% 55%}
 
 .controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-height:34vh;overflow:auto}
 .grupo{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;align-items:center}
@@ -242,6 +244,7 @@ body.foco .app{padding-block:8px}
 .sp-lista{display:flex;flex-direction:column;align-items:flex-start;gap:1cqw;min-width:0;max-width:54cqw}
 .sp{--lado:var(--ajuda);display:flex;align-items:center;gap:1.4cqw;padding:.7cqw 2.6cqw .7cqw 1cqw;border-radius:3.6cqw;max-width:100%;box-sizing:border-box;background:rgba(16,13,24,.88);border:.45cqw solid var(--lado);box-shadow:0 0 2.4cqw color-mix(in srgb,var(--lado) 45%,transparent);animation:spIn .4s cubic-bezier(.2,1.6,.4,1)}
 .sp.negativo{--lado:var(--atrapalha)}
+.sp.tela{--lado:#ff8a2a}.sp.limpou{--lado:#7ad8ff}   /* zumbi da tela agiu / alguém limpou a tela */
 .sp>i{font-style:normal;font-size:5cqw;line-height:1;flex:none}
 .sp>span{display:flex;flex-direction:column;min-width:0;line-height:1.15}
 .sp b{font-size:3.2cqw;font-weight:700;color:var(--lado);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -401,6 +404,7 @@ body.foco .app{padding-block:8px}
     <div class="frame" id="frame">
       <canvas id="game" width="216" height="384" aria-label="Herói contra Hordas"></canvas>
       <canvas id="texto"></canvas>
+      <canvas id="tela-baixo" width="216" height="384" aria-hidden="true"></canvas>
       <canvas id="sujeira" width="216" height="384" aria-hidden="true"></canvas>
       <div class="hud">
         <div class="top">
@@ -511,6 +515,9 @@ body.foco .app{padding-block:8px}
     </div>
     <div class="grupo">
       <button class="btn" id="b-matar">💀 Derrubar herói</button>
+    </div>
+    <div class="grupo" id="t-tela"><span class="grupo-t">Zumbis da tela</span></div>
+    <div class="grupo">
       <button class="btn" id="b-som">🔊 Som ligado</button>
       <button class="btn" id="b-foco">📺 Só o jogo</button>
       <label class="sim" for="sim-toggle"><input type="checkbox" id="sim-toggle"> Simular público</label>

@@ -133,6 +133,38 @@ Tudo anda mais devagar que antes (herói e zumbis), então tem menos decisão po
 - a velocidade segue a **física de verdade** (`public/js/core/tomate.js`): polpa de tomate é um fluido de Bingham (só escorre quando o peso vence a "tensão de escoamento"), então `v = (m·g/A − τy) · h / η`, com tomate de 100 g (60% gruda), mancha de 10 cm, τy = 20 Pa, η = 1,5 Pa·s e camada de 1,5 mm. Ele começa a uns **5,5 cm/s**, vai perdendo massa no rastro e desacelerando, e o vidro não é uniforme, então escorrega aos trancos. A tela é um vidro de 36 x 64 cm: o tomate leva uns **13 s** pra descer. Os filetes de caldo (quase água) seguem a fórmula de filme escorrendo num vidro (Nusselt), entre 2 e 9 cm/s, e param quando o caldo acaba;
 - depois que o tomate cai, o rastro seca e some em uns 12 s. O jogo continua por trás o tempo todo. Ele conta pra limpar a área.
 
+**📺 Zumbis da tela (quem suja × quem limpa).** 17 zumbis que mexem com a **tela da live**. Cada um é um zumbi de verdade na rua, com roupa e item na mão: os que **jogam de longe** param a uns metros e arremessam (ovo, tinta, chiclete, torta, lama), sempre acertando, e os que **vêm até a câmera** fazem o efeito quando chegam no herói (o **mão gigante** não tem zumbi: vem direto). O efeito aparece na tela por **2 a 4 s** e some, com **som exagerado** em cada impacto e o **nome de quem causou** no canto ("🥚 @fulano jogou um ovo podre!"). A soma do quanto os efeitos cobrem não passa de 90% da tela: com a tela cheia, o mais antigo sai antes. Os que **sujam o vidro** ficam por cima de tudo (como o tomate); os que **mexem na imagem** (chiado, fumaça, apagão, tonto) ficam por baixo do painel, que continua legível.
+
+**A disputa:** quem **atrapalha** suja, quem **ajuda** limpa. **Todo presente de ajuda passa o 🧽 limpador de para-brisa** se a tela estiver suja (a palheta varre a tela inteira e tira tudo, menos a trinca: vidro trincado não sai com água), com o aviso "🧽 @fulano limpou a tela!".
+
+**Como eles aparecem** (`public/js/core/tela.js` → `TELA` e o catálogo `ZUMBIS_TELA`):
+- **Presente de atrapalhar:** além do efeito dele, tem **60%** de chance de mandar um zumbi da tela, no máximo **um a cada 6 s**, do **nível do valor do presente** (escala com o presente): 1 moeda → nível 1 · 2 a 9 → níveis 1 e 2 · 10 a 99 → 2 e 3 · 100 a 999 → 3 · 1.000 ou mais → **4 (mão gigante)** ou 3. Ele nasce perto, então o efeito acontece em poucos segundos.
+- **Sozinho na rua:** a cada quarteirão, **30%** de chance de aparecer um (no máximo 1 vivo), só dos que já liberaram pelo nível do herói (coluna "na rua desde").
+- **De propósito, por presente:** no `config.json`, `"efeito": "tela", "zumbi": "torta"` manda sempre aquele (sem `"zumbi"`, sorteia um do nível do valor); `"efeito": "limpador"` limpa a tela.
+- **Na página de teste:** um botão pra cada (o zumbi aparece perto e faz o efeito; com **Shift**, só o efeito, na hora) e o **🧽 Limpar**.
+
+| Zumbi | Grupo | Nível | Como faz | Dura | Cobre | Repete a cada | Na rua desde |
+|---|---|---|---|---|---|---|---|
+| 🥚 Ovo podre: o ovo bate, a clara espirra e a gema **escorre devagar** deixando um **rastro amarelo** | suja | 1 | joga de longe | 4 s | 15% | 9 s | nível 3 |
+| 🎨 Pintor: **balde de tinta cobre um canto inteiro**, cada vez de uma cor, com tinta escorrendo | suja | 2 | joga de longe | 4 s | 30% | 12 s | nível 8 |
+| 🍬 Chiclete: gruda com fios que **esticam quando a tela treme** | suja | 1 | joga de longe | 4 s | 12% | 9 s | nível 4 |
+| 🥧 Torta: **torta na cara** no meio da tela (com cereja), depois escorrega | suja | 2 | joga de longe | 2,5 s | 45% | 11 s | nível 6 |
+| 👅 Lambedor: a **língua passa por dentro do vidro** e deixa marca de baba, com bolhinhas | suja | 1 | vem até a câmera | 3,5 s | 15% | 10 s | nível 5 |
+| ✋ Bate no vidro: a mão **bate 3 vezes** (a tela treme) e na terceira o **vidro trinca** | quarta parede | 2 | vem até a câmera | 3 s | 20% | 12 s | nível 9 |
+| 😶 Encostado: a **cara achatada no vidro**, olhando pro público, piscando e embaçando; depois escorrega | quarta parede | 2 | vem até a câmera | 3,5 s | 35% | 14 s | nível 10 |
+| 📄 Puxa a tela: **dobra o canto da tela como uma página** (atrás, escuro, com dois olhos) | quarta parede | 3 | vem até a câmera | 3 s | 25% | 15 s | nível 14 |
+| 🖌️ Grafite: **picha em spray** o nome de quem mandou ou "SOCORRO", "SEGUE AÍ", "MIOLOS"... | quarta parede | 2 | vem até a câmera | 3,5 s | 20% | 13 s | nível 7 |
+| ⚡ Eletricista: **chiado de TV antiga**, a imagem pisca e treme | imagem | 3 | vem até a câmera | 3 s | 20% | 14 s | nível 12 |
+| 💨 Fumaça: uma **nuvem embaça** tudo e vai sumindo | imagem | 1 | vem até a câmera | 4 s | 30% | 12 s | nível 6 |
+| 🔦 Apagão: **as luzes caem**, só os **olhos dos zumbis** brilham (e a lanterninha do herói) | imagem | 3 | vem até a câmera | 3,5 s | 35% | 18 s | nível 16 |
+| 😵‍💫 Tonto: a imagem **gira e fica de cabeça pra baixo** | imagem | 2 | vem até a câmera | 3 s | 10% | 14 s | nível 11 |
+| 🟫 Lama: **lama respingando de baixo pra cima**, como se um carro tivesse passado | imagem | 1 | joga de longe | 3,5 s | 25% | 10 s | nível 4 |
+| 🖐️ Gigante: a **mão enorme entra pelo lado** e tenta pegar a live (tira 12% da vida do herói e arrasta ele) | marcante | 4 | direto (presente caro) | 3,5 s | 50% | – | só por presente |
+| 🤳 Selfie: celular, **FLASH branco** e a imagem **congela numa foto** polaroid com o nome de quem mandou | marcante | 3 | vem até a câmera | 2,5 s | 60% | 16 s | nível 13 |
+| 🪧 Fã: **dança na frente com a plaquinha com o nome** de quem mandou, soltando coraçõezinhos | marcante | 3 | vem até a câmera | 4 s | 25% | 16 s | só por presente |
+
+Os números de cada um (nível, duração, cobertura, recarga, nível na rua, chance relativa, roupa, vida e velocidade) ficam no catálogo `ZUMBIS_TELA`; a arte e a animação de cada efeito, em `public/js/view/tela.js`; os sons, em `public/js/view/som.js` → `telaSom`. No `config.json`: `zumbis_da_tela` (1 liga, 0 desliga), `tela_chance_por_presente` (0.6), `tela_recarga_segundos` (6) e `tela_na_rua_chance` (0.3).
+
 **A cidade vai sendo destruída.** Quanto mais tempo a run dura, mais destruídas vêm as ruas e prédios novos: começa depois de 1 minuto e chega no máximo com 10 minutos.
 - 🕳️ **buracos no asfalto** (machucam e deixam lento)
 - 🚗 **carros batidos fechando a rua** (engavetamento)
@@ -402,6 +434,7 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 | `torcida_maximo_pessoas` | quantas pessoas da torcida contam no máximo (0 desliga a torcida) | 10 |
 | `periodo_do_dia_segundos` | quanto dura cada período do dia: manhã, tarde, noite e madrugada (0 = sempre manhã) | 150 |
 | `segundos_dentro_do_predio` | quanto tempo até o alarme mandar ele sair | 70 |
+| `zumbis_da_tela` / `tela_chance_por_presente` / `tela_recarga_segundos` / `tela_na_rua_chance` | zumbis da tela: liga (1) ou desliga (0); chance de um presente de atrapalhar também mandar um; segundos mínimos entre um e outro; chance por quarteirão de aparecer um sozinho na rua | 1 / 0.6 / 6 / 0.3 |
 | `drop_ate_moedas` | presente de até tantas moedas: o de ajudar solta um drop; o de atrapalhar manda o conversível ou o zumbi paraquedista | 1 |
 | `doacao_a_partir_de_moedas` | presente a partir de tantas moedas é doação: inspiração, drop e colosso | 2 |
 | `inspiracao_segundos` | quanto dura a inspiração | 10 |
@@ -428,6 +461,8 @@ A tela é dividida em três faixas fixas, para **nada cobrir o herói** (ele fic
 | `trem` | `qtd` de corredores | atrapalha |
 | `chefao` | – | atrapalha |
 | `rei` | `segundos` de noite | atrapalha |
+| `tela` | `zumbi` (ovo, pintor, chiclete, torta, lambedor, bate, encostado, puxa, grafite, eletricista, fumaca, apagao, tonto, lama, gigante, selfie, fa); sem ele, sorteia um do nível do valor | atrapalha |
+| `limpador` | – (passa o limpador de para-brisa na tela) | ajuda |
 
 `emoji`, `nome` e `moedas` servem para a legenda e para os botões de teste. `seguir` e `compartilhar` usam os mesmos efeitos. Depois de mudar o `config.json`, feche a janela preta e abra de novo.
 
@@ -467,12 +502,13 @@ Cada assunto tem o seu arquivo em `public/js/core/`:
 | `praia.js` | **a praia** do nível 30: chance, tempo pra sobreviver, ondas do mar e o mapa |
 | `room.js` | o lado de dentro dos prédios (tamanho, móveis, loot e perigos de cada tipo) |
 | `votacao.js` | as opções, as palavras do chat e a janela de votos atrasados |
+| `tela.js` | **os zumbis da tela**: o catálogo com os números de cada um (`ZUMBIS_TELA`: nível, duração, cobertura, recarga, nível na rua, chance), a escala com o valor do presente, a chance por presente e na rua (`TELA`). A arte fica em `view/tela.js` |
 | `habilidades.js` | **as habilidades** (estilo Vampire Survivors): as 3 cartas, os 5 slots de cada lado, as receitas, a sinergia, o núcleo com as 6 supremas, o nível deus, armas novas, treino e o que a IA escolhe |
 | `hab-ativas.js` / `hab-passivas.js` / `hab-supremas.js` | as 22 habilidades, as 22 passivas, as 22 supremas e os 8 poderes deus (gerais e únicos de cada personagem). Habilidade nova = acrescentar em `ATIVAS` (com a passiva par) e a suprema dela em `SUPREMAS` (instruções no começo de cada arquivo) |
 | `hab-base.js` | as peças das habilidades: alvos, explosões e ondas do herói, raio em cadeia, projéteis, minas, torretas |
 | `jogo.js` | o resto: herói, zumbis, arena, herói caído, mochila e presentes inteligentes |
 
-**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/som.test.mjs` (acústica), `node teste/tomate.test.mjs` (física do tomate no vidro), `node teste/grafico.test.mjs` (gráfico de atributos), `node teste/previsao.test.mjs` (o resultado da votação conta o que tem no destino, e acerta), `node teste/cabo.test.mjs` (cabo de guerra e os 10 s do resultado), `node teste/pedra.test.mjs` (zumbi da pedra e a trinca no vidro), `node teste/portal.test.mjs` (portal dos 500, guardião e relíquias), `node teste/fusoes.test.mjs` (tabela de supremas do T e o avião do Ataque aéreo), `node teste/presentes.test.mjs` (presentes baratos, sorteio do mesmo preço, parcelas e poderes fortes recarregando), `node teste/toque.test.mjs` (dano por toque), `node teste/pistola.test.mjs` (pente da pistola), `node teste/entrada.test.mjs` (zumbi de quem entra na live), `node teste/recompensas.test.mjs` (drops, inspiração, colosso, runas, conversível, zumbi paraquedista e zumbis do fã), `node teste/catalogo.test.mjs` (a prévia sem o programa usa os mesmos números do config.json), `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/habilidades.test.mjs` (o que existe, receitas, cartas, únicas de cada personagem, slots e trocas, cada habilidade, sinergia, supremas, núcleo, nível deus, escolha do chat, a IA chegando no nível deus, experiência, nível máximo, Anti-explosão e inchados instáveis), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (zumbi do tomate, começo puxado, cota da quadra, limpar a área, horda a cada 5 quarteirões, segundo fôlego, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
+**Testes automáticos:** `node teste/dano.test.mjs`, `node teste/status.test.mjs`, `node teste/ameaca.test.mjs`, `node teste/caminhos.test.mjs`, `node teste/nome.test.mjs`, `node teste/som.test.mjs` (acústica), `node teste/tomate.test.mjs` (física do tomate no vidro), `node teste/grafico.test.mjs` (gráfico de atributos), `node teste/previsao.test.mjs` (o resultado da votação conta o que tem no destino, e acerta), `node teste/cabo.test.mjs` (cabo de guerra e os 10 s do resultado), `node teste/pedra.test.mjs` (zumbi da pedra e a trinca no vidro), `node teste/portal.test.mjs` (portal dos 500, guardião e relíquias), `node teste/fusoes.test.mjs` (tabela de supremas do T e o avião do Ataque aéreo), `node teste/presentes.test.mjs` (presentes baratos, sorteio do mesmo preço, parcelas e poderes fortes recarregando), `node teste/toque.test.mjs` (dano por toque), `node teste/pistola.test.mjs` (pente da pistola), `node teste/entrada.test.mjs` (zumbi de quem entra na live), `node teste/recompensas.test.mjs` (drops, inspiração, colosso, runas, conversível, zumbi paraquedista e zumbis do fã), `node teste/catalogo.test.mjs` (a prévia sem o programa usa os mesmos números do config.json), `node teste/ambiente.test.mjs`, `node teste/atraso.test.mjs` (votos atrasados, caído, presentes inteligentes), `node teste/tela.test.mjs` (zumbis da tela: catálogo, escala com o presente, como aparecem, mão gigante, grafite e fã com o nome, limpador), `node teste/habilidades.test.mjs` (o que existe, receitas, cartas, únicas de cada personagem, slots e trocas, cada habilidade, sinergia, supremas, núcleo, nível deus, escolha do chat, a IA chegando no nível deus, experiência, nível máximo, Anti-explosão e inchados instáveis), `node teste/bonus.test.mjs` (bônus por quarteirões), `node teste/ritmo.test.mjs` (zumbi do tomate, começo puxado, cota da quadra, limpar a área, horda a cada 5 quarteirões, segundo fôlego, chefes, lobo e braço longo, praia, desgaste, figurantes, fúria sem ajuda) e `node teste/estabilidade.test.mjs` (roda meia hora de jogo com cada personagem e falha se algum herói travar ou ficar imortal). Para simular um personagem só: `CLASSE=enfermeira node teste/simular.mjs 30 nada`.
 
 **Para testar o equilíbrio sem live:** `node teste/simular.mjs` roda dezenas de partidas em segundos em 5 cenários (sem interação, só chat, presentes misturados, só presentes que ajudam, só presentes que atrapalham) e mostra quanto cada herói durou. Para testar números sem mexer no `config.json`: `AJUSTES='{"horda_base":8}' node teste/simular.mjs 20 nada`. Também dá pra mexer em `ameaca.js` e na força dos zumbis só na simulação: `AMEACA='{"medioForca":1.5}' ESCALA='{"vida":0.3}' node teste/simular.mjs 20 chat`, e `SEED=1` roda outra sequência de partidas. O simulador mostra em que faixa de nível os heróis caem, a vida mínima em cada faixa, quando chegam no nível 10, quando saem a 1ª, a 3ª e a 6ª suprema e o nível deus (tempo e nível) e quanto tempo levam pra limpar a área.
 
@@ -496,7 +532,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.41.1)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 1.42.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.

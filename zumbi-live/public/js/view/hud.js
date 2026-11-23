@@ -6,6 +6,7 @@ import { BAIRROS } from '../core/city.js';
 import { EFEITOS, ladoDo } from '../core/efeitos.js';
 import { progressoAmeaca } from '../core/ameaca.js';
 import { slotsDoHeroi } from '../core/habilidades.js';
+import { ZUMBIS_TELA } from '../core/tela.js';
 import { Letreiro } from './letreiro.js';
 import { RESULTADO_SEG } from '../core/jogo.js';
 import { CABO } from '../core/cabo.js';
@@ -123,6 +124,20 @@ export class Hud {
     a.timer = setTimeout(() => { a.el.classList.add('out'); setTimeout(() => { a.el.remove(); if (this.spAvisos.get(e.id) === a) this.spAvisos.delete(e.id); }, 460); }, STATUS_PRESENTE_SEG * 1000);
   }
 
+  // Zumbi da tela agiu ("🥚 @fulano jogou um ovo podre!") ou alguém limpou a tela ("🧽 @fulano limpou a tela!").
+  // Aparece no mesmo lugar do status de presente, por 3 s: as pessoas pagam pra aparecer.
+  avisoTela(e) {
+    const box = $('h-sp');
+    const Zt = ZUMBIS_TELA[e.id];
+    const quem = e.nick ? '@' + e.nick : e.limpou ? 'Alguém' : 'Um zumbi';
+    const el = document.createElement('div');
+    el.className = 'sp ' + (e.limpou ? 'limpou' : 'tela');
+    el.innerHTML = e.limpou ? `<i>🧽</i><span><b>${esc(quem)}</b><small>limpou a tela!</small></span>` : `<i>${esc(Zt.emoji)}</i><span><b>${esc(quem)}</b><small>${esc(Zt.frase)}!</small></span>`;
+    box.prepend(el);
+    while (box.children.length > 3) box.lastChild.remove();
+    setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 460); }, 3000);
+  }
+
   // Slots do herói: habilidades (5, pra esquerda) ← NÚCLEO (as 6 supremas em volta) → passivas (5, pra direita)
   atualizarSlots(h) {
     const S = slotsDoHeroi(h), N = S.nucleo;
@@ -169,6 +184,7 @@ export class Hud {
     switch (e.type) {
       case 'presente': this.toast(e); break;
       case 'status_presente': this.statusPresente(e); break;
+      case 'tela': this.avisoTela(e); break;
       case 'chefe':
         if (e.arena) break;   // na arena o aviso é o da arena
         if (e.tipo === 'rei') this.banner('👑 REI ZUMBI!', `despertado por ${e.nome}`, 'perigo', 3.2);
