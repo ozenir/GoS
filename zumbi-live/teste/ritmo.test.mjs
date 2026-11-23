@@ -118,35 +118,19 @@ teste(`limpar a área: faltando ${AMEACA.cacarPoucos} ou menos, o herói vai atr
   assert.ok(z.morto && !z.sumiu, 'matou (não precisou sumir)');
 });
 
-teste('o herói só passa pro próximo quarteirão depois que o chat escolhe todas as habilidades da fila', () => {
+teste('escolha de habilidade aberta não segura o herói: ele atravessa e a habilidade entra quando a votação fecha', () => {
   const j = jogo(12);
   j.cotaRua = 0; j.zumbis = [];
   const no = j.city.nodePos(j.rota.alvo.i, j.rota.alvo.j);
   j.hero.x = no.x; j.hero.y = no.y;
   j.decisao = { id: 'frente', dir: j.rota.dir };
-  j.niveisPendentes = 2; j.filaNiveis = [2, 3];   // subiu 2 níveis no quarteirão
+  j.niveisPendentes = 1; j.filaNiveis = [j.hero.nivel]; j.escolhaEspera = 0;   // subiu de nível: abre a escolha (A, B, C)
   const q0 = j.stats.quarteiroes;
-  let avisou = false;
-  passar(j, 3, ev => { for (const e of ev) if (e.type === 'esperando_escolha') avisou = true; j.hero.vida = j.hero.vidaMax; });
-  assert.equal(j.stats.quarteiroes, q0, 'espera no cruzamento');
-  assert.ok(avisou && j.esperandoEscolha);
-  passar(j, 60, () => { j.hero.vida = j.hero.vidaMax; j.zumbis = []; });
-  assert.ok(!j.escolhasPendentes(), 'o chat (ou a IA) escolheu tudo');
-  assert.ok(j.stats.quarteiroes > q0, 'aí atravessou');
-});
-
-teste('esperando as escolhas: os níveis que ele ganha enquanto espera ficam pro próximo quarteirão (não trava)', () => {
-  const j = jogo(12);
-  j.cotaRua = 0; j.zumbis = [];
-  const no = j.city.nodePos(j.rota.alvo.i, j.rota.alvo.j);
-  j.hero.x = no.x; j.hero.y = no.y;
-  j.decisao = { id: 'frente', dir: j.rota.dir };
-  j.niveisPendentes = 1; j.filaNiveis = [2];
-  const q0 = j.stats.quarteiroes;
-  // a cada 3 s ele sobe mais um nível (zumbis de presente morrendo, por exemplo): a fila nunca esvazia
-  let t = 0;
-  passar(j, 90, () => { j.hero.vida = j.hero.vidaMax; j.zumbis = []; if ((t += 1 / 30) > 3) { t = 0; j.niveisPendentes++; j.filaNiveis.push(j.hero.nivel); } });
-  assert.ok(j.stats.quarteiroes > q0, 'atravessou depois da escolha que estava pendente');
+  passar(j, 2, () => { j.hero.vida = j.hero.vidaMax; j.zumbis = []; });
+  assert.ok(j.escolha, 'a escolha continua aberta (o tempo do chat é o mesmo)');
+  assert.ok(j.stats.quarteiroes > q0, 'e ele já atravessou, sem esperar');
+  passar(j, j.cfg.escolhaDur + j.cfg.atraso + 2, () => { j.hero.vida = j.hero.vidaMax; j.zumbis = []; });
+  assert.ok(j.escolhaRes, 'a habilidade entrou quando a votação fechou');
 });
 
 teste('segundo fôlego: antes do nível 10, com a vida quase no fim, empurra a horda e salva o herói (com recarga)', () => {

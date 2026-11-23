@@ -199,7 +199,6 @@ export class Jogo {
     this.cotaRua = null;            // zumbis da rua que ainda nascem neste quarteirão (null = calcula na hora)
     this.limpando = null;           // esperando no cruzamento a área ficar limpa
     this.areaLiberada = false;      // área limpa (ou tempo máximo da limpeza): pode atravessar quando chegar
-    this.esperandoEscolha = false;  // área limpa, mas esperando o chat escolher as habilidades da fila
     this.colossoPendente = null;    // doação: o colosso que vem no próximo quarteirão (recompensas.js)
     this.cabo = this.cabo || caboDeGuerra(null);   // cabo de guerra: top ajudante x top atrapalhante (cabo.js)
     this.fusoesDaLive = this.fusoesDaLive || new Set();   // supremas já feitas nesta live (tabela do T, fusoes.js)
@@ -1107,17 +1106,9 @@ export class Jogo {
     if (this.limpando && this.decisao && !(falta < 0.5 && dist(h.x, h.y, alvo.x, alvo.y) < 1.4) && !this.liberarArea(dt)) { const caca = this.cacarZumbi(alvo); if (caca) return caca; }
     if (falta < 0.5) {
       if (dist(h.x, h.y, alvo.x, alvo.y) < 1.4) {
-        // só atravessa com a área limpa (todos os zumbis em volta mortos) e com todas as habilidades da fila
-        // escolhidas pelo chat (subiu de nível no quarteirão: as escolhas acabam antes de seguir)
-        // As que contam são as que estavam pendentes quando a área ficou limpa; os níveis que ele ganha
-        // enquanto espera ficam pro próximo quarteirão (senão a fila nunca acaba e ele não sai do lugar)
-        if (this.decisao && this.liberarArea(dt)) {
-          if (!this.esperandoEscolha) {
-            const faltam = this.contarEscolhas();
-            if (faltam > 0) { this.esperandoEscolha = { faltam }; this.emit('esperando_escolha', { faltam }); }
-          }
-          if (!this.esperandoEscolha || this.esperandoEscolha.faltam <= 0) { this.esperandoEscolha = false; this.aplicarDecisao(); return this.objetivoRota(0); }
-        }
+        // só atravessa com a área limpa (todos os zumbis em volta mortos). A escolha de habilidade NÃO segura o
+        // herói: ele segue andando enquanto o chat vota, e a habilidade entra quando a votação fechar
+        if (this.decisao && this.liberarArea(dt)) { this.aplicarDecisao(); return this.objetivoRota(0); }
         if (this.limpando) { const caca = this.cacarZumbi(alvo); if (caca) return caca; }
         return { x: alvo.x, y: alvo.y, esperando: true };
       }
@@ -1346,7 +1337,7 @@ export class Jogo {
   vigiarProgresso(dt) {
     const h = this.hero;
     h.focoRota = Math.max(0, (h.focoRota || 0) - dt);
-    if (this.room || this.arena || this.limpando || this.esperandoEscolha) { h.semProgresso = 0; h.semCruzar = 0; return; }
+    if (this.room || this.arena || this.limpando) { h.semProgresso = 0; h.semCruzar = 0; return; }
     const r = this.rota, no = this.city.nodePos(r.alvo.i, r.alvo.j);
     const d = dist(h.x, h.y, no.x, no.y);
     const chave = r.alvo.i + ',' + r.alvo.j;
@@ -1887,7 +1878,6 @@ export class Jogo {
     for (const [id, v] of e.voto.votantes) if (v === res.id && quem.length < 3) quem.push(this.nickDe(id));
     this.escolhaRes = { carta, votos: res.votos, total: e.voto.total, auto: res.auto, empate: !!res.empate, quem, ate: this.t + 3.5, voto: e.voto };
     this.emit('habilidade', { carta, votos: res.votos, auto: res.auto, quem, x: h.x, y: h.y });
-    if (this.esperandoEscolha) this.esperandoEscolha.faltam--;   // esperando no cruzamento: uma a menos
     this.escolha = null;
     this.escolhaEspera = this.niveisPendentes >= 2 ? ESCOLHA_RAPIDA.espera : 3.5;
   }
