@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { Jogo } from '../public/js/core/jogo.js';
 import { ESCALA_AMEACA, MORDIDA, TOQUE } from '../public/js/core/dano.js';
 import { ZUMBIS } from '../public/js/core/dados.js';
+import { SOBREVIVENCIA } from '../public/js/core/sobrevivencia.js';
 import { AMEACA } from '../public/js/core/ameaca.js';
 import { makeRng, fmtTempo } from '../public/js/core/util.js';
 
@@ -21,6 +22,8 @@ if (process.env.AMEACA) Object.assign(AMEACA, JSON.parse(process.env.AMEACA));
 // MORDIDA='{"folga":0.3}' / TOQUE='{"porSegundo":3}' (dano.js); DANO_ZUMBI='{"comum":6}' muda o dano base de cada zumbi
 if (process.env.MORDIDA) Object.assign(MORDIDA, JSON.parse(process.env.MORDIDA));
 if (process.env.TOQUE) Object.assign(TOQUE, JSON.parse(process.env.TOQUE));
+// SOBREV='{"xpRampa":1}' muda sobrevivencia.js → SOBREVIVENCIA (ritmo de sobrevivência)
+if (process.env.SOBREV) Object.assign(SOBREVIVENCIA, JSON.parse(process.env.SOBREV));
 if (process.env.DANO_ZUMBI) for (const [k, v] of Object.entries(JSON.parse(process.env.DANO_ZUMBI))) ZUMBIS[k].dano = v;
 const presentes = Object.entries(config.presentes.por_nome);
 

@@ -11,7 +11,7 @@ let ok = 0;
 const teste = (nome, fn) => { fn(); ok++; console.log('  ✔', nome); };
 const DT = 1 / 30;
 // herói sem atacar (senão ele mata o zumbi antes do efeito)
-const jogo = (seed = 3) => { const j = new Jogo({ seed }); j.zumbis = []; j.spawnT = 999; j.protecao = 0; j.hero.invT = 999; j.hero.folegoCd = 1e9; j.hero.arma = null; return j; };
+const jogo = (seed = 3) => { const j = new Jogo({ sobrevivencia: false, seed }); j.zumbis = []; j.spawnT = 999; j.protecao = 0; j.hero.invT = 999; j.hero.folegoCd = 1e9; j.hero.arma = null; return j; };
 const ouvir = j => { const ev = []; const e0 = j.emit.bind(j); j.emit = (t, d) => { ev.push({ t, ...d }); return e0(t, d); }; return ev; };
 // herói parado no lugar e sem atacar (como esperando no cruzamento), pra medir só o zumbi da tela
 const passar = (j, seg, cada) => { const p = { x: j.hero.x, y: j.hero.y }; for (let i = 0; i < seg / DT; i++) { j.hero.vida = j.hero.vidaMax; j.hero.corpoCd = 9; j.hero.tiroCd = 9; j.update(DT); j.hero.x = p.x; j.hero.y = p.y; cada?.(); } };

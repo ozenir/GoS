@@ -44,6 +44,10 @@ export const STATUS = {
   // habilidades (habilidades.js)
   turbo:       { nome: 'Turbo', emoji: '🏍️', lado: 'positivo', duracao: 3, maxPilhas: 1, classe: 'entregador', mods: [{ attr: 'velocidade', mult: 1.45 }, { attr: 'esquiva', soma: 0.2 }], so: 'heroi' },
   adrenalina:  { nome: 'Adrenalina', emoji: '💉', lado: 'positivo', duracao: 4, maxPilhas: 1, classe: 'enfermeira', mods: [{ attr: 'cadencia', mult: 1.5 }, { attr: 'velocidade', mult: 1.15 }], so: 'heroi' },
+  // achados nos prédios (room.js → LOJAS): duram quarteirões
+  energizado:  { nome: 'Energético', emoji: '🥤', lado: 'positivo', duracao: 30, maxPilhas: 1, mods: [{ attr: 'velocidade', mult: 1.25 }], so: 'heroi', texto: '+25% de velocidade' },
+  vitaminado:  { nome: 'Vitaminas', emoji: '🍊', lado: 'positivo', duracao: 30, maxPilhas: 1, mods: [{ attr: 'defesa', soma: 0.15 }], so: 'heroi', texto: '+15% de resistência' },
+  medicado:    { nome: 'Remédio', emoji: '💊', lado: 'positivo', duracao: 30, maxPilhas: 1, porSegundo: { cura: 0.6 }, so: 'heroi', texto: 'regenera 0,6 de vida por segundo' },
   // Inspiração (doação, recompensas.js): toma 20% do dano e solta pulsos de luz em volta (jogo.js)
   inspirado:   { nome: 'Inspirado', emoji: '✨', lado: 'positivo', duracao: 10, maxPilhas: 1, so: 'heroi' },
 

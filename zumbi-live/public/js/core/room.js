@@ -8,22 +8,26 @@ import { T } from './city.js';
 
 // O que cada lugar tem por dentro
 //   tamanho  [largura, fundo] em casas     plantas  quais arrumações de móveis podem sair
+//   loot     [[item, quantos, chance de cada um (padrão 1)]] — nem sempre tem tudo: é preciso ir conferir
+//   oque     o que dá pra achar lá (aparece na votação: cada direção leva a um lugar)
 //   perigos  [[tipo (ambiente.js), quantos]]
+// Itens com propósito (jogo.js → pegar): 🥫 comida (cura), 🥤 energético (mais rápido), 🍊 vitaminas (resistência),
+// 💊 remédio (regeneração e cura a infecção), 🔫 arma (pistola ou escopeta, com munição contada)
 export const LOJAS = {
-  farmacia:  { zumbis: 3,  tamanho: [12, 10], chao: 'azulejo',  moveis: 'prateleira', plantas: ['fileiras', 'ilhas'],
-               loot: [['kit', 2], ['cura_pequena', 1]], perigos: [['vidro', 1]] },
-  mercado:   { zumbis: 4,  tamanho: [13, 10], chao: 'piso',     moveis: 'prateleira', plantas: ['fileiras', 'corredor'],
-               loot: [['municao', 2], ['cura_pequena', 2]], perigos: [['vidro', 1]] },
-  casa:      { zumbis: 3,  tamanho: [10, 8],  chao: 'piso',     moveis: 'sofa',       plantas: ['ilhas', 'corredor'],
-               loot: [['cura_pequena', 2], ['municao', 1]], perigos: [['entulho', 1]] },
-  posto:     { zumbis: 5,  tamanho: [12, 10], chao: 'concreto', moveis: 'bancada',    plantas: ['ilhas', 'fileiras'],
-               loot: [['colete', 1], ['municao', 2]], perigos: [['fogo', 1], ['lama', 1]] },
-  fabrica:   { zumbis: 8,  tamanho: [14, 11], chao: 'concreto', moveis: 'maquina',    plantas: ['corredor', 'ilhas'],
+  farmacia:  { zumbis: 3,  tamanho: [12, 10], chao: 'azulejo',  moveis: 'prateleira', plantas: ['fileiras', 'ilhas'], oque: 'remédios, curativos',
+               loot: [['remedio', 2, 0.75], ['cura_pequena', 2], ['kit', 1, 0.5]], perigos: [['vidro', 1]] },
+  mercado:   { zumbis: 4,  tamanho: [13, 10], chao: 'piso',     moveis: 'prateleira', plantas: ['fileiras', 'corredor'], oque: 'comida, energético, vitaminas',
+               loot: [['comida', 2], ['comida', 1, 0.5], ['energetico', 1, 0.8], ['vitamina', 1, 0.7]], perigos: [['vidro', 1]] },
+  casa:      { zumbis: 3,  tamanho: [10, 8],  chao: 'piso',     moveis: 'sofa',       plantas: ['ilhas', 'corredor'], oque: 'comida, curativos',
+               loot: [['comida', 1], ['cura_pequena', 1], ['municao', 1, 0.5]], perigos: [['entulho', 1]] },
+  posto:     { zumbis: 5,  tamanho: [12, 10], chao: 'concreto', moveis: 'bancada',    plantas: ['ilhas', 'fileiras'], oque: 'colete, munição, energético',
+               loot: [['colete', 1], ['municao', 2], ['energetico', 1, 0.6]], perigos: [['fogo', 1], ['lama', 1]] },
+  fabrica:   { zumbis: 8,  tamanho: [14, 11], chao: 'concreto', moveis: 'maquina',    plantas: ['corredor', 'ilhas'], oque: 'baú, colete, munição',
                loot: [['bau_medio', 1], ['colete', 1], ['municao', 2]], perigos: [['acido', 2], ['fogo', 1], ['arame', 1]] },
-  delegacia: { zumbis: 7,  tamanho: [12, 10], chao: 'piso',     moveis: 'mesa',       plantas: ['fileiras', 'corredor'],
-               loot: [['bau_medio', 1], ['municao', 2], ['colete', 1]], perigos: [['arame', 1]] },
-  hospital:  { zumbis: 10, tamanho: [14, 10], chao: 'azulejo',  moveis: 'maca',       plantas: ['fileiras'],
-               loot: [['kit', 2], ['bau_medio', 1], ['bau_lendario_chance', 1]], perigos: [['vidro', 1], ['acido', 1]] }
+  delegacia: { zumbis: 7,  tamanho: [12, 10], chao: 'piso',     moveis: 'mesa',       plantas: ['fileiras', 'corredor'], oque: 'armas, munição, colete',
+               loot: [['arma', 1], ['municao', 2], ['colete', 1], ['bau_medio', 1, 0.35]], perigos: [['arame', 1]] },
+  hospital:  { zumbis: 10, tamanho: [14, 10], chao: 'azulejo',  moveis: 'maca',       plantas: ['fileiras'], oque: 'remédios, kits de cura',
+               loot: [['remedio', 2], ['kit', 2], ['bau_medio', 1, 0.5], ['bau_lendario_chance', 1]], perigos: [['vidro', 1], ['acido', 1]] }
 };
 
 export class Room {

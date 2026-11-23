@@ -90,6 +90,7 @@ export class City {
     this.tqCache = new Map();          // tipo de quarteirão por quarteirão (consultado milhares de vezes por quadro)
     this.bairroCache = new Map();
     this.dyn = new Map();        // obstáculos que aparecem no meio do jogo (barricadas, carro com alarme): "x,y" -> objeto
+    this.lojasGarantidas = new Map();   // "i,j" -> tipo: lugar prometido na votação (o destino de uma direção)
   }
 
   // Nó (cruzamento) i,j fica no meio das duas ruas
@@ -224,19 +225,41 @@ export class City {
     };
   }
 
+  // Garante um lugar do tipo `tipo` no cruzamento i,j (o destino prometido numa direção da votação).
+  // Usa uma das 4 esquinas que tenha prédios. Devolve a loja, ou null se não der (praça, parque...).
+  garantirLoja(i, j, tipo) {
+    if ((i === 0 && j === 0) || this.pracaAt(i, j)) return null;
+    const ja = this.shopAt(i, j);
+    if (ja) return ja;
+    const c0 = Math.floor(hash3(i, j, 11, this.seed) * 4);
+    for (let k = 0; k < 4; k++) {
+      const c = (c0 + k) % 4;
+      if (this.tipoQuarteirao(c === 0 || c === 2 ? i : i - 1, c === 0 || c === 1 ? j : j - 1) !== 'predios') continue;
+      this.lojasGarantidas.set(i + ',' + j, { tipo, c });
+      return this.shopAt(i, j);
+    }
+    return null;
+  }
+
   // Loja no cruzamento i,j (ou null). Fica num dos 4 prédios da esquina, com a porta virada pra rua horizontal.
   shopAt(i, j) {
     if (i === 0 && j === 0) return null; // o primeiro cruzamento nunca tem loja: o herói ainda está se ajeitando
+    const garantida = this.lojasGarantidas.size ? this.lojasGarantidas.get(i + ',' + j) : null;
+    if (garantida) return this.lojaNaEsquina(i, j, garantida.c, garantida.tipo);
     if (hash3(i, j, 10, this.seed) > 0.5) return null;
     if (this.pracaAt(i, j)) return null;  // cruzamento com praça: a praça é o destaque
     const c = Math.floor(hash3(i, j, 11, this.seed) * 4);
-    // c: 0 = sudeste do cruzamento, 1 = sudoeste, 2 = nordeste, 3 = noroeste
+    return this.lojaNaEsquina(i, j, c, null);
+  }
+
+  // c: 0 = sudeste do cruzamento, 1 = sudoeste, 2 = nordeste, 3 = noroeste. tipo null = o do bairro
+  lojaNaEsquina(i, j, c, tipoFixo) {
     const bi = c === 0 || c === 2 ? i : i - 1;
     const bj = c === 0 || c === 1 ? j : j - 1;
     if (this.tipoQuarteirao(bi, bj) !== 'predios') return null;
     const lojas = BAIRROS[this.bairro(bi, bj)].lojas;
-    if (!lojas.length) return null;
-    const tipo = escolher(lojas, hash3(i, j, 12, this.seed));
+    if (!lojas.length && !tipoFixo) return null;
+    const tipo = tipoFixo || escolher(lojas, hash3(i, j, 12, this.seed));
     const sx = c === 0 || c === 2 ? 0 : 1;
     const sy = c === 0 || c === 1 ? 0 : 1;
     const x0 = bi * P + BAND + sx * (BSIZE + 1), y0 = bj * P + BAND + sy * (BSIZE + 1);

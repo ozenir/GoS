@@ -5,7 +5,7 @@ import { Jogo } from '../public/js/core/jogo.js';
 let ok = 0;
 const teste = (nome, fn) => { fn(); ok++; console.log('  ✔', nome); };
 const DT = 1 / 30;
-const jogo = () => { const j = new Jogo({ seed: 5, classe: 'policial' }); j.hero.invT = 1e9; j.zumbis = []; j.spawnT = 1e9; return j; };
+const jogo = () => { const j = new Jogo({ sobrevivencia: false, seed: 5, classe: 'policial' }); j.hero.invT = 1e9; j.zumbis = []; j.spawnT = 1e9; return j; };
 const comNome = (j, n) => j.zumbis.filter(z => z.nome === n);
 
 teste('entrou na live: surge um zumbi com o nome dela', () => {

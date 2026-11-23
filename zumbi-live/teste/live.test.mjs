@@ -59,7 +59,7 @@ teste('curtidas no formato novo: quantidade em "count"', () => {
 });
 
 teste('comentário "2" da live vira voto de direção no jogo', () => {
-  const j = new Jogo({ seed: 5, classe: 'policial' });
+  const j = new Jogo({ sobrevivencia: false, seed: 5, classe: 'policial' });
   j.protecao = 99;
   for (let i = 0; i < 60; i++) j.update(1 / 30);
   assert.ok(j.voto?.aberta, 'votação aberta');
@@ -71,7 +71,7 @@ teste('comentário "2" da live vira voto de direção no jogo', () => {
 });
 
 teste('comentário "b" da live vira voto de habilidade no jogo', () => {
-  const j = new Jogo({ seed: 5, classe: 'policial' });
+  const j = new Jogo({ sobrevivencia: false, seed: 5, classe: 'policial' });
   j.protecao = 99;
   j.ganharXp(xpParaNivel(1));
   for (let i = 0; i < 60; i++) j.update(1 / 30);
@@ -81,7 +81,7 @@ teste('comentário "b" da live vira voto de habilidade no jogo', () => {
 });
 
 teste('o próprio dono da live também vota (não é ignorado)', () => {
-  const j = new Jogo({ seed: 5, classe: 'policial' });
+  const j = new Jogo({ sobrevivencia: false, seed: 5, classe: 'policial' });
   j.protecao = 99;
   for (let i = 0; i < 60; i++) j.update(1 / 30);
   j.handle(paraOJogo(comentario('esquerda', dono)));
@@ -132,7 +132,7 @@ teste('o TikTok não mandou o valor (0): usa o preço da tabela (ou 1), pra cont
 teste('Rosa da live: vira cura, conta no cabo de guerra e solta o drop pro herói', () => {
   const r = lerPresente(presente());
   const [parte] = planoDoPresente(tabela, r.nome, moedasDoPresente(tabela, r.nome, r.moedas).moedas, r.total);
-  const j = new Jogo({ seed: 5, classe: 'policial' }); j.hero.invT = 1e9;
+  const j = new Jogo({ sobrevivencia: false, seed: 5, classe: 'policial' }); j.hero.invT = 1e9;
   for (let i = 0; i < 30; i++) j.update(1 / 30);
   const ev = []; const e0 = j.emit.bind(j); j.emit = (t, d) => { ev.push(t); return e0(t, d); };
   const p = pessoa(presente().user);

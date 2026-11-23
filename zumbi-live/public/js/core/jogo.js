@@ -33,6 +33,10 @@ import { PORTAL, RELIQUIAS, sortearRodadas, forcaGuardiao, escolhaPortalIA, reve
 // Quanto tempo o resultado da votação fica na tela; a próxima votação só abre depois disso
 export const RESULTADO_SEG = 10;
 import { Historia, HISTORIA } from './historia.js';
+import { SOBREVIVENCIA, rampa, montarCena, cenaAtiva, atualizarCena, zumbiDevorando, calcularDuelo, boteDoZumbi, movimentoDuelo, calmo, pesosDestino, vontadeDestino } from './sobrevivencia.js';
+import { LOJAS } from './room.js';
+import { lugaresDaViagem, rotaAte, ruaLivre, pontosDaRota } from './mapa.js';
+import { ENCONTROS, criarEncontro, decidirEncontro, escolhaEncontroIA, atualizarEncontro, voltaramComoZumbi } from './encontros.js';
 
 export const PADRAO = {
   votoDur: 10, relNum: 10, relDest: 12, protecao: 15, likesPor: 300, maxZ: 90,
@@ -65,6 +69,8 @@ const CHAVES_AMEACA = {
   horda_a_cada_quarteiroes: 'hordaCadaQuarteiroes', zumbis_por_quarteirao: 'cotaBase', zumbis_por_quarteirao_por_nivel: 'cotaPorNivel',
   zumbis_na_rua_base: 'naturaisBase', zumbis_na_rua_por_nivel: 'naturaisPorNivel', ameaca_por_caminho_perigoso: 'porPerigo'
 };
+// Ritmo de sobrevivência (sobrevivencia.js)
+const CHAVES_SOBREV = { quarteiroes_ate_a_rua_cheia: 'quarteiroesAteCheio', zumbis_no_segundo_quarteirao: 'rampaInicio', passo_cuidadoso: 'calmaVel', cena_do_primeiro_quarteirao: 'cenaLigada', viagem_pelo_mapa: 'mapa' };
 // Chances de cada tipo de caminho (caminhos.js)
 const CHAVES_CAMINHO = { caminho_perigoso_porcento: 'perigoso', caminho_livre_porcento: 'livre', caminho_historia_porcento: 'historia' };
 
@@ -92,6 +98,10 @@ export class Jogo {
   constructor(opts = {}) {
     this.cfg = { ...PADRAO };
     this.A = { ...AMEACA };
+    // ritmo de sobrevivência (sobrevivencia.js). opts.sobrevivencia = false: o ritmo antigo, de arcade (só testes)
+    this.S = { ...JSON.parse(JSON.stringify(SOBREVIVENCIA)), cenaLigada: opts.cena ?? 1 };
+    this.S.mapa = opts.mapa ?? 1;   // viagem pelo mapa (mapa.js): o chat escolhe pra onde ir, não a direção
+    if (opts.sobrevivencia === false) Object.assign(this.S, { cenaLigada: 0, rampaInicio: 1, calmaVel: 1, tempoMin: 1, xpRampa: 0, quarteiroesAteCheio: 0, destinoChance: 0, mapa: 0, duelo: { ...this.S.duelo, max: 0 } });
     this.chances = { ...CHANCES_PADRAO };
     this.historia = new Historia(opts.historiaVista);
     this.classeFixa = opts.classe && CLASSES[opts.classe] ? opts.classe : null;   // só para testes
@@ -129,6 +139,8 @@ export class Jogo {
       if (a && Number.isFinite(Number(v)) && Number(v) >= 0) this.A[a] = Number(v);
       const ch = CHAVES_CAMINHO[k];
       if (ch && Number.isFinite(Number(v)) && Number(v) >= 0) this.chances[ch] = Number(v);
+      const sb = CHAVES_SOBREV[k];
+      if (sb && Number.isFinite(Number(v)) && Number(v) >= 0) this.S[sb] = Number(v);
     }
   }
 
@@ -185,6 +197,11 @@ export class Jogo {
     this.decisao = null;
     this.indoPorta = null;
     this.indoPraca = null;
+    this.destino = null;          // lugar no fim da rua escolhida (mercado, hospital...): entra quando chega
+    this.viagem = null;           // viagem pelo mapa (mapa.js): { lugar, dirs } — a rota até o lugar escolhido
+    this.visitados = [];          // cruzamentos ("i,j") dos últimos lugares visitados: o mapa não oferece de novo
+    this.encontro = null;         // alguém pedindo ajuda no caminho (encontros.js)
+    this.perdidos = [];           // quem ficou pra trás: volta como zumbi uns quarteirões depois
     this.arena = null;
     this.ultimaLoja = -9;
     this.stats = { inicio: this.t, quarteiroes: 0, abates: 0, predios: 0, ajudou: new Map(), atrapalhou: new Map(), matador: null, cruzamentos: 0, caminhos: { perigoso: 0, livre: 0, historia: 0 } };
@@ -209,7 +226,11 @@ export class Jogo {
     this.carros = [];               // conversíveis dos zumbis passando (presente de atrapalhar de 1 moeda)
     this.paraquedistas = [];        // zumbis descendo de paraquedas em cima do herói (idem)
     this.tomates = [];              // tomates (e pedras) voando do zumbi do tomate (e da pedra) até o herói
-    this.proxHordaQ = this.A.hordaCadaQuarteiroes;   // quarteirão da próxima horda gigante
+    // quarteirão da próxima horda gigante: a primeira só quando a rua já está cheia (sobrevivencia.js → rampa)
+    this.proxHordaQ = Math.max(this.A.hordaCadaQuarteiroes, this.S.quarteiroesAteCheio);
+    this.tempoAmeaca = 0;           // tempo que conta pra ameaça (na rua calma do começo, conta menos)
+    this.cena = null;               // a cena do 1º quarteirão (zumbi devorando uma pessoa)
+    this.dueloAtivo = null;
     this.alarmeT = 0;
     this.alarmeCarro = null;
     this.heliT = 0;
@@ -222,6 +243,8 @@ export class Jogo {
     // Presentes que ajudam e chegaram enquanto o herói anterior estava morto valem para o novo
     const pend = this.pendentesAjuda.splice(0);
     for (const p of pend) this.agendar(2 + this.rng.next(), () => this.comPresente(p.quem, () => EFEITOS[p.regra.efeito].aplicar(this, p.regra, p.qtd, p.quem)));
+    // 1º quarteirão: a cena (um zumbi devorando alguém). A votação da direção só abre depois da luta.
+    if (this.S.cenaLigada && montarCena(this)) this.votoAbreT = 1e9;
   }
 
   morrer() {
@@ -380,6 +403,9 @@ export class Jogo {
     this.atualizarPeriodo();
     this.heliT = Math.max(0, this.heliT - dt);
     this.diretor(dt);
+    atualizarCena(this, dt);
+    atualizarEncontro(this, dt);
+    this.dueloAtivo = calcularDuelo(this);
     this.processarFila(dt);
     this.zumbisDeQuemEntrou(dt);
     this.atualizarHeroi(dt);
@@ -400,7 +426,9 @@ export class Jogo {
     // Desgaste da cidade: começa depois de 1 minuto e chega no máximo com 10 minutos de run.
     // Ruas e prédios que aparecem depois disso vêm com buracos, carros batidos e em chamas, prédios pegando fogo.
     this.city.desgaste = clamp((minutos - 1) / 9, 0, 1);
-    const n = nivelAmeaca(minutos, this.stats.quarteiroes, this.nivelForca(), this.A, this.ameacaBonus);
+    // na rua calma do começo o tempo pesa menos na ameaça (sobrevivencia.js)
+    this.tempoAmeaca = (this.tempoAmeaca || 0) + dt * Math.max(this.S.tempoMin, this.rampaAtual());
+    const n = nivelAmeaca(this.tempoAmeaca / 60, this.stats.quarteiroes, this.nivelForca(), this.A, this.ameacaBonus);
     if (!this.room) {
       const b = this.city.bairroNaPosicao(this.hero.x, this.hero.y);
       if (b !== this.bairroAtual) {
@@ -559,6 +587,7 @@ export class Jogo {
   /* =================== Sala (dentro do prédio) =================== */
   entrarPredio(shop) {
     const h = this.hero;
+    this.lembrarVisita(shop.i, shop.j);
     this.room = new Room(shop);
     this.map = this.room;
     this.salaT = 0;
@@ -584,11 +613,14 @@ export class Jogo {
       const tipo = shop.tipo === 'hospital' && this.rng.chance(0.3) ? 'gordo' : this.rng.chance(0.15 * shop.risco) ? 'corredor' : 'comum';
       this.criarZumbi(tipo, p.x, p.y, null, { nascendo: 0.01, dormindo: this.rng.chance(0.5) });
     }
-    for (const [kind, qtd] of info.loot) for (let k = 0; k < qtd; k++) {
+    // o que tem lá dentro (cada item com sua chance: nem sempre tem tudo)
+    for (const [kind, qtd, chance = 1] of info.loot) for (let k = 0; k < qtd; k++) {
+      if (!this.rng.chance(chance)) continue;
       let kk = kind;
       if (kind === 'bau_lendario_chance') { if (!this.rng.chance(0.35)) continue; kk = 'bau_lendario'; }
       const p = this.room.pontoLivre(this.rng, this.room.entrada, 3);
-      this.itens.push({ id: proxId++, kind: kk, x: p.x, y: p.y, z: 0, vz: 0, data: kk === 'kit' ? { valor: 35 } : {}, quem: null, vida: 999, achado: true });
+      const data = kk === 'kit' ? { valor: 35 } : kk === 'arma' ? this.armaDaDelegacia() : {};
+      this.itens.push({ id: proxId++, kind: kk, x: p.x, y: p.y, z: 0, vz: 0, data, quem: null, vida: 999, achado: true });
     }
     this.emit('entrou_predio', { tipo: shop.tipo, nome: shop.nome, emoji: shop.emoji });
   }
@@ -768,6 +800,7 @@ export class Jogo {
   // Opções do próximo cruzamento: esquerda, frente, direita, voltar (+ entrar, se tiver loja).
   // Rua bloqueada não entra na votação (aparece riscada); rua sem saída entra, marcada (tem baú no fim).
   abrirVotacao() {
+    if (this.S.mapa && this.abrirVotacaoDestino()) return;
     const r = this.rota, N = r.alvo;
     const shop = this.city.shopAt(N.i, N.j);
     const ops = [], bloqueadas = [];
@@ -775,6 +808,12 @@ export class Jogo {
       const t = this.city.trecho(N.i, N.j, d);
       if (t.s.bloqueio) { bloqueadas.push({ id, dir: d, ...OPCOES[id] }); continue; }
       ops.push({ id, dir: d, semSaida: !!t.s.semSaida, bairro: t.s.bairro });
+    }
+    // cada direção leva a um lugar no fim da rua (mercado, hospital, delegacia...): ir pra buscar alguma coisa
+    const usados = new Set();
+    for (const o of ops) {
+      const dest = o.id !== 'voltar' && !o.semSaida ? this.destinoDaDirecao(N, o.dir, usados) : null;
+      if (dest) { o.destino = dest; usados.add(dest.tipo); }
     }
     const praca = this.city.pracaAt(N.i, N.j);
     if (shop) ops.push({ id: 'entrar', shop });
@@ -788,18 +827,85 @@ export class Jogo {
     this.emit('votacao_abriu', { opcoes: ops.map(o => o.id), loja: shop ? { tipo: shop.tipo, nome: shop.nome, emoji: shop.emoji } : null });
   }
 
+  // Viagem pelo mapa: a votação mostra os lugares mais perto (o mais perto de cada necessidade: comida, cura,
+  // armas; e a praça, se tiver) com a distância e o que tem lá. Números 1 a 4. false = nenhum lugar (vota a direção).
+  abrirVotacaoDestino() {
+    const N = this.rota.alvo;
+    const lugares = lugaresDaViagem(this.city, N, this.rng, undefined, this.visitados);
+    if (!lugares.length) return false;
+    const ids = ['esquerda', 'frente', 'direita', 'entrar'];
+    const ops = lugares.slice(0, 4).map((l, k) => ({ id: ids[k], n: k + 1, nome: l.nome.toUpperCase(), seta: l.emoji, lugar: { ...l, pts: pontosDaRota(N, l.dirs) } }));
+    this.voto = new Votacao(ops, this.cfg.votoDur, this.cfg.atraso);
+    this.voto.mapa = { ini: { i: N.i, j: N.j } };
+    this.emit('votacao_abriu', { opcoes: ops.map(o => o.id), mapa: true });
+    return true;
+  }
+
+  // Começa (ou segue) a viagem: devolve a direção a tomar no cruzamento r.alvo, como uma opção de votação.
+  // A rua do caminho fechou (carros batidos aparecem com o tempo)? Recalcula; sem caminho, a viagem acaba.
+  passoDaViagem() {
+    const V = this.viagem, r = this.rota;
+    if (!V) return null;
+    let d = V.dirs[0];
+    if (d == null || !ruaLivre(this.city, r.alvo.i, r.alvo.j, d)) {
+      const nova = rotaAte(this.city, r.alvo, V.lugar);
+      if (!nova || !nova.length) { this.viagem = null; this.emit('aviso', { texto: '🚧 O caminho fechou: escolham outro lugar', tipo: 'perigo' }); return null; }
+      V.dirs = nova; d = V.dirs[0];
+    }
+    V.dirs.shift();
+    const id = d === r.dir ? 'frente' : d === turnLeft(r.dir) ? 'esquerda' : d === turnRight(r.dir) ? 'direita' : 'voltar';
+    return { id, dir: d, ...OPCOES[id], auto: true };
+  }
+
+  // Depois de andar um quarteirão na viagem: chegou na esquina do lugar (vai pra porta) ou marca o próximo passo
+  // (o herói segue sozinho; atravessa quando a área estiver limpa, como sempre)
+  seguirViagem() {
+    const V = this.viagem, r = this.rota;
+    if (!V) return;
+    if (r.alvo.i === V.lugar.i && r.alvo.j === V.lugar.j) {
+      this.destino = { i: V.lugar.i, j: V.lugar.j, praca: !!V.lugar.praca };
+      return;
+    }
+    const op = this.passoDaViagem();
+    if (!op) return;
+    this.decisao = op;
+    this.preparo = this.prepararDestino();
+    // no meio da viagem, às vezes alguém pede ajuda numa rua do lado (encontros.js)
+    V.passos = (V.passos || 0) + 1;
+    if (V.passos >= 1 && !this.encontro && this.stats.quarteiroes >= ENCONTROS.desdeQuarteirao && this.rng.chance(ENCONTROS.chance)) {
+      this.agendar(3 + this.rng.next() * 3, () => {
+        if (this.fase === 'jogo' && this.viagem && !this.encontro && !this.voto && !this.room && !this.arena && !this.caido) criarEncontro(this);
+      });
+    }
+  }
+
+  // O lugar no fim da rua que sai do cruzamento N na direção dir: a loja que já existe lá ou, às vezes, uma
+  // sorteada pelo que o herói precisa (sobrevivencia.js → pesosDestino). null = só rua.
+  destinoDaDirecao(N, dir, usados) {
+    const M = { i: N.i + DIRS[dir][0], j: N.j + DIRS[dir][1] };
+    let shop = this.city.shopAt(M.i, M.j);
+    if (!shop && this.S.destinoChance > 0 && this.rng.chance(this.S.destinoChance)) {
+      const tipo = this.rng.weighted(pesosDestino(this.hero, usados));
+      shop = this.city.garantirLoja(M.i, M.j, tipo);
+    }
+    if (!shop) return null;
+    return { i: M.i, j: M.j, tipo: shop.tipo, nome: shop.nome, emoji: shop.emoji, oque: LOJAS[shop.tipo]?.oque || '' };
+  }
+
   fecharVotacao() {
+    if (this.voto.encontro) { const res = this.voto.fechar(() => escolhaEncontroIA(this), this.rng); decidirEncontro(this, res.id, res); return; }
     const res = this.voto.fechar(ops => this.escolhaIA(ops), this.rng);
     const op = this.voto.opcoes.find(o => o.id === res.id);
     this.decisao = op;
     this.decididoEm = this.t;
     // o que tem lá já fica sorteado agora, pro resultado poder contar (previsao.js)
-    this.preparo = op.id !== 'entrar' && !op.semSaida ? this.prepararDestino() : null;
+    this.preparo = (op.lugar ? op.lugar.dist > 0 : op.id !== 'entrar') && !op.semSaida ? this.prepararDestino() : null;
+    if (op.lugar && !op.lugar.dist) this.preparo = null;   // o lugar é aqui mesmo: não anda quarteirão
     const previsao = preverDestino(this, op, this.preparo);
     this.voto.previsao = previsao;
     const quem = [];
     for (const [id, v] of this.voto.votantes) if (v === res.id && quem.length < 3) quem.push(this.nickDe(id));
-    this.emit('decisao', { id: op.id, n: op.n, nome: op.nome, seta: op.seta, votos: res.votos, total: this.voto.total, auto: res.auto, empate: !!res.empate, quem, loja: op.shop ? op.shop.nome : null, praca: !!op.praca, previsao });
+    this.emit('decisao', { id: op.id, n: op.n, nome: op.nome, seta: op.seta, votos: res.votos, total: this.voto.total, auto: res.auto, empate: !!res.empate, quem, loja: op.shop ? op.shop.nome : null, praca: !!op.praca, previsao, caminho: this.preparo?.caminho || null, lugar: op.lugar ? { nome: op.lugar.nome, emoji: op.lugar.emoji, dist: op.lugar.dist, pts: op.lugar.pts, i: op.lugar.i, j: op.lugar.j } : null });
   }
 
   // Sorteia o que vai ter na rua escolhida (praia? que caminho?) na hora que a votação fecha
@@ -810,6 +916,8 @@ export class Jogo {
 
   escolhaIA(ops) {
     const h = this.hero, vidaPct = h.vida / h.vidaMax;
+    // viagem pelo mapa: o lugar que ele mais precisa, preferindo os mais perto
+    if (ops.some(o => o.lugar)) return this.rng.weighted(ops.map(o => [o.id, (o.lugar.praca ? (vidaPct > 0.7 ? 0.8 : 0.1) : vontadeDestino(h, o.lugar.tipo)) / (1 + o.lugar.dist * 0.25)]));
     const pesos = ops.map(o => {
       if (o.id === 'entrar' && o.praca) return [o.id, this.stats.cruzamentos - this.ultimaLoja < 3 ? 0.1 : vidaPct > 0.6 ? 0.8 : 0.15];
       if (o.id === 'entrar') {
@@ -820,7 +928,7 @@ export class Jogo {
         return [o.id, 0.7 - o.shop.risco * 0.1];
       }
       if (o.id === 'voltar') return [o.id, ops.length === 1 ? 1 : 0.06];
-      const base = o.id === 'frente' ? 1.3 : 1;
+      const base = (o.id === 'frente' ? 1.3 : 1) * (o.destino ? vontadeDestino(h, o.destino.tipo) : 1);
       if (o.semSaida) return [o.id, base * (vidaPct > 0.5 ? 0.5 : 0.15)];   // baú no fim, mas é arriscado
       return [o.id, base];
     });
@@ -828,16 +936,29 @@ export class Jogo {
   }
 
   aplicarDecisao() {
-    const r = this.rota, op = this.decisao;
+    const r = this.rota;
+    let op = this.decisao;
     this.decisao = null;
     this.areaLiberada = false;
-    this.voto = null;
+    if (!this.voto?.encontro) this.voto = null;
+    // o chat escolheu um lugar no mapa: começa a viagem (o 1º passo é a direção que sai daqui)
+    if (op.lugar) {
+      this.viagem = { lugar: op.lugar, dirs: [...op.lugar.dirs] };
+      this.emit('viagem', { nome: op.lugar.nome, emoji: op.lugar.emoji, dist: op.lugar.dist });
+      if (!op.lugar.dirs.length) { this.seguirViagem(); return; }   // é aqui mesmo: vai pra porta
+      const prep = this.preparo;
+      op = this.passoDaViagem();
+      if (!op) return;
+      this.preparo = prep;
+    }
     this.stats.cruzamentos++;
     if (op.id === 'entrar') {
+      this.destino = null;
       if (op.praca) this.indoPraca = op.praca; else this.indoPorta = op.shop;
       return;
     }
     r.i = r.alvo.i; r.j = r.alvo.j;
+    this.destino = op.destino || null;   // foi pra buscar alguma coisa: entra no lugar do fim da rua
     const virou = op.dir !== r.dir;
     r.dir = op.dir;
     r.alvo = { i: r.i + DIRS[r.dir][0], j: r.j + DIRS[r.dir][1] };
@@ -852,14 +973,19 @@ export class Jogo {
     const t = this.city.trecho(r.i, r.j, r.dir);
     if (t.s.semSaida) this.entrarBeco(t);
     else this.iniciarTrecho(prep?.caminho);
+    this.seguirViagem();
   }
 
   /* =================== Arena (praça com chefe) =================== */
   // Duração máxima e ritmo das ondas da arena
   static ARENA = { duracao: 100, ondaCada: 9, chefeVida: 1.6 };
 
+  // os últimos lugares visitados (o mapa não oferece de novo logo em seguida)
+  lembrarVisita(i, j) { this.visitados = [...(this.visitados || []).filter(k => k !== i + ',' + j), i + ',' + j].slice(-3); }
+
   iniciarArena(praca) {
     const A = Jogo.ARENA;
+    this.lembrarVisita(praca.i, praca.j);
     this.indoPraca = null;
     this.ultimaLoja = this.stats.cruzamentos;
     this.stats.arenas = (this.stats.arenas || 0) + 1;
@@ -999,7 +1125,7 @@ export class Jogo {
   zumbisNaArea() {
     const h = this.hero, R = this.A.areaRaio;
     let n = 0;
-    for (const z of this.zumbis) if (!z.morto && !z.dormindo && dist2(z.x, z.y, h.x, h.y) < R * R) n++;
+    for (const z of this.zumbis) if (!z.morto && !z.dormindo && !z.devorando && dist2(z.x, z.y, h.x, h.y) < R * R) n++;   // (em cima de alguém, parado, não conta)
     return n;
   }
 
@@ -1011,7 +1137,7 @@ export class Jogo {
     const h = this.hero, R = this.A.areaRaio, poucos = this.poucosPraLimpar();
     let melhor = null, md = Infinity;
     for (const z of this.zumbis) {
-      if (z.morto || z.dormindo || z.nascendo > 0 || (z.tipo === 'explosivo' && !(poucos && h.arma))) continue;
+      if (z.morto || z.dormindo || z.devorando || z.nascendo > 0 || (z.tipo === 'explosivo' && !(poucos && h.arma))) continue;
       const d = dist2(z.x, z.y, h.x, h.y);
       if (d < md && d < R * R) { md = d; melhor = z; }
     }
@@ -1087,12 +1213,26 @@ export class Jogo {
       if (dist(h.x, h.y, d.x, d.y) < 0.45) { this.entrarPredio(this.indoPorta); return null; }
       return { x: d.x, y: d.y, porta: true };
     }
+    // decidiram ajudar alguém (encontros.js): vai até a pessoa (os zumbis dela levantam quando ele chega)
+    if (this.encontro?.fase === 'ajudando') { const p = this.encontro.pessoa; return { x: p.x, y: p.y, ajudando: true }; }
     if (r.beco) {
       // rua sem saída: vai até o fim (baú), depois dá meia-volta
       if (dist(h.x, h.y, r.beco.fim.x, r.beco.fim.y) < 0.8) { this.voltarDoBeco(); return this.objetivoRota(0); }
       return { x: r.beco.fim.x, y: r.beco.fim.y };
     }
-    if (!this.voto && !this.decisao) {
+    // indo pra um destino (mercado, hospital...): perto do cruzamento do fim da rua, vai pra porta
+    if (this.destino) {
+      const D = this.destino, no = this.city.nodePos(D.i, D.j);
+      if (r.alvo.i !== D.i || r.alvo.j !== D.j) this.destino = null;   // (foi parar em outra rua)
+      else if (dist(h.x, h.y, no.x, no.y) < 4) {
+        this.destino = null; this.viagem = null;
+        const praca = D.praca ? this.city.pracaAt(D.i, D.j) : null;
+        if (praca) { this.indoPraca = praca; this.emit('destino', { tipo: 'praca', nome: 'Praça', emoji: '⚔️' }); return { x: praca.entrada.x, y: praca.entrada.y, porta: true }; }
+        const shop = this.city.shopAt(D.i, D.j);
+        if (shop) { this.indoPorta = shop; this.emit('destino', { tipo: shop.tipo, nome: shop.nome, emoji: shop.emoji }); return { x: shop.door.x, y: shop.door.y, porta: true }; }
+      }
+    }
+    if (!this.voto && !this.decisao && !this.destino) {
       this.votoAbreT -= dt;
       if (this.votoAbreT <= 0) this.abrirVotacao();
     }
@@ -1111,7 +1251,7 @@ export class Jogo {
       if (dist(h.x, h.y, alvo.x, alvo.y) < 1.4) {
         // só atravessa com a área limpa (todos os zumbis em volta mortos). A escolha de habilidade NÃO segura o
         // herói: ele segue andando enquanto o chat vota, e a habilidade entra quando a votação fechar
-        if (this.decisao && this.liberarArea(dt)) { this.aplicarDecisao(); return this.objetivoRota(0); }
+        if (this.decisao && this.liberarArea(dt) && !this.voto?.encontro) { this.aplicarDecisao(); return this.objetivoRota(0); }
         if (this.limpando) { const caca = this.cacarZumbi(alvo); if (caca) return caca; }
         return { x: alvo.x, y: alvo.y, esperando: true };
       }
@@ -1144,6 +1284,7 @@ export class Jogo {
   atualizarHeroi(dt) {
     const h = this.hero;
     h.tiroCd -= dt; h.corpoCd -= dt;
+    if (h.tropecou > 0) h.tropecou = Math.max(0, h.tropecou - dt);   // tropeçou no duelo: caído uns instantes (sobrevivencia.js)
     if (h.recargaT > 0 && (h.recargaT -= dt) <= 0) { h.recargaT = 0; h.pente = ARMAS[h.arma]?.pente ?? null; this.emit('recarregou', { x: h.x, y: h.y }); }
     h.invT = Math.max(0, h.invT - dt);
     h.folegoCd = Math.max(0, (h.folegoCd || 0) - dt);
@@ -1227,7 +1368,7 @@ export class Jogo {
     else if (obj.esperando && dObj > 0.15) { vx = dirObj.x / dObj * 0.6; vy = dirObj.y / dObj * 0.6; }
     // Sem arma de fogo: vai pra cima do zumbi mirado até ficar no alcance do golpe.
     // Na rua, só persegue quem está à frente no caminho, pra nunca largar a rota.
-    const perto = !h.arma;
+    const perto = !h.arma || h.semTiro;
     this.vigiarProgresso(dt);
     if (perto && h.mira && !obj.porta && !obj.saida && h.focoRota <= 0) {
       const m = h.mira, dz = dist(h.x, h.y, m.x, m.y), alc = CORPO[h.corpo].alcance * 0.75 + ZUMBIS[m.tipo].raio;
@@ -1243,11 +1384,17 @@ export class Jogo {
       else if (vale) { vx *= 0.2; vy *= 0.2; }
     }
 
+    // Duelo (poucos zumbis perto): espera a brecha, entra, bate e recua; vendo o bote do zumbi, desvia.
+    // Quem atira mantém distância. Recuando, pode tropeçar (sobrevivencia.js).
+    let duelo = null;
+    if (this.dueloAtivo && !obj.porta && !obj.saida && !(h.focoRota > 0)) duelo = movimentoDuelo(this, h, this.dueloAtivo, dt);
+    if (duelo) { vx = duelo.vx; vy = duelo.vy; }
+
     // Zumbis perto: recua deles; se tiver muitos na frente, para e luta.
     // Forçando a rota (focoRota: muito tempo sem avançar), recua bem menos e abre caminho no empurrão.
     const forcando = h.focoRota > 0 && !this.room && !this.arena;
     let rx = 0, ry = 0, naFrente = 0;
-    for (const z of this.zumbis) {
+    for (const z of duelo ? [] : this.zumbis) {
       if (z.morto || z.nascendo > 0) continue;
       const dx = h.x - z.x, dy = h.y - z.y, d2 = dx * dx + dy * dy;
       const T = ZUMBIS[z.tipo];
@@ -1290,7 +1437,7 @@ export class Jogo {
     if (vm > 1) { vx /= vm; vy /= vm; }
     // Perigos do chão (ambiente.js): machucam, causam status e deixam lento
     const amb = this.ambienteNoHeroi(dt);
-    const vel = velocidadeHeroi(h, this.cfg.velHeroi, { lutando: lutando && !perto }) * h.estados.lentidao() * amb.lentidao * (obj.ritmo || 1);
+    const vel = velocidadeHeroi(h, this.cfg.velHeroi, { lutando: lutando && !perto }) * h.estados.lentidao() * amb.lentidao * this.fatorPasso(obj, duelo);
     const antesX = h.x, antesY = h.y;
     this.mover(h, vx * vel * dt, vy * vel * dt, 0.22);
     const andou = Math.hypot(h.x - antesX, h.y - antesY);
@@ -1318,11 +1465,23 @@ export class Jogo {
     }
   }
 
+  // Quanto da velocidade ele usa: no duelo, a do duelo; sem zumbi por perto, o passo cuidadoso (devagar,
+  // olhando em volta); e, esperando a votação, o ritmo pra chegar no cruzamento junto com o fim dela
+  fatorPasso(obj, duelo) {
+    const h = this.hero;
+    if (duelo) { h.cauteloso = false; return duelo.vel; }
+    // em cima de perigo no chão (vidro, fogo, lama...): sai rápido, nada de passo cuidadoso
+    const noPerigo = h.noVidro || (this.zonasHeroi || this.zonasAgora || []).some(z => dentro(z, h.x, h.y));
+    h.cauteloso = !obj.item && !this.limpando && !noPerigo && calmo(this);
+    const ritmo = cenaAtiva(this) ? 1 : (obj.ritmo || 1);
+    return h.cauteloso ? Math.min(ritmo, this.S.calmaVel) : ritmo;
+  }
+
   // O herói está fora do "corredor" da rua atual (entre o último cruzamento e o próximo) há mais de 1,5 s?
   // Acontece quando, no meio do cruzamento, ele recua de um chefe ou corre atrás de item pela rua do lado.
   foraDaRota(dt) {
     const h = this.hero, r = this.rota;
-    if (this.arena || this.indoPorta || this.indoPraca || r.beco) { h.foraT = 0; return false; }
+    if (this.arena || this.indoPorta || this.indoPraca || r.beco || this.encontro?.fase === 'ajudando') { h.foraT = 0; return false; }
     const a = this.city.nodePos(r.i, r.j), b = this.city.nodePos(r.alvo.i, r.alvo.j);
     const cx = clamp(h.x, Math.min(a.x, b.x), Math.max(a.x, b.x)), cy = clamp(h.y, Math.min(a.y, b.y), Math.max(a.y, b.y));
     const d = Math.hypot(h.x - cx, h.y - cy);
@@ -1340,7 +1499,7 @@ export class Jogo {
   vigiarProgresso(dt) {
     const h = this.hero;
     h.focoRota = Math.max(0, (h.focoRota || 0) - dt);
-    if (this.room || this.arena || this.limpando) { h.semProgresso = 0; h.semCruzar = 0; return; }
+    if (this.room || this.arena || this.limpando || this.encontro?.fase === 'ajudando') { h.semProgresso = 0; h.semCruzar = 0; return; }
     const r = this.rota, no = this.city.nodePos(r.alvo.i, r.alvo.j);
     const d = dist(h.x, h.y, no.x, no.y);
     const chave = r.alvo.i + ',' + r.alvo.j;
@@ -1467,6 +1626,15 @@ export class Jogo {
     const alvo = this.escolherAlvo(alcance);
     h.mira = alvo;
     if (!alvo) return false;
+    // a cena do 1º quarteirão: com o zumbi em cima da pessoa, não dá pra atirar (pode acertar ela). Vai de perto.
+    const vit = this.cena?.vitima;
+    if (vit && !vit.salva && alvo.cena && dist(alvo.x, alvo.y, vit.x, vit.y) < 1.4) {
+      if (!this.cena.avisouTiro) { this.cena.avisouTiro = true; this.emit('aviso', { texto: '🔦 Não dá pra atirar: pode acertar a pessoa!', tipo: 'info' }); }
+      h.semTiro = true;
+      const fm = Math.hypot(alvo.x - h.x, alvo.y - h.y) || 1; h.fx = (alvo.x - h.x) / fm; h.fy = (alvo.y - h.y) / fm;
+      return true;
+    }
+    h.semTiro = false;
     h.fx = alvo.x - h.x; h.fy = alvo.y - h.y;
     const fm = Math.hypot(h.fx, h.fy) || 1; h.fx /= fm; h.fy /= fm;
     const base = Math.atan2(h.fy, h.fx);
@@ -1623,6 +1791,7 @@ export class Jogo {
     for (const z of this.zumbis) {
       if (z.morto || z.nascendo > 0 || (perto && z.tipo === 'explosivo' && h.vida / h.vidaMax < 0.5)) continue;
       if (z.fa?.escudo > 0) continue;   // zumbi do fã com escudo: não adianta mirar nele
+      if (z.devorando && z.encontro && this.encontro?.fase !== 'ajudando') continue;   // em cima de alguém no encontro: só se decidirem ajudar
       const d = dist(h.x, h.y, z.x, z.y);
       if (d > alcance + ZUMBIS[z.tipo].raio) continue;
       let s = d;
@@ -1790,7 +1959,9 @@ export class Jogo {
 
   // Começo puxado: quantos zumbis normais a mais aparecem no nível atual do herói (ameaca.js → multInicio)
   // (enquanto o chat escolhe a habilidade suprema do nível 10, ainda vale o do nível 9)
-  multInicio() { return multInicio(this.hero.nivel, this.A); }
+  // × a rampa da sobrevivência: a rua começa vazia e vai enchendo quarteirão a quarteirão
+  multInicio() { return multInicio(this.hero.nivel, this.A) * this.rampaAtual(); }
+  rampaAtual() { return this.S.cenaLigada || this.S.rampaInicio < 1 ? rampa(this.stats.quarteiroes + (this.S.cenaLigada ? 0 : 1), this.S) : 1; }
   // Tamanho de horda dos caminhos perigosos, já com o multiplicador do começo
   hordaDaRua(n) { return Math.max(3, Math.round(tamanhoHorda(n, this.A) * this.multInicio())); }
 
@@ -1819,6 +1990,7 @@ export class Jogo {
     this.stats.quarteiroes += n;
     // quarteirão novo: cota de zumbis da rua nova
     this.cotaRua = null;
+    voltaramComoZumbi(this);   // quem ficou pra trás num encontro pode voltar como zumbi (encontros.js)
     // zumbi do tomate: um por vez, às vezes, num quarteirão novo
     if (h.nivel >= TOMATEIRO.desdeNivel && !this.zumbis.some(z => !z.morto && z.tipo === 'tomateiro') && this.rng.chance(TOMATEIRO.chance)) this.agendar(3, () => this.surgirTomateiro());
     // zumbi da tela sozinho na rua (tela.js → TELA.naRua; cada um tem o nível do herói em que começa a aparecer)
@@ -1960,7 +2132,9 @@ export class Jogo {
       const st = z.estados.update(dt);
       for (const d of st.danos) this.ferirZumbi(z, danoNoZumbi(z, d.valor, d.tipo), null, true);
       if (z.morto) continue;
-      if (z.estados.parado()) { z.atkCd = Math.max(z.atkCd, 0.25); continue; }
+      if (z.estados.parado()) { z.atkCd = Math.max(z.atkCd, 0.25); z.bote = null; continue; }
+      // a cena do 1º quarteirão: agachado devorando (ou levantando), não anda nem ataca
+      if ((z.devorando || z.levantando > 0) && zumbiDevorando(this, z, dt)) continue;
       // Perigos do chão também pegam os zumbis
       let lentidaoChao = 1;
       if (this.zonasAgora.length) {
@@ -2088,33 +2262,39 @@ export class Jogo {
       // com medo (Grito de guerra e cia., habilidades.js): foge do herói e não ataca
       const medo = vivo && z.estados.tem('medo');
       if (medo) { mx = -mx; my = -my; quieto = false; z.atkCd = Math.max(z.atkCd, 0.3); }
-      const avanco = (perto && !medo) || quieto ? 0 : vel * dt;
+      // duelo (poucos zumbis perto): o zumbi prepara o bote e avança, em vez de morder direto (sobrevivencia.js)
+      z.atkCd -= dt;
+      const noBote = z.duelo && vivo && !alvoAliado && !medo && boteDoZumbi(this, z, T, d, dt, () => this.morderHeroi(z, T));
+      const avanco = (perto && !medo) || quieto || noBote ? 0 : vel * dt;
       this.mover(z, mx * avanco + sx * 0.5 * dt * 4, my * avanco + sy * 0.5 * dt * 4, Math.min(0.3, T.raio * 0.7));
       if (avanco > 0) z.animT += avanco;
       z.fx = mx; z.fy = my;
-      // ataque
-      z.atkCd -= dt;
-      if (morde && z.atkCd <= 0 && vivo) {
+      // ataque (no duelo, o bote acima já cuida)
+      if (!noBote && !(z.duelo && !alvoAliado) && morde && z.atkCd <= 0 && vivo) {
         z.atkCd = T.cd;
-        if (alvoAliado) { /* aliados não morrem: só seguram o zumbi */ }
-        else {
-          const A = T.ataque || { tipo: 'mordida' };
-          // colosso: cada golpe tira 10% da vida máxima do herói e atravessa a armadura (tipo "esmagar");
-          // cansado, bate bem mais fraco
-          const C = RECOMPENSA.chefe;
-          const golpe = z.doacao ? h.vidaMax * C.golpe * (z.doacao.cansado ? C.cansadoDano : 1) : danoDoZumbi(z);
-          const coleteAntes = h.colete;
-          const entrou = this.ferirHeroi(golpe, z.dono, z.doacao ? 'o colosso' : z.dono ? `${T.nome.toLowerCase()} de ${z.dono.nick}` : 'a horda', z.doacao ? 'esmagar' : A.tipo);
-          // zumbi do fã: acertou (ou bateu no colete) → perde o escudo
-          if (z.fa?.escudo > 0 && (entrou || h.colete < coleteAntes)) { z.fa.escudo = 0; this.emit('fa_acertou', { x: z.x, y: z.y, nome: z.nome }); }
-          if (entrou) for (const s of A.status || []) if (this.rng.next() < s.chance) this.aplicarStatus(h, s.id, { duracao: s.duracao, fonte: z.dono });
-        }
-        this.emit('mordida', { x: z.x, y: z.y, chefe: !!T.chefe });
+        if (alvoAliado) this.emit('mordida', { x: z.x, y: z.y, chefe: !!T.chefe });   // aliados não morrem: só seguram o zumbi
+        else this.morderHeroi(z, T);
       }
       // gemido de vez em quando (o som decide se toca)
       if (this.rng.next() < dt * 0.08) this.emit('gemido', { x: z.x, y: z.y, tipo: z.tipo });
     }
     if (this.zumbis.length > 40 || this.rng.next() < 0.05) this.zumbis = this.zumbis.filter(z => !z.morto);
+  }
+
+  // A mordida (ou o golpe) de um zumbi no herói
+  morderHeroi(z, T) {
+    const h = this.hero, A = T.ataque || { tipo: 'mordida' };
+    // colosso: cada golpe tira 10% da vida máxima do herói e atravessa a armadura (tipo "esmagar");
+    // cansado, bate bem mais fraco
+    const C = RECOMPENSA.chefe;
+    const golpe = z.doacao ? h.vidaMax * C.golpe * (z.doacao.cansado ? C.cansadoDano : 1) : danoDoZumbi(z);
+    const coleteAntes = h.colete;
+    const entrou = this.ferirHeroi(golpe, z.dono, z.doacao ? 'o colosso' : z.dono ? `${T.nome.toLowerCase()} de ${z.dono.nick}` : 'a horda', z.doacao ? 'esmagar' : A.tipo);
+    // zumbi do fã: acertou (ou bateu no colete) → perde o escudo
+    if (z.fa?.escudo > 0 && (entrou || h.colete < coleteAntes)) { z.fa.escudo = 0; this.emit('fa_acertou', { x: z.x, y: z.y, nome: z.nome }); }
+    if (entrou) for (const s of A.status || []) if (this.rng.next() < s.chance) this.aplicarStatus(h, s.id, { duracao: s.duracao, fonte: z.dono });
+    this.emit('mordida', { x: z.x, y: z.y, chefe: !!T.chefe, entrou });
+    return entrou;
   }
 
   // dano já calculado (dano.js). critico e efetividade ('super' | 'fraco') só servem pra mostrar na tela.
@@ -2134,7 +2314,8 @@ export class Jogo {
     const T = ZUMBIS[z.tipo];
     this.stats.abates++;
     aoMatarZumbi(this, z);   // supremas que reagem a zumbi morrendo (Transfusão)
-    if (this.fase === 'jogo') this.ganharXp(T.xp * (1 + (this.nivelAmeaca - 1) * 0.1));   // zumbi mais forte dá mais XP
+    // zumbi mais forte dá mais XP; na rua calma do começo (poucos zumbis), cada um vale mais (sobrevivencia.js → xpRampa)
+    if (this.fase === 'jogo') this.ganharXp(T.xp * (1 + (this.nivelAmeaca - 1) * 0.1) * (1 + (1 - this.rampaAtual()) * this.S.xpRampa) * (z.cena ? this.S.cena.vidaZumbi : 1));
     this.emit('morte_zumbi', { x: z.x, y: z.y, tipo: z.tipo, chefe: !!T.chefe, nome: z.nome, dono: z.dono?.nick || null, roupa: z.roupa });
     // ajudante na frente no cabo de guerra: sorte, às vezes o cadáver tem um suprimento
     const sorte = this.fase === 'jogo' && !T.chefe ? sorteCabo(this.cabo) : 0;
@@ -2311,7 +2492,23 @@ export class Jogo {
       case 'suprimento': if (h.vida / h.vidaMax < 0.7) this.curar(30, quem, true); else this.darMunicao(1, quem, true); break;
       case 'bau_medio': this.abrirBau('medio', quem); break;
       case 'bau_lendario': this.abrirBau('lendario', quem); break;
-      case 'arma': this.trocarArma(it.data.arma, quem); this.emit('bau', { raridade: 'medio', arma: it.data.arma, x: it.x, y: it.y }); break;
+      case 'arma': {
+        const mesma = h.arma === it.data.arma;
+        if (!mesma) this.trocarArma(it.data.arma, quem);
+        if (it.data.municao) h.municao = (mesma && h.municao != null ? h.municao : 0) + it.data.municao;   // pistola achada: munição contada (a do policial é infinita)
+        this.emit('bau', { raridade: 'medio', arma: it.data.arma, x: it.x, y: it.y });
+        if (it.data.municao) this.emit('aviso', { texto: `${ARMAS[it.data.arma].emoji} ${ARMAS[it.data.arma].nome}${mesma ? ': munição' : ''} (+${it.data.municao} balas)`, tipo: 'bom' });
+        break;
+      }
+      // achados com propósito (room.js → LOJAS)
+      case 'comida': this.curarOuGuardar(15, quem, 'cura'); this.emit('aviso', { texto: '🥫 Comida: +15% de vida', tipo: 'bom' }); break;
+      case 'energetico': this.aplicarStatus(h, 'energizado', { quarteiroes: 2, acumula: true, maxQuarteiroes: 4 }); this.emit('aviso', { texto: '🥤 Energético: mais rápido por 2 quarteirões', tipo: 'bom' }); break;
+      case 'vitamina': this.aplicarStatus(h, 'vitaminado', { quarteiroes: 3, acumula: true, maxQuarteiroes: 6 }); this.emit('aviso', { texto: '🍊 Vitaminas: +15% de resistência por 3 quarteirões', tipo: 'bom' }); break;
+      case 'remedio':
+        h.estados.remover('infectado'); sincronizarAtributos(h.estados, h.attr);
+        this.aplicarStatus(h, 'medicado', { quarteiroes: 2, acumula: true, maxQuarteiroes: 4 });
+        this.emit('aviso', { texto: '💊 Remédio: regenera vida por 2 quarteirões', tipo: 'bom' });
+        break;
       case 'drop': {
         const id = it.data.buff, S = STATUS[id];
         this.aplicarStatus(h, id, { quarteiroes: RECOMPENSA.dropQuarteiroes, pilhas: 1, fonte: quem });
@@ -2328,6 +2525,14 @@ export class Jogo {
       }
     }
     this.emit('pegou', { kind: it.kind, x: it.x, y: it.y });
+  }
+
+  // Arma achada na delegacia: sem arma de fogo, uma pistola; com pistola, uma escopeta (munição contada)
+  armaDaDelegacia() {
+    const h = this.hero;
+    if (!h.arma) return { arma: 'pistola', municao: 36 };
+    if (h.arma === 'pistola') return { arma: 'escopeta', municao: 24 };
+    return { arma: h.arma, municao: 24 };
   }
 
   abrirBau(raridade, quem) {
@@ -2376,7 +2581,8 @@ export class Jogo {
     const h = this.hero;
     this.aplicarStatus(h, 'acelerado', { quarteiroes: q, acumula: true, maxQuarteiroes: 8 });
     const a = h.arma ? ARMAS[h.arma] : null;
-    if (a && h.municao != null && a.municao) h.municao = Math.min(a.municao * 2, h.municao + Math.ceil(a.municao * 0.5));
+    // arma com munição contada (escopeta, ou a pistola achada na delegacia): mais balas
+    if (a && h.municao != null) h.municao = Math.min((a.municao || 36) * 2, h.municao + Math.ceil((a.municao || 24) * 0.5));
     this.emit('municao', { quarteiroes: q, item });
     // Sem arma de fogo, munição não serve pra nada: vira fúria (mais dano e velocidade) pelos mesmos quarteirões
     if (!a && !item) {
@@ -2829,7 +3035,7 @@ export class Jogo {
     const h = this.hero;
     // Hordas mandadas pelo público crescem com a ameaça (o explosivo é sempre 1 por presente)
     // (o multiplicador do começo vale entre 60% e 100%: presente nunca manda mais que o normal)
-    if (quem && tipo !== 'explosivo' && !opts.semEscala && !opts.fa) qtd = Math.max(1, Math.round(qtd * multPresente(this.nivelAmeaca, this.A) * clamp(this.multInicio(), 0.6, 1)));
+    if (quem && tipo !== 'explosivo' && !opts.semEscala && !opts.fa) qtd = Math.max(1, Math.round(qtd * multPresente(this.nivelAmeaca, this.A) * clamp(multInicio(this.hero.nivel, this.A), 0.6, 1)));   // (presente não leva a rampa do começo)
     const nome = opts.nomeados && quem ? nomeSeguro(quem.nick, 12) : null;
     const lugares = [];
     if (this.room) {
@@ -2997,7 +3203,7 @@ export class Jogo {
   // Presentes caros furam a fila.
   processarFila(dt) {
     this.filaCd -= dt;
-    if (!this.fila.length || this.filaCd > 0 || this.protecao > 0) return;
+    if (!this.fila.length || this.filaCd > 0 || this.protecao > 0 || cenaAtiva(this)) return;   // a cena do 1º quarteirão é uma luta só: o resto espera
     let k = 0;
     for (let i = 1; i < this.fila.length; i++) if (this.fila[i].coins > this.fila[k].coins * 4 && this.fila[i].coins >= 500) k = i;
     const p = this.fila.splice(k, 1)[0];
@@ -3134,7 +3340,7 @@ export class Jogo {
   }
 
   zumbisDeQuemEntrou(dt) {
-    if (!this.filaEntradas?.length || this.fase !== 'jogo' || this.room || this.arena || this.caido) return;
+    if (!this.filaEntradas?.length || this.fase !== 'jogo' || this.room || this.arena || this.caido || cenaAtiva(this)) return;
     if ((this.entradaT = (this.entradaT || 0) - dt) > 0) return;
     const p = this.pontoNaRua(this.hero, 8, 12, 0);
     if (!p) { this.entradaT = 0.5; return; }

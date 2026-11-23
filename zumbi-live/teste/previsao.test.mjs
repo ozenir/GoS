@@ -19,7 +19,7 @@ teste('a previsão bate com o que acontece na rua (o caminho é sorteado quando 
     for (let i = 0; i < 300 / DT && conferidos < meta; i++) {
       j.update(DT);
       for (const e of ev.splice(0)) {
-        if (e.t === 'decisao') prev = { prep: j.preparo, op: e.id, previsao: e.previsao };
+        if (e.t === 'decisao') prev = { prep: { caminho: e.caminho }, op: e.id, previsao: e.previsao };   // (o caminho sorteado na hora da decisão)
         if (e.t === 'caminho' && prev?.prep?.caminho) {
           assert.equal(e.tipo, prev.prep.caminho.tipo, `seed ${seed}: tipo`);
           if (e.tipo === 'perigoso') {
@@ -59,7 +59,7 @@ teste('horda gigante no próximo quarteirão e suprimentos quase caindo aparecem
 
 teste('loja: conta os zumbis e o que tem lá dentro; rua sem saída: baú e emboscada', () => {
   const p = preverDestino(falso(90), { id: 'entrar', shop: { tipo: 'farmacia', nome: 'Farmácia', emoji: '💊', risco: 1 } });
-  assert.ok(p.itens.some(t => t.includes('zumbis lá dentro')) && p.itens.some(t => t.includes('kits de cura')));
+  assert.ok(p.itens.some(t => t.includes('zumbis lá dentro')) && p.itens.some(t => t.includes('pode ter') && t.includes('remédios')));
   const b = preverDestino(falso(90), { id: 'direita', semSaida: true });
   assert.ok(b.itens.some(t => t.includes('baú')) && b.itens.some(t => t.includes('emboscada')));
 });

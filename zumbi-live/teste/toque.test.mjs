@@ -8,7 +8,7 @@ import { ZUMBIS } from '../public/js/core/dados.js';
 let ok = 0;
 const teste = (nome, fn) => { fn(); ok++; console.log('  ✔', nome); };
 const DT = 1 / 30;
-const jogo = () => { const j = new Jogo({ seed: 6, classe: 'policial' }); j.zumbis = []; j.spawnT = 1e9; j.protecao = 0; j.hero.invT = 0; j.hero.nivel = 12; return j; };
+const jogo = () => { const j = new Jogo({ sobrevivencia: false, seed: 6, classe: 'policial' }); j.zumbis = []; j.spawnT = 1e9; j.protecao = 0; j.hero.invT = 0; j.hero.nivel = 12; return j; };
 const encostado = (j, dx = 0.3) => { const z = j.criarZumbi('comum', j.hero.x + dx, j.hero.y, null, { nascendo: 0 }); z.atkCd = 1e9; return z; };   // atkCd alto: só o toque, sem mordida
 
 teste('cada zumbi encostado tira 2 por segundo (vezes a força dele, menos a defesa)', () => {

@@ -13,6 +13,7 @@ import { CABO } from '../core/cabo.js';
 import { RELIQUIAS } from '../core/portal.js';
 import { tabelaFusoes, TABELA_SEGUNDOS } from '../core/fusoes.js';
 import { graficoDoHeroi, GRAFICO_SEGUNDOS, BLOCOS } from '../core/grafico.js';
+import { desenharMapa, CORES_OPCAO } from './mapa.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -448,6 +449,12 @@ export class Hud {
     if (g.protecao > 0 && g.fase === 'jogo') st.push(`<span class="chip ok">🛡️ proteção ${Math.ceil(g.protecao)}s</span>`);
     if (g.fila.length && g.protecao > 0) st.push(`<span class="chip mal">😈 ${g.fila.length} na fila</span>`);
     if (g.poucosPraLimpar?.()) st.push(`<span class="chip">🎯 caçando os últimos ${g.limpando.restam}</span>`);
+    // viagem pelo mapa: pra onde está indo e quanto falta; salvando alguém no caminho
+    if (g.encontro?.fase === 'ajudando' && g.fase === 'jogo') st.push(`<span class="chip ok">🤝 salvando ${esc(g.encontro.nome)}</span>`);
+    if ((g.viagem || g.destino) && !g.room && g.fase === 'jogo') {
+      const L = g.viagem?.lugar, falta = g.viagem ? g.viagem.dirs.length + 1 : 0;
+      st.push(g.destino || !L ? `<span class="chip ok">🧭 chegando${L ? ` · ${esc(L.emoji)} ${esc(L.nome)}` : ''}</span>` : `<span class="chip">🧭 ${esc(L.emoji)} ${esc(L.nome)} · ${falta} quarteirã${falta === 1 ? 'o' : 'os'}</span>`);
+    }
     // período do dia (manhã, tarde, noite, madrugada) e quanto falta pro próximo
     const per = g.periodoDoDia();
     if (Number.isFinite(per.resta)) {
@@ -594,6 +601,7 @@ export class Hud {
       this.cache.vres = null; this.cache.vkey = null;
     }
     this.atualizarCabo(g.cabo);
+    this.atualizarMapa(g, votando, comResultado ? R : null);
     // relógio da votação aberta
     const relogio = $('v-relogio');
     if (votando) {
@@ -609,13 +617,16 @@ export class Hud {
     const key = v.opcoes.map(o => o.id).join(',') + (v.contandoAtrasados ? '|c' : '') + (total ? '|b' : '');
     if (this.cache.vkey !== key) {
       this.cache.vkey = key;
-      const icone = o => o.id === 'entrar' ? (o.praca ? '⚔️' : esc(o.shop.emoji)) : o.seta;
-      const nome = o => o.id === 'entrar' ? (o.praca ? 'arena' : 'entrar') : o.nome.toLowerCase();
+      const icone = o => o.lugar ? esc(o.lugar.emoji) : o.id === 'entrar' ? (o.praca ? '⚔️' : esc(o.shop?.emoji || '🚪')) : o.seta;
+      // a direção que leva a um lugar mostra o lugar (🛒 mercado, 🏥 hospital, 🚓 delegacia...)
+      const nome = o => o.lugar ? `${esc(o.lugar.nome.toLowerCase())} <small>${o.lugar.dist}q</small>` : o.id === 'entrar' ? (o.praca ? 'arena' : 'entrar') : o.destino ? `${esc(o.destino.emoji)} ${esc(o.destino.nome.toLowerCase())}` : o.nome.toLowerCase();
       const titulo = v.contandoAtrasados ? '⏳ contando os votos da live <small>· ainda dá tempo</small>'
+        : v.encontro ? `🆘 ${esc(v.encontro.nome)} pede ajuda! <small>· ${esc(v.encontro.situacao)}, ${v.encontro.zumbis} zumbis</small>`
+        : v.mapa ? '🗺️ Pra onde vamos? <small>· vote no lugar</small>'
         : v.portal ? (v.premio ? '🏆 Escolha a relíquia com' : '🌀 Escolha o portal com')
         : v.praia ? '🏖️ Saia da praia com' : v.loja ? `🗳️ Escolha a direção com <small>· ${esc(v.loja.emoji)} ${esc(v.loja.nome)} aqui!</small>` : '🗳️ Escolha a direção com';
       $('v-info').innerHTML = `<div class="vi-t">${titulo}</div><div class="vi-ops">${v.opcoes.map(o => `<span><b>${o.n}</b>${icone(o)} ${nome(o)}${o.semSaida ? ' 📦' : ''}</span>`).join('')}</div>`;
-      $('v-bolas').innerHTML = v.opcoes.map(o => `<span class="vb" data-op="${o.id}"><b>${o.n}</b><small>${icone(o)} 0</small></span>`).join('');
+      $('v-bolas').innerHTML = v.opcoes.map(o => `<span class="vb" data-op="${o.id}"><b>${o.n}</b><small>${icone(o)}${o.destino ? esc(o.destino.emoji) : ''} 0</small></span>`).join('');
       // sem votos: aviso; com votos: bolinhas no lugar dele. Relógio zerado: "contando os votos da live" no lugar dele
       $('v-info').hidden = total > 0;
       $('v-bolas').hidden = total === 0;
@@ -630,13 +641,33 @@ export class Hud {
         if (this.cache.vb[o.id] !== o.votos) {
           if (this.cache.vb[o.id] != null) { el.classList.remove('pulo'); void el.offsetWidth; el.classList.add('pulo'); }
           this.cache.vb[o.id] = o.votos;
-          el.querySelector('small').textContent = `${o.id === 'entrar' ? (o.praca ? '⚔️' : o.shop.emoji) : o.seta} ${o.votos}`;
+          el.querySelector('small').textContent = `${o.lugar ? o.lugar.emoji : o.id === 'entrar' ? (o.praca ? '⚔️' : o.shop?.emoji || '🚪') : o.seta + (o.destino ? o.destino.emoji : '')} ${o.votos}`;
           el.style.setProperty('--k', (1 + 0.35 * o.votos / total).toFixed(2));
         }
         el.classList.toggle('lider', o.votos > 0 && o.votos === max);
         el.classList.toggle('zero', o.votos === 0);
       }
     }
+  }
+
+  // Mapa da viagem: aberto na votação de destino (todas as rotas) e no resultado dela (só a escolhida)
+  atualizarMapa(g, votando, R) {
+    const box = $('h-mapa'), v = g.voto;
+    const aberto = votando && v?.mapa && !g.portal ? v : null;
+    if (aberto) this.mapaVoto = aberto;
+    const mv = aberto || (R?.lugar && this.mapaVoto ? this.mapaVoto : null);
+    if (!mv || g.fase !== 'jogo' || g.caido) { if (!box.hidden) box.hidden = true; if (!R) this.mapaVoto = null; return; }
+    if (box.hidden) box.hidden = false;
+    const escolhida = aberto ? null : R.id;
+    desenharMapa($('m-cv'), g, mv.opcoes, mv.mapa.ini, escolhida, performance.now() / 1000, mv.mapa);
+    const max = Math.max(1, ...mv.opcoes.map(o => o.votos));
+    const k = mv.opcoes.map(o => o.votos).join(',') + '|' + escolhida;
+    if (this.cache.mleg === k) return;
+    this.cache.mleg = k;
+    $('m-leg').innerHTML = mv.opcoes.filter(o => !escolhida || o.id === escolhida).map(o => {
+      const L = o.lugar, cor = CORES_OPCAO[(o.n - 1) % 4];
+      return `<span class="${o.votos > 0 && o.votos === max ? 'lider' : ''}"><b style="background:${cor}">${o.n}</b>${esc(L.emoji)} ${esc(L.nome)} · ${L.dist} quarteirões <em>${esc(L.oque)}</em></span>`;
+    }).join('');
   }
 
   // Resultado da votação: pra onde vai, com quantos votos, e o que tem lá

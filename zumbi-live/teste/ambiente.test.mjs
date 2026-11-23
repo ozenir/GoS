@@ -78,7 +78,7 @@ teste('a cidade coloca perigos nos trechos de rua conforme o bairro', () => {
 });
 // Herói parado dentro de um perigo por "seg" segundos: quanto de vida perde (sem esquiva, colete nem invencível)
 function danoNoHeroiEm(tipo, seg, extra = {}) {
-  const j = new Jogo({ seed: 9, classe: 'policial' });
+  const j = new Jogo({ sobrevivencia: false, seed: 9, classe: 'policial' });
   const h = j.hero;
   j.zumbis = []; h.invT = 0; h.attr.base.esquiva = 0;
   j.zonas = [{ tipo, x0: h.x - 1, y0: h.y - 1, x1: h.x + 1, y1: h.y + 1, t: 99, semente: 1, ...extra }];
@@ -119,7 +119,7 @@ teste('armadilha de vidro do presente (sangramento duplo) também 6× menor', ()
 });
 
 teste('zumbi continua levando o dano cheio de fogo (molotov e lança-chamas não ficam fracos)', () => {
-  const j = new Jogo({ seed: 9, classe: 'policial' });
+  const j = new Jogo({ sobrevivencia: false, seed: 9, classe: 'policial' });
   const z = j.criarZumbi('comum', j.hero.x + 8, j.hero.y, null, { nascendo: 0 });
   j.aplicarStatus(z, 'queimando');
   const v0 = z.vida;
@@ -129,7 +129,7 @@ teste('zumbi continua levando o dano cheio de fogo (molotov e lança-chamas não
 });
 
 teste('sangramento de mordida no herói não fica fraco por causa do vidro', () => {
-  const j = new Jogo({ seed: 9, classe: 'policial' });
+  const j = new Jogo({ sobrevivencia: false, seed: 9, classe: 'policial' });
   const h = j.hero;
   j.aplicarStatus(h, 'sangramento', { mult: 1 / 6 });
   j.aplicarStatus(h, 'sangramento');
@@ -139,7 +139,7 @@ teste('sangramento de mordida no herói não fica fraco por causa do vidro', () 
 /* ---------------- cacos de vidro: o herói não se cura ---------------- */
 // jogo com o herói parado em cima de uma zona de vidro (e nada mais em volta)
 const noVidro = () => {
-  const j = new Jogo({ seed: 9, classe: 'enfermeira' });
+  const j = new Jogo({ sobrevivencia: false, seed: 9, classe: 'enfermeira' });
   j.zumbis = []; j.spawnT = 999; j.cotaRua = 0; j.protecao = 0;
   const h = j.hero;
   j.zonas = [{ tipo: 'vidro', x0: h.x - 1, y0: h.y - 1, x1: h.x + 1, y1: h.y + 1, t: 999 }];
@@ -192,7 +192,7 @@ teste('vida em 30% ou menos em cima do vidro: sai na hora rumo ao objetivo', () 
 
 teste('vida em 30% ou menos: desvia do vidro que está no caminho', () => {
   const pisou = vida => {
-    const j = new Jogo({ seed: 9, classe: 'policial' });
+    const j = new Jogo({ sobrevivencia: false, seed: 9, classe: 'policial' });
     j.zumbis = []; j.spawnT = 999; j.cotaRua = 0; j.protecao = 0;
     const h = j.hero; h.invT = 999;
     const [dx, dy] = [[0, -1], [1, 0], [0, 1], [-1, 0]][j.rota.dir];

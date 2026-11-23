@@ -106,7 +106,7 @@ export function spriteHeroi(roupa, zumbi = false) {
 
 // Pessoas comuns (figurantes: fugindo ou sendo devoradas)
 const CIVIL_CAMISA = ['#c84a4a', '#4a8ac8', '#e8c84a', '#8a5ac8', '#4ab87a', '#e88a4a'];
-const CIVIL_PELE = ['#e0ac7e', '#c98a5e', '#8d5a3b', '#f0c39b', '#a86e48', '#d29a6e'];
+export const CIVIL_PELE = ['#e0ac7e', '#c98a5e', '#8d5a3b', '#f0c39b', '#a86e48', '#d29a6e'];
 export function spriteCivil(k) {
   const key = 'civil' + k;
   if (cache.has(key)) return cache.get(key);
@@ -320,6 +320,19 @@ export function spriteItem(kind) {
     fillPoly(x, [[10, 2], [15, 9], [10, 10]], '#c8a8ff');
     fillPoly(x, [[10, 10], [15, 9], [10, 18]], '#6a3fd0');
     r(9, 7, 2, 4, '#fff3d0');
+  } else if (kind === 'comida') {
+    // lata de comida: cilindro com rótulo vermelho
+    r(6, 7, 8, 9, '#b8bcc4'); r(6, 9, 8, 5, '#c8342a'); r(7, 10, 6, 2, '#f2d34c'); r(6, 6, 8, 1, '#e0e4ea'); r(6, 16, 8, 1, '#8a8e96');
+  } else if (kind === 'energetico') {
+    // latinha de energético: verde-limão com raio
+    r(7, 5, 6, 11, '#2a3a2a'); r(7, 7, 6, 7, '#7ef04a'); r(9, 8, 2, 2, '#1a1a1a'); r(10, 10, 2, 2, '#1a1a1a'); r(7, 4, 6, 1, '#c8ccd2');
+  } else if (kind === 'vitamina') {
+    // frasco de vitaminas: laranja com tampa branca
+    r(7, 8, 7, 8, '#f08a24'); r(8, 10, 5, 3, '#fff3d0'); r(8, 5, 5, 3, '#f4f4f4'); r(7, 15, 7, 1, '#b8641a');
+  } else if (kind === 'remedio') {
+    // caixinha de remédio: branca com faixa azul e cruz
+    caixaIso(x, 10, 17, 6, 5, 5, '#f4f6fa', '#d8dde6', '#bcc4d0');
+    r(5, 11, 4, 2, '#3a7bd8'); r(12, 11, 4, 2, '#3a7bd8'); r(9, 7, 3, 1, '#3a7bd8'); r(10, 6, 1, 3, '#3a7bd8');
   } else if (kind === 'arma') {
     r(3, 9, 13, 3, '#3a3a40'); r(12, 12, 3, 4, '#5a3a22'); r(15, 9, 2, 2, '#3a3a40'); r(4, 10, 8, 1, '#6a6a70');
   }
@@ -490,7 +503,7 @@ const PALETAS = [
 // Prédio visto de cima de lado. du, dv = tamanho na vista (casas). alt = altura em pixels.
 // porta: { face: 'u' | 'v', a: posição ao longo da face (casas) } ou null.
 export function spritePredio(b, du, dv, porta, rot) {
-  const k = 'b' + b.id + '|' + rot + '|' + (porta ? porta.face + porta.a : '');
+  const k = 'b' + b.id + '|' + rot + '|' + (porta ? porta.face + porta.a : '') + (b.shop ? b.shop.tipo : '');
   if (cache.has(k)) return cache.get(k);
   if (cache.size > 900) cache.clear();
   const alt = b.altura;

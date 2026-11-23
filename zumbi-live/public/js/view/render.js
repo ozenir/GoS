@@ -2,7 +2,7 @@
 // "pra cima e pra direita" (↗), então esquerda é sempre ↖ e direita é sempre ↘ — igual à votação.
 import { mod, hash2, DIRS, clamp, dist } from '../core/util.js';
 import { P, T as TT } from '../core/city.js';
-import { ZUMBIS, CLASSES } from '../core/dados.js';
+import { ZUMBIS, CLASSES, CORPO } from '../core/dados.js';
 import { STATUS } from '../core/status.js';
 import { AMBIENTE, ligado as ligadoZona } from '../core/ambiente.js';
 import { posDrone } from '../core/habilidades.js';
@@ -445,7 +445,8 @@ export class Render {
   setasVotacao(g) {
     if (g.room || g.fase !== 'jogo') return;
     const v = g.voto;
-    if (!v) return;
+    if (!v || v.encontro) return;   // encontro (ajudar ou seguir): sem setas no chão
+    if (v.mapa) { this.setasMapa(g, v); return; }
     const ctx = this.ctx;
     const n = g.city.nodePos(g.rota.alvo.i, g.rota.alvo.j);
     const max = Math.max(...v.opcoes.map(o => o.votos));
@@ -487,6 +488,33 @@ export class Render {
       ctx.globalAlpha = 1;
       const m = { x: n.x + dx * 2.2, y: n.y + dy * 2.2 };
       this.marcadores.push({ ...m, txt: String(o.n), cor, z: 10 });
+    }
+  }
+
+  // Votação de destino (viagem pelo mapa): a seta da rua em que cada rota começa, com o número do lugar
+  // (lugares que saem pela mesma rua dividem a seta: "1·3")
+  setasMapa(g, v) {
+    const ctx = this.ctx, n = g.city.nodePos(g.rota.alvo.i, g.rota.alvo.j);
+    const max = Math.max(...v.opcoes.map(o => o.votos));
+    this.marcadores = [];
+    const porDir = new Map();
+    for (const o of v.opcoes) {
+      const d = o.lugar?.dirs?.[0];
+      if (d == null) continue;
+      if (v.resultado && v.resultado.id !== o.id) continue;
+      const l = porDir.get(d) || []; l.push(o); porDir.set(d, l);
+    }
+    for (const [d, ops] of porDir) {
+      const lider = !v.resultado && max > 0 && ops.some(o => o.votos === max);
+      const cor = v.resultado ? '#7dff9a' : lider ? '#ffd23f' : 'rgba(255,255,255,0.75)';
+      const [dx, dy] = DIRS[d], px = -dy, py = dx;
+      const a0 = 1.7, a1 = 2.75, a2 = 3.35, w = 0.12, wh = 0.4;
+      const pt = (a, l) => this.tela(n.x + dx * a + px * l, n.y + dy * a + py * l);
+      ctx.globalAlpha = v.resultado ? 0.55 : lider ? 0.45 : 0.3;
+      fillPoly(ctx, [pt(a0, -w), pt(a1, -w), pt(a1, w), pt(a0, w)], cor);
+      fillPoly(ctx, [pt(a1, -wh), pt(a2, 0), pt(a1, wh)], cor);
+      ctx.globalAlpha = 1;
+      this.marcadores.push({ x: n.x + dx * 2.2, y: n.y + dy * 2.2, txt: ops.map(o => o.n).join('·'), cor, z: 10 });
     }
   }
 
@@ -656,6 +684,25 @@ export class Render {
     return [sx, sy];
   }
 
+  // Pessoa agachada: o mesmo quadro, mais baixo (k = altura de 0 a 1), com os pés no chão; dy = balanço da cabeça
+  pessoaAgachada(spr, x, y, k, dy = 0) {
+    const ctx = this.ctx, [sx, sy] = this.tela(x, y);
+    const sh = S.sombra(12); ctx.drawImage(sh, sx - Math.floor(sh.width / 2), sy - Math.floor(sh.height / 2));
+    const hh = Math.round(S.SPR_H * k);
+    ctx.drawImage(spr, 0, 0, S.SPR_W, S.SPR_H, sx - S.PE_X - 1, sy - Math.round(S.PE_Y * k) + dy, S.SPR_W + 2, hh);
+    return [sx, sy];
+  }
+  // Zumbi preparando o bote: o corpo pende pra trás (longe do herói) e treme um pouco
+  pessoaInclinada(spr, z, g) {
+    const [dx, dy] = this.dirTela(g.hero.x - z.x, g.hero.y - z.y), m = Math.hypot(dx, dy) || 1;
+    const k = 1 - Math.max(0, z.bote.t) / 0.5, tre = Math.floor(this.t * 30) % 2 ? 0.5 : -0.5;
+    const ox = -dx / m * 2 * k + tre, oy = -dy / m * 1 * k;
+    const ctx = this.ctx, [sx, sy] = this.tela(z.x, z.y);
+    const sh = S.sombra(10); ctx.drawImage(sh, sx - Math.floor(sh.width / 2), sy - Math.floor(sh.height / 2));
+    ctx.drawImage(spr, Math.round(sx - S.PE_X + ox), Math.round(sy - S.PE_Y + oy));
+    return [sx, sy];
+  }
+
   desenharZumbi(z, g) {
     const T = ZUMBIS[z.tipo];
     if (z.tipo === 'lobo') return this.desenharLobo(z, T);
@@ -673,7 +720,14 @@ export class Render {
       this.ctx.globalAlpha = 0.35 + 0.25 * k; disc(this.ctx, gx, gy, 9 + k * 2, k > 0.5 ? '#25f4ee' : '#fe2c55', 0.5); this.ctx.globalAlpha = 1;
       if (Math.random() < 0.25) this.particula({ x: z.x + (Math.random() - 0.5) * 0.5, y: z.y + (Math.random() - 0.5) * 0.5, z: 0.5, vz: 1.5, g: -0.4, life: 0.6, cor: Math.random() < 0.5 ? '#25f4ee' : '#fe2c55', tam: 1 });
     }
-    const [sx, sy] = this.pessoa(spr, z.x, z.y, esc, 1, Math.max(0.05, nasc));
+    // a cena do 1º quarteirão: agachado devorando (a cabeça subindo e descendo) ou levantando devagar;
+    // no duelo, preparando o bote: inclinado pra trás, com o olho vermelho brilhando
+    const agachado = z.devorando ? 0.68 : z.levantando > 0 ? 0.68 + 0.32 * (1 - z.levantando / 0.9) : 1;
+    const preparo = z.bote && z.bote.t > 0;
+    const [sx, sy] = agachado < 1 ? this.pessoaAgachada(spr, z.x, z.y, agachado, z.devorando ? Math.round(Math.sin(this.t * 7 + z.id) * 1.2) : 0)
+      : preparo ? this.pessoaInclinada(spr, z, g) : this.pessoa(spr, z.x, z.y, esc, 1, Math.max(0.05, nasc));
+    if (z.devorando && Math.random() < 0.06) this.sangue(z.devorando.x, z.devorando.y, 1);
+    if (preparo && Math.floor(this.t * 14) % 2) { this.ctx.fillStyle = '#ff2a1a'; this.ctx.fillRect(sx - 1, sy - 22, 1, 1); this.ctx.fillRect(sx + 2, sy - 22, 1, 1); }
     if (z.fa?.escudo > 0 && nasc >= 1) { this.ctx.globalAlpha = 0.18 + 0.08 * Math.sin(this.t * 8); disc(this.ctx, sx, sy - 10, 13, '#bff8ff', 0.9); this.ctx.globalAlpha = 1; }
     if (z.flash > 0.04) { this.ctx.globalAlpha = 0.6; this.ctx.drawImage(this.branco(spr), sx - S.PE_X * esc, sy - S.PE_Y * esc, S.SPR_W * esc, S.SPR_H * esc); this.ctx.globalAlpha = 1; }
     // zumbi do tomate: um tomate na mão, balançando, pronto pra jogar
@@ -742,6 +796,20 @@ export class Render {
   // Figurantes (só cenário): pessoa fugindo, ou pessoa caída com dois zumbis em cima pedindo socorro
   desenharFigurante(f, g) {
     const ctx = this.ctx, set = S.spriteCivil(f.roupa);
+    if (f.tipo === 'vitima') {
+      // a pessoa da cena do 1º quarteirão: caída numa poça de sangue, se debatendo e pedindo socorro;
+      // salva, agradece e fica ali, ferida
+      const [sx, sy] = this.tela(f.x, f.y);
+      ctx.globalAlpha = 0.75; disc(ctx, sx + 1, sy, 9, '#5a0a0a', 0.45); ctx.globalAlpha = 1;
+      ctx.drawImage(S.sombra(14), sx - 8, sy - 3);
+      const mexe = !f.salva && Math.floor(this.t * 5) % 3 === 0 ? 1 : 0;
+      ctx.drawImage(S.deitado(set.frente[0]), sx - 14, sy - 10 - mexe);
+      if (!f.salva && Math.floor(this.t * 3) % 2) { ctx.fillStyle = S.CIVIL_PELE[(f.roupa * 5) % 6]; ctx.fillRect(sx + 6, sy - 12 - mexe, 1, 3); }   // a mão pedindo ajuda
+      const desde = f.t - (f.gritoDesde ?? -9);
+      if (f.salva ? desde < 3.5 : desde < 1.8) this.nomes.push({ x: sx, y: sy - 22, txt: (f.salva ? '🙏 ' : '🆘 ') + f.grito, cor: f.salva ? '#fff3c8' : '#ff6a5a' });
+      if (!f.salva && Math.random() < 0.05) this.sangue(f.x, f.y, 1);
+      return;
+    }
     if (f.tipo === 'fugindo') {
       const spr = this.quadro(set, f.fx || f.vx, f.fy || f.vy, f.animT * 1.6, true);
       const [sx, sy] = this.pessoa(spr, f.x, f.y);
@@ -791,6 +859,13 @@ export class Render {
     disc(ctx, ax, ay, 6, 'rgba(26,20,32,0.9)', 0.45);
     ctx.globalAlpha = 1;
     if (g.caido) { this.heroiCaido(g, spr, ax, ay); return; }
+    // tropeçou (duelo): cai de lado e levanta (sobrevivencia.js → tropeco)
+    if (h.tropecou > 0) {
+      const k = Math.min(1, h.tropecou / 0.25, (1.1 - h.tropecou + 0.15) / 0.25);
+      ctx.save(); ctx.translate(ax + 5 * k, ay - 2); ctx.rotate(-Math.PI / 2 * k); ctx.drawImage(spr, -S.PE_X, -S.PE_Y); ctx.restore();
+      this.heroiSpr = null; this.heroiTela = [ax, ay];
+      return;
+    }
     // zumbi paraquedista agarrado na perna: deitado atrás do herói, puxando
     const agarrados = h.estados.pilhas('agarrado');
     for (let k = 0; k < agarrados; k++) {
@@ -817,7 +892,8 @@ export class Render {
       const armas = { pistola: [5, '#2a2a30'], escopeta: [8, '#5a3a22'], metralhadora: [9, '#1a1a1e'], lanca: [8, '#b83a2a'] };
       const [len, cor] = armas[h.arma] || armas.pistola;
       line(ctx, hx, hy, hx + ux * len, hy + uy * len, cor, h.arma === 'pistola' ? 1 : 2);
-      if (h.corpo !== 'empurrao') line(ctx, sx - 4, sy - 16, sx - 2, sy - 6, h.corpo === 'chave' ? '#8a8a92' : '#8a5a32', 1);
+      if (h.corpo === 'lanterna') { ctx.fillStyle = '#2a2a30'; ctx.fillRect(sx - 5, sy - 12, 1, 4); ctx.fillStyle = '#e8eef8'; ctx.fillRect(sx - 5, sy - 13, 1, 1); }   // lanterna na outra mão
+      else if (h.corpo !== 'empurrao') line(ctx, sx - 4, sy - 16, sx - 2, sy - 6, h.corpo === 'chave' ? '#8a8a92' : '#8a5a32', 1);
     } else {
       // arma de perto na mão; balança logo depois de um golpe
       const giro = this.golpeT > 0 ? (1 - this.golpeT / 0.15) * 1.6 - 0.8 : 0;
@@ -826,6 +902,9 @@ export class Render {
       else if (h.corpo === 'machado') { line(ctx, hx, hy, hx + cx * 7, hy + cy * 7, '#7a4a28', 1); ctx.fillStyle = '#b8bec8'; ctx.fillRect(Math.round(hx + cx * 6) - 1, Math.round(hy + cy * 6) - 2, 3, 4); }
       else if (h.corpo === 'chave') line(ctx, hx, hy, hx + cx * 6, hy + cy * 6, '#8a8a92', 2);
       else if (h.corpo === 'taco') line(ctx, hx, hy, hx + cx * 7, hy + cy * 7, '#8a5a32', 2);
+      else if (h.corpo === 'beisebol') { line(ctx, hx, hy, hx + cx * 4, hy + cy * 4, '#c8a070', 1); line(ctx, hx + cx * 3, hy + cy * 3, hx + cx * 8, hy + cy * 8, '#d9b384', 2); }
+      else if (h.corpo === 'pe_de_cabra') { line(ctx, hx, hy, hx + cx * 7, hy + cy * 7, '#b8302a', 1); ctx.fillStyle = '#b8302a'; ctx.fillRect(Math.round(hx + cx * 7 - cy * 1.5), Math.round(hy + cy * 7 + cx * 1.5), 1, 1); }
+      else if (h.corpo === 'lanterna') { line(ctx, hx, hy, hx + cx * 4, hy + cy * 4, '#2a2a30', 2); ctx.fillStyle = '#e8eef8'; ctx.fillRect(Math.round(hx + cx * 4), Math.round(hy + cy * 4), 1, 1); }
     }
     if (h.colete > 0) { ctx.fillStyle = '#5a9ad8'; for (let i = 0; i < Math.min(h.colete, 6); i++) ctx.fillRect(sx - 6 + i * 2, sy - 29, 1, 2); }
     if (h.estados.tem('lento') && Math.random() < 0.3) this.particula({ x: h.x, y: h.y, z: 0.1, vz: 0.5, life: 0.3, cor: '#d8f4ff', tam: 1 });
@@ -1314,6 +1393,9 @@ export class Render {
     };
     const [hx, hy] = this.tela(g.hero.x, g.hero.y, 10);
     buraco(hx, hy, 120 - 60 * noite, 0.95);   // a visão vai fechando junto com o escuro
+    // lanterna (policial): um cone de luz pra onde ele olha, abrindo o escuro na frente
+    const lanterna = noite > 0.05 && g.fase === 'jogo' && !g.caido && CORPO[g.hero.corpo]?.luz;
+    if (lanterna) this.coneLanterna(ex, g, 1);
     // explosões e raios abrem luz no escuro; de noite a explosão ilumina bem mais longe
     for (const r of this.raios) { const [sx, sy] = this.tela(r.x, r.y, 8); buraco(sx, sy, r.r * (1 - r.age / r.life * 0.5) * (noite > 0 ? 1.7 : 1), 0.95); }
     for (const p of this.parts) if (p.fogo && Math.random() < 0.3) { const [sx, sy] = this.tela(p.x, p.y, p.z * 12); buraco(sx, sy, 16, 0.5); }
@@ -1350,6 +1432,8 @@ export class Render {
       if (this.emLc) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = noite; ctx.drawImage(this.emLc, 0, 0); ctx.globalAlpha = 1; }
       ctx.globalCompositeOperation = 'source-over';
     }
+    // a luz branca e fria da lanterna por cima do escuro (bem de leve)
+    if (lanterna) { ctx.globalCompositeOperation = 'lighter'; this.coneLanterna(ctx, g, 0.16 * noite, true); ctx.globalCompositeOperation = 'source-over'; }
     // vinheta vermelha de vida baixa
     const pct = g.hero.vida / g.hero.vidaMax;
     if (g.fase === 'jogo' && (pct < 0.3 || g.caido)) {
@@ -1358,6 +1442,18 @@ export class Render {
       gr.addColorStop(0, 'rgba(200,0,0,0)'); gr.addColorStop(1, `rgba(200,0,0,${0.25 + 0.25 * p})`);
       ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
     }
+  }
+
+  // Cone da lanterna: sai da mão do herói pra onde ele olha (com um tremidinho de mão), ~75 px de alcance.
+  // c = contexto (o do escuro, pra abrir buraco; ou o da tela, pra pintar a luz), forca = opacidade no centro
+  coneLanterna(c, g, forca, cor = false) {
+    const h = g.hero, [mx, my] = this.tela(h.x, h.y, 11);
+    const [dx, dy] = this.dirTela(h.fx, h.fy), a = Math.atan2(dy, dx) + Math.sin(this.t * 1.7) * 0.04, abre = 0.42, R = 78;
+    const gr = c.createRadialGradient(mx, my, 4, mx, my, R);
+    const tom = cor ? '215,230,255' : '0,0,0';
+    gr.addColorStop(0, `rgba(${tom},${forca})`); gr.addColorStop(0.65, `rgba(${tom},${forca * 0.55})`); gr.addColorStop(1, `rgba(${tom},0)`);
+    c.fillStyle = gr;
+    c.beginPath(); c.moveTo(mx, my); c.arc(mx, my, R, a - abre, a + abre); c.closePath(); c.fill();
   }
 
   desenharHeli(g, dt) {

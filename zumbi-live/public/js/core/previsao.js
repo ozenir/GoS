@@ -18,7 +18,8 @@ export const RISCOS = {
 // O que tem em cada loja, do jeito que aparece no resultado
 const LOOT = {
   kit: '💚 kits de cura', cura_pequena: '🩹 curativos', municao: '🔫 munição', colete: '🦺 colete',
-  bau_medio: '📦 baú', bau_lendario_chance: '✨ chance de baú lendário'
+  bau_medio: '📦 baú', bau_lendario_chance: '✨ chance de baú lendário',
+  comida: '🥫 comida', energetico: '🥤 energético', vitamina: '🍊 vitaminas', remedio: '💊 remédios', arma: '🔫 arma'
 };
 
 // prep = { praia, caminho } sorteado pra essa opção (só ruas comuns); g = jogo
@@ -26,7 +27,14 @@ export function preverDestino(g, op, prep = null) {
   const h = g.hero, vida = h.vida / h.vidaMax;
   const itens = [];
   let perigo = 0;   // 0 tranquilo · 1 perigoso · 2 muito perigoso
-  const rua = op.id !== 'entrar';
+  const L = op.lugar;   // viagem pelo mapa (mapa.js): o lugar escolhido
+  const rua = L ? L.dist > 0 : op.id !== 'entrar';
+  if (L) {
+    const longe = L.dist ? `a ${L.dist} quarteirã${L.dist === 1 ? 'o' : 'os'}` : 'aqui mesmo';
+    itens.push(L.praca ? `⚔️ praça ${longe}: chefe, ondas de zumbis e baú` : `${L.emoji} ${L.nome} ${longe}: pode ter ${L.oque}`);
+    if (L.praca) perigo = 2;
+    else if (L.risco >= 4) perigo = Math.max(perigo, 1);
+  }
 
   if (op.id === 'entrar' && op.praca) {
     itens.push('⚔️ arena: chefe da praça e ondas de zumbis', '📦 baú no fim (pode ser lendário)');
@@ -34,8 +42,13 @@ export function preverDestino(g, op, prep = null) {
   } else if (op.id === 'entrar' && op.shop) {
     const L = LOJAS[op.shop.tipo] || LOJAS.mercado;
     itens.push(`${op.shop.emoji} ${op.shop.nome}: ${L.zumbis} zumbis lá dentro`);
-    itens.push(L.loot.map(([k]) => LOOT[k]).filter(Boolean).join(', '));
+    itens.push(L.oque ? `pode ter: ${L.oque}` : L.loot.map(([k]) => LOOT[k]).filter(Boolean).join(', '));
     perigo = op.shop.risco >= 4 ? 2 : op.shop.risco >= 3 ? 1 : 0;
+  }
+  // a direção leva a um lugar: ele entra lá no fim da rua (o que tem lá dentro é sorteado: nem sempre tem tudo)
+  if (rua && op.destino) itens.push(`${op.destino.emoji} ${op.destino.nome} no fim da rua: ${op.destino.oque}`);
+  if (L ? !L.dist : op.id === 'entrar') {
+    // (já contado acima)
   } else if (op.semSaida) {
     itens.push('🚧 rua sem saída', '📦 baú no fim', '⚠️ emboscada na volta');
     perigo = 1;

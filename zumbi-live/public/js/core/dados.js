@@ -47,8 +47,8 @@ for (const [id, Zt] of Object.entries(ZUMBIS_TELA)) {
 }
 
 // Personagens. Todos usam o mesmo corpo, muda roupa, armas e o jeito de lutar.
-//   arma         arma de fogo inicial (ARMAS) ou null = luta só de perto
-//   corpo        golpe de perto (CORPO)
+//   arma         arma de fogo inicial (ARMAS) ou null = luta só de perto (armas de fogo se acham na delegacia)
+//   corpo        arma de perto inicial (CORPO): lanterna, faca, machado, pé de cabra, taco de beisebol
 //   estilo       'distancia' (atira e recua) ou 'perto' (vai pra cima)
 //   pericias     perícia inicial em cada categoria (dano.js → PERICIAS; 2 = normal)
 //   crescimento  quanto cada perícia sobe a cada nível do herói
@@ -58,12 +58,12 @@ for (const [id, Zt] of Object.entries(ZUMBIS_TELA)) {
 export const CLASSES = {
   policial: {
     nome: 'Policial', emoji: '👮', roupa: 'policial', vida: 100, vel: 1.0,
-    arma: 'pistola', corpo: 'empurrao', estilo: 'distancia',
+    arma: 'pistola', corpo: 'lanterna', estilo: 'distancia',
     pericias: { armas_fogo: 4, impacto: 2, facas: 1, machados: 1, explosivos: 2, agilidade: 2 },
     crescimento: { armas_fogo: 1 },
     attr: { defesa: 0.05 },
     passiva: { id: 'tiro_certeiro', texto: 'tiro crítico marca o zumbi (+25% de dano nele)' },
-    descricao: 'perito em armas de fogo · colete da polícia'
+    descricao: 'perito em armas de fogo · pistola e lanterna (ilumina a noite)'
   },
   enfermeira: {
     nome: 'Enfermeira', emoji: '🩺', roupa: 'enfermeira', vida: 115, vel: 1.05,
@@ -86,20 +86,20 @@ export const CLASSES = {
   },
   entregador: {
     nome: 'Entregador', emoji: '🛵', roupa: 'entregador', vida: 105, vel: 1.22,
-    arma: 'pistola', corpo: 'empurrao', estilo: 'distancia',
-    pericias: { agilidade: 4, armas_fogo: 2, impacto: 2, facas: 2, machados: 1, explosivos: 1 },
-    crescimento: { agilidade: 1, armas_fogo: 0.5 },
+    arma: null, corpo: 'beisebol', estilo: 'perto',
+    pericias: { agilidade: 4, impacto: 3, armas_fogo: 2, facas: 2, machados: 1, explosivos: 1 },
+    crescimento: { agilidade: 1, impacto: 0.5 },
     attr: { esquiva: 0.16 },
     passiva: { id: 'esquiva', texto: 'desvia de ataques (a esquiva sobe com a agilidade)' },
-    descricao: 'perito em agilidade · rápido e escorregadio'
+    descricao: 'perito em agilidade · taco de beisebol · rápido e escorregadio'
   },
   mecanico: {
     nome: 'Mecânico', emoji: '🔧', roupa: 'mecanico', vida: 100, vel: 0.98,
-    arma: 'escopeta', municao: 8, corpo: 'chave', estilo: 'distancia',
+    arma: null, corpo: 'pe_de_cabra', estilo: 'perto',
     pericias: { impacto: 4, explosivos: 3, armas_fogo: 2, facas: 1, machados: 2, agilidade: 1 },
     crescimento: { impacto: 0.6, explosivos: 0.5 },
     attr: { defesa: 0, resExplosao: 0.5 },
-    passiva: { id: 'pancada', texto: 'a chave inglesa atordoa e quebra a armadura dos zumbis' },
+    passiva: { id: 'pancada', texto: 'o pé de cabra atordoa e quebra a armadura dos zumbis' },
     descricao: 'perito em pancada e explosivos · aguenta explosões'
   }
 };
@@ -123,7 +123,11 @@ export const CORPO = {
   taco:     { nome: 'Taco com pregos', emoji: '🏏', dano: 40, cd: 0.55, empurra: 0.9, alcance: 1.1,  arco: 1.2, tipo: 'impacto', categoria: 'impacto', golpes: 60, status: [{ id: 'atordoado', chance: 0.25, duracao: 0.6 }, { id: 'sangramento', chance: 0.15 }] },
   faca:     { nome: 'Facas',           emoji: '🔪', dano: 15, cd: 0.32, empurra: 0.3, alcance: 1.05, arco: 1.1, tipo: 'corte',   categoria: 'facas', status: [{ id: 'sangramento', chance: 0.45 }] },
   machado:  { nome: 'Machado',         emoji: '🪓', dano: 32, cd: 0.85, empurra: 1.0, alcance: 1.3,  arco: 1.35, tipo: 'corte',   categoria: 'machados', status: [{ id: 'quebrado', chance: 0.35 }, { id: 'sangramento', chance: 0.25 }] },
-  chave:    { nome: 'Chave inglesa',   emoji: '🔧', dano: 14, cd: 0.7, empurra: 0.8, alcance: 1.05, arco: 1.1, tipo: 'impacto', categoria: 'impacto', status: [{ id: 'atordoado', chance: 0.14, duracao: 0.5 }, { id: 'quebrado', chance: 0.2 }] }
+  chave:    { nome: 'Chave inglesa',   emoji: '🔧', dano: 14, cd: 0.7, empurra: 0.8, alcance: 1.05, arco: 1.1, tipo: 'impacto', categoria: 'impacto', status: [{ id: 'atordoado', chance: 0.14, duracao: 0.5 }, { id: 'quebrado', chance: 0.2 }] },
+  // armas iniciais de cada personagem (a pistola do policial fica em ARMAS)
+  lanterna:    { nome: 'Lanterna',         emoji: '🔦', dano: 11, cd: 0.6,  empurra: 0.8, alcance: 1.05, arco: 1.1,  tipo: 'impacto', categoria: 'impacto', luz: true, status: [{ id: 'atordoado', chance: 0.12, duracao: 0.5 }] },
+  pe_de_cabra: { nome: 'Pé de cabra',      emoji: '🪝', dano: 24, cd: 0.75, empurra: 0.9, alcance: 1.15, arco: 1.15, tipo: 'impacto', categoria: 'impacto', status: [{ id: 'atordoado', chance: 0.18, duracao: 0.5 }, { id: 'quebrado', chance: 0.25 }] },
+  beisebol:    { nome: 'Taco de beisebol', emoji: '🏏', dano: 20, cd: 0.55, empurra: 1.1, alcance: 1.2,  arco: 1.3,  tipo: 'impacto', categoria: 'impacto', status: [{ id: 'atordoado', chance: 0.2, duracao: 0.5 }] }
 };
 for (const c of Object.values(CORPO)) c.corpo = true;
 

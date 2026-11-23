@@ -11,7 +11,7 @@ const teste = (nome, fn) => { fn(); ok++; console.log('  ✔', nome); };
 const DT = 1 / 30;
 const passar = (j, seg, cada) => { for (let i = 0; i < Math.round(seg / DT); i++) { j.update(DT); cada?.(); } };
 const jogo = () => {
-  const j = new Jogo({ seed: 5, classe: 'policial' });
+  const j = new Jogo({ sobrevivencia: false, seed: 5, classe: 'policial' });
   j.zumbis = []; j.spawnT = 999; j.cotaRua = 0; j.protecao = 0; j.hero.folegoCd = 1e9;
   return j;
 };
@@ -160,7 +160,7 @@ teste('pegar a runa: gruda numa habilidade que o herói tem e avisa', () => {
 teste('presente de atrapalhar de 1 moeda: não dá drop; vem o conversível ou o zumbi paraquedista', () => {
   const visto = { conversivel: 0, paraquedista: 0 };
   for (let s = 0; s < 30; s++) {
-    const j = new Jogo({ seed: 100 + s, classe: 'policial' });
+    const j = new Jogo({ sobrevivencia: false, seed: 100 + s, classe: 'policial' });
     j.zumbis = []; j.spawnT = 999; j.cotaRua = 0; j.protecao = 0;
     presente(j, 1, 1, 'zumbis');
     passar(j, 2);
@@ -194,7 +194,7 @@ teste('conversível: tira metade da vida ATUAL de quem pegar (herói e zumbis, i
 teste('conversível: quando o herói percebe, pula pro lado e escapa', () => {
   let escapou = 0;
   for (let s = 0; s < 6; s++) {
-    const j = new Jogo({ seed: 300 + s, classe: 'policial' });
+    const j = new Jogo({ sobrevivencia: false, seed: 300 + s, classe: 'policial' });
     j.zumbis = []; j.spawnT = 999; j.cotaRua = 0; j.protecao = 0; j.hero.invT = 0;
     j.conversivel(null);
     j.carros[0].desvia = true;

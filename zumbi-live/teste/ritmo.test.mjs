@@ -15,7 +15,7 @@ const teste = (nome, fn) => { fn(); ok++; console.log('  ✔', nome); };
 const DT = 1 / 30;
 const passar = (j, seg, cada) => { for (let i = 0; i < Math.round(seg / DT); i++) { j.update(DT); if (cada) cada(j.drainEvents()); } };
 const jogo = (nivel = 1, classe = 'policial') => {
-  const j = new Jogo({ seed: 21, classe });
+  const j = new Jogo({ sobrevivencia: false, seed: 21, classe });
   j.hero.nivel = nivel; j.protecao = 0; j.hero.invT = 9999;
   return j;
 };
@@ -217,7 +217,7 @@ teste(`lobos e braços longos só a partir do nível ${NIVEL_INIMIGOS_NOVOS} do 
 teste('lobo zumbi salta no herói e paralisa', () => {
   let paralisou = false, saltos = 0;
   for (let s = 0; s < 6 && !paralisou; s++) {
-    const j = new Jogo({ seed: 40 + s, classe: 'policial' });
+    const j = new Jogo({ sobrevivencia: false, seed: 40 + s, classe: 'policial' });
     j.hero.nivel = 20; j.protecao = 0; j.hero.arma = null; j.hero.corpoCd = 999;
     j.zumbis = []; j.spawnT = 999; j.hordaT = 999;
     const z = j.criarZumbi('lobo', j.hero.x + 2.4, j.hero.y, null, { nascendo: 0 });
