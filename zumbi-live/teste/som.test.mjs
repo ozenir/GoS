@@ -23,4 +23,11 @@ teste('quanto mais longe, mais baixo, mais grave (o ar come os agudos primeiro) 
   assert.ok(acustica(25).atraso < 0.2, 'o atraso é pequeno (não desencontra da imagem)');
 });
 
+teste('eco da cidade: perto quase só o som direto; longe, cada vez mais eco (é o que faz o ouvido sentir "longe")', () => {
+  let antes = acustica(0).eco;
+  assert.ok(antes < 0.2, 'do lado do herói: pouco eco');
+  for (let d = 2; d <= 40; d += 2) { const e = acustica(d).eco; assert.ok(e >= antes, `distância ${d}`); antes = e; }
+  assert.ok(acustica(30).eco > 0.5 && acustica(60).eco <= 0.85, 'longe: muito eco, sem passar do limite');
+});
+
 console.log(`\n${ok} testes passaram.`);

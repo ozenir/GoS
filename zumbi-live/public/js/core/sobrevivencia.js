@@ -77,8 +77,8 @@ export function pesosDestino(h, usados = new Set()) {
 // Quanto a IA quer ir pra esse lugar (votação sem votos)
 export function vontadeDestino(h, tipo) {
   const vida = h.vida / h.vidaMax;
-  if (vida < 0.5 && (tipo === 'hospital' || tipo === 'farmacia')) return 3.5;
-  if (vida < 0.5 && tipo === 'mercado') return 2.5;
+  // com a vida baixa: remédio (hospital, farmácia) ou comida (mercado, casa); o resto fica pra depois
+  if (vida < 0.5) return tipo === 'hospital' || tipo === 'farmacia' ? 3.5 : tipo === 'mercado' || tipo === 'casa' ? 2.8 : 0.4;
   if (!h.arma && tipo === 'delegacia') return 2.2;
   if (h.municao != null && h.municao < 10 && (tipo === 'delegacia' || tipo === 'posto')) return 2;
   return 1.3;

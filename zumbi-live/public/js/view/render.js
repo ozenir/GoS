@@ -139,7 +139,7 @@ export class Render {
       case 'ima': this.ondas.push({ x: e.x, y: e.y, raio: e.raio, age: 0, life: 0.5, cor: '#c58bff', fecha: true }); break;
       case 'algemas': this.choques.push({ pts: e.pts, age: 0, life: 0.3, cor: '#d8dde6', reto: true }); this.texto(e.x, e.y, '⛓️', '#d8dde6', 0.9); break;
       case 'sirene': this.piscar(Math.floor(this.t * 4) % 2 ? '#ff2a2a' : '#2a6aff', 0.3); this.tremer(3); break;
-      case 'grito': this.texto(e.x, e.y, e.grande ? '🦁 RRRAAAH!' : '📣 AAAH!', '#ffb347', e.grande ? 1.5 : 1.1); break;
+      case 'grito': if (e.heroi) this.texto(e.x, e.y, e.grande ? '🦁 RRRAAAH!' : '📣 AAAH!', '#ffb347', e.grande ? 1.5 : 1.1); break;
       case 'seringa': for (let i = 0; i < (e.grande ? 16 : 8); i++) this.particula({ x: e.x + (Math.random() - 0.5) * 0.6, y: e.y + (Math.random() - 0.5) * 0.6, z: 0.5, vz: 1.5 + Math.random(), g: -0.3, life: 0.7, cor: i % 2 ? '#9dffb0' : '#ffffff', tam: 2 }); break;
       case 'escudo': this.texto(e.x, e.y, `🔰 escudo x${e.cargas}`, '#7ad8ff', 0.9); break;
       case 'escudo_bloqueou': this.texto(e.x, e.y, e.resta ? '🔰 bloqueou' : '🔰 escudo quebrou!', '#7ad8ff', 0.9); this.tremer(2); break;
@@ -806,7 +806,8 @@ export class Render {
       ctx.drawImage(S.deitado(set.frente[0]), sx - 14, sy - 10 - mexe);
       if (!f.salva && Math.floor(this.t * 3) % 2) { ctx.fillStyle = S.CIVIL_PELE[(f.roupa * 5) % 6]; ctx.fillRect(sx + 6, sy - 12 - mexe, 1, 3); }   // a mão pedindo ajuda
       const desde = f.t - (f.gritoDesde ?? -9);
-      if (f.salva ? desde < 3.5 : desde < 1.8) this.nomes.push({ x: sx, y: sy - 22, txt: (f.salva ? '🙏 ' : '🆘 ') + f.grito, cor: f.salva ? '#fff3c8' : '#ff6a5a' });
+      if (f.salva ? desde < 3.5 : desde < 1.8) this.nomes.push({ x: sx, y: sy - 22, txt: (f.salva ? '🙏 ' : '🆘 ') + (f.nome ? f.nome + ': ' : '') + f.grito, cor: f.salva ? '#fff3c8' : '#ff6a5a' });
+      else if (f.nome && !f.salva) this.nomes.push({ x: sx, y: sy - 18, txt: f.nome, cor: '#ffd8a8' });
       if (!f.salva && Math.random() < 0.05) this.sangue(f.x, f.y, 1);
       return;
     }

@@ -415,6 +415,7 @@ export class Jogo {
     this.atualizarZumbis(dt);
     this.danoPorToque(dt);
     this.atualizarCarros(dt);
+    this.atualizarAlarmesCarro();
     this.atualizarItens(dt);
   }
 
@@ -717,6 +718,7 @@ export class Jogo {
   // A rua deu na praia: uma horda maior sai do mar; sobreviver 1 minuto
   entrarPraia() {
     const h = this.hero;
+    this.viagem = null; this.destino = null;   // a rua deu na praia: a viagem acaba (saindo, vota pra onde ir)
     this.figurantes = [];
     this.room = new Praia(this.rng.int(1, 1e9));
     this.map = this.room;
@@ -2343,6 +2345,7 @@ export class Jogo {
   // cadeia = true: explosivos dentro do estouro estouram logo em seguida (inchados instáveis do nível 20)
   explodir(x, y, raio, danoHeroi, danoZumbi, quem, causa, cadeia = false) {
     this.emit('explosao', { x, y, raio });
+    this.alarmeDeCarro(x, y, raio);
     // explosão grande deixa o chão pegando fogo por alguns segundos
     if (raio >= 1.5 && this.zonas.length < 12) { const m = raio * 0.55; this.zonas.push({ tipo: 'fogo', x0: x - m, y0: y - m, x1: x + m, y1: y + m, t: 4, semente: this.rng.int(1, 1e6) }); }
     const h = this.hero;
@@ -2369,6 +2372,30 @@ export class Jogo {
         if (!z.morto && d > 0.01 && !ZUMBIS[z.tipo].chefe) { z.kx += (z.x - x) / d * 4; z.ky += (z.y - y) / d * 4; }
       }
     }
+  }
+
+  // Explosão perto de um carro parado: o alarme dispara (pisca e toca uns segundos) e os vidros estouram.
+  // Um por vez (com intervalo), pra não virar uma sinfonia de alarmes.
+  alarmeDeCarro(x, y, raio) {
+    if (this.room || this.t < (this.carroAlarmeCd || 0)) return;
+    const R = raio + 1.5;
+    for (const o of this.city.objectsIn(x - R, y - R, x + R, y + R)) {
+      if (o.kind !== 'prop' || o.p.tipo !== 'carro' || o.p.alarme) continue;
+      const cx = o.p.x + (o.p.w || 1) / 2, cy = o.p.y + (o.p.h || 1) / 2;
+      if (dist(cx, cy, x, y) > R) continue;
+      const seg = 9;
+      o.p.alarme = true;
+      (this.carrosAlarme ||= []).push({ p: o.p, ate: this.t + seg });
+      this.carroAlarmeCd = this.t + 14;
+      this.emit('alarme_carro', { x: cx, y: cy, seg });
+      return;
+    }
+  }
+  // desliga os alarmes que já tocaram o bastante
+  atualizarAlarmesCarro() {
+    if (!this.carrosAlarme?.length) return;
+    for (const c of this.carrosAlarme) if (this.t > c.ate) c.p.alarme = false;
+    this.carrosAlarme = this.carrosAlarme.filter(c => this.t <= c.ate);
   }
 
   /* =================== Aliados (cachorro, sobrevivente) =================== */

@@ -226,7 +226,7 @@ export const SUPREMAS = {
     usar(g, h, m) {
       if (!onda(g, h.x, h.y, this.raio, this.dano * m, { minimo: 2, cor: '#ffb347', status: { id: 'medo', duracao: this.medo } })) return false;
       g.aplicarStatus(h, 'furia', { duracao: 4 }); g.aplicarStatus(h, 'foco', { duracao: 4 });
-      g.emit('grito', { x: h.x, y: h.y, grande: true });
+      g.emit('grito', { x: h.x, y: h.y, grande: true, heroi: true });
       return true;
     }
   },

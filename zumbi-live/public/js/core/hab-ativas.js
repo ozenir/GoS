@@ -154,7 +154,7 @@ export const ATIVAS = {
       const z = onda(g, h.x, h.y, this.raio(n), 0, { minimo: 3, cor: '#ffb347', status: { id: 'medo', duracao: this.medo(n) } });
       if (!z) return false;
       g.aplicarStatus(h, 'furia', { duracao: this.furia(n) });
-      g.emit('grito', { x: h.x, y: h.y });
+      g.emit('grito', { x: h.x, y: h.y, heroi: true });
       return true;
     }
   },

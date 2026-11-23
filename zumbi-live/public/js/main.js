@@ -195,16 +195,25 @@ setInterval(() => { $('snd-hint').hidden = !(live && som.on && !som.running); },
 
 // distância (em casas) do herói até onde o som aconteceu: a câmera segue o herói (acústica em som.js)
 const longe = (e, g, x = e.x, y = e.y) => Number.isFinite(x) ? Math.hypot(x - g.hero.x, y - g.hero.y) : 0;
+// de que lado da tela o som vem (-1 esquerda, 1 direita): o estéreo acompanha a imagem
+const ladoNaTela = (x, y) => { if (!Number.isFinite(x)) return 0; const [sx] = render.tela(x, y); return clamp((sx - 108) / 108, -1, 1) * 0.85; };
+// som que acontece em (x, y) daqui a `seg` segundos (onde a granada, o molotov e o gelo caem)
+const depois = (seg, x, y, g, fn) => setTimeout(() => { som.pan = ladoNaTela(x, y); try { fn(Math.hypot(x - g.hero.x, y - g.hero.y)); } finally { som.pan = 0; } }, seg * 1000);
 
 function tocar(e, g) {
+  som.pan = ladoNaTela(e.x, e.y);
+  try { tocarEvento(e, g); } finally { som.pan = 0; }
+}
+function tocarEvento(e, g) {
+  const classe = g.hero?.classe;
   switch (e.type) {
     case 'tiro': if (e.heroi) som.tiro(e.arma); else som.tiroAliado(longe(e, g)); break;
     case 'chama': som.chama(); break;
     case 'acerto': som.acerto(longe(e, g)); break;
-    case 'golpe': som.golpe(e.taco); break;
+    case 'golpe': som.golpe(e.arma, e.acertos); break;
     case 'morte_zumbi': som.morteZumbi(e.chefe, longe(e, g), e.tipo); break;
     // (as vozes dos zumbis tocam sozinhas, de vez em quando: som.vozes no laço abaixo)
-    case 'mordida': som.mordida(e.chefe); break;
+    case 'mordida': som.mordida(e.chefe, e.entrou ? classe : null); break;   // (mordida em aliado: sem a voz do herói)
     case 'explosao': som.explosao(e.raio, longe(e, g)); break;
     case 'cura': som.cura(); break;
     case 'municao': som.municao(); break;
@@ -217,20 +226,20 @@ function tocar(e, g) {
     case 'presente': som.presente(e.lado); break;
     case 'voto': som.voto(); break;
     case 'decisao': som.decisao(); break;
-    case 'entrou_predio': case 'saiu_predio': som.porta(); break;
     case 'entrou_praia': som.perigo(); break;
     case 'praia_vencida': som.recorde(); break;
     case 'virou': som.virou(); break;
     case 'chefe': som.chefe(e.tipo === 'rei' || e.tipo === 'colosso'); break;
-    case 'alarme': som.alarme(e.sala ? 4 : 6); break;
+    case 'alarme': som.alarme(e.sala ? 4 : 6, !!e.sala); break;
+    case 'alarme_carro': som.alarmeCarro(e.seg, longe(e, g)); break;
     case 'latido': som.latido(longe(e, g)); break;
-    case 'vidro_pisou': som.vidro(); break;
+    case 'vidro_pisou': som.crocante(); break;
     case 'helicoptero': som.helicoptero(); break;
     case 'heroi_morreu': som.morteHeroi(); break;
-    case 'caiu': som.caiu(); break;
-    case 'raio': som.zap(); break;
+    case 'caiu': som.caiuHeroi(); break;
+    case 'raio': som.zap(e.pts?.length ? 1 : 2); break;
     case 'lobo_pulou': som.rosnado(longe(e, g)); break;
-    case 'grito': som.grito(longe(e, g)); break;
+    case 'grito': if (e.heroi) som.gritoGuerra(classe, e.grande); else som.grito(longe(e, g)); break;
     case 'braco': som.esticar(longe(e, g)); break;
     case 'horda_quadra': som.perigo(); break;
     case 'segundo_folego': som.onda(); break;
@@ -242,10 +251,10 @@ function tocar(e, g) {
     case 'conversivel': som.conversivel(e.distancia, e.vel); break;
     case 'atropelou': som.atropelou(e.heroi, longe(e, g)); break;
     case 'paraquedista': som.paraquedista(); break;
-    case 'tomate_lancado': som.arremesso(); break;
+    case 'tomate_lancado': som.arremesso('tomate'); break;
     case 'tomatada': sujeira.tomatada(); som.tomatada(); break;
     case 'tela': som.telaSom(e.id); break;
-    case 'pedra_lancada': som.arremesso(); break;
+    case 'pedra_lancada': som.arremesso('pedra'); break;
     case 'pedrada': sujeira.pedrada(); som.pedrada(); break;
     case 'portal_abriu': som.portalAbriu(); break;
     case 'portal_rodada': som.escolha(); break;
@@ -267,14 +276,13 @@ function tocar(e, g) {
     case 'runa': som.runa(); break;
     case 'suprema': som.nucleo(Math.min(3, Math.ceil(e.total / 2))); break;
     // habilidades novas (hab-ativas.js, hab-supremas.js)
-    case 'gelo': som.onda(); break;
-    case 'ima': som.zap(); break;
-    case 'algemas': som.bloqueio(); break;
-    case 'grito': som.onda(); break;
-    case 'sirene': som.alarme(1.5); break;
-    case 'escudo': som.colete(); break;
-    case 'escudo_bloqueou': som.bloqueio(); break;
-    case 'seringa': som.cura(); break;
+    case 'gelo': som.gelo(longe(e, g)); break;
+    case 'ima': som.ima(longe(e, g)); break;
+    case 'algemas': som.algemas(longe(e, g)); break;
+    case 'sirene': som.sirene(); break;
+    case 'escudo': som.escudo(); break;
+    case 'escudo_bloqueou': som.escudoBloqueou(); break;
+    case 'seringa': som.seringa(); break;
     case 'rajada': som.tiro(e.grande ? 'metralhadora' : 'escopeta'); break;
     case 'tempo_parado': som.furiaDivina(); break;
     case 'justica': som.tiro('escopeta'); break;
@@ -282,8 +290,8 @@ function tocar(e, g) {
     case 'nivel_maximo': som.recorde(); break;
     case 'furia_divina': som.furiaDivina(); break;
     case 'novos_inimigos': som.chefe(false); break;
-    case 'onda': som.onda(); break;
-    case 'arremesso': som.arremesso(); break;
+    case 'onda': som.onda(longe(e, g)); break;
+    case 'arremesso': som.arremesso(e.tipo); if (Number.isFinite(e.x1) && e.tipo !== 'missil') depois(e.t || 0.5, e.x1, e.y1, g, d => som.caiu(e.tipo, d)); break;
     case 'habilidade': som.habilidade(); break;
     case 'escolha_abriu': som.escolha(); break;
     case 'levantou': som.levantou(); break;
@@ -298,6 +306,17 @@ function tocar(e, g) {
     case 'historia': som.historia(); break;
     case 'ambiente': som.ambiente(e.tipo); break;
     case 'caminho': if (e.tipo === 'perigoso') som.perigo(); else som.livre(); break;
+    // sobrevivência: a cena do 1º quarteirão, o duelo, a viagem pelo mapa e os encontros
+    case 'socorro': som.socorro(longe(e, g), e.texto, 1 + ((Math.round(e.x * 7 + e.y * 3) % 5) - 2) * 0.06); break;
+    case 'devorando': som.devorando(longe(e, g)); break;
+    case 'zumbi_notou': som.notou(longe(e, g)); break;
+    case 'bote_preparo': som.botePreparo(longe(e, g)); break;
+    case 'bote': som.bote(longe(e, g)); break;
+    case 'tropecou': som.tropecou(classe); break;
+    case 'vitima_salva': case 'encontro_salvo': som.alivio(longe(e, g)); som.livre(); break;
+    case 'voltou_zumbi': som.notou(longe(e, g)); som.perigo(); break;
+    case 'votacao_abriu': if (e.mapa) som.mapa(); else if (e.encontro) som.encontro(); break;
+    case 'entrou_predio': case 'saiu_predio': som.porta(); break;
   }
 }
 
@@ -336,15 +355,18 @@ function loop(agora) {
     if (z.morto) continue;
     const d2 = dist2(z.x, z.y, h.x, h.y);
     if (d2 < 36) { perto++; if (ZUMBIS[z.tipo].chefe) chefe = 1; }
-    if (d2 < 121 && !(z.nascendo > 0) && !z.dormindo) vistos.push({ d: Math.sqrt(d2), tipo: z.tipo });
+    if (d2 < 121 && !(z.nascendo > 0) && !z.dormindo && !z.devorando) vistos.push({ d: Math.sqrt(d2), tipo: z.tipo, pan: ladoNaTela(z.x, z.y) });
   }
   som.vozes(dt, jogo.fase === 'jogo' ? vistos : []);
   // sozinho: só os próprios passos e a respiração (som.js → solidao)
+  // passos e respiração (som.js → solidao) e a cama do lugar (som.js → cenario)
+  const sala = jogo.room && !jogo.room.praia ? jogo.room.info?.chao : null;
   som.solidao(dt, {
     sozinho: jogo.fase === 'jogo' && !jogo.caido && !vistos.length,
-    andando: h.andando, anda: h.animT || 0, vida: pct,
-    chao: jogo.room ? (jogo.room.praia ? 'grama' : 'piso') : jogo.bairroAtual === 'parque' ? 'grama' : 'asfalto'   // areia da praia soa como grama
+    andando: h.andando && jogo.fase === 'jogo', anda: h.animT || 0, vida: jogo.fase === 'jogo' ? pct : 1, cauteloso: !!h.cauteloso,
+    chao: h.noVidro ? 'vidro' : jogo.room ? (jogo.room.praia ? 'grama' : sala === 'azulejo' ? 'azulejo' : sala === 'concreto' ? 'concreto' : 'piso') : jogo.bairroAtual === 'parque' ? 'grama' : 'asfalto'   // areia da praia soa como grama
   });
+  som.cenario(dt, { periodo: jogo.periodo || 'manha', dentro: !!jogo.room, praia: !!jogo.room?.praia, parque: jogo.bairroAtual === 'parque', perigo: clamp(perto / 12, 0, 1) });
   som.musica(jogo.fase === 'jogo' ? clamp(perto / 18 + (1 - pct) * 0.4 + (jogo.ehNoite() ? 0.25 : 0) + chefe * 0.4, 0, 1) : 0, dt, jogo.fase === 'jogo' && pct < 0.5 ? clamp((0.5 - pct) / 0.5, 0.05, 1) : 0);
   if (jogo.fase === 'jogo' && pct < 0.3) { coracaoT -= dt; if (coracaoT <= 0) { coracaoT = pct < 0.15 ? 0.55 : 0.85; som.coracao(); } }
   // tique dos últimos segundos da votação
