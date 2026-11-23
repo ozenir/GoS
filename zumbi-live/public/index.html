@@ -121,6 +121,10 @@ body.foco .app{padding-block:8px}
 .nuc.pronta .meio{box-shadow:0 0 2cqw #ffd23f;animation:pisca .5s infinite alternate}   /* tem suprema pra fazer: pisca */
 .nuc.deus{filter:drop-shadow(0 0 2cqw rgba(255,210,63,.85))}
 .nuc.deus .meio{font-size:3cqw;background:radial-gradient(circle,#fff3a0,#ffb02a 60%,#7a4a10);animation:pisca 1.2s infinite alternate}
+/* a runa do núcleo: traço dourado com brilho; se formando (6 supremas, antes do poder deus) ela pulsa */
+.nuc .meio .runa{width:3.6cqw;height:3.6cqw;fill:none;stroke:#fff3a0;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 .5cqw #ffd23f) drop-shadow(0 0 1.2cqw rgba(255,180,40,.8))}
+.nuc .meio .runa.formando{stroke:#ffd23f;opacity:.85;animation:pisca .6s infinite alternate}
+.nuc.deus .meio .runa{stroke:#3a1a06;filter:drop-shadow(0 0 .4cqw #fff3a0)}
 .nuc.up{animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
 
 .stats{display:flex;align-items:center;justify-content:space-between;gap:1cqw;padding:.9cqw 2.2cqw;border-radius:99px;background:rgba(16,13,24,.72);border:.35cqw solid var(--card-line);font-size:2.9cqw;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}

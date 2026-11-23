@@ -1,11 +1,11 @@
 // Testes das habilidades (estilo Vampire Survivors): cartas do chat, slots, receitas, supremas, núcleo e nível deus.
 // Rodar:  node teste/habilidades.test.mjs
 import assert from 'node:assert/strict';
-import { Jogo } from '../public/js/core/jogo.js';
+import { Jogo, ESCUDO_SEGURA } from '../public/js/core/jogo.js';
 import {
   ATIVAS, PASSIVAS, SUPREMAS, DEUSES, FORCA, MAX_ATIVAS, MAX_PASSIVAS, MAX_SUPREMAS, NIVEL_SUPREMA_ATIVA, NIVEL_SUPREMA_PASSIVA,
   sortearCartas, aplicarCarta, atualizarHabilidades, escolhaDaIA, SALVA_DESDE, slotsDoHeroi, vagasOcupadas, vagasPassivas,
-  supremasProntas, cartasDeus, deusPendente, multSuprema, receitas, recargasDoHeroi
+  supremasProntas, cartasDeus, deusPendente, multSuprema, receitas, recargasDoHeroi, NIVEL_PRESENTE, SUPREMAS_PRESENTE, cartasPresente
 } from '../public/js/core/habilidades.js';
 import { FORCA_PASSIVA } from '../public/js/core/hab-base.js';
 import { CLASSES, xpParaNivel, NIVEL_MAXIMO } from '../public/js/core/dados.js';
@@ -221,17 +221,18 @@ teste('fogo do molotov e o rastro de brasa não queimam o herói', () => {
   assert.ok(!j.hero.estados.tem('queimando'));
 });
 
-teste('escudo de energia segura golpes inteiros e, quando quebra, empurra a horda', () => {
+teste('escudo de energia: cada carga segura um golpe (até 20% da vida máxima) e, quando quebra, empurra a horda', () => {
   const j = jogo(), h = j.hero;
   h.invT = 0; h.colete = 0; h.attr.addMod({ id: 'sem-esquiva', attr: 'esquiva', mult: 0 });
   aplicarCarta(j, carta('ativa', 'escudo', 3));
   rodar(j, 0.6);
   assert.equal(h.escudo, ATIVAS.escudo.cargas(3));
   const z = zumbi(j, 1.2, 0, 'gordo'); z.vel = 0;
-  const v = h.vida;
-  j.ferirHeroi(50, null, 'teste');
-  assert.equal(h.vida, v, 'bloqueou');
-  j.ferirHeroi(50, null, 'teste');
+  const v = h.vida, segura = h.vidaMax * ESCUDO_SEGURA;
+  j.ferirHeroi(segura * 0.9, null, 'teste');
+  assert.equal(h.vida, v, 'golpe menor que o limite: bloqueou inteiro');
+  j.ferirHeroi(segura + 10, null, 'teste');
+  assert.ok(h.vida < v && h.vida > v - 20, 'golpe maior: o escudo segura o limite e passa só o resto');
   assert.equal(h.escudo, 0);
   assert.ok(z.kx > 0 || z.vida < z.vidaMax, 'a quebra empurrou/feriu');
   j.ferirHeroi(50, null, 'teste');
@@ -388,6 +389,32 @@ teste('cada suprema a mais deixa todas mais fortes', () => {
   const m1 = multSuprema(h);
   fazerSuprema(j, 'tempestade');
   assert.ok(multSuprema(h) > m1);
+});
+
+teste(`nível ${NIVEL_PRESENTE}: o chat escolhe 1 das 3 supremas originais de presente (Ataque aéreo, Aura de fogo, Coração de ferro)`, () => {
+  assert.deepEqual(SUPREMAS_PRESENTE, ['bombardeio', 'aura', 'coracao']);
+  const j = jogo('policial'), h = j.hero;
+  j.configurar({ segundos_escolha_habilidade: 3, atraso_da_live_segundos: 1 });
+  let x = 0; for (let k = 1; k < NIVEL_PRESENTE; k++) x += xpParaNivel(k);
+  j.ganharXp(x);   // sobe do 1 ao 10 de uma vez: a do nível 10 passa na frente da fila
+  assert.equal(h.nivel, NIVEL_PRESENTE);
+  passar(j, 1);
+  assert.ok(j.escolha?.presente, 'a escolha especial abriu primeiro');
+  assert.deepEqual(j.escolha.cartas.map(c => c.id), SUPREMAS_PRESENTE);
+  assert.ok(j.escolha.cartas.every(c => c.tipo === 'suprema' && c.gratis));
+  j.handle({ type: 'chat', id: 'x', nick: 'X', texto: 'a' });
+  passar(j, 9);   // (com níveis na fila a votação é a rápida: no mínimo 7 s + o atraso)
+  assert.deepEqual(h.supremas, ['bombardeio'], 'Ataque aéreo de presente, sem receita (a Aura também vale pro policial)');
+  assert.equal(h.supremaPresente, 'bombardeio');
+  assert.deepEqual(cartasPresente(h).map(c => c.id), ['aura', 'coracao']);
+  // não volta a abrir nos próximos níveis
+  for (let k = 0; k < 12 && (j.escolha || j.niveisPendentes); k++) { assert.ok(!j.escolha?.presente, 'não abre de novo'); passar(j, 5); }
+  // e o Ataque aéreo funciona
+  j.zumbis = []; h.supT.bombardeio = 0.2;
+  const zs = [];
+  for (let k = 0; k < 6; k++) { const z = zumbi(j, 2 + (k % 3) * 0.3, 2 + Math.floor(k / 3) * 0.3); z.vel = 0; zs.push(z); }
+  rodar(j, 5);
+  assert.ok(zs.filter(z => z.morto).length >= 4, 'o avião derrubou o grupo');
 });
 
 /* ---------------- Núcleo e nível deus ---------------- */

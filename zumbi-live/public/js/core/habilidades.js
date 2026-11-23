@@ -176,6 +176,16 @@ export function sortearCartas(h, rng) {
   return cartas.filter(Boolean).map((c, k) => ({ ...c, letra: 'ABC'[k] }));
 }
 
+// NÍVEL 10: a escolha especial de sempre. O chat escolhe 1 das 3 supremas originais DE PRESENTE (sem receita):
+// ✈️ Ataque aéreo, ☀️ Aura de fogo ou ❤️‍🔥 Coração de ferro. Ela ocupa 1 das 6 vagas do núcleo; as outras 5 vêm
+// pelas receitas. (A habilidade e a passiva da receita dela deixam de aparecer: a suprema já é dela.)
+export const NIVEL_PRESENTE = 10;
+export const SUPREMAS_PRESENTE = ['bombardeio', 'aura', 'coracao'];
+export const presenteNivel10 = h => h.nivel >= NIVEL_PRESENTE && !h.supremaPresente && lista(h).length < MAX_SUPREMAS;
+export function cartasPresente(h) {
+  return SUPREMAS_PRESENTE.filter(id => !lista(h).includes(id)).map((id, k) => ({ ...cartaSuprema(id), gratis: true, unica: false, letra: 'ABC'[k] }));
+}
+
 // A escolha especial depois da 6ª suprema: 3 poderes nível deus. O do personagem aparece se ele fez pelo menos
 // uma suprema única dele; senão, os 3 gerais.
 export function cartasDeus(h, rng) {
@@ -194,7 +204,7 @@ export function escolhaDaIA(h, cartas, rng) {
   const nAtivas = vagasOcupadas(h);
   return rng.weighted(cartas.map(c => {
     let p = 1;
-    if (c.tipo === 'suprema') p = 10;
+    if (c.tipo === 'suprema') p = c.gratis ? (c.id === 'coracao' && vidaPct < 0.4 ? 3 : 1) : 10;
     if (c.tipo === 'deus') p = c.unica ? 3 : c.papel === 'defensiva' && vidaPct < 0.5 ? 2 : 1;
     // aprimorar a receita mais adiantada vale mais (fecha a suprema antes)
     if (c.tipo === 'ativa') p = c.cat === 'nova' ? (nAtivas < 2 ? 2.2 : 1.1) : ((h.passivas?.[ATIVAS[c.id].par] || 0) > 0 ? 2.4 : 1.5) * (1 + 2 * progressoReceita(h, c.id));
@@ -250,6 +260,7 @@ export function aplicarCarta(g, carta) {
   } else if (carta.tipo === 'suprema') {
     const S = SUPREMAS[carta.id];
     if (h.supremas.includes(carta.id) || h.supremas.length >= MAX_SUPREMAS) return;
+    if (carta.gratis) { h.supremaPresente = carta.id; h.vida = Math.min(h.vidaMax, h.vida + h.vidaMax * 0.3); }   // a do nível 10 chega com fôlego
     // a habilidade sai do slot (a suprema roda no lugar dela); a passiva sai do slot, mas o bônus fica
     delete h.habs[S.ativa];
     h.supremas.push(carta.id);
@@ -408,6 +419,6 @@ export function slotsDoHeroi(h) {
   const supremas = lista(h).map(id => ({ id, emoji: SUPREMAS[id].emoji, nome: SUPREMAS[id].nome, unica: !!SUPREMAS[id].classe }));
   return {
     ativas, passivas, supremas, maxAtivas: MAX_ATIVAS, maxPassivas: MAX_PASSIVAS,
-    nucleo: { total: MAX_SUPREMAS, feitas: supremas.length, deus: h.deus ? { emoji: DEUSES[h.deus].emoji, nome: DEUSES[h.deus].nome } : null, prontas: supremasProntas(h).length }
+    nucleo: { total: MAX_SUPREMAS, feitas: supremas.length, deus: h.deus ? { id: h.deus, emoji: DEUSES[h.deus].emoji, nome: DEUSES[h.deus].nome } : null, prontas: supremasProntas(h).length }
   };
 }

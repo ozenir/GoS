@@ -22,6 +22,21 @@ export const AVISOS_NO_MEIO = false;
 // Por quantos segundos o status que um presente deu ao herói fica na tela (embaixo do painel de cima)
 export const STATUS_PRESENTE_SEG = 4;
 const urlOk = u => /^https:\/\//.test(String(u || ''));
+// Runas do NÚCLEO: com as 6 supremas, as peças se juntam numa runa; escolhido o poder deus, a runa única dele
+// (traços num quadro de 24 x 24, desenhados em dourado com brilho)
+const RUNAS = {
+  formando: 'M12 3 L12 21 M5 7.5 L19 16.5 M19 7.5 L5 16.5',
+  furia: 'M12 3 L12 21 M12 9 L6 3.5 M12 9 L18 3.5 M12 15 L6 20.5 M12 15 L18 20.5 M8 12 L16 12',          // fúria divina: coroa e raio
+  egide: 'M12 2.5 L20 6 L18.5 15.5 L12 21.5 L5.5 15.5 L4 6 Z M12 7 L12 17 M8 11.5 L16 11.5',              // égide: o escudo
+  tempo: 'M6 3 L18 3 M6 21 L18 21 M7 3 L17 21 M17 3 L7 21 M9.5 12 L14.5 12',                             // tempo parado: ampulheta
+  justica: 'M12 3 L12 21 M5 7 L19 7 M5 7 L2.5 13 L7.5 13 Z M19 7 L16.5 13 L21.5 13 Z M8 21 L16 21',       // justiça: a balança
+  anjo: 'M12 7 L12 21 M12 10 L3.5 5.5 L6 13 L12 12.5 M12 10 L20.5 5.5 L18 13 L12 12.5 M9 3.5 L15 3.5 M9 21 L15 21',   // anjo: asas e auréola
+  inferno: 'M12 21.5 C6 18.5 5.5 12.5 9.5 8 C9.5 11 11 12.5 12 13 C12 9 13.5 5.5 12.5 2.5 C18 6.5 19.5 14 15 19.5 M12 21.5 L12 16',   // inferno: a chama
+  meteoros: 'M3 21 L12 12 M7 21.5 L13.5 15 M2.5 16.5 L9 10 M16.5 2.5 L18 6.5 L22 7 L19 9.8 L20 13.8 L16.5 11.6 L13 13.8 L14 9.8 L11 7 L15 6.5 Z',   // meteoros: a estrela cadente
+  mecha: 'M12 2.5 L12 6 M12 18 L12 21.5 M2.5 12 L6 12 M18 12 L21.5 12 M5.3 5.3 L7.8 7.8 M16.2 16.2 L18.7 18.7 M18.7 5.3 L16.2 7.8 M5.3 18.7 L7.8 16.2 M12 8 A4 4 0 1 0 12.01 8'   // mecha: a engrenagem
+};
+const runa = id => `<svg class="runa${id === 'formando' ? ' formando' : ''}" viewBox="0 0 24 24" aria-hidden="true"><path d="${RUNAS[id] || RUNAS.formando}"/></svg>`;
+
 const AVATAR_VAZIO = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#2a2238"/><circle cx="5" cy="4" r="2" fill="#6a5a88"/><rect x="2" y="7" width="6" height="3" rx="1.5" fill="#6a5a88"/></svg>');
 
 export class Hud {
@@ -161,7 +176,8 @@ export class Hud {
       if (x) { const id = 'S' + x.id; ids.push(id); }
       return `<span class="orb${x ? ' on' : ''}${x?.unica ? ' unica' : ''}${x && !antes.has('S' + x.id) && this.cache.slots ? ' novo' : ''}" style="--a:${i * parte + parte / 2 - 90}deg" title="${x ? esc(x.nome) : 'vaga de suprema'}">${x ? `<b class="cd" data-cd="sup:${x.id}"></b>${esc(x.emoji)}` : ''}</span>`;
     }).join('');
-    const meio = N.deus ? esc(N.deus.emoji) : `${N.feitas}<small>/${N.total}</small>`;
+    // no meio: vazio enquanto as supremas se juntam; com as 6, a runa se formando; com o poder deus, a runa dele
+    const meio = N.deus ? runa(N.deus.id) : N.feitas >= N.total ? runa('formando') : '';
     const titulo = N.deus ? `nível deus: ${N.deus.nome}` : `núcleo: ${N.feitas} de ${N.total} supremas (habilidade nível 5 + a passiva par no nível 3). Com ${N.total}, o chat escolhe o poder nível deus`;
     const subiu = (this.cache.nucF ?? N.feitas) !== N.feitas || (this.cache.nucD === false && !!N.deus);
     this.cache.nucF = N.feitas; this.cache.nucD = !!N.deus;
@@ -496,7 +512,7 @@ export class Hud {
     if (this.cache.ekey !== key) {
       this.cache.ekey = key;
       // selo da carta: SUPREMA (com a receita), NÍVEL DEUS, NOVA/ÚNICA, PASSIVA, NÍVEL n...
-      const tag = c => c.cat === 'suprema' ? `SUPREMA ${c.de}` : c.cat === 'deus' ? (c.unica ? 'DEUS ÚNICO' : 'NÍVEL DEUS')
+      const tag = c => c.gratis ? 'SUPREMA DE PRESENTE' : c.cat === 'suprema' ? `SUPREMA ${c.de}` : c.cat === 'deus' ? (c.unica ? 'DEUS ÚNICO' : 'NÍVEL DEUS')
         : c.cat === 'nova' ? (c.tipo === 'arma' ? 'ARMA NOVA' : c.unica ? 'NOVA · ÚNICA' : 'NOVA') : c.cat === 'passiva' ? (c.unica ? 'PASSIVA · ÚNICA' : 'PASSIVA')
         : c.tipo === 'treino' ? 'APRIMORAR' : c.tipo === 'extra' ? 'EXTRA' : `NÍVEL ${c.nivel}`;
       const cls = c => c.cat === 'deus' ? 'deus' : c.cat === 'suprema' ? 'suprema' : c.unica ? 'unica' : c.cat;
@@ -524,7 +540,7 @@ export class Hud {
       $('e-barra').style.width = (clamp(resta / v.duracao, 0, 1) * 100).toFixed(1) + '%';
       $('e-tempo').classList.toggle('urg', resta < 3.5);
       if (v.contandoAtrasados) { this.set('e-titulo', '⏳ CONTANDO VOTOS DA LIVE...'); this.set('e-sub', 'ainda dá tempo: A, B ou C'); }
-      else { this.set('e-titulo', e.deus ? '👑 NÍVEL DEUS · ESCOLHAM O PODER!' : e.cartas.some(c => c.tipo === 'suprema') ? `🧬 NÍVEL ${e.nivel} · TEM SUPREMA!` : `⭐ NÍVEL ${e.nivel} · ESCOLHAM!`); this.set('e-sub', `digite A, B ou C · ${Math.ceil(resta)}s`); }
+      else { this.set('e-titulo', e.presente ? '🔥 NÍVEL 10 · SUPREMA DE PRESENTE!' : e.deus ? '👑 NÍVEL DEUS · ESCOLHAM O PODER!' : e.cartas.some(c => c.tipo === 'suprema') ? `🧬 NÍVEL ${e.nivel} · TEM SUPREMA!` : `⭐ NÍVEL ${e.nivel} · ESCOLHAM!`); this.set('e-sub', `digite A, B ou C · ${Math.ceil(resta)}s`); }
     } else {
       for (const el of document.querySelectorAll('.ec')) {
         const venceu = el.dataset.l === res.carta.letra;

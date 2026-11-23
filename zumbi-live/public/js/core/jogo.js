@@ -9,7 +9,7 @@ import { FlowField } from './flow.js';
 import { ZUMBIS, CLASSES, ARMAS, CORPO, xpParaNivel, multVidaNivel, NIVEL_MAXIMO } from './dados.js';
 import { EFEITOS, ladoDo } from './efeitos.js';
 import { Votacao, lerVoto, lerEscolha, OPCOES } from './votacao.js';
-import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasDeus, deusPendente, supremaSegura, aoMatarZumbi, ATIVAS } from './habilidades.js';
+import { sortearCartas, escolhaDaIA, aplicarCarta, atualizarHabilidades, habilidadesDoHeroi, cartasDeus, deusPendente, supremaSegura, aoMatarZumbi, ATIVAS, NIVEL_PRESENTE, presenteNivel10, cartasPresente } from './habilidades.js';
 import { pedeGrafico } from './grafico.js';
 import { RECOMPENSA, DROPS, XP_POR_PILHA_SORTE, defesaRuna, CONVERSIVEL, PARAQUEDISTA, ZUMBI_FA, FORTES, chaveForte } from './recompensas.js';
 import {
@@ -73,6 +73,9 @@ let proxId = 1;
 // Escolha de habilidade com níveis acumulados na fila (2 ou mais): votação mais curta (escolhaDur × mult, no mínimo
 // `minimo` segundos; o atraso da live continua valendo) e menos espera entre uma escolha e a próxima
 export const ESCOLHA_RAPIDA = { mult: 0.6, minimo: 7, espera: 1.5 };
+
+// Escudo de energia: o máximo que cada carga segura de um golpe (fração da vida máxima)
+export const ESCUDO_SEGURA = 0.2;
 
 // Controle no zumbi: atordoado, congelado e com medo não se renovam em cima um do outro; depois que passa,
 // o zumbi fica CONTROLE_IMUNE segundos imune (a janela pra ele atacar)
@@ -1656,10 +1659,14 @@ export class Jogo {
     const r = danoNoHeroi(h, dano, tipo, this.rng);
     if (r.bloqueado === 'invencivel') return false;
     if (r.bloqueado === 'esquiva') { this.emit('esquiva', { x: h.x, y: h.y }); return false; }
-    // Escudo de energia (habilidades): cada carga segura um golpe inteiro; quando a última quebra, empurra a horda
+    // Escudo de energia (habilidades): cada carga segura um golpe, até ESCUDO_SEGURA da vida máxima (o que passar
+    // disso machuca: senão, com a horda cada vez mais forte, o escudo deixava o herói imortal); quando a última
+    // carga quebra, empurra a horda
     if (h.escudo > 0 && !silencioso && tipo !== 'esmagar') {
       h.escudo--;
       this.emit('escudo_bloqueou', { x: h.x, y: h.y, resta: h.escudo });
+      const passou = r.dano - h.vidaMax * ESCUDO_SEGURA;
+      if (passou > 0) r.dano = passou;
       if (h.escudo === 0 && h.escudoEstouro > 0) {
         this.emit('onda', { x: h.x, y: h.y, raio: 2.2, cor: '#7ad8ff' });
         for (const z of this.zumbis) {
@@ -1669,7 +1676,7 @@ export class Jogo {
           if (!z.morto && !ZUMBIS[z.tipo].chefe) { z.kx += (z.x - h.x) / d * 7; z.ky += (z.y - h.y) / d * 7; }
         }
       }
-      return false;
+      if (!(passou > 0)) return false;
     }
     if (r.bloqueado === 'colete') { h.colete--; this.emit('colete', { x: h.x, y: h.y, resta: h.colete }); return false; }
     dano = r.dano;
@@ -1848,18 +1855,21 @@ export class Jogo {
   // Se subir vários níveis de uma vez, as escolhas vêm uma depois da outra.
   // Com 6 supremas no núcleo, a próxima escolha é a do NÍVEL DEUS (3 poderes; passa na frente da fila e não
   // gasta um nível)
+  // No nível 10, a escolha especial das 3 supremas originais de presente (habilidades.js → cartasPresente); ela passa
+  // na frente das escolhas de níveis anteriores que ainda estão na fila.
   abrirEscolha() {
     const h = this.hero;
     const deus = deusPendente(h);
     if (!deus) this.niveisPendentes--;
-    const nivel = deus ? h.nivel : this.filaNiveis.shift() ?? h.nivel;
-    const cartas = deus ? cartasDeus(h, this.rng) : sortearCartas(h, this.rng);
+    const k10 = this.filaNiveis.indexOf(NIVEL_PRESENTE), presente = !deus && k10 >= 0 && presenteNivel10(h);
+    const nivel = deus ? h.nivel : (presente ? this.filaNiveis.splice(k10, 1)[0] : this.filaNiveis.shift()) ?? h.nivel;
+    const cartas = deus ? cartasDeus(h, this.rng) : presente ? cartasPresente(h) : sortearCartas(h, this.rng);
     if (!cartas.length) return;
     // com níveis acumulados na fila, a votação fica mais curta (o chat escolhe mais rápido e o herói não fica pra trás)
     const dur = this.niveisPendentes >= 2 ? Math.max(ESCOLHA_RAPIDA.minimo, this.cfg.escolhaDur * ESCOLHA_RAPIDA.mult) : this.cfg.escolhaDur;
     const voto = new Votacao(cartas.map(c => ({ id: c.letra.toLowerCase(), n: c.letra })), dur, this.cfg.atraso);
-    this.escolha = { voto, cartas, nivel, deus };
-    this.emit('escolha_abriu', { nivel, cartas, deus });
+    this.escolha = { voto, cartas, nivel, deus, presente };
+    this.emit('escolha_abriu', { nivel, cartas, deus, presente });
   }
 
   atualizarEscolha(dt) {

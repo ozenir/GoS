@@ -146,11 +146,11 @@ export const SUPREMAS = {
   },
   coracao: {
     ativa: 'escudo', passiva: 'vitalidade', nome: 'Coração de ferro', emoji: '❤️‍🔥', cat: 'defensiva', poder: 300,
-    cd: 40, cura: 45, raio: 3, cargas: 3, recargaEscudo: 8, mods: [{ attr: 'defesa', soma: 0.15 }, { attr: 'regen', soma: 1.2 }],
+    cd: 45, cura: 45, raio: 3, cargas: 2, recargaEscudo: 12, mods: [{ attr: 'defesa', soma: 0.15 }, { attr: 'regen', soma: 1.2 }],
     desc() { return `+15% de defesa, regenera e tem escudo de ${this.cargas} golpes; quase caindo, explode uma onda, cura ${this.cura}% e fica 3s invencível (a cada ${this.cd}s)`; },
     sempre(g, h, m, dt) {
       h.coracaoEsc = (h.coracaoEsc ?? 0) - dt;
-      if (h.coracaoEsc <= 0 && (h.escudo || 0) < this.cargas) { h.coracaoEsc = this.recargaEscudo; h.escudo = this.cargas; h.escudoMax = this.cargas; h.escudoEstouro = 200 * m; g.emit('escudo', { x: h.x, y: h.y, cargas: h.escudo }); }
+      if (h.coracaoEsc <= 0 && (h.escudo || 0) < this.cargas) { h.coracaoEsc = this.recargaEscudo; h.escudo = this.cargas; h.escudoMax = this.cargas; h.escudoEstouro = 0; g.emit('escudo', { x: h.x, y: h.y, cargas: h.escudo }); }   // (o escudo do Coração não estoura: segurar a horda longe deixava o herói imortal)
     },
     salvar(g, h, m) {
       if ((h.supT?.coracao ?? 0) > 0) return false;
@@ -211,7 +211,7 @@ export const SUPREMAS = {
   },
   santuario: {
     ativa: 'pulso', passiva: 'sabedoria', nome: 'Santuário', emoji: '✨', cat: 'defensiva', poder: 160,
-    cd: 9, dur: 4.5, raio: 3, dano: 160, cura: 1.6,
+    cd: 9, dur: 4.5, raio: 3, dano: 160, cura: 0.8,
     desc() { return `a cada ${this.cd}s um círculo sagrado em volta por ${this.dur}s: o herói cura ${this.cura}% a cada meio segundo e os zumbis dentro tomam ${this.dano} e ficam lentos`; },
     usar(g, h, m) {
       if ((g.objHab || []).some(o => o.tipo === 'santuario')) return false;
