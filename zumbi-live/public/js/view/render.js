@@ -616,14 +616,16 @@ export class Render {
         if (tampa) ctx.globalAlpha = 0.35;
         ctx.drawImage(s.c, x0, y0);
         ctx.globalAlpha = 1;
+        // caixa d'água e chaminé do telhado: só com o prédio opaco (transparente, somem por completo)
+        if (s.teto && !tampa) ctx.drawImage(s.teto, x0, y0);
         if (noite) {
           // prédio de verdade tapa a luz dos postes e as janelas de trás; prédio TRANSPARENTE (na frente do herói)
           // não tapa a luz dos postes (ela fica por cima dele) e só apaga um pouco as janelas de trás
-          if (!tampa) for (const c of [this.emL, this.emM]) { c.globalCompositeOperation = 'destination-out'; c.drawImage(s.c, x0, y0); c.globalCompositeOperation = 'source-over'; }
+          if (!tampa) for (const c of [this.emL, this.emM]) { c.globalCompositeOperation = 'destination-out'; c.drawImage(s.c, x0, y0); if (s.teto) c.drawImage(s.teto, x0, y0); c.globalCompositeOperation = 'source-over'; }
           // a luz da lanterna não passa por cima de um prédio opaco que está na frente; o transparente deixa passar
-          if (this.lanternaFeita && !tampa) for (const c of [this.emF, this.emFC]) { c.globalCompositeOperation = 'destination-out'; c.drawImage(s.c, x0, y0); c.globalCompositeOperation = 'source-over'; }
+          if (this.lanternaFeita && !tampa) for (const c of [this.emF, this.emFC]) { c.globalCompositeOperation = 'destination-out'; c.drawImage(s.c, x0, y0); if (s.teto) c.drawImage(s.teto, x0, y0); c.globalCompositeOperation = 'source-over'; }
           const e = this.em;
-          e.globalCompositeOperation = 'destination-out'; e.globalAlpha = tampa ? 0.65 : 1; e.drawImage(s.c, x0, y0); e.globalAlpha = 1;
+          e.globalCompositeOperation = 'destination-out'; e.globalAlpha = tampa ? 0.65 : 1; e.drawImage(s.c, x0, y0); if (s.teto && !tampa) e.drawImage(s.teto, x0, y0); e.globalAlpha = 1;
           e.globalCompositeOperation = 'source-over';
           if (s.luzes && !o.b.fogo) { e.globalAlpha = tampa ? 0.35 : 1; e.drawImage(s.luzes, x0, y0); e.globalAlpha = 1; }
         }

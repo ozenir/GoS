@@ -283,7 +283,7 @@ O efeito cresce com a vantagem: perto do empate (até 55% x 45%) não faz nada, 
 
 **As praças: arena de chefe.** Algumas esquinas têm uma praça com chafariz. Na votação aparece **4 ⚔️ ARENA**. Lá dentro vem um **chefe** e ondas de zumbis por todos os lados, por até 100 segundos. Quem vence ganha recompensa: um baú (às vezes lendário) e um kit médico.
 
-**Os prédios.** Alguns cruzamentos têm uma loja na esquina (com a opção **4 🚪 ENTRAR**). A placa é em **letras de pixel com o ícone da loja**, desenhada dentro do próprio prédio, então segue a perspectiva e a ordem das camadas (o prédio da frente tapa a placa; o prédio transparente deixa a placa transparente junto): metade das lojas tem um **letreiro no telhado** sobre dois postes, e a outra metade a **placa na fachada, em cima da porta**, inclinada na direção da parede. De noite, as placas acendem. Cada tipo tem tamanho, móveis e arrumação próprios (fileiras, ilhas ou corredor), zumbis, coisas para pegar e **perigos no chão** também. Depois de um tempo dispara o alarme, e ele sai pelos fundos, do outro lado do quarteirão (conta como atalho).
+**Os prédios.** Alguns cruzamentos têm uma loja na esquina (com a opção **4 🚪 ENTRAR**). A placa é em **letras de pixel com o ícone da loja**, desenhada dentro do próprio prédio, então segue a perspectiva e a ordem das camadas (o prédio da frente tapa a placa; o prédio transparente deixa a placa transparente junto): metade das lojas tem um **letreiro no telhado** sobre dois postes, e a outra metade a **placa na fachada, em cima da porta**, inclinada na direção da parede. De noite, as placas acendem. A **caixa d'água / ar-condicionado** (e a chaminé) em cima dos prédios **some por completo** quando o prédio fica transparente na frente do herói, e volta quando ele fica opaco de novo. Cada tipo tem tamanho, móveis e arrumação próprios (fileiras, ilhas ou corredor), zumbis, coisas para pegar e **perigos no chão** também. Depois de um tempo dispara o alarme, e ele sai pelos fundos, do outro lado do quarteirão (conta como atalho).
 
 | Loja | Risco | O que tem | Perigo dentro |
 |---|---|---|---|
@@ -612,7 +612,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 2.2.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 2.2.1)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.

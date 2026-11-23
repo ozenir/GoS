@@ -729,13 +729,16 @@ export function spritePredio(b, du, dv, porta, rot) {
   // telhado com mureta
   fillPoly(x, [P(0, 0, alt), P(du, 0, alt), P(du, dv, alt), P(0, dv, alt)], tom(pal.topo, b.ruina ? -0.2 : 0));
   fillPoly(x, [P(0.35, 0.35, alt), P(du - 0.35, 0.35, alt), P(du - 0.35, dv - 0.35, alt), P(0.35, dv - 0.35, alt)], tom(pal.topo, -0.18));
-  // caixa d'água / ar-condicionado
+  // caixa d'água / ar-condicionado e chaminé: numa camada à parte (teto), que o render só desenha quando o prédio
+  // está opaco; com o prédio transparente (na frente do herói) elas somem por completo
   const hh = hash2(b.bi * 7 + b.sx, b.bj * 7 + b.sy, 77);
+  const temTeto = !shop;
+  const [tc, tx] = temTeto ? canvas(W, H) : [null, null];
   if (!shop) {
     const u0 = 1.5 + hh * 2, v0 = 1.5 + (1 - hh) * 2;
-    fillPoly(x, [P(u0, v0 + 1.2, alt), P(u0 + 1.2, v0 + 1.2, alt), P(u0 + 1.2, v0 + 1.2, alt + 6), P(u0, v0 + 1.2, alt + 6)], '#7a7a80');
-    fillPoly(x, [P(u0 + 1.2, v0 + 1.2, alt), P(u0 + 1.2, v0, alt), P(u0 + 1.2, v0, alt + 6), P(u0 + 1.2, v0 + 1.2, alt + 6)], '#5a5a60');
-    fillPoly(x, [P(u0, v0, alt + 6), P(u0 + 1.2, v0, alt + 6), P(u0 + 1.2, v0 + 1.2, alt + 6), P(u0, v0 + 1.2, alt + 6)], '#9a9aa0');
+    fillPoly(tx, [P(u0, v0 + 1.2, alt), P(u0 + 1.2, v0 + 1.2, alt), P(u0 + 1.2, v0 + 1.2, alt + 6), P(u0, v0 + 1.2, alt + 6)], '#7a7a80');
+    fillPoly(tx, [P(u0 + 1.2, v0 + 1.2, alt), P(u0 + 1.2, v0, alt), P(u0 + 1.2, v0, alt + 6), P(u0 + 1.2, v0 + 1.2, alt + 6)], '#5a5a60');
+    fillPoly(tx, [P(u0, v0, alt + 6), P(u0 + 1.2, v0, alt + 6), P(u0 + 1.2, v0 + 1.2, alt + 6), P(u0, v0 + 1.2, alt + 6)], '#9a9aa0');
   }
   if (pal.listras) { // galpão: chapa ondulada
     for (let a2 = 0.25; a2 < du; a2 += 0.25) { const p0 = P(a2, dv, 0), p1 = P(a2, dv, alt); line(x, p0[0], p0[1], p1[0], p1[1], tom(esq, -0.12)); }
@@ -743,8 +746,8 @@ export function spritePredio(b, du, dv, porta, rot) {
   }
   if (b.bairro === 'residencial' && !shop) { // chaminé
     const u0 = 1 + hh * 3, v0 = 1;
-    fillPoly(x, [P(u0, v0 + 0.8, alt), P(u0 + 0.8, v0 + 0.8, alt), P(u0 + 0.8, v0 + 0.8, alt + 9), P(u0, v0 + 0.8, alt + 9)], '#8a4a3a');
-    fillPoly(x, [P(u0 + 0.8, v0 + 0.8, alt), P(u0 + 0.8, v0, alt), P(u0 + 0.8, v0, alt + 9), P(u0 + 0.8, v0 + 0.8, alt + 9)], '#6a3a2a');
+    fillPoly(tx, [P(u0, v0 + 0.8, alt), P(u0 + 0.8, v0 + 0.8, alt), P(u0 + 0.8, v0 + 0.8, alt + 9), P(u0, v0 + 0.8, alt + 9)], '#8a4a3a');
+    fillPoly(tx, [P(u0 + 0.8, v0 + 0.8, alt), P(u0 + 0.8, v0, alt), P(u0 + 0.8, v0, alt + 9), P(u0 + 0.8, v0 + 0.8, alt + 9)], '#6a3a2a');
   }
   // janelas
   // luzes: só as janelas acesas de noite (camada que brilha por cima do escuro: render.js → luz)
@@ -822,7 +825,7 @@ export function spritePredio(b, du, dv, porta, rot) {
   // arestas
   line(x, ...P(0, dv, 0), ...P(0, dv, alt), tom(esq, 0.12));
   line(x, ...P(du, dv, 0), ...P(du, dv, alt), tom(esq, 0.2));
-  const s = { c, ox: T[0], oy: T[1], placa: null, luzes: temLuz ? lc : null };
+  const s = { c, teto: tc, ox: T[0], oy: T[1], placa: null, luzes: temLuz ? lc : null };
   cache.set(k, s);
   return s;
 }
