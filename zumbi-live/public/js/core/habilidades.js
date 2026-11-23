@@ -297,7 +297,10 @@ export function atualizarHabilidades(g, dt) {
     if (A.continua) { A.atualizar(g, h, n, dt); continue; }
     h.habT[id] = (h.habT[id] ?? 1) - dt;
     if (h.habT[id] > 0) continue;
-    h.habT[id] = A.usar(g, h, n) ? A.cd(n) * recarga(h) : 0.4;   // sem alvo: tenta de novo logo
+    // usou: a recarga inteira (guardada pro anel do painel); sem alvo: tenta de novo logo (continua "pronta")
+    h.habCd = h.habCd || {};
+    if (A.usar(g, h, n)) h.habT[id] = h.habCd[id] = A.cd(n) * recarga(h);
+    else { h.habT[id] = 0.4; h.habCd[id] = 0; }
   }
   if (!sup.length && !h.deus) return;
   const m = multSuprema(h);
@@ -319,7 +322,8 @@ function rodar(g, h, S, id, m, dt, timers) {
   if (S.continua) { S.atualizar(g, h, m, dt); return; }
   if (S.usar) {
     timers[id] = (timers[id] ?? 1) - dt;
-    if (timers[id] <= 0) timers[id] = S.usar(g, h, m) ? S.cd * recarga(h) : 0.5;
+    h.supCd = h.supCd || {};
+    if (timers[id] <= 0) { if (S.usar(g, h, m)) timers[id] = h.supCd[id] = S.cd * recarga(h); else { timers[id] = 0.5; h.supCd[id] = 0; } }
     return;
   }
   // só salva (Coração de ferro): o tempo de recarga corre aqui
@@ -380,6 +384,19 @@ export function habilidadesDoHeroi(h) {
     if (r.resistencia) l.push({ emoji: '🔮🛡️', nome: `Runa de resistência: ${hab}`, nivel: r.resistencia, tipo: 'runa' });
   }
   return l;
+}
+
+// Quanto cada habilidade (e suprema, e o poder deus) já recarregou: 0 = acabou de usar, 1 = pronta.
+// As que ficam sempre ligadas (lâminas, aura...) e as que esperam alvo contam como prontas.
+// Chaves: 'hab:<id>', 'sup:<id>', 'deus' (o painel desenha um anel em volta de cada uma)
+const fracao = (resta, total) => (!(total > 0) || !(resta > 0) ? 1 : Math.max(0, Math.min(1, 1 - resta / total)));
+export function recargasDoHeroi(h) {
+  const r = {};
+  for (const id of Object.keys(h.habs || {})) r['hab:' + id] = ATIVAS[id].continua ? 1 : fracao(h.habT?.[id], h.habCd?.[id]);
+  const da = (S, id) => (S.continua ? 1 : S.usar ? fracao(h.supT?.[id], h.supCd?.[id]) : S.salvar ? fracao(id === 'deus' ? h.deusSalvaT : h.supT?.[id], S.cd) : 1);
+  for (const id of lista(h)) r['sup:' + id] = da(SUPREMAS[id], id);
+  if (h.deus) r.deus = da(DEUSES[h.deus], 'deus');
+  return r;
 }
 
 // O painel do herói: fileira de habilidades (esquerda), o NÚCLEO com as supremas em volta e a fileira de passivas

@@ -101,6 +101,10 @@ body.foco .app{padding-block:8px}
 .sl.pas i{background:#cfd6e6}
 .sl.unica{border-color:#c58bff;background:rgba(170,100,255,.16);box-shadow:0 0 1cqw rgba(197,139,255,.45)}   /* única do personagem */
 .sl.max i{background:#ff8a3d;color:#fff}   /* no nível máximo (pronta pra suprema) */
+/* anel de recarga (habilidades, supremas e o poder deus): esvazia quando usa e enche em sentido horário; cheio = pronta */
+.sl .cd,.orb .cd,.meio .cd{position:absolute;inset:-.7cqw;border-radius:50%;pointer-events:none;--p:100;background:conic-gradient(var(--cc,#7ad8ff) calc(var(--p) * 1%),rgba(10,8,16,.55) 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - .5cqw),#000 calc(100% - .45cqw));mask:radial-gradient(farthest-side,transparent calc(100% - .5cqw),#000 calc(100% - .45cqw))}
+.orb .cd{inset:-.5cqw;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - .4cqw),#000 calc(100% - .35cqw));mask:radial-gradient(farthest-side,transparent calc(100% - .4cqw),#000 calc(100% - .35cqw))}
+.sl .cd.pronta,.orb .cd.pronta,.meio .cd.pronta{--cc:#ffd23f;filter:drop-shadow(0 0 .6cqw rgba(255,210,63,.8))}
 .sl u{position:absolute;left:-.5cqw;top:-.5cqw;font-size:1.8cqw;text-decoration:none}
 .sl.novo,.sm.novo{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
 .nucleo{display:flex;align-items:center;gap:.8cqw}

@@ -5,7 +5,7 @@ import { Jogo } from '../public/js/core/jogo.js';
 import {
   ATIVAS, PASSIVAS, SUPREMAS, DEUSES, FORCA, MAX_ATIVAS, MAX_PASSIVAS, MAX_SUPREMAS, NIVEL_SUPREMA_ATIVA, NIVEL_SUPREMA_PASSIVA,
   sortearCartas, aplicarCarta, atualizarHabilidades, escolhaDaIA, SALVA_DESDE, slotsDoHeroi, vagasOcupadas, vagasPassivas,
-  supremasProntas, cartasDeus, deusPendente, multSuprema, receitas
+  supremasProntas, cartasDeus, deusPendente, multSuprema, receitas, recargasDoHeroi
 } from '../public/js/core/habilidades.js';
 import { FORCA_PASSIVA } from '../public/js/core/hab-base.js';
 import { CLASSES, xpParaNivel, NIVEL_MAXIMO } from '../public/js/core/dados.js';
@@ -260,6 +260,24 @@ teste('controle não prende pra sempre: depois de atordoado/congelado/com medo, 
   assert.ok(!j.aplicarStatus(z, 'atordoado', { duracao: 0.5 }), 'logo depois: imune');
   j.t += 1.3;
   assert.ok(j.aplicarStatus(z, 'medo', { duracao: 1 }), 'passou a imunidade');
+});
+
+teste('anel de recarga: zera quando a habilidade é usada e vai enchendo até ficar pronta', () => {
+  const j = jogo(), h = j.hero;
+  aplicarCarta(j, carta('ativa', 'granada', 2));
+  aplicarCarta(j, carta('ativa', 'laminas', 1));
+  const zs = [zumbi(j, 2, 0, 'gordo'), zumbi(j, 2.3, 0.3, 'gordo'), zumbi(j, 1.8, -0.3, 'gordo')];
+  for (const z of zs) { z.vel = 0; z.atkCd = 99; z.vida = z.vidaMax = 1e6; }
+  rodar(j, 0.6);   // a granada sai logo
+  const r1 = recargasDoHeroi(h)['hab:granada'];
+  assert.ok(r1 < 0.2, `logo depois de usar: ${r1}`);
+  rodar(j, 2);
+  const r2 = recargasDoHeroi(h)['hab:granada'];
+  assert.ok(r2 > r1 && r2 < 1, `enchendo: ${r2}`);
+  assert.equal(recargasDoHeroi(h)['hab:laminas'], 1, 'sempre ligada: cheia');
+  j.zumbis = [];
+  rodar(j, ATIVAS.granada.cd(2) + 1);
+  assert.equal(recargasDoHeroi(h)['hab:granada'], 1, 'sem alvo: fica pronta (cheia)');
 });
 
 /* ---------------- Supremas ---------------- */

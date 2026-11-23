@@ -5,7 +5,7 @@ import { STATUS } from '../core/status.js';
 import { BAIRROS } from '../core/city.js';
 import { EFEITOS, ladoDo } from '../core/efeitos.js';
 import { progressoAmeaca } from '../core/ameaca.js';
-import { slotsDoHeroi } from '../core/habilidades.js';
+import { slotsDoHeroi, recargasDoHeroi } from '../core/habilidades.js';
 import { ZUMBIS_TELA } from '../core/tela.js';
 import { Letreiro } from './letreiro.js';
 import { RESULTADO_SEG } from '../core/jogo.js';
@@ -147,7 +147,9 @@ export class Hud {
     const ids = [];
     const slot = (x, cls) => {
       const id = cls + x.id + x.nivel; ids.push(id);
-      return `<span class="sl ${cls}${x.unica ? ' unica' : ''}${x.max ? ' max' : ''}${antes.has(id) || !this.cache.slots ? '' : ' novo'}" title="${esc(x.nome)}${x.unica ? ' (única)' : ''}">${esc(x.emoji)}<i>${x.nivel}</i>${x.runa ? '<u>🔮</u>' : ''}</span>`;
+      // habilidade: anel da recarga em volta (esvazia quando usa e vai enchendo em sentido horário)
+      const anel = cls === 'hab' ? `<b class="cd" data-cd="hab:${x.id}"></b>` : '';
+      return `<span class="sl ${cls}${x.unica ? ' unica' : ''}${x.max ? ' max' : ''}${antes.has(id) || !this.cache.slots ? '' : ' novo'}" title="${esc(x.nome)}${x.unica ? ' (única)' : ''}">${anel}${esc(x.emoji)}<i>${x.nivel}</i>${x.runa ? '<u>🔮</u>' : ''}</span>`;
     };
     const fileira = (lista, max, cls) => lista.slice(0, max).map(x => slot(x, cls)).join('') + '<span class="sl vazio"></span>'.repeat(Math.max(0, max - lista.length));
     // anel do núcleo: 6 pedaços com uma folguinha entre eles; cheios em dourado (deus: tudo claro)
@@ -157,7 +159,7 @@ export class Hud {
     const orbs = Array.from({ length: N.total }, (_, i) => {
       const x = S.supremas[i];
       if (x) { const id = 'S' + x.id; ids.push(id); }
-      return `<span class="orb${x ? ' on' : ''}${x?.unica ? ' unica' : ''}${x && !antes.has('S' + x.id) && this.cache.slots ? ' novo' : ''}" style="--a:${i * parte + parte / 2 - 90}deg" title="${x ? esc(x.nome) : 'vaga de suprema'}">${x ? esc(x.emoji) : ''}</span>`;
+      return `<span class="orb${x ? ' on' : ''}${x?.unica ? ' unica' : ''}${x && !antes.has('S' + x.id) && this.cache.slots ? ' novo' : ''}" style="--a:${i * parte + parte / 2 - 90}deg" title="${x ? esc(x.nome) : 'vaga de suprema'}">${x ? `<b class="cd" data-cd="sup:${x.id}"></b>${esc(x.emoji)}` : ''}</span>`;
     }).join('');
     const meio = N.deus ? esc(N.deus.emoji) : `${N.feitas}<small>/${N.total}</small>`;
     const titulo = N.deus ? `nível deus: ${N.deus.nome}` : `núcleo: ${N.feitas} de ${N.total} supremas (habilidade nível 5 + a passiva par no nível 3). Com ${N.total}, o chat escolhe o poder nível deus`;
@@ -165,9 +167,24 @@ export class Hud {
     this.cache.nucF = N.feitas; this.cache.nucD = !!N.deus;
     $('h-slots').innerHTML =
       `<div class="lado hab">${fileira(S.ativas, S.maxAtivas, 'hab')}</div>` +
-      `<div class="nucleo"><span class="nuc${N.deus ? ' deus' : ''}${N.prontas && !N.deus ? ' pronta' : ''}${subiu ? ' up' : ''}" title="${esc(titulo)}"><span class="anel" style="background:conic-gradient(${anel});-webkit-mask:radial-gradient(circle,transparent 58%,#000 59%);mask:radial-gradient(circle,transparent 58%,#000 59%)"></span><span class="meio">${meio}</span>${orbs}${N.deus ? '<em>DEUS</em>' : ''}</span></div>` +
+      `<div class="nucleo"><span class="nuc${N.deus ? ' deus' : ''}${N.prontas && !N.deus ? ' pronta' : ''}${subiu ? ' up' : ''}" title="${esc(titulo)}"><span class="anel" style="background:conic-gradient(${anel});-webkit-mask:radial-gradient(circle,transparent 58%,#000 59%);mask:radial-gradient(circle,transparent 58%,#000 59%)"></span><span class="meio">${N.deus ? '<b class="cd" data-cd="deus"></b>' : ''}${meio}</span>${orbs}${N.deus ? '<em>DEUS</em>' : ''}</span></div>` +
       `<div class="lado pas">${fileira(S.passivas, S.maxPassivas, 'pas')}</div>`;
     this.cache.slots = k; this.cache.slotsIds = ids;
+    this.aneis = [...$('h-slots').querySelectorAll('[data-cd]')];
+  }
+
+  // Anéis de recarga: 0 a 100% (esvazia quando a habilidade é usada e vai enchendo em sentido horário);
+  // cheio = pronta (dourado). Atualiza só o que mudou.
+  atualizarRecargas(h) {
+    if (!this.aneis?.length) return;
+    const r = recargasDoHeroi(h);
+    for (const el of this.aneis) {
+      const p = Math.round((r[el.dataset.cd] ?? 1) * 100);
+      if (el._p === p) continue;
+      el._p = p;
+      el.style.setProperty('--p', p);
+      el.classList.toggle('pronta', p >= 100);
+    }
   }
 
   banner(texto, sub = '', tipo = '', dur = 2.6) {
@@ -393,6 +410,7 @@ export class Hud {
     if (this.cache['h-nv'] !== String(h.nivel)) { const el = $('h-nv'); el.classList.remove('up'); void el.offsetWidth; el.classList.add('up'); }
     this.set('h-nv', String(h.nivel));
     this.atualizarSlots(h);
+    this.atualizarRecargas(h);
     // relíquia do portal dos 500: selo brilhando no avatar
     const rel = h.reliquia ? RELIQUIAS[h.reliquia] : null;
     if (this.cache.rel !== (rel?.emoji || '')) { this.cache.rel = rel?.emoji || ''; const el = $('h-rel'); el.hidden = !rel; el.textContent = rel?.emoji || ''; el.title = rel ? `${rel.nome}: ${rel.desc}` : ''; }
