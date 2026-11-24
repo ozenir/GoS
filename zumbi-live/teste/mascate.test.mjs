@@ -32,26 +32,51 @@ teste('começa com a grana inicial; no modo antigo (sem sobrevivência) não tem
   assert.equal(novo().hero.grana, MASCATE.granaInicial);
   const v = new Jogo({ seed: 1, classe: 'bombeiro', sobrevivencia: false });
   assert.equal(v.hero.grana, 0);
-  v.stats.quarteiroes = 9; v.rng.chance = () => true;
+  v.stats.quarteiroes = 9; v.rng.chance = () => true; v.mascatePendente = true;
   assert.equal(talvezMascate(v), false);
 });
 
-teste('10% de chance a cada quarteirão novo (do 2º em diante; sem encontro, sem moto, sem estar indo pra um lugar)', () => {
-  assert.equal(MASCATE.chance, 0.1);
+teste('40% de chance depois de derrotar um chefe (zumbi comum nunca; sem chefe ele não aparece por quarteirão)', () => {
+  assert.equal(MASCATE.chanceChefe, 0.4);
+  const N = 1200;
   let viu = 0;
-  const N = 1500;
   for (let s = 0; s < N; s++) {
-    const j = novo(500 + s); j.stats.quarteiroes = 3;
-    if (talvezMascate(j)) viu++;
+    const j = novo(500 + s);
+    const z = j.criarZumbi('chefao', j.hero.x + 3, j.hero.y, null, { nascendo: 0 });
+    j.matarZumbi(z, null);
+    if (j.mascate) viu++;
   }
-  assert.ok(Math.abs(viu / N - 0.1) < 0.025, `apareceu ${viu}/${N}`);
+  assert.ok(Math.abs(viu / N - 0.4) < 0.04, `apareceu ${viu}/${N}`);
+  for (const tipo of ['rei', 'exheroi', 'colosso']) {
+    const j = novo(7); j.rng.chance = () => true;
+    j.matarZumbi(j.criarZumbi(tipo, j.hero.x + 3, j.hero.y, null, { nascendo: 0 }), null);
+    assert.ok(j.mascate, `${tipo} conta como chefe`);
+  }
+  const c = novo(8); c.rng.chance = () => true;
+  for (let k = 0; k < 30; k++) c.matarZumbi(c.criarZumbi('comum', c.hero.x + 3, c.hero.y, null, { nascendo: 0 }), null);
+  assert.equal(c.mascate, null, 'zumbi comum não chama o Barganha');
+  c.stats.quarteiroes = 9;
+  assert.equal(talvezMascate(c), false, 'quarteirão novo sozinho não chama mais');
+});
+
+teste('chefe derrotado perto do cruzamento (ou com encontro, de moto, indo pra um lugar): fica pro próximo quarteirão', () => {
   const j = novo(3); j.rng.chance = () => true;
-  j.stats.quarteiroes = 1; assert.equal(talvezMascate(j), false, '1º quarteirão');
-  j.stats.quarteiroes = 3; j.encontro = { fase: 'votando' }; assert.equal(talvezMascate(j), false, 'encontro');
+  const no = j.city.nodePos(j.rota.alvo.i, j.rota.alvo.j);
+  j.hero.x = no.x - 2; j.hero.y = no.y;
+  j.matarZumbi(j.criarZumbi('chefao', j.hero.x + 1, j.hero.y, null, { nascendo: 0 }), null);
+  assert.equal(j.mascate, null, 'perto demais do cruzamento: não aparece na cara dele');
+  assert.equal(j.mascatePendente, true, 'fica marcado');
+  j.encontro = { fase: 'votando' }; assert.equal(talvezMascate(j), false, 'encontro');
   j.encontro = null; j.hero.moto = true; assert.equal(talvezMascate(j), false, 'de moto');
   j.hero.moto = false; j.destino = { i: 0, j: 0 }; assert.equal(talvezMascate(j), false, 'indo pra um lugar');
-  j.destino = null; assert.equal(talvezMascate(j), true);
+  j.destino = null;
+  assert.equal(j.mascatePendente, true, 'continua marcado');
+  assert.equal(talvezMascate(j), true, 'no quarteirão seguinte ele aparece');
+  assert.equal(j.mascatePendente, false);
   assert.equal(talvezMascate(j), false, 'um de cada vez');
+  const k = novo(4); k.rng.chance = () => true; k.hero.moto = true;
+  k.matarZumbi(k.criarZumbi('chefao', k.hero.x + 3, k.hero.y, null, { nascendo: 0 }), null);
+  assert.ok(!k.mascatePendente && !k.mascate, 'de moto: sem Barganha');
 });
 
 teste('sempre numa rua sem saída do lado do próximo cruzamento, fechada pelo galpão com o janelão virado pro herói', () => {

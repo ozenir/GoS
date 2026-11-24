@@ -50,7 +50,7 @@ teste('muito perto: 4x o dano', () => {
   assert.ok(Math.abs(dp / dl - E.area.multPerto) < 0.01, `perto ${dp.toFixed(1)} / longe ${dl.toFixed(1)}`);
 });
 
-teste('empurra cada zumbi 3 casas pra trás (chefe só um terço)', () => {
+teste('à queima-roupa empurra o zumbi 3 casas pra trás (chefe só um terço); o de longe não é empurrado', () => {
   const j = arena(5), h = j.hero;
   const z = zumbi(j, 1.5, 0), c = zumbi(j, 1.5, 0.6, 'chefao');
   const x0 = z.x, cx0 = c.x;
@@ -59,6 +59,10 @@ teste('empurra cada zumbi 3 casas pra trás (chefe só um terço)', () => {
   assert.ok(Math.abs(z.x - x0 - E.area.empurra) < 0.35, `andou ${(z.x - x0).toFixed(2)}`);
   assert.ok(Math.abs(c.x - cx0 - E.area.empurra / 3) < 0.3, `chefe andou ${(c.x - cx0).toFixed(2)}`);
   assert.ok(ZUMBIS.chefao.chefe);
+  const k = arena(6), longe = zumbi(k, 3.6, 0);
+  atirar(k);
+  assert.equal(longe.kx || 0, 0, 'longe: só o dano, sem empurrão');
+  assert.ok(longe.vida < longe.vidaMax);
 });
 
 teste('parede no meio: não acerta', () => {

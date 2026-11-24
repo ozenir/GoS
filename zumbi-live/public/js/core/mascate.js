@@ -5,8 +5,10 @@
 //  AZUL tremeluzindo na parede, que ilumina a rua sem saída.
 //
 //  Como acontece:
-//    1. A cada quarteirão novo que o herói começa, 10% de chance (MASCATE.chance) de o Barganha estar numa rua
-//       do lado do próximo cruzamento. Essa rua vira sem saída: o galpão fecha ela no meio (city.js → galpoes).
+//    1. Depois que o herói derrota um CHEFE (chefão, Rei Zumbi, ex-herói, colosso, o chefe da arena), 40% de
+//       chance (MASCATE.chanceChefe) de o Barganha aparecer numa rua do lado do próximo cruzamento (se o herói já
+//       está perto dele, ou dentro de um prédio/arena, fica pro cruzamento seguinte). Essa rua vira sem saída: o
+//       galpão fecha ela no meio (city.js → galpoes).
 //    2. O herói chega no cruzamento (com a área limpa) e PARA: o chat vota se vai até o Barganha
 //         1 IR NA BANCA   ou   2 SEGUIR   (ninguém votou: a IA vai se tiver grana ou alguma coisa pra vender)
 //       Seguir: o janelão fecha e a tocha apaga. Ir: ele entra na rua sem saída e para na frente do janelão.
@@ -27,8 +29,8 @@ import { ITENS, ARMAS_LOJA, fazSentido, pertences, tirarPertence, entregarItem, 
 
 export const MASCATE = {
   nome: 'O Barganha', emoji: '🧥',
-  chance: 0.1,            // a cada quarteirão novo
-  desdeQuarteirao: 2,     // (o 1º quarteirão tem a cena da chegada: sobrevivencia.js)
+  chanceChefe: 0.4,       // depois de derrotar um chefe
+  pertoDoCruzamento: 8,   // herói a menos disso (casas) do próximo cruzamento: o Barganha fica pro seguinte
   rodadas: 3,             // negócios por visita, no máximo
   granaInicial: 10,
   segAbrindo: 1.4, segResultado: 3.2, segFechando: 1.4,
@@ -58,12 +60,24 @@ export const mascateAtivo = g => !!g.mascate && FASES_ATIVAS.has(g.mascate.fase)
 export const direcaoDaCamera = g => (g.mascate && (g.mascate.fase === 'entrando' || g.mascate.fase === 'loja') ? g.mascate.dirBeco : g.rota.dir);
 
 /* =================== Onde ele aparece =================== */
-// Quarteirão novo: 10% de chance de o Barganha estar numa rua do lado do próximo cruzamento
+// Derrotou um chefe: 40% de chance de o Barganha aparecer. Tenta já no próximo cruzamento (se ainda está longe
+// dele); senão fica marcado (g.mascatePendente) e aparece no primeiro quarteirão novo em que der.
+export function chefeDerrotado(g) {
+  if (!g.S.mascate || g.hero.moto || g.fase !== 'jogo' || g.mascatePendente || g.mascate) return false;
+  if (!g.rng.chance(MASCATE.chanceChefe)) return false;
+  g.mascatePendente = true;
+  const no = g.city.nodePos(g.rota.alvo.i, g.rota.alvo.j);
+  if (dist(g.hero.x, g.hero.y, no.x, no.y) > MASCATE.pertoDoCruzamento) talvezMascate(g);
+  return true;
+}
+
+// Quarteirão novo (ou logo depois do chefe): se o Barganha está marcado pra aparecer e dá, ele aparece numa rua
+// do lado do próximo cruzamento
 export function talvezMascate(g) {
-  const M = MASCATE;
-  if (!g.S.mascate || g.mascate || g.encontro || g.hero.moto || g.room || g.arena || g.rota.beco || g.destino || g.indoPorta || g.indoPraca) return false;
-  if (g.stats.quarteiroes < M.desdeQuarteirao || !g.rng.chance(M.chance)) return false;
-  return !!aparecerMascate(g);
+  if (!g.S.mascate || !g.mascatePendente || g.mascate || g.encontro || g.hero.moto || g.room || g.arena || g.rota.beco || g.destino || g.indoPorta || g.indoPraca) return false;
+  if (!aparecerMascate(g)) return false;
+  g.mascatePendente = false;
+  return true;
 }
 
 // Escolhe a rua do lado (esquerda ou direita) do cruzamento da frente que não é o caminho do herói nem está

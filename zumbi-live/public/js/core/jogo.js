@@ -39,7 +39,7 @@ import { lugaresDaViagem, rotaAte, ruaLivre, pontosDaRota } from './mapa.js';
 import { ENCONTROS, criarEncontro, decidirEncontro, escolhaEncontroIA, atualizarEncontro, voltaramComoZumbi, quarteiraoDosSalvos, salvosChegaram } from './encontros.js';
 import { atualizarCenario } from './cenario.js';
 import { abrirEscolha, atualizarPrologo, votoPrologo, atualizarMoto } from './prologo.js';
-import { MASCATE, talvezMascate, mascateAtivo, mascateSegura, atualizarMascate, objetivoMascate, atualizarLoja, votoLoja, escolhaBarganhaIA, decidirBarganha } from './mascate.js';
+import { MASCATE, talvezMascate, chefeDerrotado, mascateAtivo, mascateSegura, atualizarMascate, objetivoMascate, atualizarLoja, votoLoja, escolhaBarganhaIA, decidirBarganha } from './mascate.js';
 import { guardarTonico, atualizarBolsa, sortearTonico } from './itens.js';
 
 export const PADRAO = {
@@ -214,6 +214,7 @@ export class Jogo {
     this.encontro = null;         // alguém pedindo ajuda no caminho (encontros.js)
     this.viaturas = []; this.janelas = []; this.viaturaT = null; this.janelaT = null;   // cenário vivo (cenario.js)
     this.mascate = null;          // o Barganha (mascate.js)
+    this.mascatePendente = false; // derrotou um chefe e o Barganha vai aparecer no próximo cruzamento que der
     this.loja = null;             // a banca do Barganha aberta (a rua fica pausada)
     this.hero.grana = this.S.mascate ? MASCATE.granaInicial : 0;   // 💰 R$ pra negociar com ele
     this.perdidos = [];           // quem ficou pra trás: volta como zumbi uns quarteirões depois
@@ -1015,7 +1016,7 @@ export class Jogo {
     if (t.s.semSaida) this.entrarBeco(t);
     else this.iniciarTrecho(prep?.caminho);
     this.seguirViagem();
-    if (!t.s.semSaida) talvezMascate(this);   // 10%: o Barganha numa rua sem saída do lado do próximo cruzamento
+    if (!t.s.semSaida) talvezMascate(this);   // derrotou um chefe (40%): o Barganha numa rua sem saída do lado do próximo cruzamento
   }
 
   /* =================== Arena (praça com chefe) =================== */
@@ -1779,9 +1780,11 @@ export class Jogo {
       if (z.morto) continue;
       this.statusDeAtaque(h, arma, z);
       if (r.critico && CLASSES[h.classe].passiva?.id === 'tiro_certeiro') this.aplicarStatus(z, 'marcado');
-      if (d > 0.01) {
-        const f = A.empurra * K * (ZUMBIS[z.tipo].chefe ? 1 / 3 : 1);
+      // o mesmo zumbi só é empurrado de novo depois de `empurraCd` s (senão a horda nunca chega perto: herói imortal)
+      if (d > 0.01 && !(z.empurradoAte > this.t) && (perto || !A.soPerto)) {
+        const f = A.empurra * K * (ZUMBIS[z.tipo].chefe ? (A.chefe ?? 1 / 3) : 1);
         z.kx = dx / d * f; z.ky = dy / d * f;
+        z.empurradoAte = this.t + (A.empurraCd || 0);
       }
     }
     // os rastros do leque: um pra cada zumbi acertado e o resto espalhado
@@ -2420,6 +2423,7 @@ export class Jogo {
     if (this.S.mascate && this.fase === 'jogo' && !z.sumiu) {
       const M = MASCATE, D = T.chefe ? M.dropChefe : M.dropZumbi;
       if (T.chefe || this.rng.chance(D.chance)) this.soltarItemEm('grana', { valor: this.rng.int(D.min, D.max) }, null, z.x, z.y);
+      if (T.chefe) chefeDerrotado(this);   // 40%: o Barganha aparece numa rua sem saída logo adiante
       if (T.chefe && !this.hero.moto && this.rng.chance(M.tonicoChefe)) this.soltarItemEm('tonico', { id: sortearTonico(this.rng) }, null, z.x + 0.4, z.y + 0.4);   // e às vezes um tônico
     }
     // ajudante na frente no cabo de guerra: sorte, às vezes o cadáver tem um suprimento

@@ -112,9 +112,10 @@ export const ARMAS = {
   // pro dano por segundo ficar parecido com o de antes (sem pente: 14 a cada 0,42 s)
   pistola:     { nome: 'Pistola',       emoji: '🔫', dano: 22, cd: 0.5, alcance: 6.5, balas: 1, espalha: 0.05, pente: 14, recarga: 3, tipo: 'perfuracao', categoria: 'armas_fogo' },
   // escopeta: 2 tiros (pente) e 0,75 s recarregando. Cada tiro é um leque (cone) que acerta TODOS os zumbis dentro
-  // dele (dano em área), com 4x o dano em quem está muito perto (perto, em casas da borda do zumbi), e empurra
-  // cada um 3 casas pra trás (empurra; chefe só um terço). balas = só os rastros do leque na tela.
-  escopeta:    { nome: 'Escopeta',      emoji: '💥', dano: 26, cd: 0.28, pente: 2, recarga: 0.75, alcance: 4.6, balas: 6, espalha: 0.45, municao: 30, area: { cone: 0.45, perto: 1.2, multPerto: 4, empurra: 3 }, tipo: 'perfuracao', categoria: 'armas_fogo', status: [{ id: 'atordoado', chance: 0.08, duracao: 0.5 }] },
+  // dele (dano em área), com 4x o dano em quem está muito perto (perto, em casas da borda do zumbi); esse tiro à
+  // queima-roupa empurra o zumbi 3 casas pra trás (empurra; chefe só um terço; soPerto: o de longe não é empurrado,
+  // senão a horda nunca chega perto e o herói fica imortal). balas = só os rastros do leque na tela.
+  escopeta:    { nome: 'Escopeta',      emoji: '💥', dano: 26, cd: 0.28, pente: 2, recarga: 0.75, alcance: 4.6, balas: 6, espalha: 0.45, municao: 30, area: { cone: 0.45, perto: 1.2, multPerto: 4, empurra: 3, soPerto: true }, tipo: 'perfuracao', categoria: 'armas_fogo', status: [{ id: 'atordoado', chance: 0.08, duracao: 0.5 }] },
   metralhadora:{ nome: 'Metralhadora',  emoji: '🔥', dano: 11, cd: 0.085, alcance: 7, balas: 1, espalha: 0.09, quarteiroes: 3, lendaria: true, tipo: 'perfuracao', categoria: 'armas_fogo' },
   lanca:       { nome: 'Lança-chamas',  emoji: '🔥', dps: 75,  alcance: 3.3, cone: 0.5, quarteiroes: 3, lendaria: true, chama: true, tipo: 'fogo', categoria: 'explosivos', status: [{ id: 'queimando', chance: 1 }] }
 };
