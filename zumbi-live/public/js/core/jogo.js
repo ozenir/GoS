@@ -429,12 +429,12 @@ export class Jogo {
     atualizarEncontro(this, dt);
     atualizarCenario(this, dt);   // veículos de emergência passando e gente nas janelas (cenario.js)
     atualizarMascate(this, dt);   // o comerciante ambulante
-    this.dueloAtivo = calcularDuelo(this);
+    this.dueloAtivo = this.hero.moto ? null : calcularDuelo(this);
     this.processarFila(dt);
     this.zumbisDeQuemEntrou(dt);
     this.atualizarHeroi(dt);
     if (this.hero.moto && this.fase === 'jogo' && !this.caido) atualizarMoto(this, dt, ZUMBIS);   // de moto: atropela (prologo.js)
-    if (this.fase === 'jogo' && !this.caido) { this.atualizarEscolha(dt); atualizarHabilidades(this, dt); atualizarReliquia(this, dt); this.checarPortal(); }
+    if (this.fase === 'jogo' && !this.caido) { this.atualizarEscolha(dt); if (!this.hero.moto) atualizarHabilidades(this, dt); atualizarReliquia(this, dt); this.checarPortal(); }
     this.atualizarFigurantes(dt);
     this.atualizarAliados(dt);
     this.atualizarZumbis(dt);
@@ -843,12 +843,12 @@ export class Jogo {
     // cada direção leva a um lugar no fim da rua (mercado, hospital, delegacia...): ir pra buscar alguma coisa
     const usados = new Set();
     for (const o of ops) {
-      const dest = o.id !== 'voltar' && !o.semSaida ? this.destinoDaDirecao(N, o.dir, usados) : null;
+      const dest = o.id !== 'voltar' && !o.semSaida && !this.hero.moto ? this.destinoDaDirecao(N, o.dir, usados) : null;
       if (dest) { o.destino = dest; usados.add(dest.tipo); }
     }
     const praca = this.city.pracaAt(N.i, N.j);
-    if (shop) ops.push({ id: 'entrar', shop });
-    else if (praca) ops.push({ id: 'entrar', praca });
+    if (shop && !this.hero.moto) ops.push({ id: 'entrar', shop });   // de moto não entra em lugar nenhum: segue pelos quarteirões
+    else if (praca && !this.hero.moto) ops.push({ id: 'entrar', praca });
     for (const o of ops) { Object.assign(o, OPCOES[o.id]); if (o.praca) { o.nome = 'ARENA'; o.seta = '⚔️'; } }
     ops.sort((a, b) => a.n - b.n);
     this.voto = new Votacao(ops, this.cfg.votoDur, this.cfg.atraso);
@@ -1393,12 +1393,13 @@ export class Jogo {
     if (this.fase !== 'jogo') return;
     if (!obj) return; // acabou de entrar no prédio
     // Item por perto? Vai pegar (se não estiver indo pra porta)
-    const item = this.itemDesejado();
+    const item = h.moto ? null : this.itemDesejado();   // de moto não desvia pra pegar nada
     if (item && !obj.porta && !obj.saida) obj = { x: item.x, y: item.y, item: true };
     if (h.estados.parado()) { h.andando = false; return; }   // atordoado: não anda nem ataca
 
-    // 2) Luta (escolhe alvo e atira; ataque de perto é automático)
-    const lutando = this.combate(dt);
+    // 2) Luta (escolhe alvo e atira; ataque de perto é automático). De moto não luta: só atropela (prologo.js)
+    if (h.moto) h.mira = null;
+    const lutando = h.moto ? false : this.combate(dt);
 
     // 3) Movimento
     let vx = 0, vy = 0;
@@ -1444,14 +1445,14 @@ export class Jogo {
     // Duelo (poucos zumbis perto): espera a brecha, entra, bate e recua; vendo o bote do zumbi, desvia.
     // Quem atira mantém distância. Recuando, pode tropeçar (sobrevivencia.js).
     let duelo = null;
-    if (this.dueloAtivo && !obj.porta && !obj.saida && !(h.focoRota > 0)) duelo = movimentoDuelo(this, h, this.dueloAtivo, dt);
+    if (this.dueloAtivo && !h.moto && !obj.porta && !obj.saida && !(h.focoRota > 0)) duelo = movimentoDuelo(this, h, this.dueloAtivo, dt);
     if (duelo) { vx = duelo.vx; vy = duelo.vy; }
 
     // Zumbis perto: recua deles; se tiver muitos na frente, para e luta.
     // Forçando a rota (focoRota: muito tempo sem avançar), recua bem menos e abre caminho no empurrão.
     const forcando = h.focoRota > 0 && !this.room && !this.arena;
     let rx = 0, ry = 0, naFrente = 0;
-    for (const z of duelo ? [] : this.zumbis) {
+    for (const z of duelo || h.moto ? [] : this.zumbis) {   // (de moto passa por cima: não recua de ninguém)
       if (z.morto || z.nascendo > 0) continue;
       const dx = h.x - z.x, dy = h.y - z.y, d2 = dx * dx + dy * dy;
       const T = ZUMBIS[z.tipo];
@@ -2373,7 +2374,7 @@ export class Jogo {
     this.stats.abates++;
     aoMatarZumbi(this, z);   // supremas que reagem a zumbi morrendo (Transfusão)
     // zumbi mais forte dá mais XP; na rua calma do começo (poucos zumbis), cada um vale mais (sobrevivencia.js → xpRampa)
-    if (this.fase === 'jogo') this.ganharXp(T.xp * (1 + (this.nivelAmeaca - 1) * 0.1) * (1 + (1 - this.rampaAtual()) * this.S.xpRampa) * (z.cena ? this.S.cena.vidaZumbi : 1));
+    if (this.fase === 'jogo' && !this.hero.moto) this.ganharXp(T.xp * (1 + (this.nivelAmeaca - 1) * 0.1) * (1 + (1 - this.rampaAtual()) * this.S.xpRampa) * (z.cena ? this.S.cena.vidaZumbi : 1));
     this.emit('morte_zumbi', { x: z.x, y: z.y, tipo: z.tipo, chefe: !!T.chefe, nome: z.nome, dono: z.dono?.nick || null, roupa: z.roupa });
     // grana pro Barganha (mascate.js): às vezes cai de zumbi; chefe sempre deixa um bolo
     if (this.S.mascate && this.fase === 'jogo' && !z.sumiu) {
@@ -2557,6 +2558,8 @@ export class Jogo {
       }
       it.vida -= dt;
       if (this.fase !== 'jogo' || this.caido) continue;
+      // de moto não pega nada (nem bônus): o item fica no chão; só a grana dos atropelos conta (prologo.js)
+      if (h.moto && it.kind !== 'grana') continue;
       const d2 = dist2(h.x, h.y, it.x, it.y);
       // ímã: item perto vem sozinho até o herói (não fica preso atrás de zumbi ou carro)
       const ima = (it.ima || 2.2) * h.attr.get('ima');   // passivas (Gorjeta) puxam de mais longe

@@ -941,19 +941,67 @@ export class Render {
     if (z.nome) this.nomes.push({ x: sx, y: sy - (z.estados.lista.size ? 21 : 14), txt: z.nome, cor: z.dono ? ROXO_ATRAPALHA : '#ffd8a8' });
   }
 
-  // Moto vista de lado, virada pra `lado` (1 direita, -1 esquerda), com o pé do herói em (x, y)
-  desenharMoto(ctx, x, y, lado, andando) {
-    const P = (dx, dy, w, h, cor) => { ctx.fillStyle = cor; ctx.fillRect(Math.round(x + (lado > 0 ? dx : -dx - w)), Math.round(y + dy), w, h); };
-    const tre = andando ? Math.round(Math.sin(this.t * 40)) * 0.5 : 0;
-    // rodas
-    for (const wx of [-9, 8]) { P(wx - 3, -5, 6, 5, '#0c0c10'); P(wx - 2, -4, 4, 3, '#2a2a32'); P(wx - 1, -3, 1, 1, '#8a8a96'); }
-    // corpo, banco, tanque, farol
-    P(-8, -9 + tre, 15, 3, '#5a1e1a'); P(-6, -10 + tre, 12, 1, '#8a3226'); P(0, -11 + tre, 6, 2, '#a8402a');
-    P(-9, -10 + tre, 7, 1, '#121216'); P(-12, -7 + tre, 5, 1, '#3a3a44');
-    P(6, -12 + tre, 2, 7, '#4a4a54'); P(6, -13 + tre, 4, 1, '#2a2a32'); P(9, -10 + tre, 2, 2, '#ffe8a0');
-    // baú de entrega atrás
-    P(-15, -19 + tre, 8, 9, '#9a4a1e'); P(-15, -19 + tre, 7, 8, '#c8642a'); P(-15, -19 + tre, 7, 1, '#e0884a'); P(-13, -16 + tre, 3, 2, '#f4e0c0');
-    // fumaça do escapamento
+  // O entregador montado na moto (caminho das entregas, core/prologo.js), visto de lado: sentado, inclinado pra frente,
+  // as duas mãos no guidão, capacete com a viseira azulada, a jaqueta com a faixa refletiva e o baú laranja atrás.
+  // Quadro de 40 x 34 com o chão em (20, 31); lado 1 = virado pra direita (-1 espelha). f: quadro dos raios da roda.
+  spriteMoto(lado, f, bob) {
+    const k = 'moto' + lado + f + bob;
+    this.cacheMoto ||= new Map();
+    if (this.cacheMoto.has(k)) return this.cacheMoto.get(k);
+    const c = document.createElement('canvas'); c.width = 40; c.height = 34;
+    const x = c.getContext('2d'), AX = 20, AY = 31;
+    if (lado < 0) { x.translate(40, 0); x.scale(-1, 1); }
+    const p = (dx, dy, w, h, cor, sobe = true) => { x.fillStyle = cor; x.fillRect(AX + dx, AY + dy - (sobe ? bob : 0), w, h); };
+    // rodas (não balançam)
+    for (const cx of [-9, 9]) {
+      [[-4, 3], [-3, 5], [-2, 7], [-1, 7], [0, 7], [1, 7], [2, 5], [3, 3]].forEach(([dy, w]) => p(cx - (w >> 1), -4 + dy, w, 1, '#0b0b0f', false));
+      p(cx - 1, -6, 3, 4, '#2a2a34', false); p(cx - 2, -5, 5, 2, '#2a2a34', false); p(cx, -4, 1, 1, '#8a8a96', false);
+      if (f) { p(cx - 1, -5, 1, 1, '#4a4a56', false); p(cx + 1, -3, 1, 1, '#4a4a56', false); } else { p(cx + 1, -5, 1, 1, '#4a4a56', false); p(cx - 1, -3, 1, 1, '#4a4a56', false); }
+    }
+    // balança, escapamento, motor
+    for (let t = 0; t <= 6; t++) p(-9 + t, -4 - Math.round(t * 0.5), 1, 1, '#3a3a44');
+    p(-13, -8, 9, 2, '#3a3a44'); p(-13, -8, 9, 1, '#8a8a96'); p(-14, -8, 1, 2, '#1a1a20');
+    p(-3, -10, 7, 5, '#24242c'); p(-2, -9, 2, 2, '#3a3a46'); p(2, -9, 1, 3, '#16161c');
+    // garfo e para-lama da frente
+    for (let t = 0; t <= 11; t++) p(9 - Math.round(t * 3 / 11), -4 - t, 1, 1, '#6a6a76');
+    p(6, -9, 5, 1, '#5a1a16');
+    // corpo, tanque e banco
+    p(-12, -12, 5, 2, '#5a1a16'); p(-13, -12, 1, 1, '#ff3a2a');
+    p(-8, -12, 15, 3, '#5a1a16'); p(-6, -14, 13, 2, '#8a2e22'); p(1, -15, 6, 2, '#b04a2e'); p(2, -15, 4, 1, '#d8684a');
+    p(-10, -14, 8, 2, '#141418'); p(-10, -14, 8, 1, '#2a2a30');
+    // farol e guidão
+    p(7, -16, 3, 3, '#3a3a44'); p(9, -15, 1, 1, '#fff2c0');
+    p(3, -18, 5, 1, '#2a2a32'); p(2, -18, 1, 1, '#101014');
+    // o baú de entrega
+    p(-18, -24, 10, 11, '#9a4a1e'); p(-18, -24, 9, 10, '#c8642a'); p(-18, -24, 9, 1, '#e8904a'); p(-18, -24, 1, 10, '#e0884a');
+    p(-16, -21, 5, 1, '#f4e0c0'); p(-15, -20, 3, 2, '#f4e0c0'); p(-14, -19, 1, 1, '#c8642a'); p(-17, -14, 9, 1, '#2a2a30');
+    // o entregador sentado: coxa, canela, tênis
+    p(-7, -16, 9, 3, '#161a26'); p(-7, -16, 9, 1, '#222a3c');
+    p(1, -15, 3, 7, '#161a26'); p(3, -15, 1, 6, '#222a3c'); p(1, -9, 5, 2, '#0e0e14'); p(1, -8, 5, 1, '#34343e');
+    // tronco inclinado pra frente, com a faixa refletiva
+    for (let y = -25; y <= -16; y++) { const x0 = -7 + Math.round((-16 - y) * 0.35); p(x0, y, 7, 1, '#1e2a42'); p(x0, y, 1, 1, '#141c2e'); p(x0 + 6, y, 1, 1, '#2c3c5c'); }
+    { const y = -20, x0 = -7 + Math.round(4 * 0.35); p(x0, y, 7, 1, '#9aa6b8'); }
+    // braço até o guidão
+    for (const [dx, dy] of [[0, -24], [1, -23], [1, -22], [2, -21], [2, -20], [3, -19]]) p(dx, dy, 2, 1, '#1e2a42');
+    p(3, -19, 2, 2, '#7a4a30');
+    // pescoço e capacete (com a faixa laranja e a viseira refletindo a rua)
+    p(-3, -27, 3, 2, '#141c2e');
+    [[-4, 3], [-3, 5], [-2, 7], [-1, 9], [0, 9], [1, 9], [2, 7], [3, 5]].forEach(([dy, w]) => p(-1 - (w >> 1), -31 + dy, w, 1, '#16161c'));
+    p(-5, -33, 3, 1, '#3a3a46'); p(-6, -31, 1, 2, '#2a2a34');
+    p(-6, -30, 8, 1, '#c8642a');
+    p(1, -31, 3, 3, '#1a5a68'); p(2, -31, 2, 1, '#5ae0f0');
+    this.cacheMoto.set(k, c);
+    return c;
+  }
+  desenharMoto(ctx, h, sx, sy, lado) {
+    const f = h.andando ? Math.floor(this.t * 14) % 2 : 0, bob = h.andando ? Math.floor(this.t * 9) % 2 : 0;
+    const spr = this.spriteMoto(lado, f, bob);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(sx - 14, sy - 1, 28, 2); ctx.fillRect(sx - 11, sy - 2, 22, 1);
+    // traço de velocidade atrás
+    if (h.andando) { ctx.fillStyle = 'rgba(230,236,255,0.28)'; const o = Math.floor(this.t * 30) % 6; for (const [dy, w] of [[-20, 5], [-13, 7], [-7, 4]]) ctx.fillRect(sx - lado * (20 + o) - (lado > 0 ? w : 0), sy + dy, w, 1); }
+    ctx.drawImage(spr, sx - 20, sy - 31);
+    if (h.andando && Math.random() < 0.35) this.particula({ x: h.x - h.fx * 0.7, y: h.y - h.fy * 0.7, z: 0.25, vz: 0.4, g: -0.3, life: 0.6, cor: '#6a6a72', tam: 1 });
+    return spr;
   }
 
   desenharHeroi(g) {
@@ -990,8 +1038,16 @@ export class Render {
       ctx.globalAlpha = 0.25 + 0.2 * k; disc(ctx, ax, ay - 8, 15 + k * 4, '#ffd23f', 0.8); ctx.globalAlpha = 1;
       if (Math.random() < 0.4) this.particula({ x: h.x + (Math.random() - 0.5) * 0.8, y: h.y + (Math.random() - 0.5) * 0.8, z: 0.3, vz: 2, g: -0.5, life: 0.7, cor: Math.random() < 0.5 ? '#fff3a0' : '#ffd23f', tam: 1 });
     }
-    // de moto (o entregador no caminho das entregas, core/prologo.js): a moto por baixo, o baú laranja atrás
-    if (h.moto) { const [mx, my] = this.tela(h.x, h.y), [ddx] = this.dirTela(h.fx, h.fy); this.desenharMoto(ctx, mx, my, ddx >= 0 ? 1 : -1, h.andando); }
+    // de moto (o entregador no caminho das entregas, core/prologo.js): montado, no lugar do boneco em pé
+    if (h.moto) {
+      const [mx, my] = this.tela(h.x, h.y), [ddx] = this.dirTela(h.fx, h.fy);
+      const ms = this.desenharMoto(ctx, h, mx, my, ddx >= 0 ? 1 : -1);
+      if ((h.invT > 0 || h.invQ > 0) && Math.floor(this.t * 10) % 2) { ctx.globalAlpha = 0.55; ctx.drawImage(this.branco(ms), mx - 20, my - 31); ctx.globalAlpha = 1; }
+      this.heroiSpr = [mx, my, ms, 20, 31];
+      this.heroiTela = [mx, my];
+      if (h.viewer && g.fase === 'jogo') this.nomes.push({ x: mx, y: my - 36, txt: h.viewer.nick, cor: '#ffd23f' });
+      return;
+    }
     const [sx, sy] = this.pessoa(spr, h.x, h.y, 1, g.fase === 'jogo' ? 1 : 0.6);
     this.heroiSpr = [sx, sy, spr];
     if ((h.invT > 0 || h.invQ > 0) && Math.floor(this.t * 10) % 2) { ctx.globalAlpha = 0.55; ctx.drawImage(this.branco(spr), sx - S.PE_X, sy - S.PE_Y); ctx.globalAlpha = 1; }
@@ -1050,9 +1106,9 @@ export class Render {
   // O herói aparece por cima de prédios e zumbis, meio transparente, pra nunca sumir da tela
   fantasmaHeroi(g) {
     if (g.fase !== 'jogo' || !this.heroiSpr) return;
-    const [sx, sy, spr] = this.heroiSpr;
+    const [sx, sy, spr, ox = S.PE_X, oy = S.PE_Y] = this.heroiSpr;
     this.ctx.globalAlpha = 0.32;
-    this.ctx.drawImage(spr, sx - S.PE_X, sy - S.PE_Y);
+    this.ctx.drawImage(spr, sx - ox, sy - oy);
     this.ctx.globalAlpha = 1;
   }
 

@@ -108,6 +108,21 @@ teste('depois de uns quarteirões de moto, ele cai (o filme "A poça") e segue a
   assert.equal(j.hero.grana, g0 + PROLOGO.moto.entregaPorQuarteirao * PROLOGO.moto.quarteiroes);
 });
 
+teste('de moto ele só atropela: não atira, não bate, não ganha experiência nem pega item, não entra em prédio', () => {
+  const j = novo(10);
+  chat(j, '4', 5);
+  ate(j, () => j.prologo?.etapa === 'caminho');
+  chat(j, '2', 4, 'e');
+  ate(j, () => !j.prologo);
+  const conta = { tiro: 0, golpe: 0, nivel: 0, entrar: 0 };
+  const e0 = j.emit.bind(j); j.emit = (t, d) => { if (j.hero.moto) { if (t === 'tiro' && d.heroi) conta.tiro++; if (t === 'golpe') conta.golpe++; if (t === 'nivel') conta.nivel++; if (t === 'votacao_abriu' && j.voto?.opcoes.some(o => o.id === 'entrar')) conta.entrar++; } return e0(t, d); };
+  const h = j.hero, xp0 = h.xp, moch0 = h.mochila.length;
+  j.soltarItemEm('kit', { valor: 30 }, null, h.x + 0.3, h.y);
+  ate(j, () => j.prologo?.etapa === 'acidente' || j.fase === 'morto', 300);
+  assert.deepEqual(conta, { tiro: 0, golpe: 0, nivel: 0, entrar: 0 });
+  assert.equal(h.xp, xp0); assert.equal(h.mochila.length, moch0, 'o kit ficou no chão');
+});
+
 teste('presente de ajuda que chega durante a escolha ou o filme vale quando a partida começa', () => {
   const j = novo(8);
   j.handle({ type: 'presente', id: 'p1', nick: 'ana', avatar: '', giftName: 'Rose', count: 1, coins: 1, regra: { efeito: 'cura', valor: 20, emoji: '🌹', moedas: 1 } });

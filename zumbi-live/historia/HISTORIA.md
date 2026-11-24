@@ -207,7 +207,7 @@ Ainda não está no jogo.
 
 - **Caminho 1:** ele vai **a pé, sem arma nenhuma**, com um atributo único de classe: **muita esquiva e muita velocidade**. Sobrevive fugindo, não lutando. O destino no mapa é a casa da Vó Dita.
 - **Caminho 2:**
-  1. Começa uma **gameplay de moto**: ele segue de quarteirão em quarteirão **atropelando zumbis e ganhando dinheiro**, e o chat vota **reto, direita ou esquerda** em cada cruzamento. Cada entrega é um destino.
+  1. Começa uma **gameplay de moto**: ele segue de quarteirão em quarteirão **atropelando zumbis e ganhando dinheiro**, e o chat vota **reto, direita ou esquerda** em cada cruzamento. **Na moto ele não atira, não bate em ninguém e não recebe bônus (nem experiência, nem item): só atropela e segue.** A luta começa depois que ele cai. Cada entrega é um destino.
   2. Depois de um **tempo razoável**, no começo de um quarteirão, **ele cai** (capítulo 6).
   3. A partir daí vem a gameplay de sempre, a pé, **sem a mobilidade, mas com muita grana** para comprar armas e suprimentos do Barganha, o comerciante ambulante.
   4. A insulina, ele entregou no condomínio. Precisa conseguir outra (o Barganha tem, e cobra caro).

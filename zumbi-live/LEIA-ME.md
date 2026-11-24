@@ -59,7 +59,13 @@ A partida começa com a história (a história inteira está em `historia/HISTOR
 2. **A introdução do escolhido.** É uma cena de filme em pixel art, numa faixa de cinema no meio da tela, só com legenda e som ambiente. O **entregador** tem o filme inteiro, "A tarifa 5×": a comunidade vendo a cidade queimar, o celular com a tarifa dinâmica e a mensagem da avó, e a bifurcação. Os outros, por enquanto, têm um cartão com o rosto e quem é. Na legenda, o nome original vira o nome de quem dá nome ao herói.
 3. **A escolha do caminho** (entregador). O chat vota **1 🏠 Subir até a Vó Dita** ou **2 📦 Aceitar as entregas (5×)**. Ninguém votou: a IA vai pela avó.
    - **Vó primeiro:** a pé e **sem arma nenhuma** (só as mãos), com **+22% de esquiva** e **+25% de velocidade**.
-   - **Entregas:** ele vai **de moto**, bem mais rápido. **Atropela todo zumbi que encosta** (menos chefe) e ganha **R$ 4–12 por atropelado**. De moto ele não para pra limpar a área, e o chat vota a **direção** (esquerda, reto, direita), não o destino no mapa. Depois de **4 quarteirões**, ele cai: o filme **"A poça"**. Dali em diante vai a pé, com o pagamento das entregas no bolso (R$ 180, cinco vezes a tarifa) pra gastar com o Barganha. O mapa volta.
+   - **Entregas:** ele vai **montado na moto**, bem mais rápido. **Atropela todo zumbi que encosta** (menos chefe) e ganha **R$ 4–12 por atropelado**. De moto ele **só atropela e segue pelos quarteirões**:
+     - não atira, não bate e não usa habilidade;
+     - não ganha experiência e não pega item nem bônus (só a grana dos atropelos);
+     - não para pra limpar a área e não entra em prédio;
+     - o chat vota a **direção** (esquerda, reto, direita), não o destino no mapa.
+
+     **A luta começa depois que ele cai da moto.** Depois de **4 quarteirões**, ele cai: o filme **"A poça"**. Dali em diante vai a pé, com o pagamento das entregas no bolso (R$ 180, cinco vezes a tarifa) pra gastar com o Barganha. O mapa volta.
 4. A partida segue como sempre. Quando o herói morre, a próxima partida abre a escolha de novo.
 
 Enquanto a história está na tela, **a rua fica pausada** (como no portal dos 500), e o som da rua dá lugar ao som da cena. Presente de ajuda que chega nessa hora vale assim que a partida começa. Os números ficam em `public/js/core/prologo.js` (`PROLOGO`).
@@ -634,7 +640,7 @@ O programa já está aberto em outra janela preta. Feche as duas e abra só uma.
 Clique uma vez na janela do jogo. Pela janela do atalho 3 o som já começa sozinho.
 
 **Comentei e o voto não contou**
-Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 2.3.0)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
+Primeiro confira a versão: ao abrir, a janela preta mostra `Herói contra Hordas ligado! (versão 2.3.1)` (ou mais nova). Se mostrar versão mais velha, ou não mostrar versão nenhuma, você está com o programa antigo: rode o comando do PowerShell de novo (ele fecha o programa antigo sozinho e atualiza).
 
 Olhe a janela preta: cada comentário que chega aparece nela, e se virou voto aparece junto (ex.: `💬 fulano: 2  → voto 2 FRENTE` ou `💬 fulano: b  → habilidade B`). Valem também `2️⃣`, `#2`, `22`, `vai 2`, `esquerda`; e pra habilidade `A`, `a)`, `aaa`, `letra a`, `🅰️`.
 - Se o comentário **não aparece** na janela preta, ele não chegou da live: confira se a janela mostra `✅ Ligado na live de @...` e tente comentar de outra conta.
