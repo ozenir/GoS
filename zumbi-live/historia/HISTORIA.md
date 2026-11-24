@@ -20,7 +20,8 @@ Este é o documento da história do jogo: o mundo, os personagens, os roteiros e
   - **Aprovado:** ele já aprovou, não mude sem pedir.
   - **Rascunho:** proposta ainda não conferida.
   - **Ideia:** só uma direção.
-- Ordem combinada: **primeiro o entregador inteiro** (pronto, seção 7), **depois os outros**, um de cada vez.
+- **O jogo é o artifact do herói** ("Herói contra Hordas", o jogo que já existe). A história não é um jogo separado: ela vive dentro dele (seção 3).
+- Ordem combinada: **primeiro o entregador inteiro** (pronto, seção 8), **depois os outros**, um de cada vez.
 - Fica para conversar depois: o "portal" que já existe dentro do jogo (portal dos 500) e como ele se encaixa na história.
 
 ## 2. A essência
@@ -42,7 +43,18 @@ A discussão social é sobre a sociedade de hoje:
 
 O tom é sério, humano e às vezes com humor ácido. Por exemplo, o aplicativo que continua mandando notificação no meio do fim do mundo. Nunca é panfleto: a crítica aparece no que acontece, não em discurso.
 
-## 3. O mundo: Porto Sereno
+## 3. Como a história acontece dentro do jogo (estrutura decidida)
+
+O jogo é o **Herói contra Hordas**, o artifact do herói. A história entra nele assim:
+
+1. **Tela de escolha do herói.** O jogo começa com uma tela que mostra **cada personagem com o rosto dele** (retrato em pixel art), o nome e uma frase de quem ele é. **O chat vota** em quem vai jogar. *(Hoje o jogo sorteia o personagem; isso vai mudar.)*
+2. **A introdução do escolhido.** Uma cena de filme própria de cada herói, como a abertura do entregador: quem ele é, o dia do caos e para onde ele precisa ir. Se a introdução tiver uma escolha (como "Vó primeiro ou entregas 5×"), o chat vota ali.
+3. **A gameplay começa.** É o jogo de sempre: quarteirões, hordas, mapa, Barganha, encontros.
+4. **Fragmentos da história ao longo da partida.** Pequenas cenas e momentos da história daquele herói aparecem durante a gameplay, em pontos certos (um lugar do mapa, um encontro, um quarteirão). Exemplos: a farmácia da Rua 9 e o condomínio do entregador.
+5. **Os heróis se encontram.** Onde as histórias se cruzam (seção 10), um herói aparece na partida do outro, interage e às vezes segue junto por um tempo. **As decisões do chat fazem esses encontros acontecerem ou não.**
+6. **O fim da partida.** Se chegar no objetivo, vem o final daquele herói. Se morrer, vem a tela de morte em máquina de escrever. Depois a tela de escolha volta, e o chat escolhe o próximo herói.
+
+## 4. O mundo: Porto Sereno
 
 Tudo se passa na cidade de **Porto Sereno**, na terceira noite da **Febre Cinza**.
 
@@ -50,7 +62,7 @@ Tudo se passa na cidade de **Porto Sereno**, na terceira noite da **Febre Cinza*
 |---|---|
 | **Febre Cinza** | Febre de 41 graus e pele acinzentada. Quem morre levanta. Os infectados seguem o barulho e não sentem dor. |
 | **AURORA-7** | Vacina distribuída de graça nas farmácias. O lote 7 foi liberado **antes dos testes, por lucro**. Ela não cura a febre: impede o corpo de morrer de verdade. **Importante:** o vilão é a ganância da empresa que pulou os testes, nunca a vacinação em si. A história não pode virar mensagem contra vacinas. |
-| **Instituto Aurora** | A empresa da vacina. O maior acionista é **Augusto Valadares**, o rico (seção 8). |
+| **Instituto Aurora** | A empresa da vacina. O maior acionista é **Augusto Valadares**, o rico (seção 9). |
 | **Dra. Lívia Prado** | Cientista do Instituto. Avisou que o lote 7 não estava pronto e foi calada. Tem um laboratório no subsolo do Hospital Central. |
 | **Hospital Central** | Onde a enfermeira trabalha. A explosão do primeiro dia vem do laboratório no subsolo. |
 | **Operação Farol** | Resgate de helicóptero na Torre de Rádio. **Segredo:** tem uma lista, e autoridades e quem pagou embarcam primeiro. Quem descobre é a bombeira. |
@@ -63,7 +75,7 @@ Tudo se passa na cidade de **Porto Sereno**, na terceira noite da **Febre Cinza*
 
 O jogo já tem fragmentos de história espalhados pelos caminhos: o cartaz da vacina, o rádio da viatura 12, o diário de uma entregadora, o prontuário do paciente 0417, a gravação da Dra. Lívia, a placa do quartel, o panfleto da Operação Farol, a Rádio Resistência e o mapa rabiscado. Tudo que for escrito precisa combinar com eles.
 
-## 4. Identidade visual das cenas (preservar sempre)
+## 5. Identidade visual das cenas (preservar sempre)
 
 As cenas de história são contadas **como um filme: só legenda e som ambiente**. Não tem narrador nem voz falada.
 
@@ -94,7 +106,7 @@ A referência é a imagem `historia/referencia-visual.jpg`: pixel art escura e p
   - motor da moto, fogo crepitando, pássaros de madrugada no final;
   - pings do celular, interfone, freada e batida, batida de coração nos momentos de decisão.
 
-## 5. O elenco da live
+## 6. O elenco da live
 
 Todo mundo que está na live vira personagem da história.
 
@@ -112,10 +124,10 @@ Todo mundo que está na live vira personagem da história.
 - **Aparece só um nome por personagem:** o original ou o do espectador, nunca os dois.
 - **Gênero:** o TikTok não informa o gênero de quem está na live, e adivinhar pelo nome ou pela foto erraria. Por isso, quem digitar **!ela** ou **!ele** no chat tem o personagem adaptado ao gênero que escolheu, e o jogo lembra a escolha dessa pessoa. Sem o comando, o personagem fica com o gênero original. *(Decidido; ainda não está no jogo.)*
 
-## 6. Finais e mortes
+## 7. Finais e mortes
 
 - **A partida dura entre 3 e 17 minutos.**
-- **Chegou no objetivo:** final feliz, com uma cena de filme única de cada personagem. A exceção é o entregador, cujo final é a entrega da foto e da insulina (seção 7).
+- **Chegou no objetivo:** final feliz, com uma cena de filme única de cada personagem. A exceção é o entregador, cujo final é a entrega da foto e da insulina (seção 8).
 - **Morreu:** a **tela de morte** escreve um resumo letra por letra, **como numa máquina de escrever**, com som de tecla e o sininho no fim da linha. O resumo diz:
   - quem ele era antes do apocalipse;
   - por que se arriscou;
@@ -129,7 +141,7 @@ Todo mundo que está na live vira personagem da história.
   - **Até 3 minutos:** chacota, com humor de quem escolheu muito mal ou deu muito azar.
   - **Depois de 3 minutos:** honroso, autêntico e trágico. Quanto mais longa a jornada, mais o texto honra o que ele passou.
 
-## 7. O entregador: Kauã, 22 anos, "Moto 22" (APROVADO)
+## 8. O entregador: Kauã, 22 anos, "Moto 22" (APROVADO)
 
 **Status:** história e arte aprovadas. A sequência completa está pronta como protótipo:
 - página publicada: https://claude.ai/artifact/N8wFWWgx8TzzAfZtNv3DXS
@@ -177,7 +189,7 @@ Ainda não está no jogo.
 
 Os números, as ruas e a causa da morte vêm da partida de verdade.
 
-## 8. Os outros personagens (próximos da fila)
+## 9. Os outros personagens (próximos da fila)
 
 ### 🩺 A Enfermeira: "Quem cuida de quem cuida?" (IDEIA DO DONO, rascunho)
 - **Quem é:** técnica de enfermagem e **mãe solo da Duda**, 9 anos. De dia, cuidadora de uma senhora rica; de noite, plantão no Hospital Central. Dorme quatro horas por noite. Deixa a filha sozinha com a regra: "não abre a porta pra ninguém".
@@ -224,7 +236,7 @@ Os números, as ruas e a causa da morte vêm da partida de verdade.
 - **Final (aprovado):** ele chega ao helicóptero e **entrega o lugar dele à filha do segurança que morreu por ele**. Pela primeira vez, não compra a saída. No rádio, ele confessa o que fez com a vacina.
 - **Elenco da live:** os seguranças são espectadores da live.
 
-## 9. Onde as histórias se cruzam
+## 10. Onde as histórias se cruzam
 
 | Quem | Aparece na história de | Como |
 |---|---|---|
@@ -234,7 +246,9 @@ Os números, as ruas e a causa da morte vêm da partida de verdade.
 | Beto (Rádio Resistência) | Todos (fragmentos de rádio) e Mecânico | A voz no rádio; o objetivo do mecânico. |
 | Dra. Lívia / Instituto Aurora | Enfermeira (a explosão), Valadares (a culpa) | O mistério da vacina. |
 
-## 10. O que falta (próximos passos)
+## 11. O que falta (próximos passos)
+
+0. **Tela de escolha do herói** com o rosto de cada personagem e a votação do chat: fazer o protótipo para aprovação.
 
 1. **Enfermeira, policial, bombeira, mecânico e Valadares:** fazer o roteiro detalhado e a sequência de cenas de cada um, no mesmo estilo do entregador, um por vez e sempre com aprovação antes. Começar pela abertura e pela escolha de cada um.
 2. **Levar a história para o jogo**, quando aprovado:
