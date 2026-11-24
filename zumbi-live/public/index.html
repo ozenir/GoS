@@ -427,6 +427,38 @@ body.foco .app{padding-block:8px}
 .sem-rede{position:absolute;right:3cqw;bottom:46cqw;font:600 2.6cqw var(--font-display);background:rgba(184,40,30,.9);color:#fff;padding:.8cqw 2.4cqw;border-radius:99px}
 @media (prefers-reduced-motion: reduce){.sp,.sp.out,.toast,.toast.out,.over-card,.intro,.intro.out,.banner .bt,.cta,.caido,.caido .cd,.escolha,.hb.novo,.av em.up{animation:none}}
 
+/* ---------- a banca do Barganha (core/mascate.js + view/banca.js): a rua pausa e o chat negocia ---------- */
+.loja{position:absolute;inset:0;z-index:29;display:grid;grid-template-rows:auto auto auto auto 1fr;align-content:start;gap:1.5cqw;padding:3cqw 3cqw 3.2cqw;background:radial-gradient(90% 40% at 10% 30%,rgba(40,90,220,.28),rgba(4,5,9,.97) 60%),#04050a;opacity:0;transition:opacity .5s;font-family:'Pixelify Sans',ui-monospace,monospace;color:#fff}
+.loja.on{opacity:1}
+.lj-topo{display:flex;align-items:baseline;justify-content:space-between;gap:2cqw}
+.lj-nome{font-weight:700;font-size:4.6cqw;color:#cfe6ff;text-shadow:0 0 2cqw rgba(58,138,255,.7)}
+.lj-nome small{display:block;font-weight:500;font-size:2.5cqw;letter-spacing:.22em;color:#7f9cc8;text-shadow:none}
+.lj-grana{font-weight:700;font-size:4.2cqw;color:#ffd23f}
+.lj-tela{position:relative;width:100%;aspect-ratio:216/176;border:.5cqw solid #12151f;box-shadow:0 0 6cqw rgba(42,106,255,.25)}
+.frame .lj-tela canvas{position:static;inset:auto;width:100%;height:100%;image-rendering:pixelated;display:block}
+.lj-res{position:absolute;left:0;right:0;bottom:0;display:grid;justify-items:center;gap:.6cqw;padding:5cqw 3cqw 3cqw;background:linear-gradient(0deg,rgba(4,5,10,.96) 65%,rgba(4,5,10,0));text-align:center}
+.lj-res .t1{font-weight:700;font-size:4.4cqw;color:#ffd23f}
+.lj-res .t2{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:3.4cqw}
+.lj-res .t3{font-family:Inter,system-ui,sans-serif;font-size:2.6cqw;color:#a8a2b4}
+.lj-fala{font-family:Inter,system-ui,sans-serif;font-style:italic;font-weight:600;font-size:3.5cqw;line-height:1.3;color:#e8f2ff;min-height:4.6cqw;text-shadow:0 .3cqw 0 #000}
+.lj-ops{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3cqw}
+.lj-op{display:grid;grid-template-rows:auto 1fr auto;gap:.5cqw;background:rgba(12,14,24,.95);border:.45cqw solid #26304a;padding:1.1cqw 1.3cqw 1.2cqw;min-width:0;transition:filter .4s,border-color .3s,transform .4s}
+.lj-op b{display:flex;align-items:center;gap:1cqw;min-width:0}
+.lj-op .n{flex:none;display:inline-grid;place-items:center;width:5cqw;height:5cqw;font-size:3.6cqw;background:#e8c84a;color:#1a1405;box-shadow:0 .4cqw 0 #6a5a12}
+.lj-op .ic{flex:none;font-size:3.4cqw}
+.lj-op .nm{font-size:2.6cqw;overflow-wrap:anywhere;line-height:1.05;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.lj-op .ds{font-family:Inter,system-ui,sans-serif;font-size:2.2cqw;line-height:1.2;color:#a8b2c8;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.lj-op .ds em{font-style:normal;font-weight:600;color:#ffd23f}
+.lj-op.caro .ds em{color:#ff6a5a;text-decoration:line-through}
+.lj-op .pe-voto{padding:0}
+.lj-op.vender .n,.lj-op.trocar .n,.lj-op.sair .n{background:#59b0ff;color:#04142a;box-shadow:0 .4cqw 0 #1a4a8a}
+.lj-op.off{filter:brightness(.38) saturate(.4)}
+.lj-op.venceu{border-color:#ffd23f;transform:scale(1.04);box-shadow:0 0 4cqw rgba(255,210,63,.3)}
+.lj-op.perdeu{filter:brightness(.32)}
+.lj-pe{display:grid;gap:1.2cqw;align-self:end}
+.lj-info{display:flex;justify-content:space-between;gap:2cqw;font-family:Inter,system-ui,sans-serif;font-size:2.6cqw;color:#a8b2c8}
+.lj-info b{color:#cfe6ff;font-weight:600}
+
 /* ---------- a história: escolha do herói e cinema (view/escolha.js) ---------- */
 .frame.em-prologo .hud,.frame.em-prologo #texto{visibility:hidden}
 .pro{position:absolute;inset:0;z-index:30;font-family:var(--f-pixel,'Pixelify Sans'),ui-monospace,monospace}
@@ -567,6 +599,17 @@ body.foco .app{padding-block:8px}
             </div>
             <div class="o-next">Próximo: <b id="o-prox">sobrevivente</b> em <b id="o-count">20</b></div>
           </div>
+        </div>
+      </div>
+      <!-- a banca do Barganha (core/mascate.js + view/banca.js): o janelão do galpão na rua sem saída -->
+      <div class="loja" id="loja" hidden>
+        <div class="lj-topo"><div class="lj-nome">🔵 RUA SEM SAÍDA<small id="lj-rod">negócio 1 de 3</small></div><div class="lj-grana" id="lj-grana">💰 R$ 0</div></div>
+        <div class="lj-tela"><canvas id="lj-cv" width="216" height="176" aria-label="A banca do Barganha"></canvas><div class="lj-res" id="lj-res" hidden></div></div>
+        <div class="lj-fala" id="lj-fala" aria-live="polite"></div>
+        <div class="lj-ops" id="lj-ops"></div>
+        <div class="lj-pe">
+          <div class="lj-info"><b id="lj-bolsa"></b><span id="lj-dica"></span></div>
+          <div class="pe-tempo"><span>⏳</span><div class="pe-trilho"><i id="lj-barra"></i></div><span id="lj-seg"></span></div>
         </div>
       </div>
       <!-- a história (core/prologo.js + view/escolha.js): escolha do herói pelo chat, o cinema da introdução,

@@ -52,6 +52,7 @@ O jogo é o **Herói contra Hordas**, o artifact do herói. A história entra ne
 - o filme de abertura do entregador e a votação do caminho;
 - a moto (atropela, ganha grana, o chat vota a direção) e a queda ("A poça");
 - o cartão de introdução de quem ainda não tem filme.
+- o Barganha na rua sem saída, no galpão com o janelão e a tocha azul, com a banca de comprar, vender e trocar (versão 2.4.0, `core/mascate.js`, `core/itens.js` e `view/banca.js`).
 
 A parte técnica fica em `public/js/core/prologo.js`, e os desenhos em `public/js/view/escolha.js`, `retratos.js` e `cinema.js`.
 
@@ -97,6 +98,7 @@ Tudo se passa na cidade de **Porto Sereno**, na terceira noite da **Febre Cinza*
 | **Jardins do Mirante** | Condomínio de luxo. Gerador ligado e luz em todas as janelas enquanto a cidade apaga. |
 | **Farmácia da Rua 9** | Saqueada. É onde estava o cartaz "VACINE-SE! AURORA-7", com "NÃO TOMEM" escrito em batom por cima. |
 | **Viatura 12** | A viatura do policial. Foi dela a transmissão no rádio: "desliguem os alarmes dos carros, eles seguem o barulho". |
+| **O Barganha** | O comerciante: compra, vende e troca (armas e tônicos). **Sempre numa rua sem saída**, dentro de um **galpão fechado que só tem um janelão aberto**, com uma **tocha azul tremeluzindo** na parede que ilumina a rua. Por dentro, o balcão parece uma **banca de revista** (revistas no varal, prateleiras com os itens, o letreiro pintado à mão). Encapuzado, de lenço vermelho, olhos amarelos, a risadinha "hehehe". Quando ele aparece, o chat vota se o herói vai até a banca ou segue. *(Pedido do dono; no jogo desde a versão 2.4.0.)* |
 
 O jogo já tem fragmentos de história espalhados pelos caminhos: o cartaz da vacina, o rádio da viatura 12, o diário de uma entregadora, o prontuário do paciente 0417, a gravação da Dra. Lívia, a placa do quartel, o panfleto da Operação Farol, a Rádio Resistência e o mapa rabiscado. Tudo que for escrito precisa combinar com eles.
 

@@ -45,6 +45,23 @@ export function lerVoto(texto) {
   return null;
 }
 
+// Na banca do Barganha (mascate.js) o chat vota de 1 a 9: "7", "77", "7️⃣", "quero o 3", "vai 9".
+// Também vale a palavra: vender (7), trocar (8), sair/tchau (9). Devolve o número ou null.
+const PALAVRAS_LOJA = { 7: ['vender', 'vende', 'venda', 'vendo'], 8: ['trocar', 'troca', 'troco', 'troque'], 9: ['sair', 'sai', 'tchau', 'seguir', 'segue', 'bora', 'nada'] };
+export function lerNumero(texto, max = 9) {
+  const t = limpar(texto);
+  if (!t) return null;
+  const rep = t.match(/^([1-9])\1*$/);
+  if (rep) return +rep[1] <= max ? +rep[1] : null;
+  const primeira = t.split(' ')[0];
+  for (const [n, lista] of Object.entries(PALAVRAS_LOJA)) if (+n <= max && lista.includes(primeira)) return +n;
+  if (t.length <= 30) {
+    const nums = new Set(t.split(' ').filter(x => /^[1-9]$/.test(x)));
+    if (nums.size === 1) { const n = +[...nums][0]; return n <= max ? n : null; }
+  }
+  return null;
+}
+
 // Atraso da live: quem assiste pelo TikTok vê a tela alguns segundos atrasada (atraso).
 // Por isso a votação fica aberta "duracao + atraso" segundos, mas a contagem na tela termina
 // "atraso" segundos antes: assim, quando o espectador vê o 0, a votação está fechando de verdade.

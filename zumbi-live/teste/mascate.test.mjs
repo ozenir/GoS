@@ -1,8 +1,13 @@
-// Testes do Barganha (core/mascate.js: comprar, vender, trocar, a IA e a grana) e da infecção de quem é salvo
-// num encontro (core/encontros.js: 40% / 60% / morre no 3º quarteirão ou na chegada). Rodar:  node teste/mascate.test.mjs
+// Testes do Barganha (core/mascate.js: a rua sem saída com o galpão, a banca, comprar, vender, trocar, a IA e a
+// grana), dos itens (core/itens.js: armas, tônicos e a bolsa) e da infecção de quem é salvo num encontro
+// (core/encontros.js: 40% / 60% / morre no 3º quarteirão ou na chegada). Rodar:  node teste/mascate.test.mjs
 import assert from 'node:assert/strict';
 import { Jogo } from '../public/js/core/jogo.js';
-import { MASCATE, aparecerMascate, montarOfertas, abrirNegocio, decidirMascate, escolhaMascateIA, talvezMascate } from '../public/js/core/mascate.js';
+import { MASCATE, aparecerMascate, talvezMascate, perguntarBarganha, decidirBarganha, escolhaBarganhaIA, abrirLoja, montarOfertas, montarPrateleira, decidirLoja, escolhaLojaIA, votoLoja, atualizarLoja, mascateAtivo, direcaoDaCamera } from '../public/js/core/mascate.js';
+import { ITENS, BOLSA_MAX, guardarTonico, atualizarBolsa, pertences, fazSentido } from '../public/js/core/itens.js';
+import { lerNumero } from '../public/js/core/votacao.js';
+import { ruaLivre } from '../public/js/core/mapa.js';
+import { STATUS } from '../public/js/core/status.js';
 import { ENCONTROS, quarteiraoDosSalvos, salvosChegaram } from '../public/js/core/encontros.js';
 
 let ok = 0;
@@ -10,9 +15,16 @@ const teste = (nome, fn) => { fn(); ok++; console.log('  ✔', nome); };
 const DT = 1 / 30;
 const ouvir = j => { const ev = []; const e0 = j.emit.bind(j); j.emit = (t, d) => { ev.push({ t, ...d }); return e0(t, d); }; return ev; };
 const novo = (seed = 1, classe = 'bombeiro') => new Jogo({ seed, classe, cena: 0 });
-// abre a rodada com o Barganha do lado do herói e devolve as opções da votação
-const negocio = j => { if (!j.mascate) assert.ok(aparecerMascate(j), 'achou uma esquina livre'); abrirNegocio(j); return j.voto.opcoes; };
-const escolher = (j, tipo, id) => { const op = j.voto.opcoes.find(o => o.oferta.tipo === tipo && (!id || o.oferta.id === id)); assert.ok(op, `tem ${tipo} ${id || ''}`); decidirMascate(j, op.id, { votos: {}, auto: false }); return op.oferta; };
+// abre a banca (com o Barganha já na rua sem saída) e a 1ª rodada
+const banca = j => {
+  if (!j.mascate) assert.ok(aparecerMascate(j), 'achou uma rua do lado');
+  abrirLoja(j);
+  atualizarLoja(j, MASCATE.segAbrindo + 0.01);
+  assert.equal(j.loja.fase, 'votando');
+  return j.loja;
+};
+const op = (j, n) => j.loja.voto.opcoes.find(o => o.n === n);
+const escolher = (j, n) => { const o = op(j, n); assert.ok(o, `opção ${n} aberta`); decidirLoja(j, o.id, { votos: 3, auto: false }); return o.oferta; };
 
 console.log('O Barganha');
 
@@ -20,155 +32,287 @@ teste('começa com a grana inicial; no modo antigo (sem sobrevivência) não tem
   assert.equal(novo().hero.grana, MASCATE.granaInicial);
   const v = new Jogo({ seed: 1, classe: 'bombeiro', sobrevivencia: false });
   assert.equal(v.hero.grana, 0);
-  v.stats.quarteiroes = 9;
+  v.stats.quarteiroes = 9; v.rng.chance = () => true;
   assert.equal(talvezMascate(v), false);
 });
 
-teste('aparece numa esquina livre do cruzamento da frente, com o barril, e avisa (som)', () => {
-  for (let seed = 1; seed <= 10; seed++) {
-    const j = novo(seed), ev = ouvir(j), m = aparecerMascate(j);
+teste('10% de chance a cada quarteirão novo (do 2º em diante; sem encontro, sem moto, sem estar indo pra um lugar)', () => {
+  assert.equal(MASCATE.chance, 0.1);
+  let viu = 0;
+  const N = 1500;
+  for (let s = 0; s < N; s++) {
+    const j = novo(500 + s); j.stats.quarteiroes = 3;
+    if (talvezMascate(j)) viu++;
+  }
+  assert.ok(Math.abs(viu / N - 0.1) < 0.025, `apareceu ${viu}/${N}`);
+  const j = novo(3); j.rng.chance = () => true;
+  j.stats.quarteiroes = 1; assert.equal(talvezMascate(j), false, '1º quarteirão');
+  j.stats.quarteiroes = 3; j.encontro = { fase: 'votando' }; assert.equal(talvezMascate(j), false, 'encontro');
+  j.encontro = null; j.hero.moto = true; assert.equal(talvezMascate(j), false, 'de moto');
+  j.hero.moto = false; j.destino = { i: 0, j: 0 }; assert.equal(talvezMascate(j), false, 'indo pra um lugar');
+  j.destino = null; assert.equal(talvezMascate(j), true);
+  assert.equal(talvezMascate(j), false, 'um de cada vez');
+});
+
+teste('sempre numa rua sem saída do lado do próximo cruzamento, fechada pelo galpão com o janelão virado pro herói', () => {
+  for (let seed = 1; seed <= 25; seed++) {
+    const j = novo(seed), N = { ...j.rota.alvo }, ev = ouvir(j);
+    j.decisao = { id: 'frente', dir: j.rota.dir };
+    const m = aparecerMascate(j);
     assert.ok(m, `seed ${seed}`);
-    assert.ok(j.livre(m.x, m.y));
-    const no = j.city.nodePos(j.rota.alvo.i, j.rota.alvo.j);
-    assert.ok(Math.abs(Math.abs(m.x - no.x) - 1.9) < 1e-9 && Math.abs(Math.abs(m.y - no.y) - 1.9) < 1e-9, 'na esquina');
+    assert.notEqual(m.dirBeco, j.rota.dir, 'não é o caminho dele');
+    assert.notEqual(m.dirBeco, (j.rota.dir + 2) % 4, 'nem a rua de onde veio');
+    const t = j.city.trecho(N.i, N.j, m.dirBeco);
+    assert.ok(t.s.semSaida?.galpao === m.gp, 'a rua virou sem saída, com o galpão');
+    assert.ok(!t.s.bloqueio);
+    assert.equal(ruaLivre(j.city, N.i, N.j, m.dirBeco), false, 'o mapa não passa por ela');
+    const gp = m.gp, no = j.city.nodePos(N.i, N.j);
+    // o janelão olha pro cruzamento; o herói para no meio da rua, na frente dele, fora do galpão
+    const paraNo = [no.x - gp.janela.x, no.y - gp.janela.y];
+    assert.ok(paraNo[0] * gp.dir[0] + paraNo[1] * gp.dir[1] > 8, 'janelão de frente pro cruzamento');
+    assert.ok(j.livre(gp.ponto.x, gp.ponto.y), 'dá pra parar na frente');
+    const r = gp.rect, meio = { x: (r.x0 + r.x1) / 2, y: (r.y0 + r.y1) / 2 };
+    assert.ok(!j.livre(meio.x, meio.y), 'o galpão é sólido');
+    assert.ok(t.s.props.some(p => p.tipo === 'galpao' && p.gp === gp), 'desenho do galpão na rua');
+    assert.equal(gp.aberto, true, 'tocha acesa');
     assert.ok(ev.some(e => e.t === 'mascate' && e.fase === 'chegou'));
   }
 });
 
-teste('não aparece antes do 2º quarteirão, nem com encontro, nem logo depois da última visita', () => {
-  const j = novo(3);
-  j.rng.chance = () => true;
-  j.stats.quarteiroes = 1; assert.equal(talvezMascate(j), false);
-  j.stats.quarteiroes = 3; j.encontro = { fase: 'votando' }; assert.equal(talvezMascate(j), false);
-  j.encontro = null; j.mascateUltimo = j.t - 10; assert.equal(talvezMascate(j), false);
-  j.mascateUltimo = j.t - MASCATE.intervalo - 1; assert.equal(talvezMascate(j), true);
+teste('a rua sem saída do galpão continua igual quando o trecho é refeito (cache limpo)', () => {
+  const j = novo(4), m = aparecerMascate(j);
+  j.city.segCache.clear();
+  const t = j.city.trecho(m.no.i, m.no.j, m.dirBeco);
+  assert.ok(t.s.semSaida?.galpao === m.gp);
 });
 
-teste('as ofertas: 2 compras + (vender ou trocar, se tiver o que) + seguir, sempre nas posições 1 a 4', () => {
-  for (let seed = 1; seed <= 20; seed++) {
-    const j = novo(seed);
-    if (seed % 2) j.guardarNaMochila(35, null, 'kit');
-    const ofs = montarOfertas(j);
-    assert.ok(ofs.length >= 3 && ofs.length <= 4);
-    assert.equal(ofs.filter(o => o.tipo === 'comprar').length, 2);
-    assert.equal(ofs.at(-1).tipo, 'seguir');
-    if (seed % 2) assert.ok(ofs.some(o => o.tipo === 'vender' || o.tipo === 'trocar'), 'com cura na mochila: vende ou troca');
-    for (const o of ofs.filter(o => o.tipo === 'comprar')) { const c = MASCATE.catalogo.find(x => x.id === o.id); assert.ok(!c.so || c.so(j.hero), `${o.id} faz sentido`); }
+teste('a prateleira: 6 itens, armas que fazem sentido em cima e tônicos diferentes embaixo', () => {
+  for (let seed = 1; seed <= 30; seed++) {
+    const j = novo(seed, ['bombeiro', 'policial', 'enfermeira'][seed % 3]);
+    const p = montarPrateleira(j);
+    assert.equal(p.length, 6);
+    assert.deepEqual(p.map(s => s.n), [1, 2, 3, 4, 5, 6]);
+    const tipos = p.map(s => ITENS[s.id].tipo);
+    assert.ok(tipos.lastIndexOf('arma') < tipos.indexOf('tonico') || !tipos.includes('arma'), 'armas antes dos tônicos');
+    for (const s of p) { assert.ok(fazSentido(j.hero, s.id), s.id); assert.equal(s.preco, ITENS[s.id].preco); }
+    const ton = p.filter(s => ITENS[s.id].tipo === 'tonico').map(s => s.id);
+    assert.equal(new Set(ton).size, ton.length, 'sem tônico repetido');
+    assert.ok(ton.length >= 3);
   }
 });
 
-teste('vida baixa: o kit ou o remédio vem entre as ofertas; sem arma de fogo: a pistola', () => {
-  let cura = 0, pistola = 0;
-  for (let seed = 1; seed <= 20; seed++) {
-    const j = novo(seed); j.hero.vida = j.hero.vidaMax * 0.3; j.hero.grana = 40;
-    if (montarOfertas(j).some(o => o.id === 'kit' || o.id === 'remedio')) cura++;
-    const k = novo(seed, 'policial'); k.hero.arma = null; k.hero.grana = 40;
-    if (montarOfertas(k).some(o => o.id === 'pistola')) pistola++;
-  }
-  assert.ok(cura >= 18, `cura ${cura}/20`);
-  assert.ok(pistola >= 16, `pistola ${pistola}/20`);
+teste('a banca pausa a rua: o tempo e os zumbis param enquanto o chat negocia', () => {
+  const j = novo(5);
+  const z = j.criarZumbi('comum', j.hero.x + 3, j.hero.y, null);
+  banca(j);
+  const t0 = j.t, zx = z.x;
+  for (let k = 0; k < 60; k++) j.update(DT);
+  assert.equal(j.t, t0);
+  assert.equal(z.x, zx);
+  assert.ok(j.loja.voto.t < j.loja.voto.duracao + j.loja.voto.atraso, 'a votação da banca anda');
 });
 
-teste('comprar: desconta a grana, entrega a coisa, fala e toca a caixa; sem grana não leva nada', () => {
-  const j = novo(4), ev = ouvir(j);
-  j.hero.vida = j.hero.vidaMax * 0.3; j.hero.grana = 100;
-  negocio(j);
-  const op = j.voto.opcoes.find(o => o.oferta.tipo === 'comprar' && (o.oferta.id === 'kit' || o.oferta.id === 'remedio'));
-  assert.ok(op);
-  const vida0 = j.hero.vida, moch0 = j.hero.mochila.length;
-  decidirMascate(j, op.id, { votos: {}, auto: false });
-  assert.equal(j.hero.grana, 100 - op.oferta.preco);
-  assert.ok(op.oferta.id === 'kit' ? j.hero.vida > vida0 || j.hero.mochila.length > moch0 : j.hero.estados.tem('medicado'), 'recebeu');
-  assert.ok(ev.some(e => e.t === 'mascate' && e.fase === 'comprar'));
-  assert.ok(ev.some(e => e.t === 'grana' && e.valor === -op.oferta.preco));
-  assert.ok(ev.some(e => e.t === 'decisao' && e.mascate && e.previsao.rotulo === 'NEGÓCIO FECHADO'));
-  // segunda rodada: oferece de novo
-  assert.equal(j.mascate.fase, 'esperando');
-  // sem grana
-  j.mascate.proximaT = 0; j.hero.grana = 0;
-  negocio(j);
-  const caro = j.voto.opcoes.find(o => o.oferta.tipo === 'comprar');
-  decidirMascate(j, caro.id, { votos: {}, auto: false });
-  assert.equal(j.hero.grana, 0);
-  assert.ok(MASCATE.falas.tchau.includes(j.mascate.fala) || MASCATE.falas.semGrana.includes(j.mascate.fala));
-  assert.equal(j.mascate.fase, 'indo', 'sem negócio: ele vai embora');
+teste('as opções: 1 a 6 da prateleira, 7 vender, 8 trocar, 9 sair (vender/trocar só se tiver o que)', () => {
+  const j = novo(6), L = banca(j);
+  const ofs = L.ofertas;
+  assert.deepEqual(ofs.map(o => o.n), [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  assert.deepEqual(ofs.slice(6).map(o => o.tipo), ['vender', 'trocar', 'sair']);
+  assert.equal(ofs[6].ok, false, 'sem nada pra vender'); assert.equal(ofs[7].ok, false);
+  assert.ok(!op(j, 7) && !op(j, 8) && op(j, 9));
+  j.guardarNaMochila(35, null, 'kit'); guardarTonico(j, 't_furia');
+  const ofs2 = montarOfertas(j);
+  assert.equal(ofs2[6].ok, true);
+  assert.equal(ofs2[6].ganho, Math.round(ITENS.t_furia.preco / 2), 'vende o mais valioso pela metade');
 });
 
-teste('comprar arma: a pistola chega com balas; a metralhadora vira a arma do herói', () => {
-  const j = novo(5, 'policial'); j.hero.arma = null; j.hero.grana = 200;
-  aparecerMascate(j);
-  j.voto = null; abrirNegocio(j);
-  // força as ofertas pra testar a entrega
-  const pist = MASCATE.catalogo.find(c => c.id === 'pistola'), lend = MASCATE.catalogo.find(c => c.id === 'lendaria');
-  j.voto.opcoes[0].oferta = { tipo: 'comprar', ...pist }; j.voto.opcoes[1].oferta = { tipo: 'comprar', ...lend };
-  decidirMascate(j, j.voto.opcoes[0].id, { votos: {}, auto: false });
-  for (let k = 0; k < 30; k++) j.update(DT);
-  assert.equal(j.hero.arma, 'pistola');
-  assert.ok(j.hero.municao > 0);
-  j.mascate.proximaT = 0; abrirNegocio(j);
-  j.voto.opcoes[0].oferta = { tipo: 'comprar', ...lend };
-  decidirMascate(j, j.voto.opcoes[0].id, { votos: {}, auto: false });
-  assert.equal(j.hero.arma, 'metralhadora');
-  assert.equal(j.hero.grana, 200 - pist.preco - lend.preco);
-});
-
-teste('vender: a cura da mochila sai e a grana entra; trocar: 1 cura vira energético + vitaminas', () => {
-  let vendeu = 0, trocou = 0;
-  for (let seed = 1; seed <= 16 && (!vendeu || !trocou); seed++) {
-    const j = novo(seed), ev = ouvir(j);
-    j.guardarNaMochila(35, null, 'kit');
-    negocio(j);
-    const o = j.voto.opcoes.find(x => x.oferta.tipo === 'vender' || x.oferta.tipo === 'trocar').oferta;
-    const g0 = j.hero.grana;
-    decidirMascate(j, j.voto.opcoes.find(x => x.oferta === o).id, { votos: {}, auto: false });
-    assert.equal(j.hero.mochila.length, 0, 'a cura saiu da mochila');
-    if (o.tipo === 'vender') { vendeu++; assert.equal(j.hero.grana, g0 + MASCATE.compraDoHeroi.kit); assert.ok(ev.some(e => e.t === 'mascate' && e.fase === 'vender')); }
-    else { trocou++; assert.equal(j.hero.grana, g0); assert.ok(ev.some(e => e.t === 'mascate' && e.fase === 'trocar')); }
-  }
-  assert.ok(vendeu && trocou, `vendeu ${vendeu}, trocou ${trocou}`);
-});
-
-teste('vender a arma achada: volta pra arma da classe e ganha R$ 20', () => {
-  const j = novo(2, 'bombeiro');
-  j.trocarArma('escopeta', null);
-  const ofs = montarOfertas(j);
-  const v = ofs.find(o => o.tipo === 'vender');
-  assert.ok(v && v.id === 'arma');
-  negocio(j);
-  const g0 = j.hero.grana;
-  escolher(j, 'vender', 'arma');
-  assert.notEqual(j.hero.arma, 'escopeta');
-  assert.equal(j.hero.grana, g0 + MASCATE.compraDoHeroi.arma);
-});
-
-teste('IA (ninguém votou): compra o que precisa se tiver grana; duro, vende; senão segue', () => {
-  const j = novo(6); j.hero.vida = j.hero.vidaMax * 0.3; j.hero.grana = 100;
-  negocio(j);
-  const id = escolhaMascateIA(j, j.voto.opcoes), o = j.voto.opcoes.find(x => x.id === id).oferta;
-  assert.ok(o.tipo === 'comprar' && (o.id === 'kit' || o.id === 'remedio'), `comprou ${o.id}`);
-  const k = novo(6); k.hero.grana = 0; k.guardarNaMochila(35, null, 'kit');
-  k.rng.chance = p => p !== 0.5 && Math.random() < p;   // (sem troca: força o "vender")
-  negocio(k);
-  const o2 = k.voto.opcoes.find(x => x.id === escolhaMascateIA(k, k.voto.opcoes)).oferta;
-  assert.equal(o2.tipo, 'vender');
-  const s = novo(6); s.hero.grana = 0;
-  negocio(s);
-  assert.equal(s.voto.opcoes.find(x => x.id === escolhaMascateIA(s, s.voto.opcoes)).oferta.tipo, 'seguir');
-});
-
-teste('no jogo: o herói vai até o Barganha, a votação abre, fecha sozinha e ele vai embora', () => {
+teste('o chat vota pelo número (1 a 9) ou pela palavra; cada um vota uma vez', () => {
+  assert.equal(lerNumero('7'), 7); assert.equal(lerNumero('777'), 7); assert.equal(lerNumero('7️⃣'), 7);
+  assert.equal(lerNumero('quero o 3'), 3); assert.equal(lerNumero('vender'), 7); assert.equal(lerNumero('troca'), 8);
+  assert.equal(lerNumero('tchau'), 9); assert.equal(lerNumero('oi gente'), null); assert.equal(lerNumero('0'), null);
   const j = novo(7), ev = ouvir(j);
-  for (let k = 0; k < 30 * 4; k++) j.update(DT);
-  if (j.voto) j.voto = null;
-  aparecerMascate(j);
-  let abriu = false;
-  for (let k = 0; k < 30 * 150 && j.mascate; k++) {
+  j.hero.grana = 500; banca(j);
+  j.handle({ type: 'chat', id: 'a', nick: 'ana', texto: '2' });
+  j.handle({ type: 'chat', id: 'a', nick: 'ana', texto: '3' });
+  j.handle({ type: 'chat', id: 'b', nick: 'bia', texto: 'quero o 2' });
+  j.handle({ type: 'chat', id: 'c', nick: 'caio', texto: '9' });
+  assert.equal(op(j, 2).votos, 2); assert.equal(op(j, 9).votos, 1); assert.equal(op(j, 3).votos, 0);
+  assert.equal(j.voto, null, 'não é voto de direção');
+  assert.ok(ev.some(e => e.t === 'voto' && e.loja));
+  for (let k = 0; k < 30 * 40 && j.loja?.fase === 'votando'; k++) j.update(DT);
+  assert.equal(j.loja.ultimo.n, 2, 'o mais votado ganha');
+});
+
+teste('comprar: desconta a grana, entrega o item e o lugar da prateleira fica vazio; sem grana não leva', () => {
+  const j = novo(8, 'enfermeira'), ev = ouvir(j);
+  j.hero.grana = 300;
+  const L = banca(j);
+  L.prateleira = [{ n: 1, id: 'pistola', preco: 40 }, { n: 2, id: 'metralhadora', preco: 90 }, { n: 3, id: 'taco', preco: 30 }, { n: 4, id: 't_furia', preco: 30 }, { n: 5, id: 't_azul', preco: 70 }, { n: 6, id: 't_sangue', preco: 35 }].map(s => ({ ...s, vendido: false }));
+  L.fase = 'resultado'; L.continua = true; L.t = 99; atualizarLoja(j, 0);
+  escolher(j, 1);
+  assert.equal(j.hero.grana, 260); assert.equal(j.hero.arma, 'pistola'); assert.equal(j.hero.municao, 36);
+  assert.ok(L.prateleira[0].vendido);
+  assert.ok(ev.some(e => e.t === 'mascate' && e.fase === 'comprar'));
+  L.t = 99; atualizarLoja(j, 0);
+  assert.ok(!op(j, 1), 'o vendido não volta na votação');
+  escolher(j, 4);
+  assert.deepEqual(j.hero.bolsa.map(b => b.id), ['t_furia'], 'tônico vai pra bolsa');
+  L.t = 99; atualizarLoja(j, 0);
+  escolher(j, 6);
+  L.t = 99; atualizarLoja(j, 0);
+  assert.equal(L.fase, 'fechando', 'no máximo 3 negócios por visita');
+  const k = novo(9); k.hero.grana = 5; banca(k);
+  const compra = k.loja.ofertas.find(o => o.tipo === 'comprar' && o.ok);
+  decidirLoja(k, 'n' + compra.n, { votos: 1 });
+  assert.equal(k.hero.grana, 5); assert.equal(k.loja.ultimo.fez, false);
+});
+
+teste('vender a arma achada (metade do preço, pelo que sobrou dela) e voltar pra arma do personagem', () => {
+  const j = novo(10, 'bombeiro');
+  j.trocarArma('escopeta', null);
+  const p = pertences(j).find(x => x.ref.onde === 'arma');
+  assert.equal(p.venda, Math.round(ITENS.escopeta.preco * Math.min(1, ITENS.escopeta.municao ? (j.hero.municao / ITENS.escopeta.municao) : 1) / 2));
+  banca(j);
+  const g0 = j.hero.grana, o = escolher(j, 7);
+  assert.equal(o.pertence.ref.onde, 'arma');
+  assert.equal(j.hero.arma, null, 'bombeira volta pro machado');
+  assert.equal(j.hero.grana, g0 + o.ganho);
+  // a pistola do policial não se vende
+  const k = novo(10, 'policial');
+  assert.ok(!pertences(k).some(x => x.ref.onde === 'arma'));
+});
+
+teste('trocar: o pertence vale o preço cheio e leva um item da prateleira que caiba nisso', () => {
+  const j = novo(11, 'bombeiro');
+  j.hero.grana = 0;
+  guardarTonico(j, 't_azul');
+  const L = banca(j);
+  const o = L.ofertas.find(x => x.tipo === 'trocar');
+  assert.ok(o.ok);
+  assert.ok(ITENS[o.id].preco <= ITENS.t_azul.preco && o.id !== 't_azul');
+  escolher(j, 8);
+  assert.ok(!j.hero.bolsa.some(b => b.id === 't_azul'), 'o tônico azul foi');
+  assert.ok(o.slot.vendido);
+  assert.equal(j.hero.grana, 0, 'troca não mexe na grana');
+  const veio = ITENS[o.id];
+  if (veio.tipo === 'tonico') assert.ok(j.hero.bolsa.some(b => b.id === o.id));
+});
+
+teste('IA (ninguém votou): vida baixa compra o Tônico do Sangue; duro troca ou vende; senão sai — e a banca fecha', () => {
+  const j = novo(12); j.hero.grana = 100; j.hero.vida = j.hero.vidaMax * 0.3;
+  const L = banca(j);
+  L.prateleira[5] = { n: 6, id: 't_sangue', preco: 35, vendido: false };
+  L.ofertas = montarOfertas(j); L.voto.opcoes = L.ofertas.filter(o => o.ok).map(o => ({ id: 'n' + o.n, n: o.n, oferta: o, votos: 0 }));
+  assert.equal(escolhaLojaIA(j, L.voto.opcoes), 'n6');
+  const k = novo(13); k.hero.grana = 3; k.guardarNaMochila(35, null, 'kit');
+  banca(k);
+  const id = escolhaLojaIA(k, k.loja.voto.opcoes);
+  assert.ok(['vender', 'trocar'].includes(op(k, +id.slice(1)).oferta.tipo));
+  const s = novo(14); s.hero.grana = 20; banca(s);
+  assert.equal(op(s, +escolhaLojaIA(s, s.loja.voto.opcoes).slice(1)).oferta.tipo, 'sair');
+  // rodada sem voto: a IA decide e a banca fecha (ninguém está olhando)
+  const t = novo(15); t.hero.grana = 300; banca(t);
+  for (let q = 0; q < 30 * 60 && t.loja && t.loja.fase !== 'fechando'; q++) t.update(DT);
+  assert.equal(t.loja.ultimo.auto, true); assert.equal(t.loja.fase, 'fechando');
+});
+
+teste('no jogo: aparece, o herói entra na rua sem saída, para no janelão, negocia, volta e a tocha apaga', () => {
+  const j = novo(16, 'policial'), ev = ouvir(j);
+  j.hero.grana = 200;
+  let m = null, abriu = false, cam = false, perguntou = false;
+  for (let k = 0; k < 30 * 400; k++) {
+    if (!m && j.stats.quarteiroes >= 2 && !j.room && !j.arena && !j.rota.beco && !j.destino && !j.indoPorta && !j.indoPraca) m = aparecerMascate(j);
     j.update(DT);
-    if (j.voto?.mascate) abriu = true;
+    if (j.loja) {
+      abriu = true;
+      const h = j.hero;
+      assert.ok(Math.hypot(h.x - m.gp.ponto.x, h.y - m.gp.ponto.y) < 0.6, 'na frente do janelão');
+      if (direcaoDaCamera(j) === m.dirBeco) cam = true;
+      if (j.loja.fase === 'votando' && !j.loja.voto.votantes.size) j.handle({ type: 'chat', id: 'x', nick: 'x', texto: '9' });
+    }
+    if (j.voto?.mascate && j.voto.aberta && !j.voto.votantes.size) { perguntou = true; j.handle({ type: 'chat', id: 'y', nick: 'y', texto: '1' }); }
+    if (m && abriu && !j.mascate) break;
   }
-  assert.ok(abriu, 'abriu a votação do Barganha');
-  assert.ok(ev.some(e => e.t === 'decisao' && e.mascate));
-  assert.equal(j.mascate, null, 'foi embora');
+  assert.ok(perguntou, 'o chat votou se ia na banca');
+  assert.ok(m && abriu, 'abriu a banca');
+  assert.ok(cam, 'a câmera olha pra dentro da rua sem saída');
+  assert.equal(j.mascate, null, 'voltou pro cruzamento');
+  assert.equal(m.gp.aberto, false, 'o janelão fecha e a tocha apaga');
+  assert.ok(['loja', 'mascate'].every(t => ev.some(e => e.t === t)));
+  assert.ok(!mascateAtivo(j));
+});
+
+teste('quando ele aparece, o chat vota: 1 ir na banca ou 2 seguir (o herói espera no cruzamento)', () => {
+  const j = novo(20), ev = ouvir(j);
+  j.hero.grana = 0;
+  let m = null;
+  for (let k = 0; k < 30 * 400 && !j.voto?.mascate; k++) {
+    if (!m && j.stats.quarteiroes >= 2 && !j.room && !j.arena && !j.rota.beco && !j.destino && !j.indoPorta && !j.indoPraca) m = aparecerMascate(j);
+    j.update(DT);
+  }
+  assert.ok(j.voto?.mascate && j.voto.aberta, 'abriu a votação do Barganha');
+  assert.deepEqual(j.voto.opcoes.map(o => [o.n, o.nome]), [[1, 'IR NA BANCA'], [2, 'SEGUIR']]);
+  assert.equal(m.fase, 'perguntando');
+  const q0 = j.stats.quarteiroes;
+  for (let k = 0; k < 30 * 5; k++) j.update(DT);
+  assert.equal(j.stats.quarteiroes, q0, 'não atravessa enquanto o chat vota');
+  assert.ok(Math.hypot(j.hero.x - m.entrada.x, j.hero.y - m.entrada.y) < 1.6, 'espera no cruzamento');
+  j.handle({ type: 'chat', id: 'a', nick: 'ana', texto: '2' });
+  for (let k = 0; k < 30 * 30 && j.voto?.aberta; k++) j.update(DT);
+  assert.equal(j.mascate, null, 'seguiu');
+  assert.equal(m.gp.aberto, false, 'o janelão fecha e a tocha apaga');
+  assert.ok(ev.some(e => e.t === 'decisao' && e.mascate && e.nome === 'SEGUIR'));
+  assert.ok(!j.loja);
+  // ninguém votou: a IA vai se tiver grana ou alguma coisa pra vender
+  const k2 = novo(21); k2.hero.grana = 0; aparecerMascate(k2);
+  assert.equal(escolhaBarganhaIA(k2), 'frente');
+  k2.hero.grana = 30; assert.equal(escolhaBarganhaIA(k2), 'esquerda');
+  k2.hero.grana = 0; guardarTonico(k2, 't_vento'); assert.equal(escolhaBarganhaIA(k2), 'esquerda');
+  perguntarBarganha(k2); decidirBarganha(k2, 'esquerda', { votos: 0, auto: true });
+  assert.equal(k2.mascate.fase, 'entrando');
+});
+
+console.log('Os itens');
+
+teste('tônicos: vão pra bolsa (até 4); com a bolsa cheia, bebe na hora', () => {
+  const j = novo(17);
+  for (let k = 0; k < BOLSA_MAX; k++) guardarTonico(j, 't_furia');
+  assert.equal(j.hero.bolsa.length, BOLSA_MAX);
+  guardarTonico(j, 't_ferro');
+  assert.equal(j.hero.bolsa.length, BOLSA_MAX);
+  assert.ok(j.hero.estados.tem('t_ferro'));
+  for (const id of Object.keys(ITENS).filter(k => ITENS[k].tipo === 'tonico')) assert.ok(STATUS[id]?.lado === 'positivo' && STATUS[id].texto, id);
+});
+
+teste('o herói bebe sozinho na hora certa: sangue com vida baixa, fúria com chefe; sem perigo guarda', () => {
+  const j = novo(18), h = j.hero;
+  guardarTonico(j, 't_sangue'); guardarTonico(j, 't_furia');
+  atualizarBolsa(j, 5);
+  assert.equal(h.bolsa.length, 2, 'sem perigo não bebe');
+  h.vida = h.vidaMax * 0.3; atualizarBolsa(j, 5);
+  assert.ok(h.estados.tem('t_sangue')); assert.equal(h.bolsa.length, 1);
+  h.vida = h.vidaMax;
+  j.criarZumbi('chefao', h.x + 3, h.y, null, { nascendo: 0 });
+  atualizarBolsa(j, 5);
+  assert.ok(h.estados.tem('t_furia'));
+  const d0 = h.attr.get('dano');
+  assert.ok(d0 > 1.3, `dano ${d0}`);
+  // dura quarteirões
+  j.andouQuarteirao(1); assert.ok(h.estados.tem('t_furia'));
+  j.andouQuarteirao(1); assert.ok(!h.estados.tem('t_furia'));
+});
+
+teste('chefe às vezes deixa um tônico; pegar do chão guarda na bolsa', () => {
+  const j = novo(19);
+  let caiu = 0;
+  for (let k = 0; k < 120; k++) {
+    const z = j.criarZumbi('chefao', j.hero.x + 3, j.hero.y, null);
+    j.itens = [];
+    j.matarZumbi(z, null);
+    if (j.itens.some(i => i.kind === 'tonico')) caiu++;
+  }
+  assert.ok(caiu > 20 && caiu < 70, `caiu ${caiu}/120`);
+  j.pegar({ kind: 'tonico', data: { id: 't_olho' }, quem: null, x: j.hero.x, y: j.hero.y });
+  assert.ok(j.hero.bolsa.some(b => b.id === 't_olho'));
 });
 
 teste('a grana cai dos zumbis (às vezes) e o pegar soma', () => {

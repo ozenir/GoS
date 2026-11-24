@@ -1062,3 +1062,6 @@ export class Cinema {
     rampa(chuvaG, 0); rampa(sireneG, 0); rampa(motorG, 0); rampa(fogoG, 0); passarosV = 0;
   }
 }
+
+// as peças de pixel art, pra outras telas desenharem no mesmo estilo (view/banca.js: a banca do Barganha)
+export const PIXEL = { R, P, G, brilho, texto, largura, disco, linha, th };

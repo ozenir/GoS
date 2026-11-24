@@ -289,6 +289,18 @@ function caixaIso(x, cx, base, w, h, alt, topo, esq, dir) {
   fillPoly(x, [T, R, B, L], topo);
 }
 
+// Tônico do Barganha (itens.js): garrafinha de vidro com o líquido colorido, rótulo e rolha
+export function spriteTonico(cor, claro) {
+  const k = 'ton' + cor;
+  if (cache.has(k)) return cache.get(k);
+  const [c, x] = canvas(20, 20);
+  const r = (px, py, w, h, c2) => { x.fillStyle = c2; x.fillRect(px, py, w, h); };
+  r(7, 8, 7, 9, '#1c2230'); r(8, 10, 5, 6, cor); r(8, 10, 5, 1, claro); r(8, 12, 5, 2, '#e8dcc0');
+  r(9, 5, 3, 3, '#1c2230'); r(9, 4, 3, 2, '#8a5a30'); r(8, 9, 1, 2, '#cfe6ff');
+  cache.set(k, c);
+  return c;
+}
+
 export function spriteItem(kind) {
   const k = 'i' + kind;
   if (cache.has(k)) return cache.get(k);

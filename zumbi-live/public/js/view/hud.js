@@ -10,6 +10,7 @@ import { ZUMBIS_TELA } from '../core/tela.js';
 import { Letreiro } from './letreiro.js';
 import { RESULTADO_SEG } from '../core/jogo.js';
 import { CABO } from '../core/cabo.js';
+import { ITENS } from '../core/itens.js';
 import { RELIQUIAS } from '../core/portal.js';
 import { tabelaFusoes, TABELA_SEGUNDOS } from '../core/fusoes.js';
 import { graficoDoHeroi, GRAFICO_SEGUNDOS, BLOCOS } from '../core/grafico.js';
@@ -259,6 +260,9 @@ export class Hud {
       case 'noite': this.banner('🌙 A NOITE CHEGOU', 'mais zumbis, menos visão', 'perigo', 2.4); break;
       case 'alarme': if (!e.sala) this.banner('🚨 ALARME DE CARRO!', 'a horda está vindo', 'perigo', 2.2); break;
       case 'aviso': this.banner(e.texto, '', e.tipo === 'perigo' ? 'perigo' : 'bom', 2.4); break;
+      // o Barganha (mascate.js) e os tônicos (itens.js)
+      case 'mascate': if (e.fase === 'chegou') this.banner('🔵 UMA LUZ AZUL NA RUA SEM SAÍDA', 'o Barganha está com a banca aberta', 'bom', 2.6); break;
+      case 'tonico': if (e.fase === 'bebeu') this.banner(`🧪 ${e.nome.toUpperCase()}!`, e.texto, 'bom', 2); break;
       case 'ameaca': this.banner(`☠️ AMEAÇA ${e.nivel}`, 'zumbis mais resistentes e hordas maiores', 'perigo', 1.8); break;
       case 'horda': this.banner('🧟 HORDA CHEGANDO!', `${e.qtd} zumbis`, 'perigo', 2); break;
       case 'horda_quadra': this.banner(`☠️ HORDA GIGANTE!`, `${e.qtd} zumbis${e.ondas > 1 ? ` em ${e.ondas} ondas` : ''} · a cada 5 quarteirões`, 'perigo', 2.8); break;
@@ -455,7 +459,8 @@ export class Hud {
     if (g.poucosPraLimpar?.()) st.push(`<span class="chip">🎯 caçando os últimos ${g.limpando.restam}</span>`);
     // viagem pelo mapa: pra onde está indo e quanto falta; salvando alguém no caminho
     if (g.encontro?.fase === 'ajudando' && g.fase === 'jogo') st.push(`<span class="chip ok">🤝 salvando ${esc(g.encontro.nome)}</span>`);
-    if (g.mascate && g.mascate.fase !== 'indo' && g.fase === 'jogo') st.push(`<span class="chip ok">🧥 O Barganha · 💰 R$ ${h.grana ?? 0}</span>`);
+    if (g.mascate && g.fase === 'jogo') st.push(`<span class="chip ok">🧥 O Barganha${g.mascate.fase === 'saindo' ? ' fechou' : ' na rua sem saída'} · 💰 R$ ${h.grana ?? 0}</span>`);
+    if (h.bolsa?.length && g.fase === 'jogo') st.push(`<span class="chip" title="Tônicos na bolsa: ele bebe sozinho na hora certa">🎒 ${h.bolsa.map(b => esc(ITENS[b.id]?.emoji || '🧪')).join('')}</span>`);
     for (const a of g.aliados || []) if (a.encontro) st.push(`<span class="chip mal" title="Foi mordido: pode virar zumbi">🩸 ${esc(a.encontro.nome)} · mordido</span>`);
     if ((g.viagem || g.destino) && !g.room && g.fase === 'jogo') {
       const L = g.viagem?.lugar, falta = g.viagem ? g.viagem.dirs.length + 1 : 0;
@@ -629,7 +634,7 @@ export class Hud {
       const nome = o => o.oferta ? `${esc(o.oferta.nome.toLowerCase())}${o.oferta.preco ? ` <small class="${o.oferta.preco > (g.hero.grana ?? 0) ? 'caro' : ''}">R$${o.oferta.preco}</small>` : o.oferta.ganho ? ` <small>+R$${o.oferta.ganho}</small>` : ''}` : o.lugar ? `${esc(o.lugar.nome.toLowerCase())} <small>${o.lugar.dist}q</small>` : o.id === 'entrar' ? (o.praca ? 'arena' : 'entrar') : o.destino ? `${esc(o.destino.emoji)} ${esc(o.destino.nome.toLowerCase())}` : o.nome.toLowerCase();
       const titulo = v.contandoAtrasados ? '⏳ contando os votos da live <small>· ainda dá tempo</small>'
         : v.encontro ? `🆘 ${esc(v.encontro.nome)} pede ajuda! <small>· ${esc(v.encontro.situacao)}, ${v.encontro.zumbis} zumbis</small>`
-        : v.mascate ? `🧥 O Barganha: "${esc(v.mascate.fala)}" <small>· 💰 R$ ${v.mascate.grana}</small>`
+        : v.mascate ? `🔵 O Barganha está na rua sem saída! <small>· vamos na banca? · 💰 R$ ${v.mascate.grana}</small>`
         : v.mapa ? '🗺️ Pra onde vamos? <small>· vote no lugar</small>'
         : v.portal ? (v.premio ? '🏆 Escolha a relíquia com' : '🌀 Escolha o portal com')
         : v.praia ? '🏖️ Saia da praia com' : v.loja ? `🗳️ Escolha a direção com <small>· ${esc(v.loja.emoji)} ${esc(v.loja.nome)} aqui!</small>` : '🗳️ Escolha a direção com';

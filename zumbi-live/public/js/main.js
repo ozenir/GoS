@@ -9,6 +9,7 @@ import { Som } from './view/som.js';
 import { Sujeira } from './view/sujeira.js';
 import { TelaHistoria } from './view/escolha.js';
 import { TelaFX } from './view/tela.js';
+import { Banca } from './view/banca.js';
 import { ZUMBIS_TELA } from './core/tela.js';
 import { PRESENTES_PADRAO, SEGUIR_PADRAO, COMPARTILHAR_PADRAO, JOGO_PADRAO } from './catalogo.js';
 
@@ -28,6 +29,7 @@ const render = new Render($('game'), $('texto'));
 const hud = new Hud();
 const som = new Som();
 const sujeira = new Sujeira($('sujeira'));
+const banca = new Banca();   // a banca do Barganha (core/mascate.js)
 const telaHistoria = new TelaHistoria();   // escolha do herói, cinema da introdução, votação do caminho   // tomate no vidro (zumbi do tomate)
 // zumbis da tela (core/tela.js): a arte fica em view/tela.js; a camada de baixo fica por baixo do painel
 const telaFX = new TelaFX({ cima: $('sujeira'), baixo: $('tela-baixo'), jogo: [$('game'), $('texto')], sujeira, render, som: id => som.telaSom(id) });
@@ -156,7 +158,7 @@ document.querySelectorAll('[data-evento]').forEach(b => b.addEventListener('clic
 $('b-matar').addEventListener('click', () => jogo.derrubar({ nick: 'você (teste)' }));   // derruba mesmo (sem esquiva, colete, mochila...)
 window.addEventListener('keydown', e => {
   if (e.target.closest('input')) return;
-  if (['1', '2', '3', '4', '5', 'a', 'b', 'c', 'g', 't'].includes(e.key.toLowerCase())) chatTeste(e.key.toLowerCase(), 'você ' + Math.floor(Math.random() * 1000));   // g = gráfico de atributos
+  if (['1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'g', 't'].includes(e.key.toLowerCase())) chatTeste(e.key.toLowerCase(), 'você ' + Math.floor(Math.random() * 1000));   // g = gráfico de atributos
   if (e.key.toLowerCase() === 'p') jogo.abrirPortal(true);   // p = abre o portal dos 500 na hora (teste)
 });
 
@@ -173,7 +175,7 @@ simEl.checked = !isLocal && !live;
     if (simEl.checked && !document.hidden) {
       const r = Math.random();
       if (r < 0.03) chatTeste('g', pick(NOMES));   // de vez em quando alguém pede o gráfico de atributos
-      else if (r < 0.55) chatTeste(jogo.escolha && Math.random() < 0.5 ? pick(['a', 'b', 'c']) : pick(['1', '2', '3', '4', '1', '2']), pick(NOMES));
+      else if (r < 0.55) chatTeste(jogo.loja ? pick(['1', '2', '3', '4', '5', '6', '7', '8', '9']) : jogo.escolha && Math.random() < 0.5 ? pick(['a', 'b', 'c']) : pick(['1', '2', '3', '4', '1', '2']), pick(NOMES));   // na banca do Barganha: 1 a 9
       else if (r < 0.85) {
         const lista = Object.entries(catalogo);
         const pesos = lista.map(([, x]) => 1 / Math.pow(Math.max(1, x.moedas || 1), 0.6));
@@ -333,7 +335,9 @@ function tocarEvento(e, g) {
     case 'janela': som.janela(longe(e, g), e.texto, e.socorro); break;
     case 'atropelou': som.morteZumbi(false, 0, 'comum'); som.grana(); break;   // de moto (prologo.js)
     // o Barganha e a grana (mascate.js); quem foi salvo e virou zumbi ou não resistiu (encontros.js)
-    case 'mascate': som.mascate(e.fase, longe(e, g)); if (e.fase === 'chegou') som.encontro(); break;
+    case 'mascate': if (e.fase !== 'entrando' && e.fase !== 'fechou') som.mascate(e.fase, longe(e, g)); if (e.fase === 'chegou') som.encontro(); break;
+    case 'loja': if (e.fase === 'abriu') som.porta(); else if (e.fase === 'rodada') som.escolha(); break;   // a banca (view/banca.js)
+    case 'tonico': if (e.fase === 'bebeu') som.cura(); else som.item(); break;   // tônicos (itens.js)
     case 'grana': if (e.valor > 0) som.grana(); break;
     case 'aliado_virou': som.notou(longe(e, g)); som.perigo(); break;
     case 'aliado_morreu': som.morteHeroi(); break;
@@ -366,6 +370,7 @@ function loop(agora) {
   render.draw(jogo, dt);
   if (som.ac) telaHistoria.usarAudio(som.ac, som.fx);
   telaHistoria.update(jogo, dt);
+  banca.update(jogo, dt);
   sujeira.desenhar(dt);
   telaFX.desenhar(dt, jogo);
   hud.update(jogo, dt);
@@ -396,7 +401,7 @@ function loop(agora) {
       const f = o.kind === 'prop' && o.p.fogo ? [o.p.x + 0.5, o.p.y + 0.5] : o.kind === 'building' && o.b.fogo ? [Math.max(o.b.x0, Math.min(h.x, o.b.x1)), Math.max(o.b.y0, Math.min(h.y, o.b.y1))] : null;
       if (f) fogoD = Math.min(fogoD, Math.hypot(f[0] - h.x, f[1] - h.y));
     }
-    if (jogo.mascate) fogoD = Math.min(fogoD, Math.hypot(jogo.mascate.barril.x - h.x, jogo.mascate.barril.y - h.y));   // o barril do Barganha
+    if (jogo.mascate) fogoD = Math.min(fogoD, Math.hypot(jogo.mascate.gp.janela.x - h.x, jogo.mascate.gp.janela.y - h.y) + 1.5);   // a tocha azul do Barganha
   }
   som.crepitar(dt, fogoD);
   // alarmes de carro tocando: acompanham a distância do herói até o carro

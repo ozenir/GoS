@@ -112,6 +112,7 @@ export class City {
     this.bairroCache = new Map();
     this.dyn = new Map();        // obstáculos que aparecem no meio do jogo (barricadas, carro com alarme): "x,y" -> objeto
     this.lojasGarantidas = new Map();   // "i,j" -> tipo: lugar prometido na votação (o destino de uma direção)
+    this.galpoes = new Map();    // "h3,4" -> galpão do Barganha (mascate.js): a rua vira sem saída, fechada pelo galpão
   }
 
   // Nó (cruzamento) i,j fica no meio das duas ruas
@@ -359,6 +360,10 @@ export class City {
     else if (!pertoDoInicio && hash3(i, j, sd + 100, this.seed) < dg * DESGASTE.bloqueioCarros) bloqueio = { along: 10, carros: true };
     const caos = this.caos(i, j);
     if (!bloqueio && !semSaida && !pertoDoInicio && hash3(i, j, sd + 130, this.seed) < (caos - 0.2) * CAOS.bloqueioPolicia) bloqueio = { along: 10, policia: true };
+    // o galpão do Barganha (mascate.js) fecha a rua no meio: ela vira sem saída, com o janelão virado pro lado
+    // de onde o herói vem (frente = -1: o cruzamento do começo do trecho; +1: o do fim)
+    const galpao = this.galpoes.get(`${axis}${i},${j}`);
+    if (galpao) { bloqueio = null; semSaida = galpao.frente < 0 ? { along: 13, ini: 13, fim: 16, galpao } : { along: 13, ini: 11, fim: 14, galpao }; }
     const barreira = bloqueio || semSaida;
     if (bloqueio?.carros) {
       // engavetamento: dois carros atravessados e uma barricada fecham a rua
@@ -369,6 +374,8 @@ export class City {
       }
       const p = at(10, 4); solid.add(p.x + ',' + p.y);
       props.push({ tipo: 'barricada', x: p.x, y: p.y, eixo: axis });
+    } else if (galpao) {
+      for (let a = semSaida.ini; a < semSaida.fim; a++) for (let across = 0; across < BAND; across++) { const p = at(a, across); solid.add(p.x + ',' + p.y); }
     } else if (barreira) {
       for (let across = 0; across < BAND; across++) {
         const p = at(barreira.along, across);
@@ -456,7 +463,37 @@ export class City {
         zonas.push({ tipo: 'buraco', x0: p.x - r, y0: p.y - r, x1: p.x + r, y1: p.y + r, fixo: true, semente: Math.floor(hash3(i, j, sd + 121 + k, this.seed) * 1e6) });
       }
     }
+    if (galpao) this.montarGalpao(galpao, axis, semSaida, at, props, zonas);
     return { axis, i, j, props, solid, zonas, bairro, bloqueio, semSaida, at };
+  }
+
+  // O galpão ocupa a rua de parede a parede (3 casas de fundo). Tira o que estava no lugar (carro, poste, lixo,
+  // perigo no chão) e guarda a geometria nele: o retângulo, a frente (o janelão) e onde o herói para pra negociar.
+  montarGalpao(gp, axis, s, at, props, zonas) {
+    const a = at(s.ini, 0), b = at(s.fim, BAND);
+    const r = { x0: Math.min(a.x, b.x), y0: Math.min(a.y, b.y), x1: Math.max(a.x, b.x), y1: Math.max(a.y, b.y) };
+    const dentro = (x0, y0, x1, y1, m = 0) => x1 > r.x0 - m && x0 < r.x1 + m && y1 > r.y0 - m && y0 < r.y1 + m;
+    const ax = axis === 'h';
+    for (let k = props.length - 1; k >= 0; k--) { const p = props[k]; if (dentro(p.x, p.y, p.x + (p.w || 1), p.y + (p.h || 1), 0.5)) props.splice(k, 1); }
+    for (let k = zonas.length - 1; k >= 0; k--) { const z = zonas[k]; if (dentro(z.x0, z.y0, z.x1, z.y1, 1.5)) zonas.splice(k, 1); }
+    const f = gp.frente, frenteEixo = f < 0 ? s.ini : s.fim;           // a parede do janelão, no eixo da rua
+    const pf = at(frenteEixo, MID);
+    gp.rect = r; gp.axis = axis;
+    gp.dir = ax ? [f, 0] : [0, f];                                      // pra onde o janelão olha
+    gp.janela = { x: pf.x, y: pf.y };                                   // meio da parede do janelão (no chão)
+    gp.ponto = { x: pf.x + gp.dir[0] * 1.15, y: pf.y + gp.dir[1] * 1.15 };   // onde o herói para, de frente pro balcão
+    gp.tocha = { x: pf.x + gp.dir[0] * 0.15 + (ax ? 0 : -1.9), y: pf.y + gp.dir[1] * 0.15 + (ax ? -1.9 : 0) };   // na parede, do lado do janelão
+    props.push({ tipo: 'galpao', gp, x: r.x0, y: r.y0, w: r.x1 - r.x0, h: r.y1 - r.y0 });
+  }
+
+  // Põe o galpão do Barganha no trecho (o trecho é refeito na hora). Devolve o galpão, com a geometria.
+  abrirGalpao(axis, i, j, frente) {
+    const k = `${axis}${i},${j}`;
+    const gp = { frente, aberto: true };
+    this.galpoes.set(k, gp);
+    this.segCache.delete(k);
+    this.segment(axis, i, j);
+    return gp;
   }
 
   segmentOfTile(tx, ty) {

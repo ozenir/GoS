@@ -48,6 +48,14 @@ export const STATUS = {
   energizado:  { nome: 'Energético', emoji: '🥤', lado: 'positivo', duracao: 30, maxPilhas: 1, mods: [{ attr: 'velocidade', mult: 1.25 }], so: 'heroi', texto: '+25% de velocidade' },
   vitaminado:  { nome: 'Vitaminas', emoji: '🍊', lado: 'positivo', duracao: 30, maxPilhas: 1, mods: [{ attr: 'defesa', soma: 0.15 }], so: 'heroi', texto: '+15% de resistência' },
   medicado:    { nome: 'Remédio', emoji: '💊', lado: 'positivo', duracao: 30, maxPilhas: 1, porSegundo: { cura: 0.6 }, so: 'heroi', texto: 'regenera 0,6 de vida por segundo' },
+  // tônicos do Barganha (itens.js): ficam na bolsa e o herói bebe na hora certa; duram quarteirões
+  t_furia:     { nome: 'Tônico da Fúria', emoji: '🌶️', lado: 'positivo', duracao: 30, maxPilhas: 1, mods: [{ attr: 'dano', mult: 1.4 }], so: 'heroi', texto: '+40% de dano' },
+  t_ferro:     { nome: 'Tônico de Ferro', emoji: '🔩', lado: 'positivo', duracao: 30, maxPilhas: 1, mods: [{ attr: 'defesa', soma: 0.3 }], so: 'heroi', texto: '+30% de defesa' },
+  t_vento:     { nome: 'Tônico do Vento', emoji: '🌬️', lado: 'positivo', duracao: 30, maxPilhas: 1, mods: [{ attr: 'velocidade', mult: 1.3 }, { attr: 'esquiva', soma: 0.1 }], so: 'heroi', texto: '+30% de velocidade e +10% de esquiva' },
+  t_sangue:    { nome: 'Tônico do Sangue', emoji: '❤️‍🩹', lado: 'positivo', duracao: 30, maxPilhas: 1, porSegundo: { cura: 2 }, so: 'heroi', texto: 'regenera 2 de vida por segundo' },
+  t_olho:      { nome: 'Olho de Gato', emoji: '🐈‍⬛', lado: 'positivo', duracao: 30, maxPilhas: 1, mods: [{ attr: 'critChance', soma: 0.2 }], so: 'heroi', texto: '+20% de chance de crítico' },
+  t_gatilho:   { nome: 'Tônico do Gatilho', emoji: '🎇', lado: 'positivo', duracao: 30, maxPilhas: 1, mods: [{ attr: 'cadencia', mult: 1.4 }], so: 'heroi', texto: 'ataca 40% mais rápido' },
+  t_azul:      { nome: 'Tônico Azul', emoji: '🔵', lado: 'positivo', duracao: 30, maxPilhas: 1, porSegundo: { cura: 1 }, mods: [{ attr: 'dano', mult: 1.25 }, { attr: 'defesa', soma: 0.15 }, { attr: 'velocidade', mult: 1.15 }], so: 'heroi', texto: '+25% de dano, +15% de defesa, +15% de velocidade e regenera' },
   // Inspiração (doação, recompensas.js): toma 20% do dano e solta pulsos de luz em volta (jogo.js)
   inspirado:   { nome: 'Inspirado', emoji: '✨', lado: 'positivo', duracao: 10, maxPilhas: 1, so: 'heroi' },
 

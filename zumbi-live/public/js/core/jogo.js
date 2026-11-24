@@ -39,7 +39,8 @@ import { lugaresDaViagem, rotaAte, ruaLivre, pontosDaRota } from './mapa.js';
 import { ENCONTROS, criarEncontro, decidirEncontro, escolhaEncontroIA, atualizarEncontro, voltaramComoZumbi, quarteiraoDosSalvos, salvosChegaram } from './encontros.js';
 import { atualizarCenario } from './cenario.js';
 import { abrirEscolha, atualizarPrologo, votoPrologo, atualizarMoto } from './prologo.js';
-import { MASCATE, talvezMascate, mascateAtivo, atualizarMascate, decidirMascate, escolhaMascateIA, pontoDoNegocio } from './mascate.js';
+import { MASCATE, talvezMascate, mascateAtivo, mascateSegura, atualizarMascate, objetivoMascate, atualizarLoja, votoLoja, escolhaBarganhaIA, decidirBarganha } from './mascate.js';
+import { guardarTonico, atualizarBolsa, sortearTonico } from './itens.js';
 
 export const PADRAO = {
   votoDur: 10, relNum: 10, relDest: 12, protecao: 15, likesPor: 300, maxZ: 90,
@@ -174,6 +175,7 @@ export class Jogo {
       nivel: 1, xp: 0, fx: DIRS[dir][0], fy: DIRS[dir][1], andando: false, mira: null, animT: 0,
       parado: 0, ultimaPos: { x: start.x, y: start.y }, vidaBaixa: false,
       mochila: [],     // curas e kits que chegaram com a vida alta: ele usa sozinho quando precisar
+      bolsa: [],       // tônicos (itens.js): ele bebe sozinho na hora certa
       habs: {}, passivas: {}, supremas: [], deus: null, treino: 0, habT: {}, supT: {}, escudo: 0   // habilidades escolhidas pelo chat (habilidades.js)
     };
     this.praia = null;            // praia em andamento (praia.js)
@@ -212,6 +214,7 @@ export class Jogo {
     this.encontro = null;         // alguém pedindo ajuda no caminho (encontros.js)
     this.viaturas = []; this.janelas = []; this.viaturaT = null; this.janelaT = null;   // cenário vivo (cenario.js)
     this.mascate = null;          // o Barganha (mascate.js)
+    this.loja = null;             // a banca do Barganha aberta (a rua fica pausada)
     this.hero.grana = this.S.mascate ? MASCATE.granaInicial : 0;   // 💰 R$ pra negociar com ele
     this.perdidos = [];           // quem ficou pra trás: volta como zumbi uns quarteirões depois
     this.arena = null;
@@ -403,6 +406,8 @@ export class Jogo {
     if (this.portal) { this.atualizarPortal(dt); return; }
     // prólogo (escolha do herói, introdução, a queda da moto): a rua também fica PAUSADA (prologo.js)
     if (this.prologo) { atualizarPrologo(this, dt); return; }
+    // banca do Barganha aberta: a rua também fica PAUSADA enquanto o chat negocia (mascate.js)
+    if (this.loja) { atualizarLoja(this, dt); return; }
     this.t += dt;
     this.faseT += dt;
     for (let i = this.agendados.length - 1; i >= 0; i--) {
@@ -434,6 +439,7 @@ export class Jogo {
     this.zumbisDeQuemEntrou(dt);
     this.atualizarHeroi(dt);
     if (this.hero.moto && this.fase === 'jogo' && !this.caido) atualizarMoto(this, dt, ZUMBIS);   // de moto: atropela (prologo.js)
+    if (this.fase === 'jogo' && !this.caido) atualizarBolsa(this, dt);   // os tônicos (itens.js)
     if (this.fase === 'jogo' && !this.caido) { this.atualizarEscolha(dt); if (!this.hero.moto) atualizarHabilidades(this, dt); atualizarReliquia(this, dt); this.checarPortal(); }
     this.atualizarFigurantes(dt);
     this.atualizarAliados(dt);
@@ -641,6 +647,8 @@ export class Jogo {
     }
     // grana escondida (mascate.js)
     if (this.S.mascate && this.rng.chance(MASCATE.predio.chance)) { const p = this.room.pontoLivre(this.rng, this.room.entrada, 3); this.itens.push({ id: proxId++, kind: 'grana', x: p.x, y: p.y, z: 0, vz: 0, data: { valor: this.rng.int(MASCATE.predio.min, MASCATE.predio.max) }, quem: null, vida: 999, achado: true }); }
+    // às vezes, um tônico esquecido (itens.js)
+    if (this.S.mascate && this.rng.chance(MASCATE.tonicoPredio)) { const p = this.room.pontoLivre(this.rng, this.room.entrada, 3); this.itens.push({ id: proxId++, kind: 'tonico', x: p.x, y: p.y, z: 0, vz: 0, data: { id: sortearTonico(this.rng, true) }, quem: null, vida: 999, achado: true }); }
     // o que tem lá dentro (cada item com sua chance: nem sempre tem tudo)
     for (const [kind, qtd, chance = 1] of info.loot) for (let k = 0; k < qtd; k++) {
       if (!this.rng.chance(chance)) continue;
@@ -903,7 +911,6 @@ export class Jogo {
     this.preparo = this.prepararDestino();
     // no meio da viagem, às vezes alguém pede ajuda numa rua do lado (encontros.js)
     V.passos = (V.passos || 0) + 1;
-    if (talvezMascate(this)) return;   // o Barganha na esquina da frente (mascate.js)
     if (V.passos >= 1 && !this.encontro && this.stats.quarteiroes >= ENCONTROS.desdeQuarteirao && this.rng.chance(ENCONTROS.chance)) {
       const espera = Math.max(3 + this.rng.next() * 3, (this.decididoEm ?? -1e9) + RESULTADO_SEG - this.t);   // depois do resultado sair da tela
       this.agendar(espera, () => {
@@ -926,7 +933,7 @@ export class Jogo {
   }
 
   fecharVotacao() {
-    if (this.voto.mascate) { const res = this.voto.fechar(ops => escolhaMascateIA(this, ops), this.rng); decidirMascate(this, res.id, res); return; }
+    if (this.voto.mascate) { const res = this.voto.fechar(() => escolhaBarganhaIA(this), this.rng); decidirBarganha(this, res.id, res); return; }   // ir na banca do Barganha ou seguir
     if (this.voto.encontro) { const res = this.voto.fechar(() => escolhaEncontroIA(this), this.rng); decidirEncontro(this, res.id, res); return; }
     const res = this.voto.fechar(ops => this.escolhaIA(ops), this.rng);
     const op = this.voto.opcoes.find(o => o.id === res.id);
@@ -974,7 +981,7 @@ export class Jogo {
     let op = this.decisao;
     this.decisao = null;
     this.areaLiberada = false;
-    if (!this.voto?.encontro && !this.voto?.mascate) this.voto = null;
+    if (!this.voto?.encontro) this.voto = null;
     // o chat escolheu um lugar no mapa: começa a viagem (o 1º passo é a direção que sai daqui)
     if (op.lugar) {
       this.viagem = { lugar: op.lugar, dirs: [...op.lugar.dirs] };
@@ -1008,6 +1015,7 @@ export class Jogo {
     if (t.s.semSaida) this.entrarBeco(t);
     else this.iniciarTrecho(prep?.caminho);
     this.seguirViagem();
+    if (!t.s.semSaida) talvezMascate(this);   // 10%: o Barganha numa rua sem saída do lado do próximo cruzamento
   }
 
   /* =================== Arena (praça com chefe) =================== */
@@ -1125,8 +1133,8 @@ export class Jogo {
     const r = this.rota, s = t.s;
     const [dx, dy] = DIRS[r.dir];
     const no = this.city.nodePos(r.i, r.j);
-    const b = (dx ? s.i : s.j) * PERIODO + s.semSaida.along;     // casa da barricada, no eixo da rua
-    const fimEixo = t.inicio ? b - 1.4 : b + 2.4;
+    const base = (dx ? s.i : s.j) * PERIODO, ss = s.semSaida;     // a barricada (ou o galpão do Barganha), no eixo da rua
+    const fimEixo = t.inicio ? base + (ss.ini ?? ss.along) - 1.4 : base + (ss.fim ?? ss.along + 1) + 1.4;
     const fim = dx ? { x: fimEixo, y: no.y } : { x: no.x, y: fimEixo };
     r.beco = { fim };
     this.trecho = { tipo: 'beco', livre: false };
@@ -1260,12 +1268,8 @@ export class Jogo {
     }
     // decidiram ajudar alguém (encontros.js): vai até a pessoa (os zumbis dela levantam quando ele chega)
     if (this.encontro?.fase === 'ajudando') { const p = this.encontro.pessoa; return { x: p.x, y: p.y, ajudando: true }; }
-    // o Barganha na esquina: vai até ele e fica do lado enquanto o chat negocia (mascate.js)
-    if (mascateAtivo(this)) {
-      if (this.voto?.aberta) { this.voto.update(dt); if (this.voto.t <= 0) this.fecharVotacao(); }
-      if (!this.mascate || !mascateAtivo(this)) return this.objetivoRota(0);
-      const p = pontoDoNegocio(this); if (dist(h.x, h.y, p.x, p.y) < 0.3) p.esperando = true; return p;
-    }
+    // o Barganha na rua sem saída: entra até o janelão, negocia e volta pro cruzamento (mascate.js)
+    if (this.mascate) { const o = objetivoMascate(this, dt); if (o) return o; }
     if (r.beco) {
       // rua sem saída: vai até o fim (baú), depois dá meia-volta
       if (dist(h.x, h.y, r.beco.fim.x, r.beco.fim.y) < 0.8) { this.voltarDoBeco(); return this.objetivoRota(0); }
@@ -1308,7 +1312,7 @@ export class Jogo {
       if (dist(h.x, h.y, alvo.x, alvo.y) < 1.4) {
         // só atravessa com a área limpa (todos os zumbis em volta mortos). A escolha de habilidade NÃO segura o
         // herói: ele segue andando enquanto o chat vota, e a habilidade entra quando a votação fechar
-        if (this.decisao && this.liberarArea(dt) && !this.voto?.encontro) { this.aplicarDecisao(); return this.objetivoRota(0); }
+        if (this.decisao && !mascateSegura(this) && this.liberarArea(dt) && !this.voto?.encontro) { this.aplicarDecisao(); return this.objetivoRota(0); }
         if (this.limpando) { const caca = this.cacarZumbi(alvo); if (caca) return caca; }
         return { x: alvo.x, y: alvo.y, esperando: true };
       }
@@ -1512,7 +1516,8 @@ export class Jogo {
         const alvo = this.city.nodePos(this.rota.alvo.i, this.rota.alvo.j);
         const [dx, dy] = DIRS[this.rota.dir];
         // rua sem saída: o cruzamento do alvo fica do outro lado da barricada; vai pro fim da rua (baú) e volta
-        if (h.travas >= 2 && this.rota.beco) { h.x = this.rota.beco.fim.x; h.y = this.rota.beco.fim.y; h.travas = 0; }
+        if (h.travas >= 2 && this.mascate?.fase === 'entrando') { h.x = this.mascate.gp.ponto.x; h.y = this.mascate.gp.ponto.y; h.travas = 0; }
+        else if (h.travas >= 2 && this.rota.beco) { h.x = this.rota.beco.fim.x; h.y = this.rota.beco.fim.y; h.travas = 0; }
         else if (h.travas >= 2) { h.x = alvo.x; h.y = alvo.y; h.travas = 0; }       // segunda vez: vai direto pro cruzamento
         else { h.x = dx ? h.x : alvo.x; h.y = dy ? h.y : alvo.y; }           // primeira vez: volta pro meio da rua
         h.ultimaPos = { x: h.x, y: h.y };
@@ -2380,6 +2385,7 @@ export class Jogo {
     if (this.S.mascate && this.fase === 'jogo' && !z.sumiu) {
       const M = MASCATE, D = T.chefe ? M.dropChefe : M.dropZumbi;
       if (T.chefe || this.rng.chance(D.chance)) this.soltarItemEm('grana', { valor: this.rng.int(D.min, D.max) }, null, z.x, z.y);
+      if (T.chefe && !this.hero.moto && this.rng.chance(M.tonicoChefe)) this.soltarItemEm('tonico', { id: sortearTonico(this.rng) }, null, z.x + 0.4, z.y + 0.4);   // e às vezes um tônico
     }
     // ajudante na frente no cabo de guerra: sorte, às vezes o cadáver tem um suprimento
     const sorte = this.fase === 'jogo' && !T.chefe ? sorteCabo(this.cabo) : 0;
@@ -2591,6 +2597,7 @@ export class Jogo {
         if (it.data.municao) this.emit('aviso', { texto: `${ARMAS[it.data.arma].emoji} ${ARMAS[it.data.arma].nome}${mesma ? ': munição' : ''} (+${it.data.municao} balas)`, tipo: 'bom' });
         break;
       }
+      case 'tonico': guardarTonico(this, it.data.id, quem); break;   // vai pra bolsa (itens.js)
       case 'grana': h.grana = (h.grana || 0) + (it.data.valor || 5); this.emit('grana', { valor: it.data.valor || 5, x: it.x, y: it.y }); break;
       // achados com propósito (room.js → LOJAS)
       case 'comida': this.curarOuGuardar(15, quem, 'cura'); this.emit('aviso', { texto: '🥫 Comida: +15% de vida', tipo: 'bom' }); break;
@@ -3322,6 +3329,7 @@ export class Jogo {
         this.lembrarNome(m.id, m.nick);
         this.torcida.set(m.id, this.t);
         if (votoPrologo(this, m)) break;   // na escolha do herói (ou do caminho), o número vota lá
+        if (votoLoja(this, m)) break;      // na banca do Barganha, o número (1 a 9) vota lá (mascate.js)
         const op = lerVoto(m.texto);
         const V = this.portal ? this.portal.voto : this.voto;   // no portal, 1 2 3 votam no portal
         if (op && V && V.aberta && this.fase === 'jogo') {
