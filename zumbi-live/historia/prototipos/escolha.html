@@ -1,0 +1,343 @@
+<title>Escolha do Herói</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+/* Layout: a tela do jogo em pé (9:16, como na live), centralizada; controles e notas embaixo */
+:root {
+  --noite: #08080e;
+  --texto: #e6e2da;
+  --apagado: #8f8a98;
+  --brasa: #e8853a;
+  --ciano: #59d6e6;
+  --ouro: #e8c84a;
+  --linha: #26242f;
+  --f-pixel: 'Pixelify Sans', ui-monospace, monospace;
+  --f-texto: 'Inter', system-ui, sans-serif;
+  color-scheme: dark;
+}
+html, body { background: var(--noite); color: var(--texto); }
+body { font-family: var(--f-texto); font-size: 15px; line-height: 1.55; }
+.pagina { max-width: 960px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+header { display: grid; gap: 8px; }
+.selo { font-family: var(--f-pixel); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--brasa); }
+h1 { font-family: var(--f-pixel); font-weight: 700; font-size: clamp(32px, 6.5vw, 52px); line-height: 1; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 65ch; }
+.sub { color: var(--apagado); }
+.palco { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 760px) { .palco { grid-template-columns: 1fr; } }
+
+/* a tela do jogo */
+.tela { position: relative; width: 100%; max-width: 420px; aspect-ratio: 9 / 16; container-type: inline-size; overflow: hidden; border: 1px solid var(--linha); background: #05050a; }
+.tela > canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.ui { position: absolute; inset: 0; display: grid; grid-template-rows: auto 1fr auto; padding: 4cqw 3.4cqw 3cqw; gap: 2.4cqw; }
+.topo { text-align: center; display: grid; gap: .8cqw; }
+.topo .noite { font-family: var(--f-pixel); font-size: 3cqw; letter-spacing: .25em; color: #c8a88a; }
+.topo .pergunta { font-family: var(--f-pixel); font-weight: 700; font-size: 5.6cqw; line-height: 1.05; color: #fff; text-shadow: 0 .6cqw 0 #000; }
+.topo .dica { font-size: 3.1cqw; color: #cfcad6; text-shadow: 0 .3cqw 0 #000; }
+.topo .dica b { color: var(--ouro); }
+.grade { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 2.2cqw; min-height: 0; }
+.card { position: relative; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; background: rgba(10,10,16,.86); border: .5cqw solid #2a2836; min-height: 0; overflow: hidden; transition: opacity .5s, transform .5s, border-color .3s; }
+.card canvas { width: 100%; aspect-ratio: 92 / 56; image-rendering: pixelated; display: block; }
+.card .num { position: absolute; top: 1cqw; left: 1cqw; width: 6.4cqw; height: 6.4cqw; display: grid; place-items: center; font-family: var(--f-pixel); font-weight: 700; font-size: 4.4cqw; background: var(--ouro); color: #1a1405; box-shadow: 0 .5cqw 0 #6a5a12; }
+.card .nome { font-family: var(--f-pixel); font-weight: 700; font-size: 3.6cqw; line-height: 1.1; padding: .8cqw 1.6cqw 0; color: #fff; }
+.card .quem { font-size: 2.35cqw; line-height: 1.2; padding: .2cqw 1.6cqw 0; color: #b8b2c0; overflow: hidden; }
+.card .voto { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1cqw; padding: .6cqw 1.6cqw 1.2cqw; }
+.card .barra { height: 1.6cqw; background: #1e1c28; overflow: hidden; }
+.card .barra i { display: block; height: 100%; width: 0; background: var(--ouro); transition: width .35s; }
+.card .qtd { font-family: var(--f-pixel); font-size: 3cqw; color: var(--ouro); font-variant-numeric: tabular-nums; min-width: 4ch; text-align: right; }
+.card.trancado .nome { color: #6a6676; }
+.card.trancado .num { background: #3a3846; color: #7a7686; box-shadow: none; }
+.card.trancado .voto { display: none; }
+.card .cadeado { font-size: 2.45cqw; color: #8a8696; padding: .6cqw 1.6cqw 1.4cqw; line-height: 1.25; }
+.card.venceu { border-color: var(--ouro); transform: scale(1.03); z-index: 2; box-shadow: 0 0 0 .6cqw rgba(232,200,74,.25), 0 0 6cqw rgba(232,200,74,.35); }
+.card.perdeu { filter: brightness(.32) saturate(.4); }
+.baixo { display: grid; gap: 1.4cqw; }
+.tempo { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1.6cqw; font-family: var(--f-pixel); font-size: 3.2cqw; color: #fff; }
+.tempo .trilho { height: 1.6cqw; background: #1e1c28; }
+.tempo .trilho i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--brasa), var(--ouro)); transition: width .25s linear; }
+.chat { display: flex; gap: 1.6cqw; overflow: hidden; white-space: nowrap; font-size: 2.7cqw; color: #cfcad6; height: 4cqw; }
+.chat span { opacity: .9; }
+.chat b { color: var(--ciano); font-weight: 600; }
+.resultado { position: absolute; left: 0; right: 0; top: 0; display: grid; justify-items: center; align-content: center; gap: .8cqw; padding: 4cqw 3cqw; min-height: 27cqw; background: linear-gradient(180deg, rgba(5,5,10,.97) 75%, rgba(5,5,10,0)); text-align: center; z-index: 3; }
+.resultado[hidden] { display: none !important; }
+.resultado .t1 { font-family: var(--f-pixel); font-size: 3.2cqw; letter-spacing: .2em; color: var(--ouro); }
+.resultado .t2 { font-family: var(--f-pixel); font-weight: 700; font-size: 6.6cqw; color: #fff; text-shadow: 0 .6cqw 0 #000; }
+.resultado .t3 { font-size: 3cqw; color: #cfcad6; }
+
+/* notas ao lado */
+.notas { display: grid; gap: 16px; align-content: start; }
+.botoes { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { font: inherit; font-size: 14px; color: var(--texto); background: transparent; border: 1px solid #3a3646; padding: 8px 14px; cursor: pointer; }
+.btn.forte { background: var(--brasa); border-color: var(--brasa); color: #1a0d05; font-weight: 600; }
+.btn:focus-visible { outline: 2px solid var(--ciano); outline-offset: 3px; }
+.lista { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.lista li { display: grid; grid-template-columns: 2.2em 1fr; gap: 4px 10px; border-left: 3px solid #3a3646; padding: 6px 0 6px 12px; }
+.lista .n { font-family: var(--f-pixel); font-size: 20px; color: var(--ouro); grid-row: span 2; }
+.lista strong { font-family: var(--f-pixel); font-weight: 500; font-size: 17px; }
+.lista span { color: var(--apagado); font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .card, .card .barra i, .tempo .trilho i { transition: none; } }
+</style>
+
+<div class="pagina">
+  <header>
+    <div class="selo">Protótipo para aprovação · ainda não está no jogo</div>
+    <h1>Escolha do Herói</h1>
+    <p class="sub">A primeira tela do jogo, em pé como na live. Cada herói com o rosto dele; o chat vota pelo número e o mais votado ganha a introdução e começa a partida. O Valadares só aparece depois que algum herói chegar a um final.</p>
+  </header>
+
+  <div class="palco">
+    <div class="tela" id="tela">
+      <canvas id="fundo" width="216" height="384" aria-hidden="true"></canvas>
+      <div class="ui">
+        <div class="topo">
+          <div class="noite">PORTO SERENO · 3ª NOITE DA FEBRE CINZA</div>
+          <div class="pergunta">QUEM TENTA CHEGAR EM CASA?</div>
+          <div class="dica">digite o <b>número</b> do herói no chat</div>
+        </div>
+        <div class="grade" id="grade"></div>
+        <div class="baixo">
+          <div class="tempo"><span>⏳</span><div class="trilho"><i id="trilho"></i></div><span id="seg">15s</span></div>
+          <div class="chat" id="chat" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="resultado" id="resultado" hidden>
+        <div class="t1">O CHAT ESCOLHEU</div>
+        <div class="t2" id="vencedor"></div>
+        <div class="t3" id="vencedor2"></div>
+      </div>
+    </div>
+
+    <div class="notas">
+      <div class="botoes">
+        <button class="btn forte" id="votar" type="button">▶ Simular a votação (com som)</button>
+        <button class="btn" id="trava" type="button">🔓 Ver com o Valadares liberado</button>
+      </div>
+      <ol class="lista">
+        <li><span class="n">1</span><strong>Daiane · enfermeira</strong><span>Mãe solo, dois empregos. A filha ficou sozinha em casa.</span></li>
+        <li><span class="n">2</span><strong>Sargento Edson · policial</strong><span>Mandaram isolar o morro onde a mãe dele mora.</span></li>
+        <li><span class="n">3</span><strong>Tati · bombeira</strong><span>O quartel caiu com o parceiro dela lá dentro.</span></li>
+        <li><span class="n">4</span><strong>Kauã · entregador</strong><span>Tarifa 5×. A insulina da avó acabou ontem.</span></li>
+        <li><span class="n">5</span><strong>Seu Ademir · mecânico</strong><span>Ouviu o filho que não fala com ele no rádio.</span></li>
+        <li><span class="n">6</span><strong>Augusto Valadares</strong><span>O dono da vacina. Liberado só depois de um final com qualquer herói.</span></li>
+      </ol>
+      <p class="sub">Os nomes são os originais (propostos). Na live, o herói escolhido ganha o nome de quem mais doou, e quem estiver na história dele, os nomes dos próximos da lista.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+/* ------------------------------ pixel art ------------------------------ */
+const BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+const th = (x, y) => (BAY[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
+const rnd = seed => { let a = seed >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; };
+const P = (x, c, X, Y) => { x.fillStyle = c; x.fillRect(X | 0, Y | 0, 1, 1); };
+const R = (x, c, X, Y, w, h) => { x.fillStyle = c; x.fillRect(Math.round(X), Math.round(Y), Math.round(w), Math.round(h)); };
+function G(x, X0, Y0, w, h, cores, f) { const n = cores.length - 1; for (let Y = Y0; Y < Y0 + h; Y++) for (let X = X0; X < X0 + w; X++) { const v = Math.max(0, Math.min(0.9999, f(X, Y))) * n; let i = Math.floor(v); if (v - i > th(X, Y)) i++; x.fillStyle = cores[Math.min(n, i)]; x.fillRect(X, Y, 1, 1); } }
+function brilho(x, cx, cy, r, cor, dens = 1, sy = 1) { x.fillStyle = cor; for (let Y = Math.floor(cy - r * sy); Y <= cy + r * sy; Y++) for (let X = Math.floor(cx - r); X <= cx + r; X++) { const dx = (X - cx) / r, dy = (Y - cy) / (r * sy), d = Math.sqrt(dx * dx + dy * dy); if (d >= 1) continue; if ((1 - d) * (1 - d) * dens > th(X, Y)) x.fillRect(X, Y, 1, 1); } }
+function disco(x, cx, cy, r, c) { x.fillStyle = c; for (let Y = -r; Y <= r; Y++) { const w = Math.floor(Math.sqrt(r * r - Y * Y)); x.fillRect(Math.round(cx - w), Math.round(cy + Y), w * 2 + 1, 1); } }
+function linha(x, c, x0, y0, x1, y1) { x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1); const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let e = dx + dy; x.fillStyle = c; for (;;) { x.fillRect(x0, y0, 1, 1); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } } }
+const novo = (w, h) => { const k = document.createElement('canvas'); k.width = w; k.height = h; return [k, k.getContext('2d')]; };
+
+/* ------------------------------ retratos (92 x 56): busto de frente ------------------------------ */
+const PW = 92, PH = 56;
+function busto(o) {
+  const [k, x] = novo(PW, PH), cx = 46, cy = 25, ey = cy + 1;
+  // roupa (ombros)
+  for (let y = 39; y < PH; y++) { const w = Math.round(15 + (y - 39) * 1.7); R(x, o.roupa, cx - w, y, w * 2, 1); R(x, o.roupaS, cx - w, y, Math.round(w * 0.55), 1); R(x, o.roupaL, cx + w - 2, y, 2, 1); }
+  // pescoço
+  R(x, o.peleS, cx - 5, 33, 10, 9); R(x, o.pele, cx - 2, 33, 6, 8); R(x, o.peleS, cx - 5, 39, 10, 2);
+  o.roupaExtra?.(x, cx);
+  // cabeça
+  for (let y = -12; y <= 12; y++) {
+    const w = Math.round(Math.sqrt(1 - Math.pow(y / 12.6, 2)) * (y > 4 ? 9.4 - (y - 4) * 0.35 : 10));
+    R(x, o.pele, cx - w, cy + y, w * 2 + 1, 1);
+    for (let X = cx - w; X < cx - w * 0.15; X++) if ((cx - w * 0.15 - X) / (w * 0.9) > th(X, cy + y) * 0.9) P(x, o.peleS, X, cy + y);
+    P(x, o.peleL, cx + w, cy + y); if (w > 3) P(x, o.peleL, cx + w - 1, cy + y);
+  }
+  R(x, o.peleS, cx - 11, cy - 1, 2, 5); R(x, o.pele, cx + 10, cy - 1, 2, 5); P(x, o.peleL, cx + 11, cy);
+  // olhos, sobrancelhas, olheiras
+  R(x, '#d8d0c4', cx - 7, ey, 4, 2); R(x, '#d8d0c4', cx + 3, ey, 4, 2);
+  R(x, o.olho || '#1a100a', cx - 6, ey, 2, 2); R(x, o.olho || '#1a100a', cx + 4, ey, 2, 2); P(x, '#f4efe6', cx - 6, ey); P(x, '#f4efe6', cx + 4, ey);
+  R(x, o.peleS, cx - 7, ey - 1, 4, 1); R(x, o.peleS, cx + 3, ey - 1, 4, 1);
+  const so = o.sobrancelha || o.cabelo;
+  if (o.cansado) { R(x, so, cx - 7, ey - 2, 2, 1); R(x, so, cx - 5, ey - 3, 2, 1); R(x, so, cx + 3, ey - 3, 2, 1); R(x, so, cx + 5, ey - 2, 2, 1); R(x, o.peleS, cx - 6, ey + 2, 3, 1); R(x, o.peleS, cx + 4, ey + 2, 3, 1); }
+  else if (o.frio) { R(x, so, cx - 7, ey - 3, 4, 1); R(x, so, cx + 3, ey - 3, 4, 1); P(x, so, cx - 4, ey - 2); P(x, so, cx + 3, ey - 2); }
+  else { R(x, so, cx - 7, ey - 2, 4, 1); R(x, so, cx + 3, ey - 2, 4, 1); }
+  // nariz e boca
+  R(x, o.peleS, cx - 1, ey + 2, 1, 4); P(x, o.peleS, cx - 2, ey + 5); P(x, o.peleS, cx + 1, ey + 5); P(x, o.peleL, cx, ey + 3);
+  if (o.sorriso) { R(x, o.boca || '#5a2a20', cx - 3, ey + 8, 6, 1); P(x, o.boca || '#5a2a20', cx + 3, ey + 7); }
+  else { R(x, o.boca || '#5a2a20', cx - 3, ey + 8, 7, 1); R(x, o.peleS, cx - 2, ey + 9, 5, 1); }
+  o.rostoExtra?.(x, cx, cy, ey);
+  o.cabeloFn?.(x, cx, cy, o);
+  return k;
+}
+// cabelos e chapéus
+const coque = (x, cx, cy, o) => { for (let y = -13; y <= -5; y++) { const w = Math.round(Math.sqrt(1 - Math.pow(y / 13.4, 2)) * 11); R(x, o.cabelo, cx - w, cy + y, w * 2 + 1, 1); } R(x, o.cabelo, cx - 11, cy - 5, 3, 9); R(x, o.cabelo, cx + 9, cy - 5, 3, 7); disco(x, cx + 1, cy - 15, 4, o.cabelo); R(x, o.cabeloL, cx - 2, cy - 17, 5, 1); R(x, o.cabeloL, cx - 6, cy - 11, 9, 1); P(x, o.cabelo, cx - 9, cy + 3); P(x, o.cabelo, cx - 10, cy + 5); P(x, o.cabelo, cx - 9, cy + 7); P(x, o.cabeloL, cx + 4, cy - 9); };
+const quepe = (x, cx, cy, o) => { R(x, o.cabelo, cx - 10, cy - 6, 2, 6); R(x, o.cabelo, cx + 9, cy - 6, 2, 6); R(x, '#161a26', cx - 11, cy - 15, 23, 7); R(x, '#222a3c', cx - 11, cy - 15, 23, 1); R(x, '#0a0a10', cx - 11, cy - 9, 23, 2); R(x, '#0a0a10', cx - 12, cy - 7, 25, 2); R(x, '#3a3e4a', cx - 4, cy - 7, 10, 1); R(x, '#e8c84a', cx - 1, cy - 14, 3, 3); P(x, '#fff2a0', cx, cy - 13); };
+const capacete = (x, cx, cy) => { for (let y = -18; y <= -6; y++) { const w = Math.round(Math.sqrt(1 - Math.pow((y + 6) / 12.6, 2)) * 13); R(x, '#9a2418', cx - w, cy + y, w * 2 + 1, 1); R(x, '#c83a24', cx - w + 2, cy + y, Math.max(0, w - 2), 1); } R(x, '#7a1a10', cx - 15, cy - 7, 31, 2); R(x, '#5a120a', cx - 15, cy - 5, 31, 1); R(x, '#c8c8d0', cx - 2, cy - 14, 5, 5); R(x, '#8a8a96', cx - 1, cy - 13, 3, 3); R(x, '#e86a4a', cx - 7, cy - 17, 6, 1); };
+const bone = (x, cx, cy, o) => { R(x, o.cabelo, cx - 10, cy - 6, 2, 5); R(x, o.cabelo, cx + 9, cy - 6, 2, 5); for (let y = -14; y <= -7; y++) { const w = Math.round(Math.sqrt(1 - Math.pow(y / 14.4, 2)) * 11); R(x, '#c8642a', cx - w, cy + y, w * 2 + 1, 1); } R(x, '#e0884a', cx - 4, cy - 14, 9, 1); R(x, '#f4e0c0', cx - 2, cy - 12, 5, 3); R(x, '#c8642a', cx - 1, cy - 11, 3, 1); R(x, '#9a4a1e', cx - 12, cy - 7, 25, 2); R(x, '#7a3a16', cx - 11, cy - 5, 23, 1); R(x, o.peleS, cx - 9, cy - 4, 19, 1); };
+const grisalho = (x, cx, cy) => { R(x, '#9a9a9e', cx - 11, cy - 8, 3, 9); R(x, '#9a9a9e', cx + 9, cy - 8, 3, 9); R(x, '#b8b8bc', cx - 11, cy - 8, 1, 6); for (const [dx, dy] of [[-6, -11], [-3, -12], [2, -12], [5, -11], [-8, -9], [7, -9]]) P(x, '#8a8a8e', cx + dx, cy + dy); P(x, '#f0d0b0', cx + 3, cy - 10); P(x, '#f0d0b0', cx + 4, cy - 10); };
+const prata = (x, cx, cy) => { for (let y = -13; y <= -6; y++) { const w = Math.round(Math.sqrt(1 - Math.pow(y / 13.4, 2)) * 11); R(x, '#b8bcc4', cx - w, cy + y, w * 2 + 1, 1); } for (let k = -8; k <= 8; k += 3) linha(x, '#8a8e98', cx + k, cy - 12, cx + k + 3, cy - 6); R(x, '#d8dce4', cx - 3, cy - 13, 8, 1); R(x, '#b8bcc4', cx - 11, cy - 6, 2, 6); R(x, '#b8bcc4', cx + 10, cy - 6, 2, 6); };
+
+const HEROIS = [
+  { id: 'enfermeira', n: 1, nome: 'Daiane', quem: 'Enfermeira. A filha ficou sozinha em casa.',
+    pele: '#a86e48', peleS: '#8a5638', peleL: '#c88a60', cabelo: '#1a1210', cabeloL: '#3a2a22', roupa: '#2a6a64', roupaS: '#1e504c', roupaL: '#3a8a82', cansado: true, cabeloFn: coque,
+    roupaExtra: (x, cx) => { for (let y = 39; y < 46; y++) R(x, '#8a5638', cx - (46 - y) / 2 + 1, y, 46 - y - 1, 1); linha(x, '#8a8e96', cx - 9, 40, cx - 7, 52); linha(x, '#8a8e96', cx + 9, 40, cx + 7, 50); disco(x, cx + 7, 52, 2, '#c8ccd4'); R(x, '#e8eef2', cx - 16, 47, 5, 3); R(x, '#2a6ad8', cx - 15, 48, 3, 1); },
+    fundo: (x, t) => { G(x, 0, 0, PW, PH, ['#0c1414', '#122020', '#18302c', '#1e3a36'], (X, Y) => 0.1 + Y / 120 + Math.max(0, 1 - Math.abs(X - 46) / 60) * 0.3); R(x, '#0a1010', 0, 36, PW, 1); for (let X = 4; X < PW; X += 14) R(x, '#0e1818', X, 37, 1, 19); const on = Math.sin(t * 9) + Math.sin(t * 2.7) > -1.2; R(x, on ? '#e8fff4' : '#3a4a46', 30, 1, 32, 2); if (on) { x.globalCompositeOperation = 'lighter'; brilho(x, 46, 4, 36, 'rgba(160,255,220,0.10)', 1, 1.1); x.globalCompositeOperation = 'source-over'; } },
+    luz: (x, t) => brilho(x, 58, 22, 18, 'rgba(160,255,220,0.10)') },
+  { id: 'policial', n: 2, nome: 'Sargento Edson', quem: 'Policial. Mandaram isolar o morro da mãe.',
+    pele: '#5a3a28', peleS: '#46281a', peleL: '#7a5038', cabelo: '#0e0c0c', roupa: '#2a3446', roupaS: '#1c2432', roupaL: '#3a465c', cabeloFn: quepe,
+    rostoExtra: (x, cx, cy, ey) => { R(x, '#1a100a', cx - 3, ey + 6, 7, 1); },
+    roupaExtra: (x, cx) => { R(x, '#121418', cx - 14, 44, 28, 12); R(x, '#2a2c34', cx - 14, 44, 28, 1); R(x, '#e8c84a', cx - 9, 47, 3, 3); R(x, '#3a3e4a', cx + 5, 47, 6, 2); R(x, '#0a0a0e', cx + 14, 40, 4, 6); R(x, '#0a0a0e', cx + 16, 34, 1, 6); R(x, '#3a465c', cx - 7, 39, 4, 4); R(x, '#3a465c', cx + 4, 39, 4, 4); },
+    fundo: (x, t) => { G(x, 0, 0, PW, PH, ['#06070e', '#0a0c18', '#10142a'], (X, Y) => Y / 70); const k = Math.floor(t * 4) % 2; x.globalCompositeOperation = 'lighter'; brilho(x, k ? 4 : 88, 20, 46, k ? 'rgba(255,40,40,0.16)' : 'rgba(40,90,255,0.18)'); x.globalCompositeOperation = 'source-over'; for (let i = 0; i < 18; i++) P(x, '#2a2e44', (i * 37) % PW, (i * 23) % 30); },
+    luz: (x, t) => { const k = Math.floor(t * 4) % 2; brilho(x, k ? 34 : 58, 24, 14, k ? 'rgba(255,60,60,0.16)' : 'rgba(80,120,255,0.18)'); } },
+  { id: 'bombeira', n: 3, nome: 'Tati', quem: 'Bombeira. O quartel caiu com o parceiro dentro.',
+    pele: '#c8906a', peleS: '#a8704c', peleL: '#e0aa82', cabelo: '#3a2414', roupa: '#8a6a3a', roupaS: '#6a5028', roupaL: '#a8844c', cabeloFn: capacete,
+    rostoExtra: (x, cx, cy, ey) => { for (const [dx, dy] of [[-8, 5], [-7, 6], [6, 7], [7, 6], [-2, -4], [8, 3]]) P(x, '#4a3226', cx + dx, ey + dy); R(x, '#3a2414', cx - 11, cy + 2, 2, 6); },
+    roupaExtra: (x, cx) => { R(x, '#6a5028', cx - 6, 38, 12, 4); for (let y = 49; y < 52; y++) { const w = Math.round(15 + (y - 39) * 1.7); R(x, y === 50 ? '#e8d84a' : '#c8c8b8', cx - w, y, w * 2, 1); } R(x, '#2a2018', cx, 42, 1, 14); },
+    fundo: (x, t) => { G(x, 0, 0, PW, PH, ['#1a0806', '#3a120a', '#6a2410', '#a84a1a', '#e8862a'], (X, Y) => Y / 70 + 0.15 * Math.sin(X / 9 + t * 3) * (Y / PH)); for (let i = 0; i < 14; i++) { const X = (i * 29 + t * 9 * (1 + i % 3)) % PW, Y = PH - ((t * 14 * (1 + i % 4) + i * 17) % PH); P(x, i % 2 ? '#ffd27a' : '#ff8a3a', X, Y); } },
+    luz: (x, t) => brilho(x, 40, 34, 20, `rgba(255,140,60,${0.12 + 0.04 * Math.sin(t * 11)})`) },
+  { id: 'entregador', n: 4, nome: 'Kauã', quem: 'Entregador. A insulina da avó acabou.',
+    pele: '#7a4a30', peleS: '#5e3622', peleL: '#9a6444', cabelo: '#141010', roupa: '#1e2a42', roupaS: '#141c2e', roupaL: '#2c3c5c', cabeloFn: bone,
+    roupaExtra: (x, cx) => { R(x, '#16203a', cx - 12, 38, 24, 4); for (let y = 48; y < 50; y++) { const w = Math.round(15 + (y - 39) * 1.7); R(x, '#8a96a8', cx - w, y, w * 2, 1); } R(x, '#0e1420', cx, 42, 1, 14); },
+    fundo: (x, t) => { G(x, 0, 0, PW, PH, ['#05060c', '#0a0b17', '#121228', '#22182e', '#3a1c2a'], (X, Y) => Y / 70); const r = rnd(4); x.globalCompositeOperation = 'lighter'; for (let i = 0; i < 8; i++) brilho(x, r() * PW, 10 + r() * 30, 4 + r() * 5, r() < 0.6 ? 'rgba(230,130,60,0.14)' : 'rgba(80,200,230,0.12)', 1.5); x.globalCompositeOperation = 'source-over'; for (let i = 0; i < 26; i++) { const X = (i * 13 + t * 20) % PW, Y = (i * 31 + t * 80) % PH; P(x, 'rgba(150,170,215,0.5)', X, Y); P(x, 'rgba(150,170,215,0.4)', X - 1, Y + 2); } },
+    luz: (x, t) => brilho(x, 46, 48, 20, `rgba(90,220,240,${0.14 + 0.03 * Math.sin(t * 2)})`, 1, 0.9) },
+  { id: 'mecanico', n: 5, nome: 'Seu Ademir', quem: 'Mecânico. Ouviu o filho no rádio.',
+    pele: '#d8a878', peleS: '#b8885a', peleL: '#f0c49a', cabelo: '#8a8a8e', sobrancelha: '#7a7a7e', roupa: '#2a4a7a', roupaS: '#1e365a', roupaL: '#3a5e94', cansado: false, cabeloFn: grisalho,
+    rostoExtra: (x, cx, cy, ey) => { R(x, '#9a9a9e', cx - 4, ey + 6, 9, 2); R(x, '#b8b8bc', cx - 3, ey + 6, 7, 1); for (const [dx, dy] of [[-7, 8], [-6, 10], [5, 9], [7, 8], [-5, 11], [4, 11]]) P(x, '#a8805a', cx + dx, ey + dy); R(x, '#3a3430', cx + 5, ey + 3, 3, 1); P(x, '#3a3430', cx + 6, ey + 4); },
+    roupaExtra: (x, cx) => { R(x, '#6a6a6e', cx - 7, 39, 14, 6); R(x, '#5a5a5e', cx - 7, 39, 3, 6); R(x, '#2a4a7a', cx - 9, 44, 4, 12); R(x, '#2a4a7a', cx + 5, 44, 4, 12); R(x, '#c8c8d0', cx - 8, 45, 2, 2); R(x, '#c8c8d0', cx + 6, 45, 2, 2); R(x, '#a82a2a', cx + 13, 38, 9, 6); R(x, '#c83a3a', cx + 13, 38, 9, 1); R(x, '#1a1a1a', cx - 14, 50, 4, 2); },
+    fundo: (x, t) => { G(x, 0, 0, PW, PH, ['#0a0806', '#16120c', '#221a10', '#30241a'], (X, Y) => 0.2 + Math.max(0, 1 - Math.hypot((X - 18) / 50, (Y - 6) / 40)) * 0.8); for (let Y = 6; Y < 36; Y += 4) for (let X = 60; X < 90; X += 4) P(x, '#2a2218', X, Y); linha(x, '#3a3228', 66, 10, 72, 22); linha(x, '#3a3228', 78, 8, 78, 24); R(x, '#3a3228', 75, 8, 7, 2); const s = Math.sin(t * 1.4) * 3; linha(x, '#2a2a2a', 18, 0, 18 + s, 6); R(x, '#4a4232', 15 + s, 6, 7, 2); P(x, '#ffe8a0', 18 + s, 8); x.globalCompositeOperation = 'lighter'; brilho(x, 18 + s, 12, 34, 'rgba(255,210,120,0.10)'); x.globalCompositeOperation = 'source-over'; },
+    luz: (x, t) => brilho(x, 34, 18, 16, 'rgba(255,210,120,0.12)') },
+  { id: 'valadares', n: 6, nome: 'Augusto Valadares', quem: 'O dono da vacina. Lugar reservado no helicóptero.',
+    pele: '#e0b89a', peleS: '#c09878', peleL: '#f4d2b8', cabelo: '#b8bcc4', sobrancelha: '#8a8e98', roupa: '#1a1c24', roupaS: '#101218', roupaL: '#2a2c38', frio: true, sorriso: true, cabeloFn: prata,
+    rostoExtra: (x, cx, cy, ey) => { R(x, '#c8ccd4', cx - 8, ey - 1, 6, 1); R(x, '#c8ccd4', cx + 2, ey - 1, 6, 1); R(x, '#c8ccd4', cx - 2, ey, 4, 1); P(x, '#ffffff', cx - 3, ey); P(x, '#ffffff', cx + 7, ey); },
+    roupaExtra: (x, cx) => { for (let y = 39; y < PH; y++) { const w = Math.max(0, Math.round((y - 39) * 0.45)); R(x, '#e8e4dc', cx - 4 - w, y, 9 + w * 2, 1); } R(x, '#7a1a22', cx - 1, 40, 3, 16); R(x, '#5a1018', cx - 1, 40, 3, 2); linha(x, '#2a2c38', cx - 6, 40, cx - 12, 56); linha(x, '#2a2c38', cx + 6, 40, cx + 12, 56); R(x, '#c8a84a', cx - 15, 47, 2, 2); },
+    fundo: (x, t) => { G(x, 0, 0, PW, PH, ['#0a0c16', '#10142a', '#182040'], (X, Y) => Y / 80); for (let X = 0; X < PW; X++) { const h = 30 + Math.round(Math.abs(Math.sin(X * 0.7)) * 8); R(x, '#0a0a14', X, h + 14, 1, PH); } for (const fx of [14, 40, 70]) { x.globalCompositeOperation = 'lighter'; brilho(x, fx, 46, 10, `rgba(255,110,40,${0.18 + 0.06 * Math.sin(t * 7 + fx)})`); x.globalCompositeOperation = 'source-over'; P(x, '#ffb04a', fx, 46); } for (let X = 0; X < PW; X += 23) R(x, '#2a2e3a', X, 0, 2, PH); R(x, '#2a2e3a', 0, 30, PW, 1); R(x, 'rgba(160,190,230,0.06)', 0, 0, PW, PH); },
+    luz: (x) => brilho(x, 60, 20, 16, 'rgba(200,220,255,0.10)') }
+];
+
+/* ------------------------------ o fundo da tela (216 x 384) ------------------------------ */
+const fundo = document.getElementById('fundo'), fx = fundo.getContext('2d');
+const [base, bx] = novo(216, 384);
+(function () {
+  const r = rnd(5);
+  G(bx, 0, 0, 216, 384, ['#05060c', '#080912', '#0c0d1c', '#141228', '#1e1630', '#2e1a2c', '#46202c'], (X, Y) => (Y < 110 ? Y / 160 : (384 - Y) / 900 + 0.12) + Math.max(0, 1 - Math.hypot((X - 120) / 120, (Y - 96) / 40)) * 0.35);
+  for (let i = 0; i < 50; i++) P(bx, r() < 0.3 ? '#5a5f7a' : '#2a2d42', r() * 216, r() * 60);
+  for (let X = 0; X < 216;) { const w = 6 + Math.floor(r() * 12), h = 10 + Math.floor(r() * 34); R(bx, r() < 0.5 ? '#100f22' : '#131228', X, 104 - h, w, h + 6); for (let yy = 106 - h; yy < 104; yy += 3) for (let xx = X + 1; xx < X + w - 1; xx += 2) if (r() < 0.06) P(bx, '#d8963e', xx, yy); X += w + 1; }
+  bx.globalCompositeOperation = 'lighter'; for (const [px, py] of [[60, 96], [130, 92], [180, 100]]) brilho(bx, px, py, 30, 'rgba(255,100,40,0.16)'); bx.globalCompositeOperation = 'source-over';
+  R(bx, 'rgba(5,5,10,0.6)', 0, 108, 216, 276);
+})();
+const gotas = Array.from({ length: 140 }, () => ({ x: Math.random() * 230, y: Math.random() * 384, v: 160 + Math.random() * 80 }));
+const fogos = [[60, 96], [130, 92], [180, 100]];
+
+/* ------------------------------ os cards ------------------------------ */
+const grade = document.getElementById('grade');
+let liberado = false;
+const cards = HEROIS.map(h => {
+  const el = document.createElement('div'); el.className = 'card';
+  const cv = document.createElement('canvas'); cv.width = PW; cv.height = PH; cv.setAttribute('aria-label', 'Retrato de ' + h.nome);
+  el.innerHTML = '<span class="num"></span><span class="nome"></span><span class="quem"></span><span class="voto"><span class="barra"><i></i></span><span class="qtd">0</span></span>';
+  el.prepend(cv);
+  el.querySelector('.num').textContent = h.n;
+  grade.append(el);
+  return { h, el, cv, x: cv.getContext('2d'), pessoa: busto(h), votos: 0 };
+});
+function montarTextos() {
+  for (const c of cards) {
+    const trancado = c.h.id === 'valadares' && !liberado;
+    c.el.classList.toggle('trancado', trancado);
+    c.el.querySelector('.nome').textContent = trancado ? '???' : c.h.nome;
+    c.el.querySelector('.quem').textContent = trancado ? '' : c.h.quem;
+    c.el.querySelector('.cadeado')?.remove();
+    if (trancado) { const s = document.createElement('span'); s.className = 'cadeado'; s.textContent = '🔒 Chegue a um final com qualquer herói para liberar.'; c.el.append(s); }
+  }
+  document.getElementById('trava').textContent = liberado ? '🔒 Ver com o Valadares bloqueado' : '🔓 Ver com o Valadares liberado';
+}
+montarTextos();
+function desenharCard(c, t) {
+  const x = c.x, trancado = c.h.id === 'valadares' && !liberado;
+  c.h.fundo(x, t);
+  if (trancado) {
+    x.globalCompositeOperation = 'source-over';
+    R(x, 'rgba(4,4,8,0.72)', 0, 0, PW, PH);
+    const [s, sx] = novo(PW, PH); sx.drawImage(c.pessoa, 0, 0); sx.globalCompositeOperation = 'source-in'; R(sx, '#050508', 0, 0, PW, PH);
+    x.drawImage(s, 0, 0);
+    x.globalCompositeOperation = 'lighter'; brilho(x, 46, 26, 22, 'rgba(232,200,74,0.06)'); x.globalCompositeOperation = 'source-over';
+    // o "?"
+    for (const [dx, dy] of [[-2, -6], [-1, -7], [0, -7], [1, -7], [2, -6], [2, -5], [1, -4], [0, -3], [0, -2], [0, 1]]) R(x, '#3a3846', 45 + dx * 2, 26 + dy * 2, 2, 2);
+    return;
+  }
+  x.drawImage(c.pessoa, 0, 0);
+  x.globalCompositeOperation = 'lighter'; c.h.luz(x, t); x.globalCompositeOperation = 'source-over';
+  R(x, 'rgba(0,0,0,0.0)', 0, 0, 1, 1);
+}
+
+/* ------------------------------ som (só depois do clique) ------------------------------ */
+let AC = null, master;
+function ligarSom() {
+  if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
+  AC = new (window.AudioContext || window.webkitAudioContext)(); master = AC.createGain(); master.gain.value = 0.8; master.connect(AC.destination);
+  const n = AC.sampleRate * 2, b = AC.createBuffer(1, n, AC.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  const s = AC.createBufferSource(); s.buffer = b; s.loop = true; const hp = AC.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1000; const g = AC.createGain(); g.gain.value = 0.07; s.connect(hp).connect(g).connect(master); s.start();
+  const s2 = AC.createBufferSource(); s2.buffer = b; s2.loop = true; const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 110; const g2 = AC.createGain(); g2.gain.value = 0.25; s2.connect(lp).connect(g2).connect(master); s2.start(0.7);
+}
+function nota(f, q, dur, vol, tipo = 'sine') { if (!AC) return; const t0 = AC.currentTime + q, o = AC.createOscillator(), g = AC.createGain(); o.type = tipo; o.frequency.value = f; g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); o.connect(g).connect(master); o.start(t0); o.stop(t0 + dur + 0.05); }
+
+/* ------------------------------ a votação simulada ------------------------------ */
+const NICKS = ['ana.luz', 'pedrinho_77', 'jeh.santos', 'motoboy_sp', 'carol🌸', 'tio.zé', 'ruan.games', 'bia_m', 'leo.fps', 'dona.cida', 'kaio.r', 'mel_22', 'gui.zl', 'nanda.s'];
+const DUR = 15;
+let votando = false, tv = 0, proxVoto = 0, chat = [];
+const elSeg = document.getElementById('seg'), elTrilho = document.getElementById('trilho'), elChat = document.getElementById('chat'), elRes = document.getElementById('resultado');
+function zerar() { for (const c of cards) { c.votos = 0; c.el.classList.remove('venceu', 'perdeu'); c.el.querySelector('.barra i').style.width = '0%'; c.el.querySelector('.qtd').textContent = '0'; } elRes.hidden = true; chat = []; elChat.textContent = ''; }
+function votar() { ligarSom(); zerar(); votando = true; tv = 0; proxVoto = 0.3; }
+function registrarVoto() {
+  const pode = cards.filter(c => c.h.id !== 'valadares' || liberado);
+  const pesos = pode.map(c => (c.h.id === 'entregador' ? 1.5 : c.h.id === 'valadares' ? 1.3 : 1) + c.votos * 0.04);
+  let r = Math.random() * pesos.reduce((a, b) => a + b, 0), c = pode[0];
+  for (let i = 0; i < pode.length; i++) { r -= pesos[i]; if (r <= 0) { c = pode[i]; break; } }
+  c.votos++;
+  const total = cards.reduce((a, k) => a + k.votos, 0), max = Math.max(...cards.map(k => k.votos));
+  for (const k of cards) { k.el.querySelector('.barra i').style.width = (max ? k.votos / max * 100 : 0) + '%'; k.el.querySelector('.qtd').textContent = k.votos; }
+  chat.unshift([NICKS[Math.floor(Math.random() * NICKS.length)], c.h.n]); chat = chat.slice(0, 4);
+  elChat.innerHTML = ''; for (const [nick, n] of chat) { const s = document.createElement('span'); const b = document.createElement('b'); b.textContent = '@' + nick; s.append(b, ': ' + n); elChat.append(s); }
+  nota(900 + c.h.n * 90, 0, 0.06, 0.04, 'square');
+  return total;
+}
+function fecharVotacao() {
+  votando = false;
+  const pode = cards.filter(c => c.h.id !== 'valadares' || liberado);
+  const v = pode.reduce((a, b) => (b.votos > a.votos ? b : a));
+  for (const c of cards) c.el.classList.add(c === v ? 'venceu' : 'perdeu');
+  document.getElementById('vencedor').textContent = v.h.nome.toUpperCase();
+  document.getElementById('vencedor2').textContent = v.h.id === 'entregador' ? 'a introdução dele começa agora (a abertura do Moto 22)' : 'a introdução dele começa agora';
+  elRes.hidden = false;
+  nota(523, 0, 0.6, 0.09); nota(659, 0.12, 0.6, 0.08); nota(784, 0.24, 1, 0.08);
+}
+document.getElementById('votar').addEventListener('click', votar);
+document.getElementById('trava').addEventListener('click', () => { liberado = !liberado; zerar(); montarTextos(); votando = false; elSeg.textContent = DUR + 's'; elTrilho.style.width = '100%'; });
+
+/* ------------------------------ o quadro ------------------------------ */
+let ultimo = performance.now(), t = 0;
+function quadro(agora) {
+  const dt = Math.min(0.05, (agora - ultimo) / 1000); ultimo = agora; t += dt;
+  fx.drawImage(base, 0, 0);
+  for (const [px, py] of fogos) for (let k = 0; k < 5; k++) { const X = px - 3 + Math.floor(Math.random() * 7), a = 1 + Math.floor(Math.random() * 4); fx.fillStyle = Math.random() < 0.5 ? '#e8662a' : '#ffb04a'; fx.fillRect(X, py - a, 1, a); }
+  fx.fillStyle = 'rgba(150,170,215,0.32)';
+  for (const g of gotas) { g.y += g.v * dt; g.x -= g.v * dt * 0.25; if (g.y > 384) { g.y = -4; g.x = Math.random() * 236; } fx.fillRect(g.x | 0, g.y | 0, 1, 2); }
+  for (const c of cards) desenharCard(c, t);
+  if (votando) {
+    tv += dt; proxVoto -= dt;
+    while (proxVoto <= 0) { registrarVoto(); proxVoto += 0.12 + Math.random() * 0.35; }
+    const resta = Math.max(0, DUR - tv); elSeg.textContent = Math.ceil(resta) + 's'; elTrilho.style.width = (resta / DUR * 100) + '%';
+    if (resta <= 0) fecharVotacao();
+  }
+  requestAnimationFrame(quadro);
+}
+requestAnimationFrame(quadro);
+// estado de repouso: alguns votos já na tela, para o quadro parado mostrar como fica
+for (let i = 0; i < 9; i++) registrarVoto();
+})();
+</script>

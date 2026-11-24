@@ -47,12 +47,18 @@ O tom é sério, humano e às vezes com humor ácido. Por exemplo, o aplicativo 
 
 O jogo é o **Herói contra Hordas**, o artifact do herói. A história entra nele assim:
 
-1. **Tela de escolha do herói.** O jogo começa com uma tela que mostra **cada personagem com o rosto dele** (retrato em pixel art), o nome e uma frase de quem ele é. **O chat vota** em quem vai jogar. *(Hoje o jogo sorteia o personagem; isso vai mudar.)*
+1. **Tela de escolha do herói.** O jogo começa com uma tela que mostra **cada personagem com o rosto dele** (retrato em pixel art), o nome e uma frase de quem ele é. **O chat vota** em quem vai jogar, digitando o número dele. *(Hoje o jogo sorteia o personagem; isso vai mudar.)*
+   - Protótipo: https://claude.ai/artifact/RSz2CfCqEideXecKUURFKP (cópia em `historia/prototipos/escolha.html`).
+   - A tela segue o formato do jogo: **em pé (9:16)**, como na live. Cada herói tem um card com o retrato, o número, o nome, uma frase curta e a barra de votos. Embaixo ficam o tempo da votação e os votos chegando do chat. No fim, o mais votado fica em destaque: "O CHAT ESCOLHEU: KAUÃ".
+   - **O Valadares só é liberado depois que algum herói chegar a um final** (qualquer herói). Até lá, o card dele aparece trancado: a silhueta escura, "???" e "🔒 Chegue a um final com qualquer herói para liberar". Essa liberação fica guardada de uma partida para a outra.
 2. **A introdução do escolhido.** Uma cena de filme própria de cada herói, como a abertura do entregador: quem ele é, o dia do caos e para onde ele precisa ir. Se a introdução tiver uma escolha (como "Vó primeiro ou entregas 5×"), o chat vota ali.
 3. **A gameplay começa.** É o jogo de sempre: quarteirões, hordas, mapa, Barganha, encontros.
 4. **Fragmentos da história ao longo da partida.** Pequenas cenas e momentos da história daquele herói aparecem durante a gameplay, em pontos certos (um lugar do mapa, um encontro, um quarteirão). Exemplos: a farmácia da Rua 9 e o condomínio do entregador.
 5. **Os heróis se encontram.** Onde as histórias se cruzam (seção 10), um herói aparece na partida do outro, interage e às vezes segue junto por um tempo. **As decisões do chat fazem esses encontros acontecerem ou não.**
+   - **As decisões valem só dentro da partida (run).** Elas mudam a sequência de acontecimentos daquela run, mas **não passam para a próxima**. Cada partida começa a história do zero; a única coisa que fica guardada é a liberação do Valadares.
 6. **O fim da partida.** Se chegar no objetivo, vem o final daquele herói. Se morrer, vem a tela de morte em máquina de escrever. Depois a tela de escolha volta, e o chat escolhe o próximo herói.
+
+**O formato das cenas no jogo:** o jogo é vertical (9:16), e as cenas de filme do entregador foram desenhadas deitadas (16:10, como cinema). No jogo, elas aparecem como **uma faixa de cinema no meio da tela em pé**, com tarjas pretas em cima e embaixo, e a legenda e a votação na tarja de baixo. Os retratos e as telas do próprio jogo (escolha, votação) são desenhados em pé.
 
 ## 4. O mundo: Porto Sereno
 
@@ -62,7 +68,8 @@ Tudo se passa na cidade de **Porto Sereno**, na terceira noite da **Febre Cinza*
 |---|---|
 | **Febre Cinza** | Febre de 41 graus e pele acinzentada. Quem morre levanta. Os infectados seguem o barulho e não sentem dor. |
 | **AURORA-7** | Vacina distribuída de graça nas farmácias. O lote 7 foi liberado **antes dos testes, por lucro**. Ela não cura a febre: impede o corpo de morrer de verdade. **Importante:** o vilão é a ganância da empresa que pulou os testes, nunca a vacinação em si. A história não pode virar mensagem contra vacinas. |
-| **Instituto Aurora** | A empresa da vacina. O maior acionista é **Augusto Valadares**, o rico (seção 9). |
+| **Instituto Aurora** | A empresa da vacina. O maior acionista é **Augusto Valadares** (seção 9), **o antagonista de todas as histórias**. |
+| **Augusto Valadares** | **O responsável pela crise.** Manipulou a liberação da vacina pelo lucro e, **sem querer**, transformou a população em zumbis. Ele não queria o apocalipse: queria o dinheiro. Aparece em todas as histórias como antagonista (seção 10). |
 | **Dra. Lívia Prado** | Cientista do Instituto. Avisou que o lote 7 não estava pronto e foi calada. Tem um laboratório no subsolo do Hospital Central. |
 | **Hospital Central** | Onde a enfermeira trabalha. A explosão do primeiro dia vem do laboratório no subsolo. |
 | **Operação Farol** | Resgate de helicóptero na Torre de Rádio. **Segredo:** tem uma lista, e autoridades e quem pagou embarcam primeiro. Quem descobre é a bombeira. |
@@ -107,6 +114,18 @@ A referência é a imagem `historia/referencia-visual.jpg`: pixel art escura e p
   - pings do celular, interfone, freada e batida, batida de coração nos momentos de decisão.
 
 ## 6. O elenco da live
+
+**Os nomes originais** (propostos e usados no protótipo da tela de escolha; o dono ainda pode trocar):
+
+| # | Herói | Nome original | Quem está na história dele |
+|---|---|---|---|
+| 1 | Enfermeira | **Daiane**, 33 anos | Duda (a filha, 9 anos), seu Jorge (o vizinho) |
+| 2 | Policial | **Sargento Edson**, 41 anos | Dona Zezé (a mãe) |
+| 3 | Bombeira | **Tati** (Tatiane), 34 anos | Rafa (o parceiro) |
+| 4 | Entregador | **Kauã**, 22 anos | Vó Dita (a avó) |
+| 5 | Mecânico | **Seu Ademir**, 54 anos | Beto (o filho, da Rádio Resistência) |
+| 6 | O rico (liberado depois) | **Augusto Valadares**, 61 anos | os 3 seguranças |
+
 
 Todo mundo que está na live vira personagem da história.
 
@@ -229,6 +248,8 @@ Os números, as ruas e a causa da morte vêm da partida de verdade.
 - **Final feliz (sugestão):** ele conserta o gerador que mantém a rádio no ar. Pela primeira vez, pai e filho fazem algo juntos.
 
 ### 💼 O Rico: Augusto Valadares, 61 anos (personagem novo, rascunho; final aprovado)
+- **Liberação (decidido):** só aparece na tela de escolha **depois que algum herói chegar a um final**.
+- **O antagonista de todos (decidido):** ele é **o responsável pela crise**. Manipulou a vacina pelo lucro e, **sem querer**, transformou a população em zumbis. Nas histórias dos outros, ele é o vilão por trás de tudo; quando é jogado, é a vez de ver o mesmo homem por dentro.
 - **Quem é:** maior acionista do Instituto Aurora. **Foi ele quem forçou a liberação do lote 7 antes dos testes**, pelo lucro.
 - **Jogo:** começa com armas fortes (metralhadora e colete) e **3 seguranças armados** (aliados), pagos a cada quarteirão. Se a grana acabar, ou ele se recusar a pagar, eles vão embora: *"O senhor não paga o suficiente pra eu morrer pelo senhor."*
 - **Objetivo:** o heliponto da Torre Valadares, onde a Operação Farol guarda um lugar para ele.
@@ -245,10 +266,12 @@ Os números, as ruas e a causa da morte vêm da partida de verdade.
 | Bombeira | Policial, Mecânico, Valadares | Aliada por alguns quarteirões; conta da lista da Operação Farol. |
 | Beto (Rádio Resistência) | Todos (fragmentos de rádio) e Mecânico | A voz no rádio; o objetivo do mecânico. |
 | Dra. Lívia / Instituto Aurora | Enfermeira (a explosão), Valadares (a culpa) | O mistério da vacina. |
+| **Valadares (antagonista)** | **Todos** | Sugestões, a aprovar: na enfermeira, o Hospital Central recebeu ordem dele para esconder os casos; no policial, a ordem de isolar o morro protege os condomínios dele; na bombeira, a lista da Operação Farol tem o nome dele no topo; no entregador, o Jardins do Mirante é dele (o cliente do 1204 é ele, ou alguém da família); no mecânico, a Rádio Resistência é quem denuncia a culpa dele. |
 
 ## 11. O que falta (próximos passos)
 
-0. **Tela de escolha do herói** com o rosto de cada personagem e a votação do chat: fazer o protótipo para aprovação.
+0. **Tela de escolha do herói:** protótipo feito, esperando aprovação.
+0. **Acertar um detalhe com os fragmentos que já existem no jogo:** o fragmento "Diário de uma entregadora" é assinado "— Jéssica, moto 22", e o nosso entregador é o Kauã, "Moto 22". Sugestão: trocar a assinatura para "— Kauã, moto 22", ou fazer da Jéssica uma colega dele de aplicativo.
 
 1. **Enfermeira, policial, bombeira, mecânico e Valadares:** fazer o roteiro detalhado e a sequência de cenas de cada um, no mesmo estilo do entregador, um por vez e sempre com aprovação antes. Começar pela abertura e pela escolha de cada um.
 2. **Levar a história para o jogo**, quando aprovado:
