@@ -286,6 +286,8 @@ export class Hud {
       case 'vida_baixa': this.banner('⚠️ VIDA BAIXA!', 'mande 🌹 ou 🍩 pra salvar o herói', 'perigo', 2.2); break;
       case 'decisao': this.resultado = { ...e, ate: performance.now() + RESULTADO_SEG * 1000, chave: `${e.id}:${performance.now()}` }; this.cache.vmodo = null; break;
       case 'cabo_virou': if (e.lado) this.banner(e.lado === 'ajuda' ? '🛡️ AJUDANTES NA FRENTE!' : '😈 ATRAPALHANTES NA FRENTE!', e.lado === 'ajuda' ? `${e.ajuda || 'o top ajudante'} puxou o cabo: sorte, suprimentos nos cadáveres` : `${e.atrapalha || 'o top atrapalhante'} puxou o cabo: mais zumbis e mais fortes`, e.lado === 'ajuda' ? 'bom' : 'perigo', 2.6); break;
+      // a introdução (prologo.js) acabou: agora sim o cartão do herói (e o caminho que o chat escolheu)
+      case 'prologo_fim': if (e.abertura) { this.intro({ n: g.hero.n, classe: g.hero.classe, viewer: g.hero.viewer, exHeroi: !!g.ultimoHeroi && g.exHeroiT > 0, exNome: g.ultimoHeroi?.viewer?.nick || null }, g); if (e.caminho === 'vo') $('i-arma').textContent = '✋ Sem arma nenhuma · muita esquiva e velocidade'; else if (e.caminho === 'entregas') $('i-arma').textContent = '🛵 De moto · atropela zumbi e junta grana (5×)'; } break;
       case 'novo_heroi': this.intro(e, g); $('over').hidden = true; this.histT = 0; $('h-hist').hidden = true; break;
       case 'heroi_morreu': this.relatorio(e.relatorio, e.hall, g); break;
       case 'arma': if (e.id === 'escopeta' && e.quem) this.banner('💥 ESCOPETA!', `presente de ${e.quem}`, 'bom', 1.8); if (e.id === 'taco') this.banner('🏏 TACO COM PREGOS!', e.quem ? `presente de ${e.quem}` : '', 'bom', 1.8); break;

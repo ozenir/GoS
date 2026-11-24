@@ -209,6 +209,7 @@ export class Render {
         break;
       }
       case 'pavio': this.texto(e.x, e.y, '💣', '#fff'); break;
+      case 'atropelou': this.texto(e.x, e.y, '+R$' + e.valor, '#7ee08a'); this.shake = Math.max(this.shake, 2); break;
     }
   }
 
@@ -940,6 +941,21 @@ export class Render {
     if (z.nome) this.nomes.push({ x: sx, y: sy - (z.estados.lista.size ? 21 : 14), txt: z.nome, cor: z.dono ? ROXO_ATRAPALHA : '#ffd8a8' });
   }
 
+  // Moto vista de lado, virada pra `lado` (1 direita, -1 esquerda), com o pé do herói em (x, y)
+  desenharMoto(ctx, x, y, lado, andando) {
+    const P = (dx, dy, w, h, cor) => { ctx.fillStyle = cor; ctx.fillRect(Math.round(x + (lado > 0 ? dx : -dx - w)), Math.round(y + dy), w, h); };
+    const tre = andando ? Math.round(Math.sin(this.t * 40)) * 0.5 : 0;
+    // rodas
+    for (const wx of [-9, 8]) { P(wx - 3, -5, 6, 5, '#0c0c10'); P(wx - 2, -4, 4, 3, '#2a2a32'); P(wx - 1, -3, 1, 1, '#8a8a96'); }
+    // corpo, banco, tanque, farol
+    P(-8, -9 + tre, 15, 3, '#5a1e1a'); P(-6, -10 + tre, 12, 1, '#8a3226'); P(0, -11 + tre, 6, 2, '#a8402a');
+    P(-9, -10 + tre, 7, 1, '#121216'); P(-12, -7 + tre, 5, 1, '#3a3a44');
+    P(6, -12 + tre, 2, 7, '#4a4a54'); P(6, -13 + tre, 4, 1, '#2a2a32'); P(9, -10 + tre, 2, 2, '#ffe8a0');
+    // baú de entrega atrás
+    P(-15, -19 + tre, 8, 9, '#9a4a1e'); P(-15, -19 + tre, 7, 8, '#c8642a'); P(-15, -19 + tre, 7, 1, '#e0884a'); P(-13, -16 + tre, 3, 2, '#f4e0c0');
+    // fumaça do escapamento
+  }
+
   desenharHeroi(g) {
     const h = g.hero, ctx = this.ctx;
     const set = S.spriteHeroi(CLASSES[h.classe].roupa);
@@ -974,6 +990,8 @@ export class Render {
       ctx.globalAlpha = 0.25 + 0.2 * k; disc(ctx, ax, ay - 8, 15 + k * 4, '#ffd23f', 0.8); ctx.globalAlpha = 1;
       if (Math.random() < 0.4) this.particula({ x: h.x + (Math.random() - 0.5) * 0.8, y: h.y + (Math.random() - 0.5) * 0.8, z: 0.3, vz: 2, g: -0.5, life: 0.7, cor: Math.random() < 0.5 ? '#fff3a0' : '#ffd23f', tam: 1 });
     }
+    // de moto (o entregador no caminho das entregas, core/prologo.js): a moto por baixo, o baú laranja atrás
+    if (h.moto) { const [mx, my] = this.tela(h.x, h.y), [ddx] = this.dirTela(h.fx, h.fy); this.desenharMoto(ctx, mx, my, ddx >= 0 ? 1 : -1, h.andando); }
     const [sx, sy] = this.pessoa(spr, h.x, h.y, 1, g.fase === 'jogo' ? 1 : 0.6);
     this.heroiSpr = [sx, sy, spr];
     if ((h.invT > 0 || h.invQ > 0) && Math.floor(this.t * 10) % 2) { ctx.globalAlpha = 0.55; ctx.drawImage(this.branco(spr), sx - S.PE_X, sy - S.PE_Y); ctx.globalAlpha = 1; }

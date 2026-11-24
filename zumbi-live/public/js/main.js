@@ -7,6 +7,7 @@ import { Render } from './view/render.js';
 import { Hud } from './view/hud.js';
 import { Som } from './view/som.js';
 import { Sujeira } from './view/sujeira.js';
+import { TelaHistoria } from './view/escolha.js';
 import { TelaFX } from './view/tela.js';
 import { ZUMBIS_TELA } from './core/tela.js';
 import { PRESENTES_PADRAO, SEGUIR_PADRAO, COMPARTILHAR_PADRAO, JOGO_PADRAO } from './catalogo.js';
@@ -20,12 +21,14 @@ const isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const guardado = (k, padrao) => { try { const v = JSON.parse(localStorage.getItem('hch.' + k)); return v ?? padrao; } catch { return padrao; } };
 const guardar = (k, v) => { try { localStorage.setItem('hch.' + k, JSON.stringify(v)); } catch { /* sem armazenamento: tudo bem */ } };
 
-const jogo = new Jogo({ recorde: guardado('recorde', 0), hall: guardado('hall', []), heroiN: guardado('heroiN', 0), historiaVista: guardado('historia', []) });
+// historia: 1 → o jogo abre na escolha do herói pelo chat, com a introdução de cada um (core/prologo.js)
+const jogo = new Jogo({ historia: 1, valadaresLiberado: guardado('valadares', false), recorde: guardado('recorde', 0), hall: guardado('hall', []), heroiN: guardado('heroiN', 0), historiaVista: guardado('historia', []) });
 jogo.configurar(JOGO_PADRAO);
 const render = new Render($('game'), $('texto'));
 const hud = new Hud();
 const som = new Som();
-const sujeira = new Sujeira($('sujeira'));   // tomate no vidro (zumbi do tomate)
+const sujeira = new Sujeira($('sujeira'));
+const telaHistoria = new TelaHistoria();   // escolha do herói, cinema da introdução, votação do caminho   // tomate no vidro (zumbi do tomate)
 // zumbis da tela (core/tela.js): a arte fica em view/tela.js; a camada de baixo fica por baixo do painel
 const telaFX = new TelaFX({ cima: $('sujeira'), baixo: $('tela-baixo'), jogo: [$('game'), $('texto')], sujeira, render, som: id => som.telaSom(id) });
 window.telaFX = telaFX;
@@ -328,6 +331,7 @@ function tocarEvento(e, g) {
       break;
     }
     case 'janela': som.janela(longe(e, g), e.texto, e.socorro); break;
+    case 'atropelou': som.morteZumbi(false, 0, 'comum'); som.grana(); break;   // de moto (prologo.js)
     // o Barganha e a grana (mascate.js); quem foi salvo e virou zumbi ou não resistiu (encontros.js)
     case 'mascate': som.mascate(e.fase, longe(e, g)); if (e.fase === 'chegou') som.encontro(); break;
     case 'grana': if (e.valor > 0) som.grana(); break;
@@ -360,6 +364,8 @@ function loop(agora) {
     } catch (err) { console.error('evento', e.type, err); }
   }
   render.draw(jogo, dt);
+  if (som.ac) telaHistoria.usarAudio(som.ac, som.fx);
+  telaHistoria.update(jogo, dt);
   sujeira.desenhar(dt);
   telaFX.desenhar(dt, jogo);
   hud.update(jogo, dt);
@@ -395,7 +401,7 @@ function loop(agora) {
   som.crepitar(dt, fogoD);
   // alarmes de carro tocando: acompanham a distância do herói até o carro
   som.atualizarAlarmes(p => [Math.hypot(p.x - h.x, p.y - h.y), ladoNaTela(p.x, p.y)]);
-  som.cenario(dt, { periodo: jogo.periodo || 'manha', dentro: !!jogo.room, praia: !!jogo.room?.praia, parque: jogo.bairroAtual === 'parque', perigo: clamp(perto / 12, 0, 1) });
+  som.cenario(dt, { mudo: !!jogo.prologo, periodo: jogo.periodo || 'manha', dentro: !!jogo.room, praia: !!jogo.room?.praia, parque: jogo.bairroAtual === 'parque', perigo: clamp(perto / 12, 0, 1) });
   som.musica(jogo.fase === 'jogo' ? clamp(perto / 18 + (1 - pct) * 0.4 + (jogo.ehNoite() ? 0.25 : 0) + chefe * 0.4, 0, 1) : 0, dt, jogo.fase === 'jogo' && pct < 0.5 ? clamp((0.5 - pct) / 0.5, 0.05, 1) : 0);
   if (jogo.fase === 'jogo' && pct < 0.3) { coracaoT -= dt; if (coracaoT <= 0) { coracaoT = pct < 0.15 ? 0.55 : 0.85; som.coracao(); } }
   // tique dos últimos segundos da votação

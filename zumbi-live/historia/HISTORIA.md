@@ -45,7 +45,25 @@ O tom é sério, humano e às vezes com humor ácido. Por exemplo, o aplicativo 
 
 ## 3. Como a história acontece dentro do jogo (estrutura decidida)
 
-O jogo é o **Herói contra Hordas**, o artifact do herói. A história entra nele assim:
+O jogo é o **Herói contra Hordas**, o artifact do herói. A história entra nele assim.
+
+**Já está no jogo (versão 2.3.0):**
+- a escolha do herói pelo chat;
+- o filme de abertura do entregador e a votação do caminho;
+- a moto (atropela, ganha grana, o chat vota a direção) e a queda ("A poça");
+- o cartão de introdução de quem ainda não tem filme.
+
+A parte técnica fica em `public/js/core/prologo.js`, e os desenhos em `public/js/view/escolha.js`, `retratos.js` e `cinema.js`.
+
+**Ainda falta no jogo:**
+- os capítulos do meio da partida (a farmácia, o condomínio) como fragmentos;
+- o final "O fim da linha";
+- a tela de morte em máquina de escrever;
+- os nomes dos personagens secundários vindos da live (hoje só o herói ganha o nome de quem doou);
+- o comando !ela / !ele;
+- a liberação do Valadares.
+
+As etapas:
 
 1. **Tela de escolha do herói.** O jogo começa com uma tela que mostra **cada personagem com o rosto dele** (retrato em pixel art), o nome e uma frase de quem ele é. **O chat vota** em quem vai jogar, digitando o número dele. *(Hoje o jogo sorteia o personagem; isso vai mudar.)*
    - Protótipo: https://claude.ai/artifact/RSz2CfCqEideXecKUURFKP (cópia em `historia/prototipos/escolha.html`).
@@ -270,7 +288,7 @@ Os números, as ruas e a causa da morte vêm da partida de verdade.
 
 ## 11. O que falta (próximos passos)
 
-0. **Tela de escolha do herói:** protótipo feito, esperando aprovação.
+0. **Tela de escolha do herói:** aprovada e no jogo (versão 2.3.0), junto com o prólogo do entregador e os dois caminhos.
 0. **Acertar um detalhe com os fragmentos que já existem no jogo:** o fragmento "Diário de uma entregadora" é assinado "— Jéssica, moto 22", e o nosso entregador é o Kauã, "Moto 22". Sugestão: trocar a assinatura para "— Kauã, moto 22", ou fazer da Jéssica uma colega dele de aplicativo.
 
 1. **Enfermeira, policial, bombeira, mecânico e Valadares:** fazer o roteiro detalhado e a sequência de cenas de cada um, no mesmo estilo do entregador, um por vez e sempre com aprovação antes. Começar pela abertura e pela escolha de cada um.

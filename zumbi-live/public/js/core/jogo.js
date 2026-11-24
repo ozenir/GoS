@@ -38,6 +38,7 @@ import { LOJAS } from './room.js';
 import { lugaresDaViagem, rotaAte, ruaLivre, pontosDaRota } from './mapa.js';
 import { ENCONTROS, criarEncontro, decidirEncontro, escolhaEncontroIA, atualizarEncontro, voltaramComoZumbi, quarteiraoDosSalvos, salvosChegaram } from './encontros.js';
 import { atualizarCenario } from './cenario.js';
+import { abrirEscolha, atualizarPrologo, votoPrologo, atualizarMoto } from './prologo.js';
 import { MASCATE, talvezMascate, mascateAtivo, atualizarMascate, decidirMascate, escolhaMascateIA, pontoDoNegocio } from './mascate.js';
 
 export const PADRAO = {
@@ -104,6 +105,9 @@ export class Jogo {
     this.S = { ...JSON.parse(JSON.stringify(SOBREVIVENCIA)), cenaLigada: opts.cena ?? 1 };
     this.S.mapa = opts.mapa ?? 1;   // viagem pelo mapa (mapa.js): o chat escolhe pra onde ir, não a direção
     this.S.mascate = opts.mascate ?? 1;   // o comerciante ambulante e a grana (mascate.js)
+    this.S.historia = opts.historia ?? 0;  // história (prologo.js): escolha do herói pelo chat, introdução e caminhos
+    this.prologo = null;
+    this.valadaresLiberado = !!opts.valadaresLiberado;   // o Valadares aparece na escolha depois de um final
     if (opts.sobrevivencia === false) Object.assign(this.S, { cenaLigada: 0, rampaInicio: 1, calmaVel: 1, tempoMin: 1, xpRampa: 0, quarteiroesAteCheio: 0, destinoChance: 0, mapa: 0, mascate: 0, duelo: { ...this.S.duelo, max: 0 } });
     this.chances = { ...CHANCES_PADRAO };
     this.historia = new Historia(opts.historiaVista);
@@ -148,10 +152,12 @@ export class Jogo {
   }
 
   /* =================== Rodadas =================== */
-  novoHeroi() {
+  // classeEscolhida: quem o chat escolheu (prologo.js). Sem ela, com a história ligada, abre a tela de escolha
+  // (o herói sorteado aqui só fica parado por trás da tela até o chat decidir).
+  novoHeroi(classeEscolhida = null) {
     this.heroiN++;
     const ids = Object.keys(CLASSES).filter(c => c !== this.hero?.classe);
-    const classe = this.classeFixa || this.rng.pick(ids);
+    const classe = classeEscolhida && CLASSES[classeEscolhida] ? classeEscolhida : this.classeFixa || this.rng.pick(ids);
     const C = CLASSES[classe];
     this.city = new City(this.rng.int(1, 1e9));
     this.map = this.city;
@@ -247,10 +253,18 @@ export class Jogo {
     this.curaGolpes = 0;
     this.emit('novo_heroi', { n: this.heroiN, classe, nome: C.nome, emoji: C.emoji, exHeroi: !!this.ultimoHeroi, viewer: this.hero.viewer, exNome: this.ultimoHeroi?.viewer?.nick || null });
     // Presentes que ajudam e chegaram enquanto o herói anterior estava morto valem para o novo
-    const pend = this.pendentesAjuda.splice(0);
-    for (const p of pend) this.agendar(2 + this.rng.next(), () => this.comPresente(p.quem, () => EFEITOS[p.regra.efeito].aplicar(this, p.regra, p.qtd, p.quem)));
+    this.aplicarPendentes();
     // 1º quarteirão: a cena (um zumbi devorando alguém). A votação da direção só abre depois da luta.
     if (this.S.cenaLigada && montarCena(this)) this.votoAbreT = 1e9;
+    this.prologo = null;
+    // história ligada: o chat escolhe o herói (prologo.js)
+    if (this.S.historia && !classeEscolhida && !this.classeFixa) abrirEscolha(this);
+  }
+
+  // Presentes de ajuda que chegaram sem herói em jogo (morto, ou na escolha / introdução): valem agora
+  aplicarPendentes() {
+    const pend = this.pendentesAjuda.splice(0);
+    for (const p of pend) this.agendar(2 + this.rng.next(), () => this.comPresente(p.quem, () => EFEITOS[p.regra.efeito].aplicar(this, p.regra, p.qtd, p.quem)));
   }
 
   morrer() {
@@ -387,6 +401,8 @@ export class Jogo {
   update(dt) {
     // portal dos 500 aberto: a rua fica PAUSADA (nem o tempo da ameaça corre); só o minijogo anda
     if (this.portal) { this.atualizarPortal(dt); return; }
+    // prólogo (escolha do herói, introdução, a queda da moto): a rua também fica PAUSADA (prologo.js)
+    if (this.prologo) { atualizarPrologo(this, dt); return; }
     this.t += dt;
     this.faseT += dt;
     for (let i = this.agendados.length - 1; i >= 0; i--) {
@@ -417,6 +433,7 @@ export class Jogo {
     this.processarFila(dt);
     this.zumbisDeQuemEntrou(dt);
     this.atualizarHeroi(dt);
+    if (this.hero.moto && this.fase === 'jogo' && !this.caido) atualizarMoto(this, dt, ZUMBIS);   // de moto: atropela (prologo.js)
     if (this.fase === 'jogo' && !this.caido) { this.atualizarEscolha(dt); atualizarHabilidades(this, dt); atualizarReliquia(this, dt); this.checarPortal(); }
     this.atualizarFigurantes(dt);
     this.atualizarAliados(dt);
@@ -1182,6 +1199,7 @@ export class Jogo {
   areaLimpa(dt) {
     const A = this.A;
     if (A.areaRaio <= 0) return true;
+    if (this.hero.moto) { this.limpando = null; return true; }   // de moto não para: passa por cima (prologo.js)
     const restam = this.zumbisNaArea();
     if (!restam) {
       if (this.limpando) this.emit('area_limpa', { segundos: Math.round(this.limpando.t) });
@@ -3300,6 +3318,7 @@ export class Jogo {
       case 'chat': {
         this.lembrarNome(m.id, m.nick);
         this.torcida.set(m.id, this.t);
+        if (votoPrologo(this, m)) break;   // na escolha do herói (ou do caminho), o número vota lá
         const op = lerVoto(m.texto);
         const V = this.portal ? this.portal.voto : this.voto;   // no portal, 1 2 3 votam no portal
         if (op && V && V.aberta && this.fase === 'jogo') {

@@ -876,6 +876,8 @@ export class Som {
   cenario(dt, e) {
     if (!this.running || !this.vento) return;
     const t = this.ac.currentTime, noite = e.periodo === 'noite' || e.periodo === 'madrugada';
+    // mudo: a história está na tela (view/cinema.js tem o som dela)
+    if (e.mudo) { for (const g of [this.vento.g, this.cidade.g, this.mar.g, this.lampada]) g.gain.setTargetAtTime(0, t, 0.8); return; }
     const fora = !e.dentro;
     this.espaco(e.dentro && !e.praia ? 'sala' : 'rua');
     this.vento.g.gain.setTargetAtTime(fora ? (noite ? 0.075 : 0.055) * (e.parque ? 1.3 : 1) : 0.008, t, 1.5);

@@ -6,7 +6,7 @@
 <title>Herói contra Hordas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Pixelify+Sans:wght@500;700&display=swap" rel="stylesheet">
 <style>
 /* Uma tela só: o jogo 9:16 ocupa a altura disponível; os botões de teste ficam embaixo (somem na live, com #live no endereço). */
 :root{
@@ -417,6 +417,56 @@ body.foco .app{padding-block:8px}
 .snd-hint{position:absolute;left:50%;top:92cqw;transform:translateX(-50%);font:600 3cqw var(--font-display);background:#2a2238;color:#fff;padding:1cqw 3cqw;border-radius:99px;white-space:nowrap}
 .sem-rede{position:absolute;right:3cqw;bottom:46cqw;font:600 2.6cqw var(--font-display);background:rgba(184,40,30,.9);color:#fff;padding:.8cqw 2.4cqw;border-radius:99px}
 @media (prefers-reduced-motion: reduce){.sp,.sp.out,.toast,.toast.out,.over-card,.intro,.intro.out,.banner .bt,.cta,.caido,.caido .cd,.escolha,.hb.novo,.av em.up{animation:none}}
+
+/* ---------- a história: escolha do herói e cinema (view/escolha.js) ---------- */
+.frame.em-prologo .hud,.frame.em-prologo #texto{visibility:hidden}
+.pro{position:absolute;inset:0;z-index:30;font-family:var(--f-pixel,'Pixelify Sans'),ui-monospace,monospace}
+.pro-escolha{position:absolute;inset:0;display:grid;grid-template-rows:auto 1fr auto;gap:2.4cqw;padding:4cqw 3.4cqw 3.4cqw;background:radial-gradient(120% 60% at 55% 12%,rgba(110,40,30,.55),rgba(6,6,12,.93) 55%),rgba(6,6,12,.9)}
+.pe-topo{text-align:center;display:grid;gap:.8cqw}
+.pe-noite{font-size:3cqw;letter-spacing:.25em;color:#c8a88a}
+.pe-pergunta{font-weight:700;font-size:5.6cqw;line-height:1.05;color:#fff;text-shadow:0 .6cqw 0 #000}
+.pe-dica{font-family:Inter,system-ui,sans-serif;font-size:3.1cqw;color:#cfcad6}
+.pe-dica b{color:#e8c84a}
+.pe-grade{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:2.2cqw;min-height:0}
+.pe-card{position:relative;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;background:rgba(10,10,16,.9);border:.5cqw solid #2a2836;min-height:0;overflow:hidden;transition:transform .5s,border-color .3s,filter .5s}
+.frame .pe-card canvas{position:static;inset:auto;width:100%;height:auto;aspect-ratio:92/56;image-rendering:pixelated;display:block}
+.pe-num{position:absolute;top:1cqw;left:1cqw;width:6.4cqw;height:6.4cqw;display:grid;place-items:center;font-weight:700;font-size:4.4cqw;background:#e8c84a;color:#1a1405;box-shadow:0 .5cqw 0 #6a5a12}
+.pe-nome{font-weight:700;font-size:3.6cqw;line-height:1.1;padding:.8cqw 1.6cqw 0;color:#fff}
+.pe-quem{font-family:Inter,system-ui,sans-serif;font-size:2.35cqw;line-height:1.2;padding:.2cqw 1.6cqw 0;color:#b8b2c0;overflow:hidden}
+.pe-voto{display:grid;grid-template-columns:1fr auto;align-items:center;gap:1cqw;padding:.6cqw 1.6cqw 1.2cqw}
+.pe-barra{height:1.6cqw;background:#1e1c28;overflow:hidden}
+.pe-barra i{display:block;height:100%;width:0;background:#e8c84a;transition:width .35s}
+.pe-qtd{font-size:3cqw;color:#e8c84a;min-width:4ch;text-align:right;font-variant-numeric:tabular-nums}
+.pe-card.trancado .pe-nome{color:#6a6676}
+.pe-card.trancado .pe-num{background:#3a3846;color:#7a7686;box-shadow:none}
+.pe-card.trancado .pe-voto{display:none}
+.pe-card.venceu{border-color:#e8c84a;transform:scale(1.03);z-index:2;box-shadow:0 0 0 .6cqw rgba(232,200,74,.25),0 0 6cqw rgba(232,200,74,.35)}
+.pe-card.perdeu{filter:brightness(.32) saturate(.4)}
+.pe-tempo{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:1.6cqw;font-size:3.2cqw;color:#fff}
+.pe-trilho{height:1.6cqw;background:#1e1c28}
+.pe-trilho i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#e8853a,#e8c84a);transition:width .25s linear}
+.pe-res{position:absolute;left:0;right:0;top:0;display:grid;justify-items:center;align-content:center;gap:.8cqw;padding:4cqw 3cqw;min-height:27cqw;background:linear-gradient(180deg,rgba(5,5,10,.97) 75%,rgba(5,5,10,0));text-align:center;z-index:3}
+.pe-res .t1{font-size:3.2cqw;letter-spacing:.2em;color:#e8c84a}
+.pe-res .t2{font-weight:700;font-size:6.6cqw;color:#fff;text-shadow:0 .6cqw 0 #000}
+.pe-res .t3{font-family:Inter,system-ui,sans-serif;font-size:3cqw;color:#cfcad6}
+.pro-cinema{position:absolute;inset:0;background:#000;display:grid;grid-template-rows:1fr auto auto 1fr;align-items:center;justify-items:center}
+.cine-quem{align-self:end;padding-bottom:3cqw;font-size:3cqw;letter-spacing:.25em;color:#8f8a98}
+.cine-tela{width:100%;aspect-ratio:16/10}
+.frame .cine-tela canvas{position:static;inset:auto;width:100%;height:100%;image-rendering:pixelated;display:block}
+.cine-leg{min-height:15cqw;padding:3cqw 5cqw 0;text-align:center;font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:4cqw;line-height:1.35;color:#fff;opacity:0;transition:opacity .6s;text-wrap:balance}
+.cine-leg.on{opacity:1}
+.cine-leg.fala{font-style:italic}
+.cine-voto{align-self:start;width:100%;display:grid;gap:2cqw;padding:2cqw 4cqw 4cqw}
+.cv-tit{text-align:center;font-size:3.6cqw;color:#fff}
+.cv-ops{display:grid;gap:2cqw}
+.cv-op{display:grid;gap:.8cqw;background:rgba(14,14,22,.95);border:.5cqw solid #3a3646;padding:2cqw 2.4cqw;transition:filter .4s,border-color .3s}
+.cv-op b{display:flex;align-items:center;gap:1.6cqw;font-size:3.8cqw;color:#fff}
+.cv-op .n{display:inline-grid;place-items:center;width:5.6cqw;height:5.6cqw;background:#e8853a;color:#1a0d05}
+.cv-op.fria .n{background:#59d6e6;color:#04232a}
+.cv-op .d{font-family:Inter,system-ui,sans-serif;font-size:2.8cqw;color:#a8a2b4}
+.cv-op .pe-voto{padding:0}
+.cv-op.venceu{border-color:#e8c84a}
+.cv-op.perdeu{filter:brightness(.35)}
 </style>
 </head>
 <body>
@@ -507,6 +557,30 @@ body.foco .app{padding-block:8px}
               </div>
             </div>
             <div class="o-next">Próximo: <b id="o-prox">sobrevivente</b> em <b id="o-count">20</b></div>
+          </div>
+        </div>
+      </div>
+      <!-- a história (core/prologo.js + view/escolha.js): escolha do herói pelo chat, o cinema da introdução,
+           a votação do caminho e a queda da moto. Fica por cima de tudo e some quando a partida começa. -->
+      <div class="pro" id="pro" hidden>
+        <div class="pro-escolha" id="pro-escolha" hidden>
+          <div class="pe-topo">
+            <div class="pe-noite">PORTO SERENO · 3ª NOITE DA FEBRE CINZA</div>
+            <div class="pe-pergunta">QUEM TENTA CHEGAR EM CASA?</div>
+            <div class="pe-dica">digite o <b>número</b> do herói no chat</div>
+          </div>
+          <div class="pe-grade" id="pe-grade"></div>
+          <div class="pe-tempo"><span>⏳</span><div class="pe-trilho"><i id="pe-barra"></i></div><span id="pe-seg">20s</span></div>
+          <div class="pe-res" id="pe-res" hidden><div class="t1">O CHAT ESCOLHEU</div><div class="t2" id="pe-venc"></div><div class="t3" id="pe-venc2"></div></div>
+        </div>
+        <div class="pro-cinema" id="pro-cinema" hidden>
+          <div class="cine-quem" id="cine-quem"></div>
+          <div class="cine-tela"><canvas id="cine" width="320" height="200" aria-label="Cena da história"></canvas></div>
+          <div class="cine-leg" id="cine-leg" aria-live="polite"></div>
+          <div class="cine-voto" id="cine-voto" hidden>
+            <div class="cv-tit" id="cv-tit">O CHAT DECIDE · digite 1 ou 2</div>
+            <div class="cv-ops" id="cv-ops"></div>
+            <div class="pe-tempo"><span>⏳</span><div class="pe-trilho"><i id="cv-barra"></i></div><span id="cv-seg">15s</span></div>
           </div>
         </div>
       </div>
