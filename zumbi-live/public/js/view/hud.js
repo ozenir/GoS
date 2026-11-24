@@ -644,14 +644,15 @@ export class Hud {
       $('v-quadro').classList.toggle('circulos', !!v.mapa);
       if (v.mapa) {
         $('v-info').innerHTML = `<div class="vi-circ">${v.opcoes.map(o => `<span class="vc" style="--cor:${corMapa(o)}">${o.n}</span>`).join('')}</div>`;
-        $('v-bolas').innerHTML = v.opcoes.map(o => `<span class="vb" data-op="${o.id}" style="--cor:${corMapa(o)}"><b>${o.n}</b><small>0</small></span>`).join('');
+        // cada círculo: o número, o ícone do lugar no cantinho de baixo e, embaixo, quantos votos já tem
+        $('v-bolas').innerHTML = v.opcoes.map(o => `<span class="vb" data-op="${o.id}" style="--cor:${corMapa(o)}"><b>${o.n}<i class="vic">${esc(o.lugar?.emoji || '')}</i></b><small>0</small></span>`).join('');
       } else {
         $('v-info').innerHTML = `<div class="vi-t">${titulo}</div><div class="vi-ops">${v.opcoes.map(o => `<span><b>${o.n}</b>${icone(o)} ${nome(o)}${o.semSaida ? ' 📦' : ''}</span>`).join('')}</div>`;
         $('v-bolas').innerHTML = v.opcoes.map(o => `<span class="vb" data-op="${o.id}"><b>${o.n}</b><small>${icone(o)}${o.destino ? esc(o.destino.emoji) : ''} 0</small></span>`).join('');
       }
       // sem votos: aviso; com votos: bolinhas no lugar dele. Relógio zerado: "contando os votos da live" no lugar dele
-      $('v-info').hidden = total > 0;
-      $('v-bolas').hidden = total === 0;
+      $('v-info').hidden = !!v.mapa || total > 0;          // no mapa, os círculos com os votos ficam sempre
+      $('v-bolas').hidden = !v.mapa && total === 0;
       $('v-espera').hidden = !(v.contandoAtrasados && total > 0);
       $('v-quadro').classList.toggle('contando', !!v.contandoAtrasados && total > 0);
       this.cache.vb = {};

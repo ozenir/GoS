@@ -191,7 +191,11 @@ body.foco .app{padding-block:8px}
 .circulos .vb b{width:8.6cqw;height:8.6cqw;box-sizing:border-box;background:rgba(13,11,20,.9);border:.9cqw solid var(--cor);font-size:4.6cqw;box-shadow:0 .5cqw 1.4cqw rgba(0,0,0,.55)}
 .circulos .vb.zero{opacity:.6}
 .circulos .vb.lider b{border-color:var(--cor);color:#fff;box-shadow:0 0 2.8cqw var(--cor)}
-.circulos .vb small{font-size:2.6cqw;color:#fff;opacity:1;text-shadow:0 .25cqw 0 #000}
+.circulos .vb small{font-size:3cqw;font-weight:700;color:#fff;opacity:1;text-shadow:0 .25cqw 0 #000;min-width:3ch;text-align:center}
+.circulos .vb b{position:relative}
+.voto:has(.v-quadro.circulos){--qh:18cqw}   /* mapa: espaço pros votos embaixo de cada círculo, acima do relógio */
+.circulos .vb.zero{opacity:.85}
+.vic{position:absolute;right:-1.9cqw;bottom:-1.5cqw;width:4.6cqw;height:4.6cqw;display:grid;place-items:center;border-radius:50%;background:rgba(13,11,20,.95);border:.4cqw solid var(--cor);font-style:normal;font-size:2.6cqw;line-height:1}
 /* a linha amarela: na votação é o relógio (some das pontas pro meio); fora dela é o CABO DE GUERRA entre o
    top ajudante (esquerda) e o top atrapalhante (direita), com a foto de cada um de coroa */
 .v-relogio{position:absolute;left:5cqw;right:5cqw;top:calc(var(--qh) - 2.4cqw);height:1.1cqw;display:flex;justify-content:center;transition:top .5s cubic-bezier(.3,1.2,.4,1),left .5s,right .5s,height .4s}

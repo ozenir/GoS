@@ -1722,7 +1722,8 @@ export class Jogo {
       if (h.pente == null) h.pente = arma.pente;
     }
     h.tiroCd = intervaloTiro(h, arma);
-    for (let b = 0; b < arma.balas; b++) {
+    if (arma.area) this.tiroEmArea(h, arma, base, alcance);
+    else for (let b = 0; b < arma.balas; b++) {
       const a = base + (this.rng.next() - 0.5) * 2 * arma.espalha;
       const ca = Math.cos(a), sa = Math.sin(a);
       let hit = null, ht = alcance;
@@ -1756,6 +1757,40 @@ export class Jogo {
       this.trocarArma(this.armaPadrao(), null);
     }
     return true;
+  }
+
+  // Tiro em leque (escopeta, dados.js → ARMAS.escopeta.area): acerta todos os zumbis dentro do cone que estão à
+  // vista, 4x o dano em quem está muito perto, e empurra cada um `empurra` casas pra trás (chefe: um terço).
+  tiroEmArea(h, arma, base, alcance) {
+    const A = arma.area, K = Math.log(50);   // (o empurrão perde 98% da força por segundo: anda K casas por unidade)
+    const acertos = [];
+    for (const z of this.zumbis) {
+      if (z.morto || z.nascendo > 0) continue;
+      const dx = z.x - h.x, dy = z.y - h.y, d = Math.hypot(dx, dy), raio = ZUMBIS[z.tipo].raio;
+      if (d > alcance + raio) continue;
+      const borda = Math.max(0, d - raio), cone = borda < A.perto ? A.cone * 1.8 : A.cone;   // colado no herói, o leque pega mais largo
+      let da = Math.abs(Math.atan2(dy, dx) - base); if (da > Math.PI) da = 2 * Math.PI - da;
+      if (da > cone + Math.atan2(raio, Math.max(0.3, d))) continue;
+      if (!this.linhaLivre(h.x, h.y, z.x, z.y)) continue;
+      const perto = borda < A.perto;
+      const r = danoDoHeroi(h, arma, z, this.rng, { base: arma.dano * (perto ? A.multPerto : 1) });
+      this.ferirZumbi(z, r.dano, null, false, r.critico, r.efetividade);
+      acertos.push({ z, d });
+      if (z.morto) continue;
+      this.statusDeAtaque(h, arma, z);
+      if (r.critico && CLASSES[h.classe].passiva?.id === 'tiro_certeiro') this.aplicarStatus(z, 'marcado');
+      if (d > 0.01) {
+        const f = A.empurra * K * (ZUMBIS[z.tipo].chefe ? 1 / 3 : 1);
+        z.kx = dx / d * f; z.ky = dy / d * f;
+      }
+    }
+    // os rastros do leque: um pra cada zumbi acertado e o resto espalhado
+    for (const a of acertos.slice(0, arma.balas)) this.emit('tiro', { x: h.x, y: h.y, tx: a.z.x, ty: a.z.y, arma: h.arma, acertou: true, heroi: true });
+    for (let b = acertos.length; b < Math.min(arma.balas, 4); b++) {
+      const a = base + (this.rng.next() - 0.5) * 2 * arma.espalha;
+      this.emit('tiro', { x: h.x, y: h.y, tx: h.x + Math.cos(a) * alcance, ty: h.y + Math.sin(a) * alcance, arma: h.arma, acertou: false, heroi: true });
+    }
+    if (acertos.some(a => a.d < A.perto + 0.6)) this.emit('escopetada', { x: h.x, y: h.y });
   }
 
   // Golpe de perto (automático quando um zumbi está no alcance). Acerta todos dentro do arco.

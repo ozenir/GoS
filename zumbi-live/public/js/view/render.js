@@ -215,6 +215,7 @@ export class Render {
         }
         break;
       }
+      case 'escopetada': this.tremer(3); break;   // escopeta à queima-roupa
       case 'pavio': this.texto(e.x, e.y, '💣', '#fff'); break;
       case 'atropelou': this.texto(e.x, e.y, '+R$' + e.valor, '#7ee08a'); this.shake = Math.max(this.shake, 2); break;
     }
