@@ -158,7 +158,7 @@ body.foco .app{padding-block:8px}
 .voto.modo-voto{height:var(--qh)}
 .voto.modo-cabo{height:var(--ch)}
 .voto.modo-res{padding-top:calc(var(--ch) + .4cqw)}
-.mapa{position:relative;margin:1.2cqw 2cqw 0 auto;width:44cqw;padding:.8cqw;background:#f1ead9;border-color:#cdbf9f;border-radius:2.2cqw;transform:rotate(1.2deg);box-shadow:0 .8cqw 2.4cqw rgba(0,0,0,.5);animation:pop .35s cubic-bezier(.2,1.5,.4,1)}
+.mapa{position:relative;margin:1.2cqw 2cqw 0 auto;width:50cqw;padding:.8cqw;background:#f1ead9;border-color:#cdbf9f;border-radius:2.2cqw;transform:rotate(1.2deg);box-shadow:0 .8cqw 2.4cqw rgba(0,0,0,.5);animation:pop .35s cubic-bezier(.2,1.5,.4,1)}
 .mapa canvas{border-radius:1.4cqw}
 .vi-ops small.caro{color:#ff7a6a;text-decoration:line-through}
 .frame .mapa canvas{position:static;inset:auto;display:block;width:100%;height:auto}
@@ -183,6 +183,15 @@ body.foco .app{padding-block:8px}
 .vb.zero{opacity:.45}
 .vb.lider b{border-color:var(--ouro);color:var(--ouro);box-shadow:0 0 2cqw rgba(255,210,63,.35)}
 .vb.pulo b{animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+/* votação de destino (mapa): só os círculos na cor do trajeto, com o número no meio (sem banner) */
+.v-quadro.circulos{background:transparent;border-color:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding-top:.4cqw}
+.vi-circ{display:flex;justify-content:center;gap:3.6cqw}
+.vc{width:8.6cqw;height:8.6cqw;box-sizing:border-box;border-radius:50%;display:grid;place-items:center;background:rgba(13,11,20,.9);border:.9cqw solid var(--cor);font-size:4.6cqw;font-weight:700;color:#fff;box-shadow:0 .5cqw 1.4cqw rgba(0,0,0,.55);animation:pop .35s cubic-bezier(.2,1.5,.4,1)}
+.circulos .v-bolas{gap:3.6cqw}
+.circulos .vb b{width:8.6cqw;height:8.6cqw;box-sizing:border-box;background:rgba(13,11,20,.9);border:.9cqw solid var(--cor);font-size:4.6cqw;box-shadow:0 .5cqw 1.4cqw rgba(0,0,0,.55)}
+.circulos .vb.zero{opacity:.6}
+.circulos .vb.lider b{border-color:var(--cor);color:#fff;box-shadow:0 0 2.8cqw var(--cor)}
+.circulos .vb small{font-size:2.6cqw;color:#fff;opacity:1;text-shadow:0 .25cqw 0 #000}
 /* a linha amarela: na votação é o relógio (some das pontas pro meio); fora dela é o CABO DE GUERRA entre o
    top ajudante (esquerda) e o top atrapalhante (direita), com a foto de cada um de coroa */
 .v-relogio{position:absolute;left:5cqw;right:5cqw;top:calc(var(--qh) - 2.4cqw);height:1.1cqw;display:flex;justify-content:center;transition:top .5s cubic-bezier(.3,1.2,.4,1),left .5s,right .5s,height .4s}

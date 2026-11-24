@@ -145,6 +145,22 @@ export function desenharMapa(cv, g, ops, ini, escolhida = null, t = 0, memo = {}
     ctx.fillStyle = cor; ctx.beginPath(); ctx.arc(a + 8, b - 20, 4.6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke();
     ctx.fillStyle = '#fff'; ctx.font = '700 7px "Fredoka", system-ui, sans-serif'; ctx.fillText(String(o.n), a + 8, b - 19.6);
   }
+  // o nome de cada lugar, ao lado do pino (na cor escura do trajeto, com contorno branco), sem cobrir nada
+  ctx.font = '700 10.5px "Fredoka", system-ui, sans-serif'; ctx.textBaseline = 'middle';
+  const ESCURA = ['#a14a05', '#1d4ed8', '#b0175a', '#137a3a'];
+  for (const o of lista) {
+    const L = o.lugar; if (!L) continue;
+    const [a, b] = proj(no(L).x, no(L).y), nome = L.nome.charAt(0).toUpperCase() + L.nome.slice(1);
+    const tw = ctx.measureText(nome).width, hh = 12;
+    const lugares = [[a + 17, b - 13, 'left'], [a - 15, b - 13, 'right'], [a, b + 8, 'center'], [a, b - 33, 'center'], [a + 17, b + 2, 'left'], [a - 15, b + 2, 'right']];
+    let pos = lugares.find(([x, y, al]) => { const x0 = al === 'left' ? x : al === 'right' ? x - tw : x - tw / 2; return x0 > 2 && x0 + tw < W - 2 && y - hh / 2 > 2 && y + hh / 2 < H - 2 && !bate(x0 - 2, y - hh / 2, tw + 4, hh); }) || lugares[0];
+    const [x, y, al] = pos, x0 = al === 'left' ? x : al === 'right' ? x - tw : x - tw / 2;
+    caixas.push([x0 - 2, y - hh / 2, tw + 4, hh]);
+    ctx.textAlign = al;
+    ctx.lineJoin = 'round'; ctx.lineWidth = 3.4; ctx.strokeStyle = 'rgba(253,251,246,0.97)'; ctx.strokeText(nome, x, y);
+    ctx.fillStyle = ESCURA[(o.n - 1) % 4]; ctx.fillText(nome, x, y);
+  }
+  ctx.textAlign = 'center';
   // bússola (o norte gira, porque a frente do herói fica sempre pra cima) e escala
   const nu = -d[1], nv = f[1];   // o norte (0, -1) do mundo, na tela do mapa
   ctx.save(); ctx.translate(W - 12, 12);

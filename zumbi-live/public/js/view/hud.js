@@ -633,8 +633,17 @@ export class Hud {
         : v.mapa ? '🗺️ Pra onde vamos? <small>· vote no lugar</small>'
         : v.portal ? (v.premio ? '🏆 Escolha a relíquia com' : '🌀 Escolha o portal com')
         : v.praia ? '🏖️ Saia da praia com' : v.loja ? `🗳️ Escolha a direção com <small>· ${esc(v.loja.emoji)} ${esc(v.loja.nome)} aqui!</small>` : '🗳️ Escolha a direção com';
-      $('v-info').innerHTML = `<div class="vi-t">${titulo}</div><div class="vi-ops">${v.opcoes.map(o => `<span><b>${o.n}</b>${icone(o)} ${nome(o)}${o.semSaida ? ' 📦' : ''}</span>`).join('')}</div>`;
-      $('v-bolas').innerHTML = v.opcoes.map(o => `<span class="vb" data-op="${o.id}"><b>${o.n}</b><small>${icone(o)}${o.destino ? esc(o.destino.emoji) : ''} 0</small></span>`).join('');
+      // votação de destino (mapa): sem banner, só os círculos na cor de cada trajeto, com o número no meio
+      // (o nome de cada lugar fica escrito no mapa, view/mapa.js)
+      const corMapa = o => CORES_OPCAO[(o.n - 1) % 4];
+      $('v-quadro').classList.toggle('circulos', !!v.mapa);
+      if (v.mapa) {
+        $('v-info').innerHTML = `<div class="vi-circ">${v.opcoes.map(o => `<span class="vc" style="--cor:${corMapa(o)}">${o.n}</span>`).join('')}</div>`;
+        $('v-bolas').innerHTML = v.opcoes.map(o => `<span class="vb" data-op="${o.id}" style="--cor:${corMapa(o)}"><b>${o.n}</b><small>0</small></span>`).join('');
+      } else {
+        $('v-info').innerHTML = `<div class="vi-t">${titulo}</div><div class="vi-ops">${v.opcoes.map(o => `<span><b>${o.n}</b>${icone(o)} ${nome(o)}${o.semSaida ? ' 📦' : ''}</span>`).join('')}</div>`;
+        $('v-bolas').innerHTML = v.opcoes.map(o => `<span class="vb" data-op="${o.id}"><b>${o.n}</b><small>${icone(o)}${o.destino ? esc(o.destino.emoji) : ''} 0</small></span>`).join('');
+      }
       // sem votos: aviso; com votos: bolinhas no lugar dele. Relógio zerado: "contando os votos da live" no lugar dele
       $('v-info').hidden = total > 0;
       $('v-bolas').hidden = total === 0;
@@ -649,7 +658,7 @@ export class Hud {
         if (this.cache.vb[o.id] !== o.votos) {
           if (this.cache.vb[o.id] != null) { el.classList.remove('pulo'); void el.offsetWidth; el.classList.add('pulo'); }
           this.cache.vb[o.id] = o.votos;
-          el.querySelector('small').textContent = `${o.lugar ? o.lugar.emoji : o.id === 'entrar' ? (o.praca ? '⚔️' : o.shop?.emoji || '🚪') : o.seta + (o.destino ? o.destino.emoji : '')} ${o.votos}`;
+          el.querySelector('small').textContent = v.mapa ? String(o.votos) : `${o.lugar ? o.lugar.emoji : o.id === 'entrar' ? (o.praca ? '⚔️' : o.shop?.emoji || '🚪') : o.seta + (o.destino ? o.destino.emoji : '')} ${o.votos}`;
           el.style.setProperty('--k', (1 + 0.35 * o.votos / total).toFixed(2));
         }
         el.classList.toggle('lider', o.votos > 0 && o.votos === max);
