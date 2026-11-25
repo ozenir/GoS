@@ -1,0 +1,20 @@
+{
+  "name": "quadro-inteligente",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Quadro Inteligente — plataforma de preparação e apresentação de aulas com IA",
+  "type": "module",
+  "workspaces": ["shared", "server", "web"],
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,magenta \"npm:dev -w server\" \"npm:dev -w web\"",
+    "build": "npm run build -w web && npm run build -w server",
+    "start": "npm run start -w server",
+    "typecheck": "npm run typecheck -w shared && npm run typecheck -w server && npm run typecheck -w web",
+    "test": "npm run test -w shared && npm run test -w server"
+  },
+  "devDependencies": {
+    "concurrently": "9.2.5",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,124 @@
+@import "tailwindcss";
+@import "katex/dist/katex.min.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource/patrick-hand";
+@import "@fontsource/kalam/300.css";
+@import "@fontsource/kalam/400.css";
+@import "@fontsource/kalam/700.css";
+
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-hand: "Patrick Hand", "Kalam", "Comic Sans MS", cursive;
+}
+
+html, body, #root { height: 100%; }
+body { @apply bg-slate-50 text-slate-900 antialiased; font-family: var(--font-sans); }
+
+/* ------------------------------------------------------------------ */
+/* Quadro                                                               */
+/* ------------------------------------------------------------------ */
+
+.qi-board {
+  --qi-hand: "Patrick Hand", "Kalam", cursive;
+  --paper: #f7f3e8;
+  --paper-line: rgba(60, 50, 30, 0.06);
+  --ink-ink: #1f1d1a;
+  --ink-red: #c8372d;
+  --ink-blue: #2f6fe0;
+  --ink-orange: #e39a2d;
+  --ink-green: #2e8b57;
+  --ink-purple: #7b4fc9;
+  --ink-gray: #8b857a;
+  --ink-highlight: #f6cfc2;
+  --ink-highlight-soft: rgba(246, 207, 194, 0.75);
+  --stroke: 0.085em;
+  color: var(--ink-ink);
+  background: var(--paper);
+  font-family: var(--qi-hand);
+  line-height: 1.35;
+}
+.qi-board[data-theme="whiteboard"] {
+  --paper: #fdfdfc;
+  --paper-line: rgba(30, 41, 59, 0.05);
+  --ink-ink: #111827;
+}
+.qi-board[data-theme="chalkboard"] {
+  --paper: #22392f;
+  --paper-line: rgba(255, 255, 255, 0.04);
+  --ink-ink: #f3f1e7;
+  --ink-red: #ff9a8f;
+  --ink-blue: #8ab8ff;
+  --ink-orange: #ffd27f;
+  --ink-green: #a8e6b4;
+  --ink-purple: #d6b3ff;
+  --ink-gray: #a9bab2;
+  --ink-highlight: rgba(255, 236, 140, 0.28);
+  --ink-highlight-soft: rgba(255, 236, 140, 0.2);
+}
+.qi-board[data-font="kalam"] { --qi-hand: "Kalam", "Patrick Hand", cursive; }
+
+.qi-paper-grid {
+  background-image:
+    linear-gradient(var(--paper-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+  background-size: 1.6em 1.6em;
+}
+
+.ink-ink { color: var(--ink-ink); }
+.ink-red { color: var(--ink-red); }
+.ink-blue { color: var(--ink-blue); }
+.ink-orange { color: var(--ink-orange); }
+.ink-green { color: var(--ink-green); }
+.ink-purple { color: var(--ink-purple); }
+.ink-gray { color: var(--ink-gray); }
+
+.qi-board .katex { font-size: 1.08em; color: inherit; }
+.qi-board .qi-display .katex-display { margin: 0; }
+.qi-board .qi-display { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.qi-board .qi-display::-webkit-scrollbar { display: none; }
+
+/* Matemática manuscrita: letras e números na fonte de escrita à mão,
+   mantendo a estrutura tipográfica (frações, raízes, índices) do KaTeX. */
+.qi-board[data-math="hand"] .katex .mathnormal,
+.qi-board[data-math="hand"] .katex .mathit,
+.qi-board[data-math="hand"] .katex .mord,
+.qi-board[data-math="hand"] .katex .mbin,
+.qi-board[data-math="hand"] .katex .mrel,
+.qi-board[data-math="hand"] .katex .mpunct,
+.qi-board[data-math="hand"] .katex .mop,
+.qi-board[data-math="hand"] .katex .text,
+.qi-board[data-math="hand"] .katex .textrm,
+.qi-board[data-math="hand"] .katex .mathrm {
+  font-family: var(--qi-hand), KaTeX_Main, serif;
+  font-style: normal;
+}
+.qi-board[data-math="hand"] .katex .mord.mathnormal { font-size: 1.12em; }
+.qi-board[data-math="hand"] .katex .delimsizing,
+.qi-board[data-math="hand"] .katex .op-symbol,
+.qi-board[data-math="hand"] .katex .large-op,
+.qi-board[data-math="hand"] .katex .small-op,
+.qi-board[data-math="hand"] .katex .accent-body { font-family: unset; }
+
+.qi-word { white-space: nowrap; display: inline-block; }
+.qi-g { display: inline-block; white-space: pre; }
+.qi-svg { overflow: visible; }
+.qi-svg path { vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+.qi-stroke { fill: none; stroke: currentColor; stroke-width: var(--stroke); }
+.qi-stroke.thin { stroke-width: calc(var(--stroke) * 0.7); }
+.qi-stroke.bold { stroke-width: calc(var(--stroke) * 1.5); }
+.qi-fill { stroke: none; fill: currentColor; }
+.qi-fill.hl { fill: var(--ink-highlight-soft); }
+
+.qi-hl-marker {
+  position: absolute; inset: -0.15em -0.4em; z-index: -1;
+  background: var(--ink-highlight);
+  border-radius: 0.25em 0.6em 0.3em 0.5em / 0.5em 0.25em 0.6em 0.3em;
+}
+
+/* Tela de impressão / PDF */
+@media print {
+  @page { size: A4; margin: 12mm; }
+  body { background: white; }
+  .no-print { display: none !important; }
+  .print-step { break-inside: avoid-page; }
+}
